@@ -21,6 +21,8 @@
  *   POST /api/todos/:id/reopen
  *   POST /api/todos/:id/snooze                { minutes }
  *   DELETE /api/todos/:id
+ *   GET  /api/todos/due-check                  -> { fired: [...] }  (reminder poll)
+ *   DELETE /api/todo-lists/:id                 { force: true }       (delete list + tasks)
  *   GET  /api/search/palette?q=&scope=patients
  */
 (function () {
@@ -142,6 +144,9 @@
     function open() {
         if (!drawer) cacheRefs();
         if (!drawer) return;
+        // Opening the drawer is a user gesture — a good moment to ask for
+        // desktop-notification permission so at-due reminders can pop natively.
+        ensureNotifyPermission();
         drawer.classList.add('open');
         drawer.setAttribute('aria-hidden', 'false');
         backdrop.hidden = false;
@@ -187,7 +192,9 @@
     // ------------------------------------------------------ lists rendering
     function loadLists() {
         return api('/api/todo-lists').then((res) => {
-            state.lists = Array.isArray(res) ? res : (res && res.data) || [];
+            // /api/todo-lists returns { success: true, lists: [...] }. Older
+            // shape kept as a fallback for forward-compatibility.
+            state.lists = Array.isArray(res) ? res : ((res && (res.lists || res.data)) || []);
             renderRail();
             populateListSelect();
             return state.lists;
@@ -260,7 +267,7 @@
         loading.hidden = false;
         rows.innerHTML = '';
         empty.hidden = true;
-        return api('/api/todos?list_id=' + encodeURIComponent(listId)).then((res) => {
+        return api('/api/todos?status=all&list_id=' + encodeURIComponent(listId)).then((res) => {
             loading.hidden = true;
             state.tasks = Array.isArray(res) ? res : (res && res.data) || [];
             renderTasks();
@@ -394,15 +401,25 @@
             api('/api/todos', {
                 method: 'POST',
                 body: { title: title, list_id: state.currentListId }
-            }).then((created) => {
-                // replace temp with real
+            }).then((res) => {
+                // Backend returns { success: true, data: { ...todo } }.
+                // Unwrap so the optimistic placeholder gets replaced with a
+                // proper task row (otherwise the wrapper object would have
+                // no id/title and the row would render blank).
+                const created = (res && res.data) ? res.data : res;
                 const idx = state.tasks.findIndex((t) => t.id === tempId);
-                if (idx !== -1) {
-                    state.tasks[idx] = created || Object.assign(optimistic, { _optimistic: false });
+                if (idx !== -1 && created && created.id) {
+                    state.tasks[idx] = Object.assign({}, created, { _optimistic: false });
+                } else if (idx !== -1) {
+                    // Couldn't read created task — at least clear the optimistic flag
                     state.tasks[idx]._optimistic = false;
                 }
                 renderTasks();
                 updateProgress();
+                // Refresh header badge so the open-count chip stays accurate
+                if (typeof window.__refreshTodoHeaderBadge === 'function') {
+                    window.__refreshTodoHeaderBadge();
+                }
             }).catch((err) => {
                 // rollback
                 state.tasks = state.tasks.filter((t) => t.id !== tempId);
@@ -436,13 +453,26 @@
         const endpoint = wasDone
             ? '/api/todos/' + id + '/reopen'
             : '/api/todos/' + id + '/done';
-        api(endpoint, { method: 'POST' }).catch((err) => {
-            // rollback
-            t.completed_at = wasDone ? new Date().toISOString() : null;
-            renderTasks();
-            updateProgress();
-            handleError(err);
-        });
+        api(endpoint, { method: 'POST' })
+            .then((res) => {
+                // Server may return the updated task; sync if present so the
+                // optimistic completed_at matches the server stamp.
+                const updated = (res && res.data) ? res.data : null;
+                if (updated && updated.id != null) {
+                    const idx = state.tasks.findIndex((x) => String(x.id) === String(updated.id));
+                    if (idx !== -1) state.tasks[idx] = updated;
+                }
+                if (typeof window.__refreshTodoHeaderBadge === 'function') {
+                    window.__refreshTodoHeaderBadge();
+                }
+            })
+            .catch((err) => {
+                // rollback
+                t.completed_at = wasDone ? new Date().toISOString() : null;
+                renderTasks();
+                updateProgress();
+                handleError(err);
+            });
     }
 
     // -------------------------------------------------------- delete task
@@ -454,7 +484,13 @@
             state.tasks = state.tasks.filter((x) => String(x.id) !== String(id));
             renderTasks();
             updateProgress();
-            api('/api/todos/' + id, { method: 'DELETE' }).catch((err) => {
+            api('/api/todos/' + id, { method: 'DELETE' })
+                .then(() => {
+                    if (typeof window.__refreshTodoHeaderBadge === 'function') {
+                        window.__refreshTodoHeaderBadge();
+                    }
+                })
+                .catch((err) => {
                 state.tasks.push(t);
                 renderTasks();
                 updateProgress();
@@ -543,8 +579,13 @@
         fullForm.elements.title.value = (task && task.title) || '';
         fullForm.elements.description.value = (task && task.description) || '';
         fullForm.elements.due_at.value = (task && task.due_at) ? toLocalInput(task.due_at) : '';
-        fullForm.elements.remind_before.value = (task && task.remind_before != null) ? String(task.remind_before) : '';
-        fullForm.elements.priority.value = (task && task.priority) || 'normal';
+        // Form field is now named `remind_before_minutes` (matches backend);
+        // backend may return `remind_before_minutes` (preferred) or the older
+        // `remind_before` alias.
+        fullForm.elements.remind_before_minutes.value = (task && (task.remind_before_minutes != null ? task.remind_before_minutes : task.remind_before) != null)
+            ? String(task.remind_before_minutes != null ? task.remind_before_minutes : task.remind_before)
+            : '';
+        fullForm.elements.priority.value = (task && task.priority) || 'med';
         fullForm.elements.patient_id.value = (task && task.patient_id) ? String(task.patient_id) : '';
         $('#todoFmPatient').value = (task && task.patient_name) || '';
 
@@ -580,8 +621,8 @@
                 title: (fd.get('title') || '').trim(),
                 description: (fd.get('description') || '').trim() || null,
                 due_at: fd.get('due_at') || null,
-                remind_before: fd.get('remind_before') ? parseInt(fd.get('remind_before'), 10) : null,
-                priority: fd.get('priority') || 'normal',
+                remind_before_minutes: fd.get('remind_before_minutes') ? parseInt(fd.get('remind_before_minutes'), 10) : null,
+                priority: fd.get('priority') || 'med',
                 patient_id: fd.get('patient_id') ? parseInt(fd.get('patient_id'), 10) : null
             };
             if (!payload.title || !payload.list_id) return;
@@ -697,6 +738,13 @@
     let popoverList = null;
     function openPopover(chip, list) {
         popoverList = list;
+        // The default list can't be archived or deleted (backend rejects it),
+        // so hide those actions for it.
+        const isDefault = !!(list && (list.is_default === 1 || list.is_default === true));
+        const archiveBtn = listPopover.querySelector('[data-popover-archive]');
+        const deleteBtn = listPopover.querySelector('[data-popover-delete]');
+        if (archiveBtn) archiveBtn.hidden = isDefault;
+        if (deleteBtn) deleteBtn.hidden = isDefault;
         const r = chip.getBoundingClientRect();
         listPopover.hidden = false;
         listPopover.style.position = 'fixed';
@@ -742,6 +790,18 @@
                     }).then((ok) => { if (ok) archiveList(list.id); });
                 } else if (window.confirm('Archive list?')) {
                     archiveList(list.id);
+                }
+            } else if (act === 'delete') {
+                const msg = 'Permanently delete "' + (list.name || 'this list') +
+                    '" and all of its tasks? This cannot be undone.';
+                if (typeof window.mkConfirmModal === 'function') {
+                    window.mkConfirmModal({
+                        title: 'Delete list',
+                        message: msg,
+                        okText: 'Delete', okVariant: 'danger', cancelText: 'Cancel'
+                    }).then((ok) => { if (ok) deleteList(list.id); });
+                } else if (window.confirm(msg)) {
+                    deleteList(list.id);
                 }
             }
         });
@@ -793,6 +853,27 @@
                 state.tasks = [];
                 renderTasks();
                 updateProgress();
+            }
+        }).catch(handleError);
+    }
+
+    function deleteList(id) {
+        // `force: true` tells the backend to drop the list AND its tasks in one
+        // transaction (no archive-first / must-be-empty dance).
+        api('/api/todo-lists/' + id, { method: 'DELETE', body: { force: true } }).then(() => {
+            state.lists = state.lists.filter((l) => l.id !== id);
+            renderRail();
+            populateListSelect();
+            if (state.currentListId === id && state.lists[0]) {
+                selectList(state.lists[0].id);
+            } else if (!state.lists.length) {
+                state.currentListId = null;
+                state.tasks = [];
+                renderTasks();
+                updateProgress();
+            }
+            if (typeof window.__refreshTodoHeaderBadge === 'function') {
+                window.__refreshTodoHeaderBadge();
             }
         }).catch(handleError);
     }
@@ -938,6 +1019,173 @@
     // Expose so other modules (e.g. drawer close) can ping the badge.
     window.__refreshTodoHeaderBadge = refreshHeaderBadge;
 
+    // ------------------------------------------------ due / reminder polling
+    //
+    // Polls /api/todos/due-check on an interval (and whenever the tab regains
+    // focus). That endpoint runs the same lead-time + at-due dispatch the
+    // 5-minute cron does — but scoped to the current user — and returns the
+    // freshly-fired items so we can raise an immediate in-app toast and (when
+    // permitted) a desktop notification. This means reminders work even when
+    // no OS cron is configured, and fire whether or not the drawer is open.
+    // Server-side flags (todo_reminded_at / todo_notified_at) guarantee each
+    // reminder is delivered exactly once.
+    const REMINDER_POLL_MS = 60 * 1000;
+    let reminderTimer = null;
+    let reminderStarted = false;
+
+    function startReminderPolling() {
+        if (reminderStarted) return;
+        reminderStarted = true;
+        // First check shortly after load so a just-due task surfaces quickly,
+        // then settle into the steady interval.
+        setTimeout(reminderTick, 4000);
+        reminderTimer = setInterval(reminderTick, REMINDER_POLL_MS);
+        document.addEventListener('visibilitychange', function () {
+            if (document.visibilityState === 'visible') reminderTick();
+        });
+    }
+
+    function reminderTick() {
+        if (document.visibilityState !== 'visible') return;
+        fetch('/api/todos/due-check', {
+            credentials: 'same-origin',
+            headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+        })
+            .then((r) => (r.ok ? r.json() : null))
+            .then((data) => {
+                if (!data || !data.success || !Array.isArray(data.fired) || !data.fired.length) return;
+                handleFired(data.fired);
+            })
+            .catch(() => { /* offline / transient — retry next tick */ });
+    }
+
+    function handleFired(items) {
+        maybeDesktopNotify(items);
+        // Cap in-app toasts so a backlog of overdue tasks can't flood the UI.
+        const MAX = 3;
+        items.slice(0, MAX).forEach(showReminderToast);
+        if (items.length > MAX) {
+            const extra = items.length - MAX;
+            showReminderToast({
+                kind: 'summary',
+                title: extra + ' more task' + (extra === 1 ? '' : 's') + ' need attention',
+                body: 'Open the to-do drawer to review them.'
+            });
+        }
+        // Keep the bell + header badge in sync with the new notifications.
+        try { if (window.notifCenter && window.notifCenter.refresh) window.notifCenter.refresh(); } catch (e) { /* */ }
+        if (typeof window.__refreshTodoHeaderBadge === 'function') window.__refreshTodoHeaderBadge();
+        // If the drawer is open, refresh rows so snoozed/overdue state updates.
+        if (drawer && drawer.classList.contains('open') && state.currentListId) {
+            loadTasks(state.currentListId).catch(() => { /* */ });
+        }
+    }
+
+    function ensureNotifyPermission() {
+        try {
+            if ('Notification' in window && Notification.permission === 'default') {
+                Notification.requestPermission();
+            }
+        } catch (e) { /* */ }
+    }
+
+    function maybeDesktopNotify(items) {
+        if (!('Notification' in window) || Notification.permission !== 'granted') return;
+        items.slice(0, 3).forEach((it) => {
+            try {
+                const n = new Notification(it.title || 'Task reminder', {
+                    body: it.body || '',
+                    tag: 'todo-' + (it.id || it.kind)
+                });
+                n.onclick = function () {
+                    window.focus();
+                    if (typeof window.openTodoDrawer === 'function') window.openTodoDrawer();
+                    n.close();
+                };
+            } catch (e) { /* */ }
+        });
+    }
+
+    // ------------------------------------------------ in-app reminder toast
+    let toastHost = null;
+    function reminderToastHost() {
+        if (toastHost && document.body.contains(toastHost)) return toastHost;
+        toastHost = document.getElementById('tdReminderToasts');
+        if (!toastHost) {
+            toastHost = document.createElement('div');
+            toastHost.id = 'tdReminderToasts';
+            toastHost.className = 'td-toast-host';
+            toastHost.setAttribute('aria-live', 'polite');
+            document.body.appendChild(toastHost);
+        }
+        return toastHost;
+    }
+
+    function showReminderToast(item) {
+        const host = reminderToastHost();
+        const el = document.createElement('div');
+        el.className = 'td-toast' +
+            (item.kind === 'due' ? ' is-due' : item.kind === 'reminder' ? ' is-reminder' : '');
+        el.setAttribute('role', 'status');
+
+        const icon = item.kind === 'due' ? 'bi-exclamation-circle'
+            : item.kind === 'reminder' ? 'bi-alarm' : 'bi-list-task';
+        const patient = item.patient_name
+            ? '<span class="td-toast-patient"><i class="bi bi-person" aria-hidden="true"></i>' +
+              escapeHtml(item.patient_name) + '</span>'
+            : '';
+        const canSnooze = item.id && item.kind !== 'summary';
+
+        el.innerHTML =
+            '<span class="td-toast-icon"><i class="bi ' + icon + '" aria-hidden="true"></i></span>' +
+            '<div class="td-toast-main">' +
+                '<p class="td-toast-title">' + escapeHtml(item.title || 'Task') + '</p>' +
+                (item.body ? '<p class="td-toast-body">' + escapeHtml(item.body) + '</p>' : '') +
+                patient +
+            '</div>' +
+            '<div class="td-toast-actions">' +
+                (canSnooze ? '<button type="button" class="td-toast-btn" data-toast-snooze>Snooze 1h</button>' : '') +
+                '<button type="button" class="td-toast-btn td-toast-open" data-toast-open>Open</button>' +
+                '<button type="button" class="td-toast-close" data-toast-close aria-label="Dismiss">' +
+                    '<i class="bi bi-x-lg" aria-hidden="true"></i></button>' +
+            '</div>';
+
+        let hideTimer = null;
+        const dismiss = function () {
+            if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
+            el.classList.remove('is-in');
+            el.classList.add('is-out');
+            setTimeout(() => { if (el.parentNode) el.parentNode.removeChild(el); }, 240);
+        };
+
+        el.addEventListener('click', (e) => {
+            if (e.target.closest('[data-toast-close]')) { dismiss(); return; }
+            if (e.target.closest('[data-toast-snooze]')) {
+                if (item.id) {
+                    api('/api/todos/' + item.id + '/snooze', { method: 'POST', body: { minutes: 60 } })
+                        .then(() => {
+                            if (drawer && drawer.classList.contains('open') && state.currentListId) {
+                                loadTasks(state.currentListId).catch(() => { /* */ });
+                            }
+                        })
+                        .catch(handleError);
+                }
+                dismiss();
+                return;
+            }
+            if (e.target.closest('[data-toast-open]') || e.target.closest('.td-toast-main')) {
+                if (typeof window.openTodoDrawer === 'function') window.openTodoDrawer();
+                dismiss();
+            }
+        });
+
+        host.appendChild(el);
+        requestAnimationFrame(() => el.classList.add('is-in'));
+        // At-due toasts linger a little longer than lead reminders.
+        const ttl = item.kind === 'due' ? 15000 : 9000;
+        hideTimer = setTimeout(dismiss, ttl);
+    }
+
     // -------------------------------------------------------- init
     function init() {
         cacheRefs();
@@ -971,6 +1219,10 @@
         bindFullModal();
         bindPopover();
         bindDrag();
+
+        // Start polling for due/at-due reminders site-wide (independent of
+        // whether the drawer is ever opened).
+        startReminderPolling();
     }
 
     if (document.readyState === 'loading') {

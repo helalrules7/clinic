@@ -100,6 +100,18 @@
     }
 
     /* ---------- auto schedule ---------- */
+    // Keep the header dark/light toggle + clinic logo in sync with the class
+    // that the schedule (or any other code) sets on <html>. main.js owns the
+    // canonical updater (window.syncThemeUI); fall back to a local version so
+    // the auto-switch still updates the button + logo even if main.js changes.
+    function syncToggleUI(isDark) {
+        if (typeof global.syncThemeUI === 'function') { global.syncThemeUI(); return; }
+        var input = document.getElementById('themeToggleInput');
+        if (input) input.checked = !!isDark;
+        var logo = document.getElementById('clinicLogo');
+        if (logo) logo.src = isDark ? '/assets/images/Dark.png' : '/assets/images/Light.png';
+    }
+
     function applyThemeSchedule() {
         var enabled = safeGet(LS_AUTO, '0') === '1';
         if (!enabled) return;
@@ -111,6 +123,10 @@
         var lightStart = parseTime(lightFrom);
         var isDark = (mins >= darkStart) || (mins < lightStart);
         document.documentElement.classList.toggle('dark', isDark);
+        // Persist so reloads + other tabs agree, and reflect on the toggle/logo.
+        safeSet('appTheme', isDark ? 'dark' : 'light');
+        safeSet('theme',    isDark ? 'dark' : 'light');
+        syncToggleUI(isDark);
     }
 
     /* ---------- header popover ---------- */

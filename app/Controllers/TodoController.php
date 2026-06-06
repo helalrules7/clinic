@@ -17,6 +17,7 @@ use App\Models\TodoModel;
  *   GET    /doctor/todos                   -> page
  *   GET    /api/todos                      -> index
  *   GET    /api/todos/counts               -> counts
+ *   GET    /api/todos/due-check            -> dueCheck
  *   POST   /api/todos/reorder              -> reorder
  *   GET    /api/todos/:id                  -> show
  *   POST   /api/todos                      -> create
@@ -24,11 +25,15 @@ use App\Models\TodoModel;
  *   DELETE /api/todos/:id                  -> delete
  *   POST   /api/todos/:id/done             -> markDone
  *   POST   /api/todos/:id/reopen           -> reopen
+ *   POST   /api/todos/:id/snooze           -> snooze
  */
 class TodoController
 {
     /** Allowed reminder lead-time offsets in minutes. */
     const ALLOWED_REMIND = [15, 60, 240, 1440];
+
+    /** Allowed snooze offsets in minutes (15m / 1h / 4h / 1d / 1w). */
+    const ALLOWED_SNOOZE = [15, 60, 240, 1440, 10080];
 
     /** Allowed task status values. */
     const ALLOWED_STATUS = ['open', 'done'];
@@ -685,6 +690,242 @@ class TodoController
             error_log('TodoController::reopen ' . $e->getMessage());
             $this->respond(['success' => false, 'message' => 'Database error'], 500);
         }
+    }
+
+    /**
+     * POST /api/todos/:id/snooze
+     *
+     * Body: { minutes: int }  (one of ALLOWED_SNOOZE)
+     *
+     * Snoozing pushes due_at to NOW + minutes ("remind me again in N") and
+     * clears the cron dispatch flags so a fresh lead-time / at-due reminder
+     * fires for the new time. A done task is reopened so the reminder makes
+     * sense again.
+     */
+    public function snooze($id)
+    {
+        $user = $this->bootJson();
+        if (!$user) {
+            return;
+        }
+        $userId = (int)$user['id'];
+        $id = (int)$id;
+        if ($id <= 0) {
+            $this->respond(['success' => false, 'message' => 'Invalid id'], 422);
+            return;
+        }
+
+        $data    = $this->readJsonBody();
+        $minutes = isset($data['minutes']) ? (int)$data['minutes'] : 0;
+        if (!in_array($minutes, self::ALLOWED_SNOOZE, true)) {
+            $this->respond([
+                'success' => false,
+                'message' => 'minutes must be one of 15, 60, 240, 1440, 10080',
+            ], 422);
+            return;
+        }
+
+        try {
+            $existing = $this->model->findById($id, $userId);
+            if (!$existing) {
+                $this->respond(['success' => false, 'message' => 'Not found'], 404);
+                return;
+            }
+
+            $newDue = date('Y-m-d H:i:s', time() + $minutes * 60);
+            $this->model->update($id, $userId, [
+                'due_at'           => $newDue,
+                // Suppress the lead-time reminder for this snooze cycle (the
+                // snooze itself is the "remind me again") but re-arm the
+                // at-due notification so it fires once at the new due time.
+                'todo_reminded_at' => date('Y-m-d H:i:s'),
+                'todo_notified_at' => null,
+                'status'           => 'open',
+                'completed_at'     => null,
+            ]);
+            $row = $this->model->findById($id, $userId);
+            $this->respond(['success' => true, 'data' => $row]);
+        } catch (\PDOException $e) {
+            error_log('TodoController::snooze ' . $e->getMessage());
+            $this->respond(['success' => false, 'message' => 'Database error'], 500);
+        }
+    }
+
+    /**
+     * GET /api/todos/due-check
+     *
+     * Browser-poll endpoint. Performs the same dispatch as the 5-minute cron
+     * (see bin/cron/todo-reminders.php) but scoped to the current user, and
+     * RETURNS the freshly-fired items so the front-end can raise an immediate
+     * in-app toast / desktop notification — without waiting for (or depending
+     * on) an OS-level cron being configured.
+     *
+     * Idempotent with the cron: both gate on todo_reminded_at /
+     * todo_notified_at, so whichever runs first marks the row and the other
+     * skips it. Writing into `notifications` is best-effort so a notifications
+     * schema mismatch never breaks the poll.
+     *
+     * Returns: { success: true, fired: [ { id, kind, title, body, due_at,
+     *            patient_id, patient_name, link } ] }
+     */
+    public function dueCheck()
+    {
+        $user = $this->bootJson();
+        if (!$user) {
+            return;
+        }
+        $userId = (int)$user['id'];
+
+        $fired = [];
+
+        // Bell entries are written through NotificationController::create(),
+        // which matches the real `notifications` schema (message + related_type/
+        // related_id; no body/link/icon columns). The V11 grouped endpoint maps
+        // type -> icon and related_type='todo' -> /doctor/todos?focus=ID, so a
+        // todo notification deep-links and renders correctly. Writes are
+        // best-effort: a failure here must never break the poll/toast.
+        $canNotify = false;
+        try {
+            require_once __DIR__ . '/NotificationController.php';
+            $canNotify = class_exists('App\\Controllers\\NotificationController');
+        } catch (\Throwable $e) {
+            $canNotify = false;
+        }
+
+        try {
+            // ---- 1) Lead-time reminders (remind_before_minutes ahead) ----
+            $leadStmt = $this->pdo->prepare(
+                "SELECT t.id, t.title, t.patient_id, t.due_at, t.remind_before_minutes,
+                        CASE WHEN p.id IS NOT NULL
+                             THEN CONCAT(p.first_name, ' ', p.last_name) ELSE NULL END AS patient_name
+                   FROM todos t
+                   LEFT JOIN patients p ON p.id = t.patient_id
+                  WHERE t.user_id = :uid
+                    AND t.status = 'open'
+                    AND t.remind_before_minutes IS NOT NULL
+                    AND t.todo_reminded_at IS NULL
+                    AND DATE_SUB(t.due_at, INTERVAL t.remind_before_minutes MINUTE) <= NOW()
+                    AND t.due_at > NOW()
+                  ORDER BY t.due_at ASC
+                  LIMIT 100"
+            );
+            $leadStmt->execute([':uid' => $userId]);
+            $leadRows = $leadStmt->fetchAll(\PDO::FETCH_ASSOC) ?: [];
+
+            $markReminded = $this->pdo->prepare(
+                "UPDATE todos SET todo_reminded_at = NOW() WHERE id = :id AND user_id = :uid"
+            );
+
+            foreach ($leadRows as $row) {
+                $todoId    = (int)$row['id'];
+                $title     = (string)($row['title'] ?? '');
+                $patientId = $row['patient_id'] !== null ? (int)$row['patient_id'] : null;
+                $window    = $this->humanizeMinutes((int)$row['remind_before_minutes']);
+                $body      = 'Due in ' . $window;
+                $link      = '/doctor/todos?focus=' . $todoId;
+
+                if ($canNotify) {
+                    try {
+                        NotificationController::create(
+                            $userId, 'todo_reminder', 'Upcoming: ' . $title, $body,
+                            'todo', $todoId, $patientId
+                        );
+                    } catch (\Throwable $e) {
+                        // best-effort — toast still fires below
+                    }
+                }
+                $markReminded->execute([':id' => $todoId, ':uid' => $userId]);
+
+                $fired[] = [
+                    'id'           => $todoId,
+                    'kind'         => 'reminder',
+                    'title'        => $title,
+                    'body'         => $body,
+                    'due_at'       => $row['due_at'],
+                    'patient_id'   => $patientId,
+                    'patient_name' => $row['patient_name'],
+                    'link'         => $link,
+                ];
+            }
+
+            // ---- 2) At-due notifications (due_at has passed) ----
+            $dueStmt = $this->pdo->prepare(
+                "SELECT t.id, t.title, t.patient_id, t.due_at,
+                        CASE WHEN p.id IS NOT NULL
+                             THEN CONCAT(p.first_name, ' ', p.last_name) ELSE NULL END AS patient_name
+                   FROM todos t
+                   LEFT JOIN patients p ON p.id = t.patient_id
+                  WHERE t.user_id = :uid
+                    AND t.status = 'open'
+                    AND t.due_at IS NOT NULL
+                    AND t.due_at <= NOW()
+                    AND t.todo_notified_at IS NULL
+                  ORDER BY t.due_at ASC
+                  LIMIT 100"
+            );
+            $dueStmt->execute([':uid' => $userId]);
+            $dueRows = $dueStmt->fetchAll(\PDO::FETCH_ASSOC) ?: [];
+
+            $markNotified = $this->pdo->prepare(
+                "UPDATE todos SET todo_notified_at = NOW() WHERE id = :id AND user_id = :uid"
+            );
+
+            foreach ($dueRows as $row) {
+                $todoId    = (int)$row['id'];
+                $title     = (string)($row['title'] ?? '');
+                $patientId = $row['patient_id'] !== null ? (int)$row['patient_id'] : null;
+                $link      = '/doctor/todos?focus=' . $todoId;
+
+                if ($canNotify) {
+                    try {
+                        NotificationController::create(
+                            $userId, 'todo_due', 'Due now: ' . $title, 'Task is due now',
+                            'todo', $todoId, $patientId
+                        );
+                    } catch (\Throwable $e) {
+                        // best-effort
+                    }
+                }
+                $markNotified->execute([':id' => $todoId, ':uid' => $userId]);
+
+                $fired[] = [
+                    'id'           => $todoId,
+                    'kind'         => 'due',
+                    'title'        => $title,
+                    'body'         => 'Task is due now',
+                    'due_at'       => $row['due_at'],
+                    'patient_id'   => $patientId,
+                    'patient_name' => $row['patient_name'],
+                    'link'         => $link,
+                ];
+            }
+
+            $this->respond(['success' => true, 'fired' => $fired]);
+        } catch (\PDOException $e) {
+            error_log('TodoController::dueCheck ' . $e->getMessage());
+            $this->respond(['success' => false, 'message' => 'Database error'], 500);
+        }
+    }
+
+    /**
+     * Humanize a minute count for reminder copy.
+     *   15 -> "15 min", 60 -> "1 hour", 240 -> "4 hours", 1440 -> "1 day".
+     */
+    private function humanizeMinutes($minutes)
+    {
+        $m = (int)$minutes;
+        if ($m <= 0) {
+            return '0 min';
+        }
+        if ($m < 60) {
+            return $m . ' min';
+        }
+        if ($m < 1440) {
+            $h = (int)floor($m / 60);
+            return $h . ' ' . ($h === 1 ? 'hour' : 'hours');
+        }
+        $d = (int)floor($m / 1440);
+        return $d . ' ' . ($d === 1 ? 'day' : 'days');
     }
 
     /**

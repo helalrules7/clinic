@@ -297,6 +297,14 @@ document.addEventListener('DOMContentLoaded', function() {
         updateCardButtons();
     }, 200);
     loadDashboardNotes();
+    // Live-sync: the dashboard notes widget shows a MERGED view, so refresh on
+    // ANY note change (board OR quick) from any surface. Ignore our own echoes.
+    if (window.NotesSync) {
+        window.NotesSync.on(function () {
+            if (window.__dashNoteSelfSync) return;
+            if (document.getElementById('dashboardNotesContainer')) loadDashboardNotes();
+        });
+    }
     // Initialize drag and drop for cards
     initializeDashboardCardDragDrop();
     
@@ -2048,6 +2056,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function getDashboardColorClass(backgroundColor) {
+        // Gradient preset tokens (NoteBG) aren't part of the legacy hex map.
+        if (window.NoteBG && window.NoteBG.isPreset(backgroundColor)) return 'warning';
         for (const [key, value] of Object.entries(dashboardColorMap)) {
             if (value.bg.toLowerCase() === backgroundColor.toLowerCase()) {
                 return value.class;
@@ -2057,7 +2067,10 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function getDashboardTextColor(backgroundColor) {
-        const hex = backgroundColor.replace('#', '');
+        // Glass presets always render light text on the gradient.
+        if (window.NoteBG && window.NoteBG.isPreset(backgroundColor)) return 'light-text';
+        const hex = String(backgroundColor || '').replace('#', '');
+        if (hex.length < 6) return 'dark-text';
         const r = parseInt(hex.substr(0, 2), 16);
         const g = parseInt(hex.substr(2, 2), 16);
         const b = parseInt(hex.substr(4, 2), 16);
@@ -2082,9 +2095,11 @@ document.addEventListener('DOMContentLoaded', function() {
         const x = col * (defaultWidth + spacing) + spacing;
         const y = row * (defaultHeight + spacing) + spacing;
         
+        const isGlass = !!(window.NoteBG && window.NoteBG.isPreset(bgColor));
         const widget = document.createElement('div');
         widget.className = `dashboard-note-widget color-${colorClass} ${textColorClass}`;
         widget.id = `dashboard-note-${note.id}`;
+        if (isGlass) window.NoteBG.apply(widget, bgColor);
         widget.style.left = `${x}px`;
         widget.style.top = `${y}px`;
         widget.style.width = `${defaultWidth}px`;
@@ -2107,6 +2122,9 @@ document.addEventListener('DOMContentLoaded', function() {
                             <div class="dashboard-color-option-dropdown dodgerblue" onclick="dashboardChangeNoteColor(${note.id}, '#1e90ff')"></div>
                             <div class="dashboard-color-option-dropdown warning" onclick="dashboardChangeNoteColor(${note.id}, '#fbbf24')"></div>
                             <div class="dashboard-color-option-dropdown success" onclick="dashboardChangeNoteColor(${note.id}, '#10b981')"></div>
+                            ${(window.NoteBG ? window.NoteBG.PRESETS : []).map(function (p) {
+                                return '<div class="dashboard-color-option-dropdown dashboard-color-option--grad" title="' + p.label + '" style="background:' + p.css + '" onclick="dashboardChangeNoteColor(' + note.id + ', \'' + p.id + '\')"></div>';
+                            }).join('')}
                         </div>
                     </div>
                     <div class="dashboard-note-alert-wrapper" style="position: relative;">
@@ -2165,6 +2183,141 @@ document.addEventListener('DOMContentLoaded', function() {
         
         return widget;
     }
+
+    // ---- Quick notes on the dashboard widget (merged view) ----------------
+    // Quick notes (drawer / Cmd+K store) appear here as lightweight, statically
+    // placed widgets. Mutations route to /api/quick-notes via NotesBridge so the
+    // board-note canvas logic stays untouched.
+    function dqpEsc(s) {
+        return String(s == null ? '' : s)
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+    function dqpEmit(action, id) {
+        if (!window.NotesSync) return;
+        window.__dashNoteSelfSync = true;
+        try { window.NotesSync.emit('quick', { action: action, id: id }); }
+        finally { window.__dashNoteSelfSync = false; }
+    }
+    function dqpRec(id) { return { origin: 'quick', id: id, raw: {} }; }
+
+    window.dqpUpdateTitle = function (id, title) {
+        window.NotesBridge.save(dqpRec(id), { title: title }).then(function () { dqpEmit('update', id); }).catch(function () {});
+    };
+    window.dqpUpdateContent = function (id, text) {
+        window.NotesBridge.save(dqpRec(id), { body: text }).then(function () { dqpEmit('update', id); }).catch(function () {});
+    };
+    window.dqpToggleColorPicker = function (id, e) {
+        if (e) e.stopPropagation();
+        var d = document.getElementById('dashboardQpColorPicker-' + id);
+        if (d) d.style.display = (d.style.display === 'none' || !d.style.display) ? 'flex' : 'none';
+    };
+    window.dqpChangeColor = function (id, color) {
+        var picker = document.getElementById('dashboardQpColorPicker-' + id);
+        if (picker) picker.style.display = 'none';
+        var widget = document.getElementById('dashboard-quicknote-' + id);
+        if (widget) {
+            var colorClass = getDashboardColorClass(color);
+            var textColorClass = getDashboardTextColor(color);
+            widget.classList.remove('color-white', 'color-red', 'color-black', 'color-dodgerblue', 'color-warning', 'color-success', 'light-text', 'dark-text');
+            widget.classList.add('color-' + colorClass, textColorClass);
+            if (window.NoteBG) { if (window.NoteBG.isPreset(color)) window.NoteBG.apply(widget, color); else window.NoteBG.clear(widget); }
+        }
+        window.NotesBridge.save(dqpRec(id), { background_color: color }).then(function () { dqpEmit('update', id); }).catch(function () {});
+    };
+    window.dqpTogglePin = function (id, makePinned, btn) {
+        window.NotesBridge.setPinned(dqpRec(id), makePinned).then(function () {
+            if (btn) {
+                btn.setAttribute('onclick', 'dqpTogglePin(' + id + ', ' + (!makePinned) + ', this)');
+                btn.title = makePinned ? 'Unpin' : 'Pin';
+                var ic = btn.querySelector('i');
+                if (ic) ic.className = 'bi ' + (makePinned ? 'bi-pin-angle-fill' : 'bi-pin-angle');
+            }
+            dqpEmit('pin', id);
+        }).catch(function () {});
+    };
+    window.dqpDelete = function (id) {
+        if (window.mkConfirmModal) {
+            window.mkConfirmModal({ title: 'Delete note', message: 'This quick note will be permanently removed.', confirmText: 'Delete', confirmClass: 'btn-danger' })
+                .then(function (ok) { if (ok) dqpPerformDelete(id); });
+        } else if (confirm('Delete this note?')) {
+            dqpPerformDelete(id);
+        }
+    };
+    function dqpPerformDelete(id) {
+        window.NotesBridge.remove(dqpRec(id)).then(function () {
+            var w = document.getElementById('dashboard-quicknote-' + id);
+            if (w) { w.style.opacity = '0'; w.style.transform = 'scale(.92)'; setTimeout(function () { w.remove(); }, 200); }
+            dqpEmit('delete', id);
+        }).catch(function () {});
+    }
+
+    function createDashboardQuickWidget(rec, index) {
+        var bgColor = rec.background_color || '#fbbf24';
+        var colorClass = getDashboardColorClass(bgColor);
+        var textColorClass = getDashboardTextColor(bgColor);
+        var isGlass = !!(window.NoteBG && window.NoteBG.isPreset(bgColor));
+
+        var defaultWidth = 300, defaultHeight = 250, spacing = 20, notesPerRow = 3;
+        var row = Math.floor(index / notesPerRow), col = index % notesPerRow;
+
+        var widget = document.createElement('div');
+        widget.className = 'dashboard-note-widget dashboard-note-widget--quick color-' + colorClass + ' ' + textColorClass;
+        widget.id = 'dashboard-quicknote-' + rec.id;
+        widget.setAttribute('data-quick-id', rec.id);
+        if (isGlass) window.NoteBG.apply(widget, bgColor);
+        widget.style.left = (col * (defaultWidth + spacing) + spacing) + 'px';
+        widget.style.top = (row * (defaultHeight + spacing) + spacing) + 'px';
+        widget.style.width = defaultWidth + 'px';
+        widget.style.height = defaultHeight + 'px';
+        widget.style.zIndex = 1;
+
+        var pinned = !!rec.pinned;
+        var presets = (window.NoteBG ? window.NoteBG.PRESETS : []).map(function (p) {
+            return '<div class="dashboard-color-option-dropdown dashboard-color-option--grad" title="' + dqpEsc(p.label) + '" style="background:' + p.css + '" onclick="dqpChangeColor(' + rec.id + ', \'' + p.id + '\')"></div>';
+        }).join('');
+
+        widget.innerHTML =
+            '<div class="dashboard-note-widget-header" style="cursor:default;">' +
+                '<input type="text" class="dashboard-note-widget-title" placeholder="Title..." value="' + dqpEsc(rec.title || '') + '" onblur="dqpUpdateTitle(' + rec.id + ', this.value)">' +
+                '<div class="dashboard-note-widget-actions">' +
+                    '<span class="qp-origin-chip" title="Synced quick note"><i class="bi bi-journal-text"></i></span>' +
+                    '<div class="dashboard-note-color-picker-wrapper" style="position: relative;">' +
+                        '<button class="dashboard-note-widget-btn" onclick="dqpToggleColorPicker(' + rec.id + ', event)" title="Change color"><i class="bi bi-palette"></i></button>' +
+                        '<div class="dashboard-note-color-picker-dropdown" id="dashboardQpColorPicker-' + rec.id + '" style="display: none;">' +
+                            '<div class="dashboard-color-option-dropdown white" onclick="dqpChangeColor(' + rec.id + ', \'#ffffff\')"></div>' +
+                            '<div class="dashboard-color-option-dropdown warning" onclick="dqpChangeColor(' + rec.id + ', \'#fbbf24\')"></div>' +
+                            '<div class="dashboard-color-option-dropdown success" onclick="dqpChangeColor(' + rec.id + ', \'#10b981\')"></div>' +
+                            '<div class="dashboard-color-option-dropdown dodgerblue" onclick="dqpChangeColor(' + rec.id + ', \'#1e90ff\')"></div>' +
+                            presets +
+                        '</div>' +
+                    '</div>' +
+                    '<button class="dashboard-note-widget-btn" onclick="dqpTogglePin(' + rec.id + ', ' + (!pinned) + ', this)" title="' + (pinned ? 'Unpin' : 'Pin') + '"><i class="bi ' + (pinned ? 'bi-pin-angle-fill' : 'bi-pin-angle') + '"></i></button>' +
+                    '<button class="dashboard-note-widget-btn delete" onclick="dqpDelete(' + rec.id + ')" title="Delete"><i class="bi bi-trash"></i></button>' +
+                '</div>' +
+            '</div>' +
+            '<div class="dashboard-note-widget-body">' +
+                '<div class="dashboard-note-widget-content" contenteditable="true" data-placeholder="Write your note..." style="white-space:pre-wrap;" onblur="dqpUpdateContent(' + rec.id + ', this.innerText)">' + dqpEsc(rec.body || '') + '</div>' +
+            '</div>' +
+            '<div class="dashboard-note-widget-footer"><span>Quick note</span></div>';
+
+        return widget;
+    }
+
+    async function renderDashboardQuickNotes() {
+        var container = document.getElementById('dashboardNotesContainer');
+        if (!container || !window.NotesBridge) return;
+        container.querySelectorAll('.dashboard-note-widget--quick').forEach(function (w) { w.remove(); });
+        var all = await window.NotesBridge.list().catch(function () { return []; });
+        var quick = all.filter(function (n) { return n.origin === 'quick'; });
+        if (!quick.length) return;
+        var empty = document.getElementById('dashboardNotesEmpty');
+        if (empty) empty.style.display = 'none';
+        // Offset quick notes below existing board notes to reduce overlap.
+        var boardCount = container.querySelectorAll('.dashboard-note-widget:not(.dashboard-note-widget--quick)').length;
+        quick.forEach(function (rec, i) { container.appendChild(createDashboardQuickWidget(rec, boardCount + i)); });
+    }
+    window.renderDashboardQuickNotes = renderDashboardQuickNotes;
     
     async function loadDashboardNotes() {
         try {
@@ -2264,6 +2417,8 @@ document.addEventListener('DOMContentLoaded', function() {
             } else {
                 loading.style.display = 'none';
                 empty.style.display = 'block';
+                // Clear any stale board widgets when there are no board notes.
+                container.querySelectorAll('.dashboard-note-widget:not(.dashboard-note-widget--quick)').forEach(w => w.remove());
                 
                 // Keep header button enabled (no limit)
                 const headerBtn = document.getElementById('dashboardAddNoteBtnHeader');
@@ -2272,6 +2427,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     headerBtn.title = '';
                 }
             }
+            // Merged view: render quick notes alongside the board notes.
+            await renderDashboardQuickNotes();
         } catch (error) {
             console.error('Error loading dashboard notes:', error);
             document.getElementById('dashboardNotesLoading').style.display = 'none';
@@ -2420,8 +2577,18 @@ document.addEventListener('DOMContentLoaded', function() {
         widget.classList.remove('light-text', 'dark-text');
         widget.classList.add(`color-${colorClass}`);
         widget.classList.add(textColorClass);
+        // Gradient / glassmorphism presets paint via NoteBG; clear it for plain hex.
+        if (window.NoteBG) {
+            if (window.NoteBG.isPreset(color)) window.NoteBG.apply(widget, color);
+            else window.NoteBG.clear(widget);
+        }
         
         dashboardUpdateNote(noteId, { background_color: color });
+        if (window.NotesSync) {
+            window.__dashNoteSelfSync = true;
+            try { window.NotesSync.emit('board', { action: 'update', id: noteId }); }
+            finally { window.__dashNoteSelfSync = false; }
+        }
     }
     
     async function dashboardUpdateNoteTitle(noteId, title) {
@@ -2683,6 +2850,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     setTimeout(() => {
                         widget.remove();
                         loadDashboardNotes();
+                        if (window.NotesSync) {
+                            window.__dashNoteSelfSync = true;
+                            try { window.NotesSync.emit('board', { action: 'delete', id: noteId }); }
+                            finally { window.__dashNoteSelfSync = false; }
+                        }
                     }, 300);
                 }
             } else {

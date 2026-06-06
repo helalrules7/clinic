@@ -31,6 +31,7 @@
         idInput: null, titleInput: null, titleCount: null,
         bodyInput: null, bodyError: null,
         pinInput: null,
+        swatches: null, bgInput: null,
         inlineConfirm: null, inlineConfirmText: null,
         recentToggle: null, recentToggleText: null,
         recentCount: null, recentPanel: null,
@@ -42,13 +43,22 @@
 
     // -------------------------------------------------------------- state
     var state = {
-        editingId: null,         // null = creating; otherwise patching
+        editingId: null,         // null = creating; otherwise the cross-store key being patched
+        editingRec: null,        // the normalized record being edited (carries origin)
         saving: false,
         loading: false,
         loaded: false,
-        notes: [],
+        notes: [],               // normalized records (NotesBridge merged view)
         pendingOpenId: null      // requested via openQuickNoteModal({id})
     };
+
+    function findByKey(key) {
+        for (var i = 0; i < state.notes.length; i++) {
+            var n = state.notes[i];
+            if (String(n.key || ('q:' + n.id)) === String(key)) return n;
+        }
+        return null;
+    }
 
     // -------------------------------------------------------------- fetch helper
     function api(method, url, body) {
@@ -171,12 +181,23 @@
     }
 
     // -------------------------------------------------------------- form helpers
+    function renderSwatches(active) {
+        if (els.bgInput) els.bgInput.value = active || '';
+        if (els.swatches && window.NoteBG) els.swatches.innerHTML = window.NoteBG.swatchHTML(active || '');
+    }
+
     function clearForm() {
         state.editingId = null;
+        state.editingRec = null;
+        if (els.pinInput) {
+            var pf = els.pinInput.closest('.qn-row, .qn-pin-toggle');
+            if (pf) pf.style.display = '';
+        }
         if (els.idInput)    els.idInput.value    = '';
         if (els.titleInput) els.titleInput.value = '';
         if (els.bodyInput)  els.bodyInput.value  = '';
         if (els.pinInput)   els.pinInput.checked = false;
+        renderSwatches('');
         updateTitleCount();
         autosizeBody();
         hideBodyError();
@@ -186,11 +207,18 @@
 
     function fillForm(note) {
         if (!note) return clearForm();
-        state.editingId = note.id;
-        if (els.idInput)    els.idInput.value    = note.id;
+        state.editingId = note.key || ('q:' + note.id);
+        state.editingRec = note;
+        if (els.idInput)    els.idInput.value    = state.editingId;
         if (els.titleInput) els.titleInput.value = note.title || '';
         if (els.bodyInput)  els.bodyInput.value  = note.body  || '';
         if (els.pinInput)   els.pinInput.checked = !!note.pinned;
+        // Board notes can't be pinned — hide the pin toggle when editing one.
+        if (els.pinInput) {
+            var pinField = els.pinInput.closest('.qn-pin-toggle') || els.pinInput.closest('.qn-row');
+            if (pinField) pinField.style.display = (note.origin === 'board') ? 'none' : '';
+        }
+        renderSwatches(note.background_color || '');
         updateTitleCount();
         autosizeBody();
         hideBodyError();
@@ -335,14 +363,17 @@
         var html = '';
         for (var i = 0; i < list.length; i++) {
             var n = list[i] || {};
+            var key = n.key || ('q:' + n.id);
+            var isBoard = n.origin === 'board';
             var title = (n.title && n.title.trim()) || firstLine(n.body, 80) || 'Untitled note';
             var preview = excerpt(n.body, 140);
-            var when = n.created_at || n.updated_at;
+            var when = n.updated_at || n.created_at;
             html +=
-                '<li class="qn-note' + (n.pinned ? ' qn-note--pinned' : '') + '" data-id="' + esc(n.id) + '">' +
+                '<li class="qn-note' + (n.pinned ? ' qn-note--pinned' : '') + '" data-id="' + esc(key) + '" data-origin="' + esc(n.origin || 'quick') + '">' +
                     '<div class="qn-note-main">' +
                         '<div class="qn-note-head">' +
                             '<span class="qn-note-title">' + esc(title) + '</span>' +
+                            (isBoard ? '<span class="qn-origin-badge" title="From the notes board"><i class="bi bi-easel" aria-hidden="true"></i>Board</span>' : '') +
                             (n.pinned ? '<span class="qn-pin-badge" title="Pinned"><i class="bi bi-pin-angle-fill" aria-hidden="true"></i>Pinned</span>' : '') +
                         '</div>' +
                         (preview ? '<div class="qn-note-body">' + esc(preview) + '</div>' : '') +
@@ -352,12 +383,13 @@
                         '</div>' +
                     '</div>' +
                     '<div class="qn-note-actions">' +
+                        (isBoard ? '' :
                         '<button type="button" class="qn-act qn-act-pin' + (n.pinned ? ' is-on' : '') + '" ' +
                                 'data-action="' + (n.pinned ? 'unpin' : 'pin') + '" ' +
                                 'title="' + (n.pinned ? 'Unpin' : 'Pin') + '" ' +
                                 'aria-label="' + (n.pinned ? 'Unpin note' : 'Pin note') + '">' +
                             '<i class="bi ' + (n.pinned ? 'bi-pin-angle-fill' : 'bi-pin-angle') + '" aria-hidden="true"></i>' +
-                        '</button>' +
+                        '</button>') +
                         '<button type="button" class="qn-act qn-act-edit" data-action="edit" title="Edit" aria-label="Edit note">' +
                             '<i class="bi bi-pencil" aria-hidden="true"></i>' +
                         '</button>' +
@@ -368,27 +400,45 @@
                 '</li>';
         }
         els.recentList.innerHTML = html;
+        // Paint gradient / glassmorphism backgrounds (shared NoteBG).
+        if (window.NoteBG) {
+            var rows = els.recentList.querySelectorAll('.qn-note');
+            for (var r = 0; r < rows.length; r++) {
+                var rkey = rows[r].getAttribute('data-id');
+                var match = list.filter(function (x) { return String(x.key || ('q:' + x.id)) === String(rkey); })[0];
+                window.NoteBG.apply(rows[r], match && match.background_color);
+            }
+        }
     }
 
     function loadRecent(opts) {
         opts = opts || {};
         if (state.loading) return Promise.resolve(state.notes);
         if (opts.showSpinner !== false) setRecentLoading();
-        return api('GET', '/api/quick-notes')
-            .then(function (data) {
+        var fetchP = window.NotesBridge
+            ? window.NotesBridge.list()
+            : api('GET', '/api/quick-notes').then(function (data) {
                 var arr = Array.isArray(data) ? data
                         : (data && Array.isArray(data.data)) ? data.data
                         : (data && Array.isArray(data.notes)) ? data.notes
                         : [];
+                return arr.map(function (n) {
+                    return { key: 'q:' + n.id, origin: 'quick', id: n.id, title: n.title || '',
+                             body: n.body || '', background_color: n.background_color || '',
+                             pinned: !!n.pinned, created_at: n.created_at, updated_at: n.updated_at, raw: n };
+                });
+            });
+        return fetchP
+            .then(function (arr) {
                 state.notes = arr;
                 state.loaded = true;
                 renderRecent();
                 if (els.refreshBtn) els.refreshBtn.hidden = false;
-                // If a specific note was requested, prefill it now.
+                // If a specific note was requested, prefill it now (quick-note id).
                 if (state.pendingOpenId != null) {
                     var want = String(state.pendingOpenId);
                     state.pendingOpenId = null;
-                    var match = arr.filter(function (x) { return String(x.id) === want; })[0];
+                    var match = arr.filter(function (x) { return x.origin === 'quick' && String(x.id) === want; })[0];
                     if (match) fillForm(match);
                 }
                 return arr;
@@ -414,32 +464,45 @@
         }
         hideBodyError();
 
-        var payload = { title: title, body: body, pinned: pinned };
-        var editingId = state.editingId;
+        var bg = (els.bgInput && els.bgInput.value || '').trim();
+        var editingRec = state.editingRec;
         setSaving(true);
 
-        var req = editingId
-            ? api('PATCH', '/api/quick-notes/' + encodeURIComponent(editingId), payload)
-            : api('POST',  '/api/quick-notes', payload);
+        var req;
+        if (editingRec) {
+            // Edit — route to the note's origin store via the bridge.
+            var fields = { title: title, body: body, background_color: bg || null };
+            if (editingRec.origin === 'quick') fields.pinned = pinned;
+            req = window.NotesBridge
+                ? window.NotesBridge.save(editingRec, fields)
+                : api('PATCH', '/api/quick-notes/' + encodeURIComponent(editingRec.id), fields)
+                    .then(function (d) { return window.NotesBridge ? null : (d && (d.data || d.note)); });
+        } else {
+            // New note → always a quick note.
+            req = api('POST', '/api/quick-notes', { title: title, body: body, pinned: pinned, background_color: bg || null })
+                .then(function (d) {
+                    var raw = (d && (d.data || d.note || d)) || null;
+                    return raw && window.NotesBridge ? window.NotesBridge._normQuick(raw) : raw;
+                });
+        }
 
         req
-            .then(function (data) {
-                var note = (data && (data.note || data.data || data)) || null;
-                // Patch local state without a full reload.
-                if (note && note.id != null) {
+            .then(function (note) {
+                // note is a normalized record (or null). Patch local state.
+                if (note && note.key) {
                     var existingIx = -1;
                     for (var i = 0; i < state.notes.length; i++) {
-                        if (String(state.notes[i].id) === String(note.id)) { existingIx = i; break; }
+                        if (String(state.notes[i].key) === String(note.key)) { existingIx = i; break; }
                     }
                     if (existingIx >= 0) state.notes[existingIx] = note;
                     else                 state.notes.unshift(note);
                     renderRecent();
                 } else {
-                    // Server didn't echo — refetch silently.
                     loadRecent({ showSpinner: false });
                 }
-                flashInlineConfirm(editingId ? 'Note updated.' : 'Saved.');
-                toast('success', editingId ? 'Note updated' : 'Note saved', '');
+                flashInlineConfirm(editingRec ? 'Note updated.' : 'Saved.');
+                toast('success', editingRec ? 'Note updated' : 'Note saved', '');
+                notifyChanged(editingRec ? 'update' : 'create', note || editingRec);
                 clearForm();
                 if (els.titleInput) els.titleInput.focus();
             })
@@ -450,39 +513,29 @@
     }
 
     // -------------------------------------------------------------- pin / unpin
-    function togglePin(id, makePinned) {
-        var url = '/api/quick-notes/' + encodeURIComponent(id) + (makePinned ? '/pin' : '/unpin');
-        // Optimistic update for snappy feel.
-        var prev = null;
-        for (var i = 0; i < state.notes.length; i++) {
-            if (String(state.notes[i].id) === String(id)) {
-                prev = state.notes[i].pinned;
-                state.notes[i].pinned = !!makePinned;
-                break;
-            }
-        }
+    function togglePin(key, makePinned) {
+        var rec = findByKey(key);
+        if (!rec || rec.origin === 'board') return;   // board notes can't pin
+        var prev = rec.pinned;
+        rec.pinned = !!makePinned;                     // optimistic
         renderRecent();
-        return api('POST', url)
+        var op = window.NotesBridge
+            ? window.NotesBridge.setPinned(rec, !!makePinned)
+            : api('POST', '/api/quick-notes/' + encodeURIComponent(rec.id) + (makePinned ? '/pin' : '/unpin'));
+        return op
+            .then(function () { notifyChanged('pin', rec); })
             .catch(function (err) {
-                // Revert
-                for (var j = 0; j < state.notes.length; j++) {
-                    if (String(state.notes[j].id) === String(id)) {
-                        state.notes[j].pinned = !!prev;
-                        break;
-                    }
-                }
+                rec.pinned = !!prev;
                 renderRecent();
                 toast('error', 'Pin failed', (err && err.message) || 'Please try again.');
             });
     }
 
     // -------------------------------------------------------------- delete
-    function deleteNote(id) {
-        var note = null;
-        for (var i = 0; i < state.notes.length; i++) {
-            if (String(state.notes[i].id) === String(id)) { note = state.notes[i]; break; }
-        }
-        var title = (note && (note.title || firstLine(note.body, 60))) || 'this note';
+    function deleteNote(key) {
+        var rec = findByKey(key);
+        if (!rec) return;
+        var title = (rec.title || firstLine(rec.body, 60)) || 'this note';
         return confirmDialog({
             title: 'Delete note?',
             message: 'Permanently delete <strong>' + esc(title) + '</strong>? This cannot be undone.',
@@ -493,13 +546,16 @@
             confirmClass: 'btn-danger'
         }).then(function (ok) {
             if (!ok) return;
-            return api('DELETE', '/api/quick-notes/' + encodeURIComponent(id))
+            var op = window.NotesBridge
+                ? window.NotesBridge.remove(rec)
+                : api('DELETE', '/api/quick-notes/' + encodeURIComponent(rec.id));
+            return op
                 .then(function () {
-                    state.notes = state.notes.filter(function (n) { return String(n.id) !== String(id); });
+                    state.notes = state.notes.filter(function (n) { return String(n.key) !== String(rec.key); });
                     renderRecent();
-                    // If we were editing this note, reset the form.
-                    if (String(state.editingId) === String(id)) clearForm();
+                    if (String(state.editingId) === String(rec.key)) clearForm();
                     toast('success', 'Note deleted', '');
+                    notifyChanged('delete', rec);
                 })
                 .catch(function (err) {
                     toast('error', 'Delete failed', (err && err.message) || 'Please try again.');
@@ -513,18 +569,15 @@
         if (!btn) return;
         var row = btn.closest('.qn-note');
         if (!row) return;
-        var id = row.getAttribute('data-id');
+        var key = row.getAttribute('data-id');
         var action = btn.getAttribute('data-action');
-        if (!id || !action) return;
+        if (!key || !action) return;
         e.preventDefault();
-        if (action === 'pin')         return togglePin(id, true);
-        if (action === 'unpin')       return togglePin(id, false);
-        if (action === 'delete')      return deleteNote(id);
+        if (action === 'pin')         return togglePin(key, true);
+        if (action === 'unpin')       return togglePin(key, false);
+        if (action === 'delete')      return deleteNote(key);
         if (action === 'edit') {
-            var note = null;
-            for (var i = 0; i < state.notes.length; i++) {
-                if (String(state.notes[i].id) === String(id)) { note = state.notes[i]; break; }
-            }
+            var note = findByKey(key);
             if (note) fillForm(note);
         }
     }
@@ -585,6 +638,20 @@
             els.recentList.__qnWired = true;
             els.recentList.addEventListener('click', onRecentClick);
         }
+        if (els.swatches && !els.swatches.__qnWired) {
+            els.swatches.__qnWired = true;
+            els.swatches.addEventListener('click', function (e) {
+                var sw = e.target.closest && e.target.closest('.note-swatch');
+                if (!sw) return;
+                e.preventDefault();
+                if (els.bgInput) els.bgInput.value = sw.getAttribute('data-note-swatch') || '';
+                els.swatches.querySelectorAll('.note-swatch').forEach(function (b) {
+                    var on = b === sw;
+                    b.classList.toggle('is-active', on);
+                    b.setAttribute('aria-checked', on ? 'true' : 'false');
+                });
+            });
+        }
         if (els.refreshBtn && !els.refreshBtn.__qnWired) {
             els.refreshBtn.__qnWired = true;
             els.refreshBtn.addEventListener('click', function () { loadRecent(); });
@@ -617,6 +684,8 @@
         els.bodyInput         = els.modal.querySelector('#qnBody');
         els.bodyError         = els.modal.querySelector('#qnBodyError');
         els.pinInput          = els.modal.querySelector('#qnPin');
+        els.swatches          = els.modal.querySelector('#qnSwatches');
+        els.bgInput           = els.modal.querySelector('#qnBg');
         els.inlineConfirm     = els.modal.querySelector('#qnInlineConfirm');
         els.inlineConfirmText = els.modal.querySelector('#qnInlineConfirmText');
         els.recentToggle      = els.modal.querySelector('#qnRecentToggle');
@@ -669,6 +738,32 @@
         // Load recent panel data eagerly so it's ready when toggled.
         loadRecent({ showSpinner: !state.loaded });
     }
+
+    // -------------------------------------------------------------- live sync
+    // Announce our own changes, and refresh when another surface (notes drawer,
+    // dashboard widget, notes page) changes a quick note — no page reload.
+    var _selfEmitting = false;
+    function notifyChanged(action, note) {
+        if (!window.NotesSync) return;
+        _selfEmitting = true;
+        try { window.NotesSync.emit((note && note.origin) || 'quick', { action: action, note: note }); }
+        finally { _selfEmitting = false; }
+    }
+    // notes-sync.js is deferred and may not be parsed when this script first
+    // runs (the modal partial loads quick-note.js inline). Bind once it exists —
+    // on DOMContentLoaded all deferred scripts have executed.
+    function bindSync() {
+        if (bindSync.done || !window.NotesSync) return;
+        bindSync.done = true;
+        window.NotesSync.on(function () {
+            if (_selfEmitting) return;            // ignore our own echo
+            // Merged view → refresh on ANY note change (quick or board).
+            if (state.loaded && !state.loading) loadRecent({ showSpinner: false });
+        });
+    }
+    if (window.NotesSync) bindSync();
+    else if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bindSync);
+    else bindSync();
 
     // -------------------------------------------------------------- exposed API
     window.openQuickNoteModal = open;

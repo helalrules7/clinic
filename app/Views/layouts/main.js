@@ -112,6 +112,12 @@
             
             // Favicon is now static (faicon.ico) - no need to update
         }
+
+        // Exposed so the auto-schedule applier (theme-palette.js) can keep the
+        // header toggle + logo in sync whenever it flips .dark on a timer.
+        window.syncThemeUI = function () {
+            updateThemeUI(document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+        };
         
         // Function to save theme to database and localStorage
         async function saveThemeToDatabase(theme) {
@@ -163,6 +169,29 @@
         
         // Initialize theme - Priority to localStorage, sync with database
         (async function() {
+            // Auto dark/light schedule takes precedence: the pre-paint script
+            // already set .dark from the clock, and theme-palette.js keeps it
+            // current on a timer. Don't override it with a stale saved theme —
+            // just mirror the current class onto the toggle + logo.
+            const autoSchedule = localStorage.getItem('appThemeAutoSchedule') === '1';
+            if (autoSchedule) {
+                const current = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+                updateThemeUI(current);
+                document.documentElement.classList.add('theme-loaded');
+                const themeToggleInputAuto = document.getElementById('themeToggleInput');
+                if (themeToggleInputAuto) {
+                    themeToggleInputAuto.addEventListener('change', async function () {
+                        // Manual override turns off auto so the timer stops fighting it.
+                        localStorage.setItem('appThemeAutoSchedule', '0');
+                        const nextTheme = this.checked ? 'dark' : 'light';
+                        apply(nextTheme);
+                        updateThemeUI(nextTheme);
+                        await saveThemeToDatabase(nextTheme);
+                    });
+                }
+                return;
+            }
+
             // Read theme from localStorage first (fast, synchronous)
             let savedTheme = localStorage.getItem('appTheme') || localStorage.getItem('theme');
             

@@ -553,7 +553,12 @@
     align-items: start;
 }
 
-.patient-card {
+/* NOTE: root class is `board-patient-card` (not `patient-card`) to avoid a
+   collision with patient-hover.css's `.patient-card` hover preview, which is
+   position:fixed; top:-9999px and was leaking onto these cards, pushing them
+   off-screen and collapsing the grid. The inner `.patient-card-*` classes are
+   board-specific and do not collide. */
+.board-patient-card {
     background: var(--card);
     border: 1px solid var(--border);
     border-radius: var(--bd-radius);
@@ -565,8 +570,8 @@
     flex-direction: column;
     min-height: var(--patient-card-h);
 }
-.patient-card:hover { box-shadow: var(--bd-shadow-hover); transform: translateY(-2px); }
-.patient-card.is-recent { border-color: color-mix(in srgb, var(--success) 55%, var(--border)); }
+.board-patient-card:hover { box-shadow: var(--bd-shadow-hover); transform: translateY(-2px); }
+.board-patient-card.is-recent { border-color: color-mix(in srgb, var(--success) 55%, var(--border)); }
 
 .patient-card-head {
     display: flex;
@@ -1062,8 +1067,8 @@
     100% { background-position: 0 0; }
 }
 @media (prefers-reduced-motion: reduce) {
-    .board-card, .patient-card, .note-item, .board-state, .board-toast { animation: none; }
-    .board-card:hover, .patient-card:hover { transform: none; }
+    .board-card, .board-patient-card, .note-item, .board-state, .board-toast { animation: none; }
+    .board-card:hover, .board-patient-card:hover { transform: none; }
     .skel { animation: none; }
 }
 

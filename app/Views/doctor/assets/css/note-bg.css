@@ -1,0 +1,168 @@
+/* =====================================================================
+   note-bg.css — frosted-glass gradient backgrounds for notes.
+   Paired with note-bg.js (window.NoteBG). A painted note gets the
+   .note-glass class and a --note-grad custom property; this file turns
+   that into a glassmorphism card (gradient + blur + light text).
+   ===================================================================== */
+
+.note-glass {
+    position: relative;
+    background: var(--note-grad, var(--card)) !important;
+    border: 1px solid rgba(255, 255, 255, 0.28) !important;
+    box-shadow:
+        0 8px 30px rgba(15, 23, 42, 0.22),
+        inset 0 1px 0 rgba(255, 255, 255, 0.30) !important;
+    -webkit-backdrop-filter: blur(12px) saturate(170%);
+    backdrop-filter: blur(12px) saturate(170%);
+    color: #fff !important;
+    overflow: hidden;
+}
+
+/* Soft frosted sheen so the gradient reads as glass, not a flat fill. */
+.note-glass::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0) 55%);
+    pointer-events: none;
+}
+
+/* Keep content above the sheen. */
+.note-glass > * { position: relative; z-index: 1; }
+
+/* Force readable text for the common note inner bits across all surfaces. */
+.note-glass h1, .note-glass h2, .note-glass h3, .note-glass h4,
+.note-glass h5, .note-glass h6,
+.note-glass p, .note-glass span, .note-glass small, .note-glass time,
+.note-glass .nd-row__title, .note-glass .nd-row__body, .note-glass .nd-row__time,
+.note-glass .qn-note-title, .note-glass .qn-note-body, .note-glass .qn-note-meta,
+.note-glass .note-title, .note-glass .note-content, .note-glass .note-text {
+    color: #fff !important;
+}
+.note-glass .nd-row__time,
+.note-glass .qn-note-meta,
+.note-glass small {
+    color: rgba(255, 255, 255, 0.82) !important;
+}
+
+/* Draggable board-note widgets (dashboard widget + notes page) on glass:
+   the title is an <input> and the body is a contenteditable div. */
+.note-glass .note-widget-title,
+.note-glass .dashboard-note-widget-title,
+.note-glass .note-widget-content,
+.note-glass .dashboard-note-widget-content,
+.note-glass .note-widget-footer,
+.note-glass .dashboard-note-widget-footer,
+.note-glass .note-widget-footer span,
+.note-glass .dashboard-note-widget-footer span,
+.note-glass .note-widget-btn,
+.note-glass .dashboard-note-widget-btn {
+    color: #fff !important;
+}
+.note-glass .note-widget-title,
+.note-glass .dashboard-note-widget-title {
+    background: transparent !important;
+}
+.note-glass .note-widget-title::placeholder,
+.note-glass .dashboard-note-widget-title::placeholder,
+.note-glass .note-widget-content:empty::before,
+.note-glass .dashboard-note-widget-content:empty::before {
+    color: rgba(255, 255, 255, 0.65) !important;
+}
+.note-glass .note-widget-footer,
+.note-glass .dashboard-note-widget-footer {
+    color: rgba(255, 255, 255, 0.78) !important;
+    border-top-color: rgba(255, 255, 255, 0.22) !important;
+}
+.note-glass .note-widget-btn:hover,
+.note-glass .dashboard-note-widget-btn:hover {
+    background: rgba(255, 255, 255, 0.20) !important;
+}
+
+/* Action icons (pin / edit / delete) on a glass card. */
+.note-glass .nd-row__pin,
+.note-glass .nd-row__act,
+.note-glass .qn-act,
+.note-glass .note-action,
+.note-glass .note-btn {
+    color: rgba(255, 255, 255, 0.92) !important;
+}
+.note-glass .nd-row__pin:hover,
+.note-glass .nd-row__act:hover,
+.note-glass .qn-act:hover {
+    background: rgba(255, 255, 255, 0.18) !important;
+}
+
+/* =====================================================================
+   Swatch picker (window.NoteBG.swatchHTML)
+   ===================================================================== */
+.note-swatches {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+}
+
+.note-swatch {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    border: 2px solid rgba(148, 163, 184, 0.45);
+    padding: 0;
+    cursor: pointer;
+    position: relative;
+    transition: transform .14s ease, box-shadow .14s ease, border-color .14s ease;
+    background-clip: padding-box;
+}
+.note-swatch:hover { transform: scale(1.12); }
+.note-swatch.is-active {
+    border-color: var(--accent, #6366f1);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent, #6366f1) 30%, transparent);
+}
+.note-swatch.is-active::after {
+    content: "\F26E"; /* bi-check-lg */
+    font-family: "bootstrap-icons";
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: .8rem;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, .4);
+}
+.note-swatch--none {
+    background: transparent;
+    color: var(--muted, #94a3b8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .9rem;
+}
+.note-swatch--none.is-active::after { content: none; }
+
+/* Quick notes rendered on the board surfaces (merged view) — a subtle dashed
+   outline distinguishes them from native board notes; they are statically
+   placed since the quick_notes store has no position columns. */
+.note-widget--quick { outline: 1px dashed rgba(99, 102, 241, .45); outline-offset: -3px; }
+.note-widget--quick.note-glass { outline-color: rgba(255, 255, 255, .5); }
+.qp-origin-chip {
+    display: inline-flex;
+    align-items: center;
+    opacity: .75;
+    font-size: .82rem;
+    margin-right: 2px;
+}
+
+.note-swatch-field {
+    margin-top: .5rem;
+}
+.note-swatch-field > .note-swatch-label {
+    display: block;
+    font-size: .75rem;
+    font-weight: 600;
+    color: var(--muted, #64748b);
+    margin-bottom: .4rem;
+    text-transform: uppercase;
+    letter-spacing: .03em;
+}

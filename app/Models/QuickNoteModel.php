@@ -37,7 +37,7 @@ class QuickNoteModel
             $params[':pinned'] = !empty($opts['pinned']) ? 1 : 0;
         }
 
-        $sql = 'SELECT id, user_id, title, body, pinned, created_at, updated_at
+        $sql = 'SELECT id, user_id, title, body, background_color, pinned, created_at, updated_at
                 FROM quick_notes
                 WHERE ' . implode(' AND ', $where) . '
                 ORDER BY pinned DESC, COALESCE(updated_at, created_at) DESC, id DESC';
@@ -82,7 +82,7 @@ class QuickNoteModel
     public function findById($id, $userId)
     {
         $stmt = $this->pdo->prepare(
-            'SELECT id, user_id, title, body, pinned, created_at, updated_at
+            'SELECT id, user_id, title, body, background_color, pinned, created_at, updated_at
              FROM quick_notes
              WHERE id = :id AND user_id = :user_id
              LIMIT 1'
@@ -113,6 +113,8 @@ class QuickNoteModel
         $title  = isset($data['title']) ? trim((string)$data['title']) : '';
         $body   = isset($data['body'])  ? (string)$data['body']        : '';
         $pinned = !empty($data['pinned']) ? 1 : 0;
+        $bg     = isset($data['background_color']) && $data['background_color'] !== ''
+            ? (string)$data['background_color'] : null;
 
         // Allow empty title if body is present (acts like a sticky note).
         if ($title === '' && trim($body) === '') {
@@ -120,12 +122,13 @@ class QuickNoteModel
         }
 
         $stmt = $this->pdo->prepare(
-            'INSERT INTO quick_notes (user_id, title, body, pinned, created_at, updated_at)
-             VALUES (:user_id, :title, :body, :pinned, NOW(), NOW())'
+            'INSERT INTO quick_notes (user_id, title, body, background_color, pinned, created_at, updated_at)
+             VALUES (:user_id, :title, :body, :background_color, :pinned, NOW(), NOW())'
         );
         $stmt->bindValue(':user_id', (int)$userId, PDO::PARAM_INT);
         $stmt->bindValue(':title',   $title,       PDO::PARAM_STR);
         $stmt->bindValue(':body',    $body,        PDO::PARAM_STR);
+        $stmt->bindValue(':background_color', $bg, $bg === null ? PDO::PARAM_NULL : PDO::PARAM_STR);
         $stmt->bindValue(':pinned',  $pinned,      PDO::PARAM_INT);
 
         if (!$stmt->execute()) {
@@ -165,6 +168,11 @@ class QuickNoteModel
         if (array_key_exists('body', $data)) {
             $sets[] = 'body = :body';
             $params[':body'] = (string)$data['body'];
+        }
+        if (array_key_exists('background_color', $data)) {
+            $sets[] = 'background_color = :background_color';
+            $params[':background_color'] = ($data['background_color'] === '' || $data['background_color'] === null)
+                ? null : (string)$data['background_color'];
         }
         if (array_key_exists('pinned', $data)) {
             $sets[] = 'pinned = :pinned';

@@ -25,6 +25,13 @@
 (function () {
     'use strict';
 
+    // Idempotency guard: if board.js is ever included more than once on a page
+    // (e.g. the board embedded in the dashboard plus a stray include), the second
+    // run would bind duplicate listeners that race over the same #boardGrid /
+    // #patientGrid and can leave the detail view blank. Initialise only once.
+    if (window.__boardInited) return;
+    window.__boardInited = true;
+
     const CFG  = window.BOARD_CONFIG || {};
     const CSRF = CFG.csrfToken || '';
     const ME   = CFG.currentUser || {};
@@ -507,7 +514,7 @@
 
     function patientCardEl(c) {
         const el = document.createElement('div');
-        el.className = 'patient-card';
+        el.className = 'board-patient-card';
         el.id = 'patient-' + c.patient_id;
         el.setAttribute('role', 'listitem');
 

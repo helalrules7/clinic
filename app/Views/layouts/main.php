@@ -73,6 +73,7 @@
     <link href="/app/Views/doctor/assets/css/theme-palette.css?v=<?= file_exists(__DIR__ . '/../doctor/assets/css/theme-palette.css') ? filemtime(__DIR__ . '/../doctor/assets/css/theme-palette.css') : time() ?>" rel="stylesheet">
     <link href="/app/Views/doctor/assets/css/celebration.css?v=<?= file_exists(__DIR__ . '/../doctor/assets/css/celebration.css') ? filemtime(__DIR__ . '/../doctor/assets/css/celebration.css') : time() ?>" rel="stylesheet">
     <link href="/app/Views/doctor/assets/css/notes-drawer.css?v=<?= file_exists(__DIR__ . '/../doctor/assets/css/notes-drawer.css') ? filemtime(__DIR__ . '/../doctor/assets/css/notes-drawer.css') : time() ?>" rel="stylesheet">
+    <link href="/app/Views/doctor/assets/css/note-bg.css?v=<?= file_exists(__DIR__ . '/../doctor/assets/css/note-bg.css') ? filemtime(__DIR__ . '/../doctor/assets/css/note-bg.css') : time() ?>" rel="stylesheet">
     <!-- Timepicker UI CSS (Local) -->
     <link href="/app/Views/layouts/timepicker-ui-main/css/main.css?v=<?= file_exists(__DIR__ . '/timepicker-ui-main/css/main.css') ? filemtime(__DIR__ . '/timepicker-ui-main/css/main.css') : time() ?>" rel="stylesheet">
     
@@ -1312,6 +1313,11 @@
 
     <!-- v11.0.0 feature JS bundle (deferred so it doesn't block paint) -->
     <script defer src="/app/Views/doctor/assets/js/patient-color.js?v=<?= file_exists(__DIR__ . '/../doctor/assets/js/patient-color.js') ? filemtime(__DIR__ . '/../doctor/assets/js/patient-color.js') : time() ?>"></script>
+    <!-- Shared notes background presets + cross-surface live-sync bus (load before note surfaces) -->
+    <script defer src="/app/Views/doctor/assets/js/note-bg.js?v=<?= file_exists(__DIR__ . '/../doctor/assets/js/note-bg.js') ? filemtime(__DIR__ . '/../doctor/assets/js/note-bg.js') : time() ?>"></script>
+    <script defer src="/app/Views/doctor/assets/js/notes-sync.js?v=<?= file_exists(__DIR__ . '/../doctor/assets/js/notes-sync.js') ? filemtime(__DIR__ . '/../doctor/assets/js/notes-sync.js') : time() ?>"></script>
+    <!-- Merged view over both note stores (quick_notes + notes) for cross-surface display -->
+    <script defer src="/app/Views/doctor/assets/js/notes-bridge.js?v=<?= file_exists(__DIR__ . '/../doctor/assets/js/notes-bridge.js') ? filemtime(__DIR__ . '/../doctor/assets/js/notes-bridge.js') : time() ?>"></script>
     <script defer src="/app/Views/doctor/assets/js/theme-palette.js?v=<?= file_exists(__DIR__ . '/../doctor/assets/js/theme-palette.js') ? filemtime(__DIR__ . '/../doctor/assets/js/theme-palette.js') : time() ?>"></script>
     <script defer src="/app/Views/doctor/assets/js/notification-center.js?v=<?= file_exists(__DIR__ . '/../doctor/assets/js/notification-center.js') ? filemtime(__DIR__ . '/../doctor/assets/js/notification-center.js') : time() ?>"></script>
     <script defer src="/app/Views/doctor/assets/js/todo-drawer.js?v=<?= file_exists(__DIR__ . '/../doctor/assets/js/todo-drawer.js') ? filemtime(__DIR__ . '/../doctor/assets/js/todo-drawer.js') : time() ?>"></script>

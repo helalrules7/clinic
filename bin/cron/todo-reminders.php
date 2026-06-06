@@ -14,6 +14,9 @@
 define('ROOT', realpath(__DIR__ . '/../..'));
 
 require_once ROOT . '/app/Config/Database.php';
+// NotificationController::create() is the single source of truth for the
+// notifications schema (message + related_type/related_id; no body/link/icon).
+require_once ROOT . '/app/Controllers/NotificationController.php';
 
 // Only start a session when this is run via the web (defensive — this
 // script is intended for the CLI, but ROOT/index bootstrap may have
@@ -77,15 +80,6 @@ try {
     ";
     $leadRows = $pdo->query($leadSql)->fetchAll(\PDO::FETCH_ASSOC);
 
-    $insertNotifSql = "
-        INSERT INTO notifications
-            (user_id, type, title, body, link, icon, patient_id, created_at, group_key)
-        VALUES
-            (:user_id, :type, :title, :body, :link, :icon, :patient_id, NOW(),
-             SHA1(CONCAT(:gk_type, '|', IFNULL(:gk_patient, ''), '|', DATE(NOW()))))
-    ";
-    $insertNotif = $pdo->prepare($insertNotifSql);
-
     $markRemindedSql = "UPDATE todos SET todo_reminded_at = NOW() WHERE id = :id";
     $markReminded    = $pdo->prepare($markRemindedSql);
 
@@ -96,17 +90,10 @@ try {
         $patientId = $row['patient_id'] !== null ? (int) $row['patient_id'] : null;
         $window    = humanizeMinutes($row['remind_before_minutes']);
 
-        $insertNotif->execute([
-            ':user_id'    => $userId,
-            ':type'       => 'todo_reminder',
-            ':title'      => 'Upcoming: ' . $title,
-            ':body'       => 'Due in ' . $window,
-            ':link'       => '/doctor/todos?focus=' . $todoId,
-            ':icon'       => 'alarm',
-            ':patient_id' => $patientId,
-            ':gk_type'    => 'todo_reminder',
-            ':gk_patient' => $patientId,
-        ]);
+        \App\Controllers\NotificationController::create(
+            $userId, 'todo_reminder', 'Upcoming: ' . $title, 'Due in ' . $window,
+            'todo', $todoId, $patientId
+        );
 
         $markReminded->execute([':id' => $todoId]);
         $leadCount++;
@@ -134,17 +121,10 @@ try {
         $title     = (string) ($row['title'] ?? '');
         $patientId = $row['patient_id'] !== null ? (int) $row['patient_id'] : null;
 
-        $insertNotif->execute([
-            ':user_id'    => $userId,
-            ':type'       => 'todo_due',
-            ':title'      => 'Due now: ' . $title,
-            ':body'       => 'Task is due',
-            ':link'       => '/doctor/todos?focus=' . $todoId,
-            ':icon'       => 'exclamation-circle',
-            ':patient_id' => $patientId,
-            ':gk_type'    => 'todo_due',
-            ':gk_patient' => $patientId,
-        ]);
+        \App\Controllers\NotificationController::create(
+            $userId, 'todo_due', 'Due now: ' . $title, 'Task is due now',
+            'todo', $todoId, $patientId
+        );
 
         $markNotified->execute([':id' => $todoId]);
         $dueCount++;

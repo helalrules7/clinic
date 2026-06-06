@@ -88,6 +88,12 @@
                             <span id="qnInlineConfirmText">Saved.</span>
                         </div>
                     </div>
+
+                    <div class="qn-field note-swatch-field">
+                        <span class="note-swatch-label">Background</span>
+                        <div id="qnSwatches"><!-- NoteBG.swatchHTML injected by JS --></div>
+                        <input type="hidden" name="background_color" id="qnBg" value="">
+                    </div>
                 </form>
 
                 <div class="qn-divider" aria-hidden="true"></div>
@@ -155,5 +161,6 @@
         </div>
     </div>
 </div>
-
-<script src="<?php echo base_url('app/Views/doctor/assets/js/quick-note.js'); ?>"></script>
+<?php /* quick-note.js is loaded once (deferred + cache-busted) from layouts/main.php.
+        Do NOT re-include it here: a second, un-versioned tag served a stale cached
+        copy that won the init-guard race and shipped the old (pre-gradient) behaviour. */ ?>

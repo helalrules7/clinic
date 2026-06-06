@@ -84,8 +84,11 @@ document.querySelectorAll('.color-option').forEach(option => {
 
 // Get text color based on background brightness
 function getTextColor(backgroundColor) {
+    // Glass gradient presets always read on light text.
+    if (window.NoteBG && window.NoteBG.isPreset(backgroundColor)) return 'light-text';
     // Convert hex to RGB
-    const hex = backgroundColor.replace('#', '');
+    const hex = String(backgroundColor || '').replace('#', '');
+    if (hex.length < 6) return 'dark-text';
     const r = parseInt(hex.substr(0, 2), 16);
     const g = parseInt(hex.substr(2, 2), 16);
     const b = parseInt(hex.substr(4, 2), 16);
@@ -99,6 +102,8 @@ function getTextColor(backgroundColor) {
 
 // Get color class from background color
 function getColorClass(backgroundColor) {
+    // Gradient preset tokens (NoteBG) aren't in the legacy hex map.
+    if (window.NoteBG && window.NoteBG.isPreset(backgroundColor)) return 'warning';
     for (const [key, value] of Object.entries(colorMap)) {
         if (value.bg.toLowerCase() === backgroundColor.toLowerCase()) {
             return value.class;
@@ -112,11 +117,13 @@ function getColorClass(backgroundColor) {
 function createNoteWidget(note) {
     const bgColor = note.background_color || '#fbbf24';
     const colorClass = getColorClass(bgColor);
-    const textColorClass = colorMap[colorClass]?.text || 'dark-text';
+    const isGlass = !!(window.NoteBG && window.NoteBG.isPreset(bgColor));
+    const textColorClass = isGlass ? 'light-text' : (colorMap[colorClass]?.text || 'dark-text');
     
     const widget = document.createElement('div');
     widget.className = `note-widget color-${colorClass} ${textColorClass}`;
     widget.id = `note-${note.id}`;
+    if (isGlass) window.NoteBG.apply(widget, bgColor);
     widget.style.left = `${note.position_x || 0}px`;
     widget.style.top = `${note.position_y || 0}px`;
     widget.style.width = `${note.width || 300}px`;
@@ -142,6 +149,9 @@ function createNoteWidget(note) {
                         <div class="color-option-dropdown dodgerblue" data-color="dodgerblue" data-bg="#1e90ff" onclick="changeNoteColor(${note.id}, '#1e90ff')" title="Dodger Blue"></div>
                         <div class="color-option-dropdown warning" data-color="warning" data-bg="#fbbf24" onclick="changeNoteColor(${note.id}, '#fbbf24')" title="Warning Yellow"></div>
                         <div class="color-option-dropdown success" data-color="success" data-bg="#10b981" onclick="changeNoteColor(${note.id}, '#10b981')" title="Success Green"></div>
+                        ${(window.NoteBG ? window.NoteBG.PRESETS : []).map(function (p) {
+                            return '<div class="color-option-dropdown color-option--grad" title="' + p.label + '" style="background:' + p.css + '" onclick="changeNoteColor(' + note.id + ', \'' + p.id + '\')"></div>';
+                        }).join('')}
                     </div>
                 </div>
                 <div class="note-alert-wrapper" style="position: relative;">
@@ -387,6 +397,11 @@ document.getElementById('addNoteBtn').addEventListener('click', async function()
         if (data.success) {
             // Reload all notes to get the new one with full data
             loadNotes();
+            if (window.NotesSync) {
+                window.__notesPageSelfSync = true;
+                try { window.NotesSync.emit('board', { action: 'create', id: data.note ? data.note.id : null }); }
+                finally { window.__notesPageSelfSync = false; }
+            }
         }
     } catch (error) {
         console.error('Error creating note:', error);
@@ -710,6 +725,11 @@ async function performDelete(noteId) {
         const data = await response.json();
         
         if (data.success) {
+            if (window.NotesSync) {
+                window.__notesPageSelfSync = true;
+                try { window.NotesSync.emit('board', { action: 'delete', id: noteId }); }
+                finally { window.__notesPageSelfSync = false; }
+            }
             const widget = document.getElementById(`note-${noteId}`);
             if (widget) {
                 widget.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
@@ -790,7 +810,8 @@ function changeNoteColor(noteId, color) {
     if (!widget) return;
     
     const colorClass = getColorClass(color);
-    const textColorClass = colorMap[colorClass]?.text || 'dark-text';
+    const isGlass = !!(window.NoteBG && window.NoteBG.isPreset(color));
+    const textColorClass = isGlass ? 'light-text' : (colorMap[colorClass]?.text || 'dark-text');
     
     // Remove all color classes
     widget.classList.remove('color-white', 'color-red', 'color-black', 'color-dodgerblue', 'color-warning', 'color-success');
@@ -799,12 +820,176 @@ function changeNoteColor(noteId, color) {
     // Add new color classes
     widget.classList.add(`color-${colorClass}`);
     widget.classList.add(textColorClass);
+    // Gradient / glassmorphism presets paint via NoteBG; clear it for plain hex.
+    if (window.NoteBG) {
+        if (isGlass) window.NoteBG.apply(widget, color);
+        else window.NoteBG.clear(widget);
+    }
     
     widget.setAttribute('data-bg-color', color);
     widget.setAttribute('data-color-class', colorClass);
     
     // Save to database immediately
     updateNote(noteId, { background_color: color });
+    if (window.NotesSync) {
+        window.__notesPageSelfSync = true;
+        try { window.NotesSync.emit('board', { action: 'update', id: noteId }); }
+        finally { window.__notesPageSelfSync = false; }
+    }
+}
+
+// =====================================================================
+// Quick notes on the board (merged view). Quick notes (drawer / Cmd+K store)
+// are rendered here as lightweight, default-placed widgets so a note added in
+// ANY surface appears here too. Their mutations route to /api/quick-notes via
+// NotesBridge — separate from the board-note (/api/notes) handlers above so the
+// canvas drag/resize/alert logic stays untouched. Quick notes have no
+// position/size columns, so these widgets are statically cascaded.
+function qpEsc(s) {
+    return String(s == null ? '' : s)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+function qpEmit(action, id) {
+    if (!window.NotesSync) return;
+    window.__notesPageSelfSync = true;
+    try { window.NotesSync.emit('quick', { action: action, id: id }); }
+    finally { window.__notesPageSelfSync = false; }
+}
+
+function qpRec(id) { return { origin: 'quick', id: id, raw: {} }; }
+
+async function qpUpdateTitle(id, title) {
+    try { await window.NotesBridge.save(qpRec(id), { title: title }); qpEmit('update', id); }
+    catch (e) { console.error('quick title update failed', e); }
+}
+async function qpUpdateContent(id, text) {
+    try { await window.NotesBridge.save(qpRec(id), { body: text }); qpEmit('update', id); }
+    catch (e) { console.error('quick content update failed', e); }
+}
+function qpChangeColor(id, color) {
+    var picker = document.getElementById('qpColorPicker-' + id);
+    if (picker) picker.style.display = 'none';
+    var widget = document.getElementById('quicknote-' + id);
+    if (widget) {
+        var colorClass = getColorClass(color);
+        var isGlass = !!(window.NoteBG && window.NoteBG.isPreset(color));
+        var textColorClass = isGlass ? 'light-text' : ((colorMap[colorClass] && colorMap[colorClass].text) || 'dark-text');
+        widget.classList.remove('color-white', 'color-red', 'color-black', 'color-dodgerblue', 'color-warning', 'color-success', 'light-text', 'dark-text');
+        widget.classList.add('color-' + colorClass, textColorClass);
+        if (window.NoteBG) { if (isGlass) window.NoteBG.apply(widget, color); else window.NoteBG.clear(widget); }
+        widget.setAttribute('data-bg-color', color);
+    }
+    window.NotesBridge.save(qpRec(id), { background_color: color })
+        .then(function () { qpEmit('update', id); })
+        .catch(function (e) { console.error('quick color update failed', e); });
+}
+function qpTogglePin(id, makePinned, btn) {
+    window.NotesBridge.setPinned(qpRec(id), makePinned)
+        .then(function () {
+            if (btn) {
+                btn.setAttribute('onclick', 'qpTogglePin(' + id + ', ' + (!makePinned) + ', this)');
+                btn.title = makePinned ? 'Unpin' : 'Pin';
+                var ic = btn.querySelector('i');
+                if (ic) ic.className = 'bi ' + (makePinned ? 'bi-pin-angle-fill' : 'bi-pin-angle');
+            }
+            qpEmit('pin', id);
+        })
+        .catch(function (e) { console.error('quick pin failed', e); });
+}
+function qpDelete(id) {
+    if (window.mkConfirmModal) {
+        window.mkConfirmModal({ title: 'Delete note', message: 'This quick note will be permanently removed.', confirmText: 'Delete', confirmClass: 'btn-danger' })
+            .then(function (ok) { if (ok) qpPerformDelete(id); });
+    } else if (confirm('Delete this note?')) {
+        qpPerformDelete(id);
+    }
+}
+function qpPerformDelete(id) {
+    window.NotesBridge.remove(qpRec(id))
+        .then(function () {
+            var widget = document.getElementById('quicknote-' + id);
+            if (widget) { widget.style.opacity = '0'; widget.style.transform = 'scale(.92)'; setTimeout(function () { widget.remove(); }, 200); }
+            qpEmit('delete', id);
+        })
+        .catch(function (e) { console.error('quick delete failed', e); });
+}
+
+function createQuickNoteWidget(rec, index, baseY) {
+    var bgColor = rec.background_color || '#fbbf24';
+    var colorClass = getColorClass(bgColor);
+    var isGlass = !!(window.NoteBG && window.NoteBG.isPreset(bgColor));
+    var textColorClass = isGlass ? 'light-text' : ((colorMap[colorClass] && colorMap[colorClass].text) || 'dark-text');
+
+    var widget = document.createElement('div');
+    widget.className = 'note-widget note-widget--quick color-' + colorClass + ' ' + textColorClass;
+    widget.id = 'quicknote-' + rec.id;
+    widget.setAttribute('data-quick-id', rec.id);
+    widget.setAttribute('data-note-kind', 'quick');
+    widget.setAttribute('data-bg-color', bgColor);
+    if (isGlass) window.NoteBG.apply(widget, bgColor);
+
+    // Static cascade layout (quick notes have no stored position/size). Start
+    // below any board notes to avoid overlapping the free-positioned canvas.
+    var col = index % 4, row = Math.floor(index / 4);
+    widget.style.left = (20 + col * 270) + 'px';
+    widget.style.top = ((baseY || 20) + row * 230) + 'px';
+    widget.style.width = '250px';
+    widget.style.height = '210px';
+    widget.style.zIndex = 1;
+
+    var pinned = !!rec.pinned;
+    var presets = (window.NoteBG ? window.NoteBG.PRESETS : []).map(function (p) {
+        return '<div class="color-option-dropdown color-option--grad" title="' + qpEsc(p.label) + '" style="background:' + p.css + '" onclick="qpChangeColor(' + rec.id + ', \'' + p.id + '\')"></div>';
+    }).join('');
+
+    widget.innerHTML =
+        '<div class="note-widget-header" style="cursor:default;">' +
+            '<input type="text" class="note-widget-title" placeholder="Note title..." value="' + qpEsc(rec.title || '') + '" onblur="qpUpdateTitle(' + rec.id + ', this.value)">' +
+            '<div class="note-widget-actions">' +
+                '<span class="qp-origin-chip" title="Synced quick note"><i class="bi bi-journal-text"></i></span>' +
+                '<div class="note-color-picker-wrapper" style="position: relative;">' +
+                    '<button class="note-widget-btn" onclick="(function(e){var d=document.getElementById(\'qpColorPicker-' + rec.id + '\');d.style.display=d.style.display===\'none\'?\'flex\':\'none\';e.stopPropagation();})(event)" title="Change color"><i class="bi bi-palette"></i></button>' +
+                    '<div class="note-color-picker-dropdown" id="qpColorPicker-' + rec.id + '" style="display:none;">' +
+                        '<div class="color-option-dropdown white" onclick="qpChangeColor(' + rec.id + ', \'#ffffff\')" title="White"></div>' +
+                        '<div class="color-option-dropdown warning" onclick="qpChangeColor(' + rec.id + ', \'#fbbf24\')" title="Yellow"></div>' +
+                        '<div class="color-option-dropdown success" onclick="qpChangeColor(' + rec.id + ', \'#10b981\')" title="Green"></div>' +
+                        '<div class="color-option-dropdown dodgerblue" onclick="qpChangeColor(' + rec.id + ', \'#1e90ff\')" title="Blue"></div>' +
+                        presets +
+                    '</div>' +
+                '</div>' +
+                '<button class="note-widget-btn" onclick="qpTogglePin(' + rec.id + ', ' + (!pinned) + ', this)" title="' + (pinned ? 'Unpin' : 'Pin') + '"><i class="bi ' + (pinned ? 'bi-pin-angle-fill' : 'bi-pin-angle') + '"></i></button>' +
+                '<button class="note-widget-btn delete" onclick="qpDelete(' + rec.id + ')" title="Delete"><i class="bi bi-trash"></i></button>' +
+            '</div>' +
+        '</div>' +
+        '<div class="note-widget-body">' +
+            '<div class="note-widget-content qp-content" contenteditable="true" data-placeholder="Write your note here..." style="white-space:pre-wrap;" onblur="qpUpdateContent(' + rec.id + ', this.innerText)">' + qpEsc(rec.body || '') + '</div>' +
+        '</div>' +
+        '<div class="note-widget-footer">' +
+            '<span>Quick note</span>' +
+        '</div>';
+
+    return widget;
+}
+
+async function renderQuickNotesOnBoard() {
+    var container = document.getElementById('notesContainer');
+    if (!container || !window.NotesBridge) return;
+    // Remove any previously-rendered quick widgets.
+    container.querySelectorAll('.note-widget--quick').forEach(function (w) { w.remove(); });
+    var all = await window.NotesBridge.list().catch(function () { return []; });
+    var quick = all.filter(function (n) { return n.origin === 'quick'; });
+    if (!quick.length) return;
+    var emptyState = document.getElementById('emptyState');
+    if (emptyState) emptyState.style.display = 'none';
+    // Place quick notes below the lowest board note so they don't overlap.
+    var baseY = 20;
+    container.querySelectorAll('.note-widget:not(.note-widget--quick)').forEach(function (w) {
+        var bottom = (parseInt(w.style.top, 10) || 0) + (parseInt(w.style.height, 10) || 200);
+        if (bottom + 20 > baseY) baseY = bottom + 20;
+    });
+    quick.forEach(function (rec, i) { container.appendChild(createQuickNoteWidget(rec, i, baseY)); });
 }
 
 // Add color picker to each note (optional - can be added to header)
@@ -1893,10 +2078,49 @@ if (window.location.pathname.includes('/doctor/notes')) {
     }
 }
 
+// Inject gradient/glassmorphism swatches into the toolbar color picker and
+// keep the notes page in live-sync with the dashboard board-notes widget.
+(function initNoteBgExtras() {
+    function run() {
+        // 1) Toolbar gradient swatches (single source of truth = NoteBG.PRESETS).
+        var options = document.querySelector('.color-options');
+        if (options && window.NoteBG && !options.__gradInjected) {
+            options.__gradInjected = true;
+            window.NoteBG.PRESETS.forEach(function (p) {
+                var el = document.createElement('div');
+                el.className = 'color-option color-option--grad';
+                el.setAttribute('data-color', p.id);
+                el.setAttribute('data-bg', p.id);
+                el.setAttribute('title', p.label);
+                el.style.background = p.css;
+                el.addEventListener('click', function () {
+                    document.querySelectorAll('.color-option').forEach(function (o) { o.classList.remove('active'); });
+                    el.classList.add('active');
+                    currentNoteColor = p.id;
+                    currentNoteColorClass = p.id;
+                });
+                options.appendChild(el);
+            });
+        }
+        // 2) Live-sync: this page now shows a MERGED view, so reload on ANY note
+        //    change (board OR quick) from any surface. Ignore our own echo.
+        if (window.NotesSync && !window.__notesPageSyncBound) {
+            window.__notesPageSyncBound = true;
+            window.NotesSync.on(function () {
+                if (window.__notesPageSelfSync) return;
+                if (document.getElementById('notesContainer')) loadNotes();
+            });
+        }
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run);
+    else run();
+})();
+
 // Re-initialize autocomplete when new notes are added
 const originalLoadNotes = loadNotes;
 loadNotes = async function() {
     await originalLoadNotes();
+    await renderQuickNotesOnBoard();   // merged view: show quick notes too
     setTimeout(initAllAutocompletes, 100);
     setTimeout(initDrugBadges, 100);
 };

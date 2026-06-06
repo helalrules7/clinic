@@ -125,6 +125,7 @@ class QuickNoteController
         $title  = isset($data['title']) ? trim((string)$data['title']) : '';
         $body   = isset($data['body'])  ? (string)$data['body']        : '';
         $pinned = isset($data['pinned']) ? $this->toBool($data['pinned']) : false;
+        $bg     = isset($data['background_color']) ? trim((string)$data['background_color']) : '';
 
         // Validation
         if (mb_strlen($title) > 200) {
@@ -142,13 +143,17 @@ class QuickNoteController
         }
 
         try {
-            $newId = $this->model->create((int)$user['id'], [
-                'title'   => $title === '' ? null : $title,
-                'body'    => $body,
-                'pinned'  => $pinned ? 1 : 0,
+            $note = $this->model->create((int)$user['id'], [
+                'title'            => $title === '' ? null : $title,
+                'body'             => $body,
+                'background_color' => $bg === '' ? null : $bg,
+                'pinned'           => $pinned ? 1 : 0,
             ]);
 
-            $note = $this->model->findById($newId, (int)$user['id']);
+            // QuickNoteModel::create() returns the freshly-inserted row (or null).
+            if (is_array($note) && isset($note['id'])) {
+                $note = $this->model->findById((int)$note['id'], (int)$user['id']);
+            }
             $this->respond(200, ['success' => true, 'data' => $note]);
         } catch (\Throwable $e) {
             error_log('[QuickNoteController::create] ' . $e->getMessage());
@@ -202,6 +207,11 @@ class QuickNoteController
 
         if (array_key_exists('pinned', $data)) {
             $fields['pinned'] = $this->toBool($data['pinned']) ? 1 : 0;
+        }
+
+        if (array_key_exists('background_color', $data)) {
+            $bg = $data['background_color'] === null ? null : trim((string)$data['background_color']);
+            $fields['background_color'] = ($bg === '' ? null : $bg);
         }
 
         if (empty($fields)) {

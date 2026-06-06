@@ -101,6 +101,11 @@
                     <textarea name="body" rows="8" required maxlength="50000"
                               placeholder="Write your note…"></textarea>
                 </label>
+                <div class="nd-field note-swatch-field">
+                    <span class="note-swatch-label">Background</span>
+                    <div id="ndModalSwatches"><!-- NoteBG.swatchHTML injected by JS --></div>
+                    <input type="hidden" name="background_color" id="ndModalBg" value="">
+                </div>
                 <label class="nd-field nd-field--inline">
                     <input type="checkbox" name="pinned" value="1">
                     <span><i class="bi bi-pin-angle" aria-hidden="true"></i> Pin to top</span>

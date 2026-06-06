@@ -460,10 +460,13 @@ class TodoListController
             return;
         }
 
-        if (empty($existing['archived_at'])) {
-            $this->respond(409, ['success' => false, 'message' => 'List must be archived before deletion']);
-            return;
-        }
+        // `force` (query ?force=1 or body { force: true }) deletes the list
+        // AND its tasks in a single transaction, skipping the archive-first /
+        // must-be-empty guards. Without it we keep the safe two-step path
+        // (archive, empty, then delete).
+        $body  = $this->readJsonBody();
+        $force = (isset($_GET['force']) && in_array((string)$_GET['force'], ['1', 'true', 'yes'], true))
+              || (isset($body['force']) && in_array((string)$body['force'], ['1', 'true', 'yes'], true));
 
         try {
             $stmt = $this->pdo->prepare(
@@ -472,25 +475,42 @@ class TodoListController
             $stmt->execute([':id' => $listId, ':uid' => $userId]);
             $taskCount = (int)$stmt->fetchColumn();
 
-            if ($taskCount > 0) {
-                $this->respond(409, [
-                    'success' => false,
-                    'message' => 'List still has tasks; move or delete them first',
-                    'task_count' => $taskCount,
-                ]);
-                return;
+            if (!$force) {
+                if (empty($existing['archived_at'])) {
+                    $this->respond(409, ['success' => false, 'message' => 'List must be archived before deletion']);
+                    return;
+                }
+                if ($taskCount > 0) {
+                    $this->respond(409, [
+                        'success' => false,
+                        'message' => 'List still has tasks; move or delete them first',
+                        'task_count' => $taskCount,
+                    ]);
+                    return;
+                }
             }
 
+            $this->pdo->beginTransaction();
+            if ($force && $taskCount > 0) {
+                $delTasks = $this->pdo->prepare(
+                    'DELETE FROM todos WHERE list_id = :id AND user_id = :uid'
+                );
+                $delTasks->execute([':id' => $listId, ':uid' => $userId]);
+            }
             $stmt = $this->pdo->prepare(
                 'DELETE FROM todo_lists WHERE id = :id AND user_id = :uid'
             );
             $stmt->execute([':id' => $listId, ':uid' => $userId]);
+            $this->pdo->commit();
         } catch (PDOException $e) {
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
             $this->respond(500, ['success' => false, 'message' => 'Failed to delete list']);
             return;
         }
 
-        $this->respond(200, ['success' => true]);
+        $this->respond(200, ['success' => true, 'deleted_tasks' => $force ? $taskCount : 0]);
     }
 
     /* ------------------------------------------------------------------ */

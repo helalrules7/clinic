@@ -81,3 +81,22 @@
     cursor: pointer;
     touch-action: auto;
 }
+
+/* ---------------------------------------------------------------------
+   v11 drawer-stacking guard
+   The notes-drawer + todo-drawer both use z-index 1070. Bootstrap modal's
+   default is z-index 1055 (backdrop 1050). When we call mkConfirmModal
+   from inside a drawer (Delete confirm — both drawers do this), the
+   confirm dialog has to stack ABOVE the drawer and its backdrop dimmer.
+   Lifting .mk-dialog (and the sibling .modal-backdrop Bootstrap injects
+   alongside it) above 1070 makes the confirm sit on top.
+   --------------------------------------------------------------------- */
+.modal.mk-dialog {
+    z-index: 1090;
+}
+/* Bootstrap appends .modal-backdrop as a sibling AFTER the modal element,
+   so any backdrop that follows an open mk-dialog is the one paired with it. */
+.mk-dialog ~ .modal-backdrop,
+.modal-backdrop.mk-dialog-backdrop {
+    z-index: 1085;
+}

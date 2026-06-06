@@ -583,6 +583,28 @@ body:has(.quick-note-modal.show) .modal-backdrop.show {
 .quick-note-modal .qn-pin-badge i {
     font-size: .68rem;
 }
+/* Badge marking a row sourced from the board-notes store (merged view). */
+.quick-note-modal .qn-origin-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: .25rem;
+    font-size: .62rem;
+    font-weight: 700;
+    color: #3730a3;
+    background: #e0e7ff;
+    border: 1px solid #c7d2fe;
+    border-radius: var(--r-pill, 999px);
+    padding: 1px 7px;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+}
+.dark .quick-note-modal .qn-origin-badge {
+    color: #c7d2fe;
+    background: rgba(99, 102, 241, .18);
+    border-color: rgba(129, 140, 248, .45);
+}
+.quick-note-modal .qn-origin-badge i { font-size: .68rem; }
+.note-glass .qn-origin-badge { color: #fff; background: rgba(255,255,255,.22); border-color: rgba(255,255,255,.4); }
 .quick-note-modal .qn-note-body {
     font-size: .8rem;
     color: var(--muted);

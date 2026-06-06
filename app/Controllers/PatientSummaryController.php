@@ -40,11 +40,14 @@ class PatientSummaryController
         }
 
         // --- Patient base (required) ---
+        // Schema note: real column is `dob` (not `date_of_birth`). We alias it
+        // so the rest of this method keeps the readable name.
         try {
-            $stmt = $this->pdo->prepare('SELECT id, first_name, last_name, date_of_birth, gender, phone FROM patients WHERE id = ? LIMIT 1');
+            $stmt = $this->pdo->prepare('SELECT id, first_name, last_name, dob AS date_of_birth, gender, phone FROM patients WHERE id = ? LIMIT 1');
             $stmt->execute([$patientId]);
             $patientRow = $stmt->fetch(\PDO::FETCH_ASSOC);
         } catch (Throwable $e) {
+            error_log('[PatientSummaryController::summary] base query failed for id=' . $patientId . ': ' . $e->getMessage());
             $patientRow = false;
         }
 
@@ -79,11 +82,16 @@ class PatientSummaryController
         // --- Last visit (best-effort) ---
         $lastVisit = null;
         try {
+            // Schema note: appointment.status values are Booked / Completed / NoShow / Closed.
+            // "Previous visit" includes any past appointment whose status is NOT a
+            // cancellation-style state (Cancelled/Rescheduled aren't present in this
+            // schema but the IN-list is the safer query shape). Matching the
+            // patients-list table behaviour which counts ALL past appointments.
             $sql = "SELECT date, visit_type
                     FROM appointments
                     WHERE patient_id = ?
                       AND (date < CURDATE() OR (date = CURDATE() AND end_time < NOW()))
-                      AND status = 'Completed'
+                      AND status IN ('Completed', 'NoShow', 'Closed')
                     ORDER BY date DESC, start_time DESC
                     LIMIT 1";
             $stmt = $this->pdo->prepare($sql);

@@ -113,8 +113,11 @@
             <i class="bi bi-arrow-down" aria-hidden="true"></i> Move down
         </button>
         <div class="td-popover-sep" role="separator"></div>
-        <button type="button" role="menuitem" data-act="archive" class="is-danger">
+        <button type="button" role="menuitem" data-act="archive" data-popover-archive>
             <i class="bi bi-archive" aria-hidden="true"></i> Archive list
+        </button>
+        <button type="button" role="menuitem" data-act="delete" class="is-danger" data-popover-delete>
+            <i class="bi bi-trash" aria-hidden="true"></i> Delete list
         </button>
     </div>
 
@@ -161,12 +164,15 @@
                     </div>
                     <div class="td-field">
                         <label for="todoFmRemind">Remind</label>
-                        <select id="todoFmRemind" name="remind_before">
+                        <!-- Field name + values must match the backend's
+                             ALLOWED_REMIND list in TodoController (15 / 60 /
+                             240 / 1440 minutes). Anything else triggers a
+                             422 "Invalid remind window" on save. -->
+                        <select id="todoFmRemind" name="remind_before_minutes">
                             <option value="">No reminder</option>
-                            <option value="5">5 min before</option>
                             <option value="15">15 min before</option>
-                            <option value="30">30 min before</option>
                             <option value="60">1 hour before</option>
+                            <option value="240">4 hours before</option>
                             <option value="1440">1 day before</option>
                         </select>
                     </div>
@@ -185,11 +191,13 @@
                     </div>
                     <div class="td-field">
                         <label for="todoFmPriority">Priority</label>
+                        <!-- Values must match backend's ALLOWED_PRIORITY:
+                             low / med / high. Submitting 'normal' or 'urgent'
+                             gets rejected with a 422 "Invalid priority". -->
                         <select id="todoFmPriority" name="priority">
                             <option value="low">Low</option>
-                            <option value="normal" selected>Normal</option>
+                            <option value="med" selected>Medium</option>
                             <option value="high">High</option>
-                            <option value="urgent">Urgent</option>
                         </select>
                     </div>
                 </div>

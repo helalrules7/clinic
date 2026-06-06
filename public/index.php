@@ -202,6 +202,7 @@ try {
     $router->get('/doctor/todos',           'TodoController@page');
     $router->get('/api/todos',              'TodoController@index');
     $router->get('/api/todos/counts',       'TodoController@counts');
+    $router->get('/api/todos/due-check',    'TodoController@dueCheck');
     $router->post('/api/todos/reorder',     'TodoController@reorder');
     $router->get('/api/todos/{id}',         'TodoController@show');
     $router->post('/api/todos',             'TodoController@create');
@@ -209,6 +210,7 @@ try {
     $router->delete('/api/todos/{id}',      'TodoController@delete');
     $router->post('/api/todos/{id}/done',   'TodoController@markDone');
     $router->post('/api/todos/{id}/reopen', 'TodoController@reopen');
+    $router->post('/api/todos/{id}/snooze', 'TodoController@snooze');
 
     // v11.0.0 — To-Do lists
     $router->get('/api/todo-lists',                  'TodoListController@index');

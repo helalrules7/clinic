@@ -10,6 +10,17 @@
     z-index: 1070;
     pointer-events: none;
 }
+
+/* Badge marking a row that lives in the board-notes store (merged view). */
+.nd-row__origin {
+    display: inline-flex;
+    align-items: center;
+    margin-left: .4rem;
+    font-size: .72rem;
+    color: var(--accent, #6366f1);
+    opacity: .85;
+}
+.note-glass .nd-row__origin { color: rgba(255, 255, 255, 0.9); }
 .notes-drawer.open { pointer-events: auto; }
 
 .notes-drawer__backdrop {

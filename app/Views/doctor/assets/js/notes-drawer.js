@@ -128,10 +128,23 @@
     function loadNotes() {
         if (state.loading) return;
         state.loading = true;
-        return api('/api/quick-notes')
-            .then(function (res) {
-                state.notes = (res && res.data) || [];
+        // Merged view across BOTH stores (quick_notes + board notes). Falls back
+        // to quick-only if the bridge isn't present.
+        var p = window.NotesBridge
+            ? window.NotesBridge.list()
+            : api('/api/quick-notes').then(function (res) {
+                return ((res && res.data) || []).map(function (n) {
+                    return { key: 'q:' + n.id, origin: 'quick', id: n.id, title: n.title || '',
+                             body: n.body || '', background_color: n.background_color || '',
+                             pinned: !!n.pinned, created_at: n.created_at, updated_at: n.updated_at, raw: n };
+                });
+            });
+        return p
+            .then(function (notes) {
+                state.notes = notes || [];
+                state.loaded = true;
                 render();
+                setHeaderBadge(state.notes.length);
             })
             .catch(function () {
                 listEl.innerHTML =
@@ -197,8 +210,21 @@
 
     function buildRow(n) {
         var node = rowTpl.content.firstElementChild.cloneNode(true);
-        node.dataset.id = String(n.id);
+        // Use the cross-store key (e.g. "q:7" / "b:7") since ids can collide.
+        node.dataset.id = String(n.key || ('q:' + n.id));
+        node.dataset.origin = n.origin || 'quick';
         if (n.pinned) node.classList.add('is-pinned');
+        // Board-origin notes can't be pinned and shouldn't show the pin toggle.
+        if (n.origin === 'board') {
+            var pinBtn = $('.nd-row__pin', node);
+            if (pinBtn) { pinBtn.style.visibility = 'hidden'; pinBtn.setAttribute('tabindex', '-1'); }
+            var titleWrap = $('.nd-row__title-wrap', node) || node;
+            var tag = document.createElement('span');
+            tag.className = 'nd-row__origin';
+            tag.title = 'From the notes board';
+            tag.innerHTML = '<i class="bi bi-easel" aria-hidden="true"></i>';
+            titleWrap.appendChild(tag);
+        }
         var titleEl = $('[data-field="title"]', node);
         var bodyEl  = $('[data-field="body"]',  node);
         var timeEl  = $('[data-field="time"]',  node);
@@ -216,6 +242,8 @@
         // Pin icon state
         var pinIcon = $('.nd-row__pin i', node);
         if (pinIcon) pinIcon.className = 'bi ' + (n.pinned ? 'bi-pin-angle-fill' : 'bi-pin-angle');
+        // Gradient / glassmorphism background (shared NoteBG).
+        if (window.NoteBG) window.NoteBG.apply(node, n.background_color);
         return node;
     }
 
@@ -243,8 +271,11 @@
             api('/api/quick-notes', { method: 'POST', body: { body: body } })
                 .then(function (res) {
                     if (res && res.success && res.data) {
-                        state.notes.unshift(res.data);
+                        var norm = window.NotesBridge ? window.NotesBridge._normQuick(res.data) : res.data;
+                        state.notes.unshift(norm);
                         render();
+                        setHeaderBadge(state.notes.length);
+                        notifyChanged('create', norm);
                     }
                     quickInput.value = '';
                     quickInput.style.height = '';
@@ -313,15 +344,16 @@
         });
     }
 
-    function findById(id) {
+    function findById(key) {
         for (var i = 0; i < state.notes.length; i++) {
-            if (String(state.notes[i].id) === String(id)) return state.notes[i];
+            var n = state.notes[i];
+            if (String(n.key || ('q:' + n.id)) === String(key)) return n;
         }
         return null;
     }
 
     function togglePin(note, row) {
-        var endpoint = note.pinned ? '/unpin' : '/pin';
+        if (note.origin === 'board') return;   // board notes have no pin
         var newState = !note.pinned;
         // Optimistic
         note.pinned = newState;
@@ -330,27 +362,27 @@
         if (ico) ico.className = 'bi ' + (newState ? 'bi-pin-angle-fill' : 'bi-pin-angle');
         // Re-render to re-sort
         render();
-        api('/api/quick-notes/' + encodeURIComponent(note.id) + endpoint, { method: 'POST' })
-            .catch(function () {
-                // Revert
-                note.pinned = !newState;
-                render();
-            });
+        var op = window.NotesBridge
+            ? window.NotesBridge.setPinned(note, newState)
+            : api('/api/quick-notes/' + encodeURIComponent(note.id) + (newState ? '/pin' : '/unpin'), { method: 'POST' });
+        op.then(function () { notifyChanged('pin', note); })
+          .catch(function () { note.pinned = !newState; render(); });
     }
 
     function doDelete(note, row) {
         var run = function () {
             row.classList.add('is-removing');
             setTimeout(function () {
-                var idx = state.notes.findIndex(function (n) { return String(n.id) === String(note.id); });
+                var idx = state.notes.findIndex(function (n) { return String(n.key) === String(note.key); });
                 if (idx !== -1) state.notes.splice(idx, 1);
                 render();
+                setHeaderBadge(state.notes.length);
             }, 200);
-            api('/api/quick-notes/' + encodeURIComponent(note.id), { method: 'DELETE' })
-                .catch(function () {
-                    // Restore on failure
-                    loadNotes();
-                });
+            var op = window.NotesBridge
+                ? window.NotesBridge.remove(note)
+                : api('/api/quick-notes/' + encodeURIComponent(note.id), { method: 'DELETE' });
+            op.then(function () { notifyChanged('delete', note); })
+              .catch(function () { loadNotes(); });
         };
         // Use modal-kit confirm if available, otherwise a plain confirm()
         if (window.mkConfirmModal) {
@@ -358,9 +390,8 @@
                 title: 'Delete note',
                 message: 'This note will be permanently removed.',
                 confirmText: 'Delete',
-                confirmVariant: 'danger',
-                onConfirm: run
-            });
+                confirmVariant: 'danger'
+            }).then(function (ok) { if (ok) run(); });
         } else if (confirm('Delete this note?')) {
             run();
         }
@@ -384,16 +415,31 @@
             titleInput.value = note.title || '';
             bodyInput.value  = note.body || '';
             pinInput.checked = !!note.pinned;
-            idInput.value    = note.id;
-            titleEl.textContent = 'Edit note';
+            idInput.value    = note.key || ('q:' + note.id);
+            renderModalSwatches(note.background_color || '');
+            // Board notes can't be pinned — hide the pin row in the editor.
+            var pinField = pinInput.closest('.nd-field--inline');
+            if (pinField) pinField.style.display = (note.origin === 'board') ? 'none' : '';
+            titleEl.textContent = note.origin === 'board' ? 'Edit board note' : 'Edit note';
         } else {
             titleInput.value = '';
             bodyInput.value  = '';
             pinInput.checked = false;
             idInput.value    = '';
+            var pinFieldNew = pinInput.closest('.nd-field--inline');
+            if (pinFieldNew) pinFieldNew.style.display = '';
+            renderModalSwatches('');
             titleEl.textContent = 'New note';
         }
         setTimeout(function () { bodyInput.focus(); }, 200);
+    }
+
+    // ---- background swatches (shared NoteBG) ----
+    function renderModalSwatches(active) {
+        var box = drawer.querySelector('#ndModalSwatches');
+        var hidden = drawer.querySelector('#ndModalBg');
+        if (hidden) hidden.value = active || '';
+        if (box && window.NoteBG) box.innerHTML = window.NoteBG.swatchHTML(active || '');
     }
     function closeModal() {
         if (!modal) return;
@@ -407,35 +453,73 @@
         modal.addEventListener('click', function (e) {
             if (e.target.closest('.nd-modal__backdrop')) closeModal();
             if (e.target.closest('[data-nd-cancel]')) closeModal();
+            // Background swatch selection.
+            var sw = e.target.closest('.note-swatch');
+            if (sw) {
+                var box = drawer.querySelector('#ndModalSwatches');
+                var hidden = drawer.querySelector('#ndModalBg');
+                if (hidden) hidden.value = sw.getAttribute('data-note-swatch') || '';
+                if (box) box.querySelectorAll('.note-swatch').forEach(function (b) {
+                    var on = b === sw;
+                    b.classList.toggle('is-active', on);
+                    b.setAttribute('aria-checked', on ? 'true' : 'false');
+                });
+            }
         });
         modalForm.addEventListener('submit', function (e) {
             e.preventDefault();
             var fd = new FormData(modalForm);
-            var id     = fd.get('id') || '';
+            var key    = (fd.get('id') || '').toString();
             var title  = (fd.get('title') || '').toString().trim();
             var body   = (fd.get('body')  || '').toString();
             var pinned = !!fd.get('pinned');
+            var bg     = (fd.get('background_color') || '').toString();
             if (!body.trim()) return;
-            var payload = { title: title || null, body: body, pinned: pinned };
-            var p;
-            if (id) {
-                p = api('/api/quick-notes/' + encodeURIComponent(id), { method: 'PATCH', body: payload });
-            } else {
-                p = api('/api/quick-notes', { method: 'POST', body: payload });
-            }
-            p.then(function (res) {
-                if (res && res.success && res.data) {
-                    if (id) {
-                        var idx = state.notes.findIndex(function (n) { return String(n.id) === String(id); });
-                        if (idx !== -1) state.notes[idx] = res.data;
-                    } else {
-                        state.notes.unshift(res.data);
-                    }
+
+            if (key) {
+                // Editing an existing note — route to its origin store via the bridge.
+                var rec = findById(key);
+                if (!rec) { closeModal(); return; }
+                var fields = { title: title || null, body: body, background_color: bg };
+                if (rec.origin === 'quick') fields.pinned = pinned;
+                var op = window.NotesBridge
+                    ? window.NotesBridge.save(rec, fields)
+                    : api('/api/quick-notes/' + encodeURIComponent(rec.id), { method: 'PATCH', body: fields })
+                        .then(function (res) { return res && res.data; });
+                op.then(function (updated) {
+                    var idx = state.notes.findIndex(function (n) { return String(n.key) === String(key); });
+                    if (idx !== -1 && updated) state.notes[idx] = updated;
                     render();
                     closeModal();
-                }
-            }).catch(function () { /* keep open, simple no-op */ });
+                    notifyChanged('update', updated || rec);
+                }).catch(function () { /* keep open */ });
+            } else {
+                // New note → always a quick note.
+                api('/api/quick-notes', { method: 'POST', body: { title: title || null, body: body, pinned: pinned, background_color: bg } })
+                    .then(function (res) {
+                        if (res && res.success && res.data) {
+                            var norm = window.NotesBridge
+                                ? window.NotesBridge._normQuick(res.data)
+                                : res.data;
+                            state.notes.unshift(norm);
+                            render();
+                            setHeaderBadge(state.notes.length);
+                            closeModal();
+                            notifyChanged('create', norm);
+                        }
+                    }).catch(function () { /* keep open */ });
+            }
         });
+    }
+
+    // Broadcast a change so the Cmd+K quick-note modal and any other surface
+    // refresh live without a page reload.
+    var _ndSelfEmit = false;
+    function notifyChanged(action, note) {
+        if (!window.NotesSync) return;
+        _ndSelfEmit = true;
+        try { window.NotesSync.emit((note && note.origin) || 'quick', { action: action, note: note }); }
+        finally { _ndSelfEmit = false; }
     }
 
     // -------------------------------------------------------- header trigger
@@ -464,7 +548,9 @@
         });
         anchor.parentNode.insertBefore(btn, anchor);
 
-        // Periodic light count refresh so the badge reflects pinned count.
+        // Periodic light count refresh + immediate refresh on any quick-note
+        // change (add / delete / edit / pin) from any surface, so the badge is
+        // always current without a page reload.
         refreshHeaderBadge();
         setInterval(function () {
             if (document.visibilityState === 'visible') refreshHeaderBadge();
@@ -472,11 +558,40 @@
         document.addEventListener('visibilitychange', function () {
             if (document.visibilityState === 'visible') refreshHeaderBadge();
         });
+        if (window.NotesSync) {
+            // Badge reflects the merged total, so react to any note change.
+            window.NotesSync.on(function () { refreshHeaderBadge(); });
+        }
+    }
+
+    // The header badge reflects the total number of quick notes, so it ticks up
+    // on add and down on delete. If the drawer already has fresh state loaded,
+    // use it to avoid an extra round-trip; otherwise fetch.
+    function setHeaderBadge(n) {
+        var badge = document.getElementById('notesDrawerToggleBadge');
+        if (!badge) return;
+        if (n > 0) {
+            badge.hidden = false;
+            badge.textContent = n > 99 ? '99+' : String(n);
+        } else {
+            badge.hidden = true;
+            badge.textContent = '0';
+        }
     }
 
     function refreshHeaderBadge() {
         var badge = document.getElementById('notesDrawerToggleBadge');
         if (!badge) return;
+        if (state && state.loaded && Array.isArray(state.notes)) {
+            setHeaderBadge(state.notes.length);
+            return;
+        }
+        if (window.NotesBridge) {
+            window.NotesBridge.list()
+                .then(function (rows) { setHeaderBadge((rows || []).length); })
+                .catch(function () {});
+            return;
+        }
         fetch('/api/quick-notes', {
             credentials: 'same-origin',
             headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
@@ -485,13 +600,7 @@
             .then(function (data) {
                 if (!data || !data.success) return;
                 var rows = data.data || [];
-                var n = rows.filter(function (r) { return r.pinned; }).length;
-                if (n > 0) {
-                    badge.hidden = false;
-                    badge.textContent = n > 99 ? '99+' : String(n);
-                } else {
-                    badge.hidden = true;
-                }
+                setHeaderBadge(rows.length);
             })
             .catch(function () {});
     }
@@ -515,8 +624,22 @@
         bindList();
         bindModal();
 
-        // Refresh after pin/delete/etc. from outside
-        document.addEventListener('quicknote:changed', function () { loadNotes(); });
+        // FAB ("New note with full options") — open the full editor. This was
+        // never wired, so the button did nothing.
+        if (fab) {
+            fab.addEventListener('click', function (e) {
+                e.preventDefault();
+                openEditor(null);
+            });
+        }
+
+        // The drawer shows a MERGED view, so refresh on ANY note change from
+        // any surface/store (quick or board). NotesSync dispatches the legacy
+        // 'quicknote:changed' DOM event for all scopes. Ignore our own echo.
+        document.addEventListener('quicknote:changed', function () {
+            if (_ndSelfEmit) return;
+            loadNotes();
+        });
     }
 
     if (document.readyState === 'loading') {
