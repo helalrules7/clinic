@@ -178,7 +178,78 @@
                 <!-- Drug details will be populated here -->
             </div>
             <div class="modal-footer">
+                <button type="button" class="btn btn-outline-primary me-auto" id="addDrugTemplateBtn" onclick="openDrugTemplateModal()">
+                    <i class="bi bi-bookmark-star me-1"></i>Add drug instruction template
+                </button>
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Drug Instruction Template Modal -->
+<div class="modal fade" id="drugTemplateModal" tabindex="-1" aria-labelledby="drugTemplateModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="drugTemplateModalLabel">
+                    <i class="bi bi-bookmark-star me-2"></i>Drug Instruction Template
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted small mb-3">
+                    <i class="bi bi-info-circle me-1"></i>
+                    Saved per doctor. These values auto-fill the prescription form whenever you pick this drug during an appointment.
+                </p>
+                <div class="mb-3">
+                    <label class="form-label">Drug</label>
+                    <input type="text" class="form-control" id="tplDrugName" readonly>
+                </div>
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Dose</label>
+                        <input type="text" class="form-control" id="tplDose" placeholder="e.g., 1 tablet">
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Frequency</label>
+                        <input type="text" class="form-control" id="tplFrequency" placeholder="e.g., Twice daily">
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Duration</label>
+                        <input type="text" class="form-control" id="tplDuration" placeholder="e.g., 7 days">
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Route</label>
+                    <select class="form-select" id="tplRoute">
+                        <option value="">— None —</option>
+                        <option value="Topical">Topical</option>
+                        <option value="Oral">Oral</option>
+                        <option value="IV">IV</option>
+                        <option value="IM">IM</option>
+                        <option value="Sublingual">Sublingual</option>
+                        <option value="Inhalation">Inhalation</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="mb-2">
+                    <label class="form-label">Instructions</label>
+                    <textarea class="form-control" id="tplInstructions" rows="3" placeholder="e.g., After meals, avoid sunlight..."></textarea>
+                </div>
+                <div id="tplStatus" class="small"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-danger" id="tplClearBtn" onclick="clearDrugTemplateFromModal()" style="display: none;">
+                    <i class="bi bi-trash me-1"></i>Delete template
+                </button>
+                <button type="button" class="btn btn-outline-secondary me-auto" id="tplClearFieldsBtn" onclick="clearDrugTemplateFields()" title="Clear dose, frequency, duration, route and instructions">
+                    <i class="bi bi-eraser me-1"></i>Clear fields
+                </button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="saveDrugTemplateFromModal()">
+                    <i class="bi bi-save me-1"></i>Save template
+                </button>
             </div>
         </div>
     </div>

@@ -21,10 +21,16 @@
                 <i class="bi bi-check2-square" aria-hidden="true"></i>
                 <span>To-Do</span>
             </h2>
-            <button type="button" class="td-close" id="todoDrawerClose"
-                    aria-label="Close to-do drawer">
-                <i class="bi bi-x-lg" aria-hidden="true"></i>
-            </button>
+            <div class="td-header-actions">
+                <button type="button" class="td-header-btn" id="todoArchivedBtn"
+                        aria-label="Archived lists" title="Archived lists">
+                    <i class="bi bi-archive" aria-hidden="true"></i>
+                </button>
+                <button type="button" class="td-close" id="todoDrawerClose"
+                        aria-label="Close to-do drawer">
+                    <i class="bi bi-x-lg" aria-hidden="true"></i>
+                </button>
+            </div>
         </div>
         <div class="td-filters" role="tablist" aria-label="Filter tasks">
             <button type="button" role="tab" class="td-filter is-active"
@@ -216,6 +222,136 @@
     </div>
 
     <!-- ============================================================
+         List create / edit modal — replaces the old inline rail form
+         AND the rename prompt() + color cycle. Same .td-modal pattern
+         as the task modal so it sits above the drawer (not clipped)
+         and presents as a centered card.
+         ============================================================ -->
+    <div class="td-modal" id="todoListModal" hidden role="dialog"
+         aria-modal="true" aria-labelledby="todoListModalTitle">
+        <div class="td-modal-backdrop" data-close></div>
+        <div class="td-modal-panel" role="document">
+            <header class="td-modal-head">
+                <h3 id="todoListModalTitle">New list</h3>
+                <button type="button" class="td-modal-close" data-close
+                        aria-label="Close">
+                    <i class="bi bi-x-lg" aria-hidden="true"></i>
+                </button>
+            </header>
+            <form id="todoListForm" class="td-modal-body" autocomplete="off">
+                <input type="hidden" name="id" value="">
+                <div class="td-field">
+                    <label for="todoListName">List name</label>
+                    <input type="text" id="todoListName" name="name"
+                           required maxlength="60"
+                           placeholder="e.g. Clinic follow-ups">
+                </div>
+
+                <div class="td-field">
+                    <label>Color</label>
+                    <div class="td-color-dots" role="radiogroup" aria-label="List color">
+                        <button type="button" class="td-dot is-active" role="radio"
+                                aria-checked="true" data-color="indigo"
+                                style="--dot:var(--palette-indigo)"></button>
+                        <button type="button" class="td-dot" role="radio"
+                                aria-checked="false" data-color="emerald"
+                                style="--dot:var(--palette-emerald)"></button>
+                        <button type="button" class="td-dot" role="radio"
+                                aria-checked="false" data-color="rose"
+                                style="--dot:var(--palette-rose)"></button>
+                        <button type="button" class="td-dot" role="radio"
+                                aria-checked="false" data-color="amber"
+                                style="--dot:var(--palette-amber)"></button>
+                        <button type="button" class="td-dot" role="radio"
+                                aria-checked="false" data-color="ocean"
+                                style="--dot:var(--palette-ocean)"></button>
+                        <button type="button" class="td-dot" role="radio"
+                                aria-checked="false" data-color="slate"
+                                style="--dot:var(--palette-slate)"></button>
+                    </div>
+                </div>
+
+                <div class="td-field">
+                    <label for="todoListIcon">Icon</label>
+                    <select id="todoListIcon" name="icon" class="td-new-list-icon">
+                        <option value="bi-list-task">List</option>
+                        <option value="bi-briefcase">Work</option>
+                        <option value="bi-house-heart">Personal</option>
+                        <option value="bi-heart-pulse">Clinic</option>
+                        <option value="bi-cart">Shopping</option>
+                        <option value="bi-book">Study</option>
+                        <option value="bi-stars">Ideas</option>
+                        <option value="bi-flag">Goals</option>
+                    </select>
+                </div>
+
+                <footer class="td-modal-foot">
+                    <button type="button" class="td-btn td-btn-ghost" data-close>
+                        Cancel
+                    </button>
+                    <button type="submit" class="td-btn td-btn-primary">
+                        <i class="bi bi-check2" aria-hidden="true"></i>
+                        <span data-list-submit-label>Create list</span>
+                    </button>
+                </footer>
+            </form>
+        </div>
+    </div>
+
+    <!-- ============================================================
+         Archived lists modal — view + restore (or permanently delete)
+         lists that were archived from the context popover.
+         ============================================================ -->
+    <div class="td-modal" id="todoArchivedModal" hidden role="dialog"
+         aria-modal="true" aria-labelledby="todoArchivedTitle">
+        <div class="td-modal-backdrop" data-close></div>
+        <div class="td-modal-panel" role="document">
+            <header class="td-modal-head">
+                <h3 id="todoArchivedTitle">
+                    <i class="bi bi-archive" aria-hidden="true"></i> Archived lists
+                </h3>
+                <button type="button" class="td-modal-close" data-close
+                        aria-label="Close">
+                    <i class="bi bi-x-lg" aria-hidden="true"></i>
+                </button>
+            </header>
+            <div class="td-modal-body">
+                <div class="td-archived" id="todoArchivedBody" role="list">
+                    <!-- archived rows injected by JS -->
+                </div>
+                <div class="td-archived-empty" id="todoArchivedEmpty" hidden>
+                    <i class="bi bi-archive" aria-hidden="true"></i>
+                    <p>No archived lists</p>
+                </div>
+                <div class="td-archived-loading" id="todoArchivedLoading" hidden>
+                    <span class="td-spinner" aria-hidden="true"></span>
+                    <span>Loading…</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Archived list row template -->
+    <template id="tpl-td-archived-row">
+        <div class="td-archived-row" role="listitem" data-list-id="">
+            <span class="td-archived-icon bi" aria-hidden="true"></span>
+            <span class="td-archived-name"></span>
+            <span class="td-archived-count"></span>
+            <div class="td-archived-acts">
+                <button type="button" class="td-btn td-btn-ghost td-btn-sm"
+                        data-act="restore">
+                    <i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i>
+                    Restore
+                </button>
+                <button type="button" class="td-archived-del" data-act="delete"
+                        aria-label="Delete permanently" title="Delete permanently">
+                    <i class="bi bi-trash" aria-hidden="true"></i>
+                </button>
+            </div>
+        </div>
+    </template>
+
+    <!-- ============================================================
          TEMPLATES (cloned by JS)
          ============================================================ -->
 
@@ -226,6 +362,10 @@
             <i class="td-list-icon bi" aria-hidden="true"></i>
             <span class="td-list-name"></span>
             <span class="td-list-count" aria-label="open tasks"></span>
+            <span class="td-list-opts" role="button" tabindex="-1"
+                  aria-label="List options" title="List options">
+                <i class="bi bi-three-dots-vertical" aria-hidden="true"></i>
+            </span>
         </button>
     </template>
 
@@ -264,48 +404,6 @@
                 </button>
             </div>
         </div>
-    </template>
-
-    <!-- Inline new-list form (cloned into rail when "+ New list" is clicked) -->
-    <template id="tpl-td-new-list">
-        <form class="td-new-list" autocomplete="off">
-            <input type="text" name="name" class="td-new-list-name"
-                   placeholder="List name" maxlength="60" required>
-            <div class="td-color-dots" role="radiogroup" aria-label="List color">
-                <button type="button" class="td-dot is-active" role="radio"
-                        aria-checked="true" data-color="indigo"
-                        style="--dot:var(--palette-indigo)"></button>
-                <button type="button" class="td-dot" role="radio"
-                        aria-checked="false" data-color="emerald"
-                        style="--dot:var(--palette-emerald)"></button>
-                <button type="button" class="td-dot" role="radio"
-                        aria-checked="false" data-color="rose"
-                        style="--dot:var(--palette-rose)"></button>
-                <button type="button" class="td-dot" role="radio"
-                        aria-checked="false" data-color="amber"
-                        style="--dot:var(--palette-amber)"></button>
-                <button type="button" class="td-dot" role="radio"
-                        aria-checked="false" data-color="ocean"
-                        style="--dot:var(--palette-ocean)"></button>
-                <button type="button" class="td-dot" role="radio"
-                        aria-checked="false" data-color="slate"
-                        style="--dot:var(--palette-slate)"></button>
-            </div>
-            <select name="icon" class="td-new-list-icon" aria-label="Icon">
-                <option value="bi-list-task">List</option>
-                <option value="bi-briefcase">Work</option>
-                <option value="bi-house-heart">Personal</option>
-                <option value="bi-heart-pulse">Clinic</option>
-                <option value="bi-cart">Shopping</option>
-                <option value="bi-book">Study</option>
-                <option value="bi-stars">Ideas</option>
-                <option value="bi-flag">Goals</option>
-            </select>
-            <div class="td-new-list-actions">
-                <button type="button" class="td-btn td-btn-ghost" data-cancel>Cancel</button>
-                <button type="submit" class="td-btn td-btn-primary">Create</button>
-            </div>
-        </form>
     </template>
 
     <!-- Snooze options template -->

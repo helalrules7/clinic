@@ -831,7 +831,7 @@ if ($status === 'completed') {
                                 </span>
                             </div>
                             <div class="btn-group btn-group-sm" role="group">
-                                <button class="btn btn-outline-primary" onclick="event.stopPropagation(); editMedication(<?= (int) $med['id'] ?>, <?= htmlspecialchars(json_encode($med['drug_name']), ENT_QUOTES) ?>, <?= htmlspecialchars(json_encode($med['notes'] ?? ''), ENT_QUOTES) ?>)" title="Edit Medication">
+                                <button class="btn btn-outline-primary" onclick="event.stopPropagation(); editMedication(<?= (int) $med['id'] ?>, <?= htmlspecialchars(json_encode($med['drug_name']), ENT_QUOTES) ?>, <?= htmlspecialchars(json_encode($med['notes'] ?? ''), ENT_QUOTES) ?>, <?= htmlspecialchars(json_encode($med['dose'] ?? ''), ENT_QUOTES) ?>, <?= htmlspecialchars(json_encode($med['frequency'] ?? ''), ENT_QUOTES) ?>, <?= htmlspecialchars(json_encode($med['duration'] ?? ''), ENT_QUOTES) ?>, <?= htmlspecialchars(json_encode($med['route'] ?? ''), ENT_QUOTES) ?>)" title="Edit Medication">
                                     <i class="bi bi-pencil"></i>
                                 </button>
                                 <button class="btn btn-outline-danger" onclick="event.stopPropagation(); deleteMedication(<?= $med['id'] ?>)" title="Delete Medication">
@@ -839,6 +839,19 @@ if ($status === 'completed') {
                                 </button>
                             </div>
                         </div>
+                        <?php
+                            $rxMeta = [];
+                            if (!empty($med['dose'])) $rxMeta[] = ['bi-capsule', 'Dose', $med['dose']];
+                            if (!empty($med['frequency'])) $rxMeta[] = ['bi-arrow-repeat', 'Frequency', $med['frequency']];
+                            if (!empty($med['duration'])) $rxMeta[] = ['bi-calendar3', 'Duration', $med['duration']];
+                        ?>
+                        <?php if (!empty($rxMeta)): ?>
+                            <div class="rx-meta d-flex flex-wrap gap-2 mb-2">
+                                <?php foreach ($rxMeta as $m): ?>
+                                    <span class="rx-meta-chip"><i class="bi <?= $m[0] ?> me-1"></i><span class="rx-meta-k"><?= $m[1] ?>:</span>&nbsp;<?= htmlspecialchars($m[2]) ?></span>
+                                <?php endforeach; ?>
+                            </div>
+                        <?php endif; ?>
                         <?php if (!empty($med['notes'])): ?>
                             <p class="text-muted mb-0">
                                 <small><?= htmlspecialchars($med['notes']) ?></small>
@@ -855,6 +868,30 @@ if ($status === 'completed') {
             </div>
         </div>
 
+
+        <style>
+            /* Prescription card meta chips (dose / frequency / duration) — a
+               distinct teal tone so they read apart from the blue drug title
+               and the muted notes, in both light + dark themes. */
+            .rx-meta-chip {
+                display: inline-flex;
+                align-items: center;
+                font-size: .72rem;
+                font-weight: 600;
+                padding: .2rem .6rem;
+                border-radius: 999px;
+                line-height: 1.25;
+                color: #0d9488;
+                background: rgba(13, 148, 136, .10);
+                border: 1px solid rgba(13, 148, 136, .22);
+            }
+            .rx-meta-chip .rx-meta-k { font-weight: 500; opacity: .75; }
+            .dark .rx-meta-chip {
+                color: #2dd4bf;
+                background: rgba(45, 212, 191, .12);
+                border-color: rgba(45, 212, 191, .30);
+            }
+        </style>
 
         <!-- Glasses Prescriptions -->
         <div class="card mb-4">

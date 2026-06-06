@@ -117,6 +117,29 @@ body.td-no-scroll { overflow: hidden; }
     color: var(--text);
     transform: rotate(90deg);
 }
+.todo-drawer .td-header-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+.todo-drawer .td-header-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: var(--r-md);
+    border: 1px solid var(--glass-border);
+    background: var(--glass-bg);
+    color: var(--muted);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background .15s ease, color .15s ease, transform .15s ease;
+}
+.todo-drawer .td-header-btn:hover {
+    background: rgba(var(--accent-rgb), 0.10);
+    color: var(--text);
+    transform: translateY(-1px);
+}
 
 /* filter chips */
 .todo-drawer .td-filters {
@@ -230,6 +253,41 @@ body.td-no-scroll { overflow: hidden; }
 .todo-drawer .td-list-chip .td-list-count.is-empty {
     display: none;
 }
+.todo-drawer .td-list-chip .td-list-opts {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    margin: -2px -6px -2px -2px;
+    border-radius: 50%;
+    color: var(--muted);
+    font-size: .72rem;
+    line-height: 1;
+    opacity: 0;
+    transform: scale(.78);
+    transition: opacity .18s ease, transform .18s ease, background .18s ease, color .18s ease;
+    pointer-events: none;
+}
+.todo-drawer .td-list-chip:hover .td-list-opts,
+.todo-drawer .td-list-chip.is-active .td-list-opts,
+.todo-drawer .td-list-chip:focus-within .td-list-opts {
+    opacity: 1;
+    transform: none;
+    pointer-events: auto;
+}
+.todo-drawer .td-list-chip .td-list-opts:hover {
+    background: color-mix(in srgb, var(--list-c) 24%, transparent);
+    color: var(--list-c);
+}
+/* Pointer-coarse devices (touch) have no hover, so always expose the kebab. */
+@media (hover: none) {
+    .todo-drawer .td-list-chip .td-list-opts {
+        opacity: 1;
+        transform: none;
+        pointer-events: auto;
+    }
+}
 .todo-drawer .td-list-chip.is-active {
     background: color-mix(in srgb, var(--list-c) 14%, var(--card));
     border-color: var(--list-c);
@@ -250,42 +308,14 @@ body.td-no-scroll { overflow: hidden; }
     background: rgba(var(--accent-rgb), 0.06);
 }
 
-/* ---------- inline new-list form ---------- */
-.todo-drawer .td-new-list {
-    flex: 0 0 auto;
-    display: inline-flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    align-items: center;
-    padding: 10px;
-    border-radius: var(--r-lg);
-    background: var(--glass-bg-strong);
-    border: 1px solid var(--accent);
-    box-shadow: 0 8px 24px rgba(var(--accent-rgb), 0.18);
-    max-width: 320px;
-}
-.todo-drawer .td-new-list-name {
-    flex: 1 1 100%;
-    min-width: 160px;
-    padding: 7px 10px;
-    border-radius: var(--r-md);
-    border: 1px solid var(--glass-border);
-    background: var(--card);
-    color: var(--text);
-    font-size: .85rem;
-}
-.todo-drawer .td-new-list-name:focus {
-    outline: none;
-    border-color: var(--accent);
-    box-shadow: 0 0 0 3px rgba(var(--accent-rgb), .18);
-}
+/* ---------- new-list modal: color swatches ---------- */
 .todo-drawer .td-color-dots {
     display: inline-flex;
-    gap: 6px;
+    gap: 8px;
 }
 .todo-drawer .td-dot {
-    width: 22px;
-    height: 22px;
+    width: 24px;
+    height: 24px;
     border-radius: 50%;
     border: 2px solid transparent;
     background: var(--dot, var(--palette-indigo));
@@ -297,19 +327,6 @@ body.td-no-scroll { overflow: hidden; }
 .todo-drawer .td-dot.is-active {
     border-color: var(--card);
     box-shadow: 0 0 0 2px var(--dot, var(--palette-indigo));
-}
-.todo-drawer .td-new-list-icon {
-    padding: 6px 8px;
-    border-radius: var(--r-md);
-    border: 1px solid var(--glass-border);
-    background: var(--card);
-    color: var(--text);
-    font-size: .82rem;
-}
-.todo-drawer .td-new-list-actions {
-    display: inline-flex;
-    gap: 6px;
-    margin-left: auto;
 }
 
 /* ---------- body ---------- */
@@ -961,6 +978,84 @@ body.td-no-scroll { overflow: hidden; }
 .td-btn.td-btn-primary:hover {
     background: color-mix(in srgb, var(--accent) 88%, black);
     box-shadow: 0 6px 16px rgba(var(--accent-rgb), .4);
+}
+.td-btn.td-btn-sm { padding: 5px 10px; font-size: .78rem; }
+
+/* ---------- archived lists modal ---------- */
+.todo-drawer .td-archived {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.todo-drawer .td-archived-row {
+    --list-c: var(--palette-indigo);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: var(--r-md);
+    border: 1px solid var(--glass-border);
+    background: var(--glass-bg);
+}
+.todo-drawer .td-archived-icon {
+    color: var(--list-c);
+    font-size: 1.05rem;
+    flex: 0 0 auto;
+}
+.todo-drawer .td-archived-name {
+    font-weight: 600;
+    font-size: .9rem;
+    color: var(--text);
+    flex: 1 1 auto;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.todo-drawer .td-archived-count {
+    font-size: .72rem;
+    color: var(--muted);
+    flex: 0 0 auto;
+}
+.todo-drawer .td-archived-acts {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex: 0 0 auto;
+}
+.todo-drawer .td-archived-del {
+    width: 30px;
+    height: 30px;
+    border-radius: var(--r-sm);
+    border: 1px solid var(--glass-border);
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background .15s ease, color .15s ease, border-color .15s ease;
+}
+.todo-drawer .td-archived-del:hover {
+    background: rgba(239, 68, 68, .12);
+    color: #ef4444;
+    border-color: rgba(239, 68, 68, .4);
+}
+.todo-drawer .td-archived-empty,
+.todo-drawer .td-archived-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 28px 12px;
+    color: var(--muted);
+    text-align: center;
+}
+.todo-drawer .td-archived-empty i { font-size: 1.8rem; opacity: .7; }
+.todo-drawer .td-archived-empty p { margin: 0; font-size: .88rem; }
+.todo-drawer .td-archived-loading {
+    flex-direction: row;
+    font-size: .85rem;
 }
 
 /* ---------- mobile bottom-sheet ---------- */

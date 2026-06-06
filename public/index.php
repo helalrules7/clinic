@@ -435,6 +435,10 @@ try {
     $router->get('/api/getMostUsedDrugs', 'ApiController@getMostUsedDrugs');
     $router->get('/api/searchDrugsAutocomplete', 'ApiController@searchDrugsAutocomplete');
     $router->post('/api/drugs/update-database', 'ApiController@updateDrugsDatabase');
+    // Per-doctor drug defaults (saved route + instructions per drug)
+    $router->get('/api/drug-defaults', 'ApiController@getDrugDefault');
+    $router->post('/api/drug-defaults', 'ApiController@saveDrugDefault');
+    $router->delete('/api/drug-defaults', 'ApiController@deleteDrugDefault');
     
     // Comprehensive Search API route
     $router->get('/api/search/comprehensive', 'ApiController@comprehensiveSearch');

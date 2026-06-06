@@ -117,6 +117,7 @@
         progressTitle, progressSub, progressBadge, progressFill, progressCard,
         quickForm, quickInput,
         fab, fullModal, fullForm,
+        listModal, listForm, archivedModal,
         listPopover, snoozeMenu;
 
     function cacheRefs() {
@@ -137,6 +138,9 @@
         fab           = document.getElementById('todoFullAddFab');
         fullModal     = document.getElementById('todoFullModal');
         fullForm      = document.getElementById('todoFullForm');
+        listModal     = document.getElementById('todoListModal');
+        listForm      = document.getElementById('todoListForm');
+        archivedModal = document.getElementById('todoArchivedModal');
         listPopover   = document.getElementById('todoListPopover');
     }
 
@@ -177,6 +181,8 @@
         document.body.classList.remove('td-no-scroll');
         hidePopover();
         closeFullModal();
+        closeListModal();
+        closeArchivedModal();
     }
 
     function handleError(e) {
@@ -221,6 +227,15 @@
             }
             // click → select
             chip.addEventListener('click', () => selectList(l.id));
+            // explicit options affordance (kebab) → context popover
+            const optsBtn = chip.querySelector('.td-list-opts');
+            if (optsBtn) {
+                optsBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    openPopover(chip, l);
+                });
+            }
             // right-click / long-press → context popover
             chip.addEventListener('contextmenu', (e) => {
                 e.preventDefault();
@@ -235,7 +250,7 @@
         add.className = 'td-list-chip td-list-add';
         add.innerHTML =
             '<i class="bi bi-plus-lg" aria-hidden="true"></i><span>New list</span>';
-        add.addEventListener('click', openNewListForm);
+        add.addEventListener('click', () => openListModal(null));
         rail.appendChild(add);
     }
 
@@ -689,19 +704,65 @@
         });
     }
 
-    // -------------------------------------------------------- new-list inline
-    function openNewListForm() {
-        // already open?
-        if (rail.querySelector('.td-new-list')) {
-            rail.querySelector('.td-new-list-name').focus();
-            return;
-        }
-        const tpl = document.getElementById('tpl-td-new-list');
-        const form = tpl.content.firstElementChild.cloneNode(true);
-        const addChip = rail.querySelector('.td-list-add');
-        rail.insertBefore(form, addChip);
+    // -------------------------------------------------- list create/edit modal
+    // `list` null → create mode; an existing list object → edit mode (used by
+    // the popover's Rename + Color actions, replacing the old prompt()/cycle).
+    // `focusField` ('name' | 'color') just decides what to focus on open.
+    function openListModal(list, focusField) {
+        if (!listModal) cacheRefs();
+        if (!listModal) return;
+        const isEdit = !!(list && list.id);
+        listForm.reset();
 
-        const dots = $$('.td-dot', form);
+        listForm.elements.id.value = isEdit ? String(list.id) : '';
+        listForm.elements.name.value = isEdit ? (list.name || '') : '';
+
+        const targetColor = isEdit ? (list.color || 'indigo') : 'indigo';
+        const dots = $$('.td-dot', listForm);
+        dots.forEach((d) => {
+            const active = d.dataset.color === targetColor;
+            d.classList.toggle('is-active', active);
+            d.setAttribute('aria-checked', active ? 'true' : 'false');
+        });
+        // Fallback: if the stored color isn't in the swatch set, select the first.
+        if (!listForm.querySelector('.td-dot.is-active') && dots[0]) {
+            dots[0].classList.add('is-active');
+            dots[0].setAttribute('aria-checked', 'true');
+        }
+
+        if (isEdit && list.icon) listForm.elements.icon.value = list.icon;
+
+        const titleEl = document.getElementById('todoListModalTitle');
+        const labelEl = listForm.querySelector('[data-list-submit-label]');
+        if (titleEl) titleEl.textContent = isEdit ? 'Edit list' : 'New list';
+        if (labelEl) labelEl.textContent = isEdit ? 'Save changes' : 'Create list';
+
+        listModal.hidden = false;
+        requestAnimationFrame(() => listModal.classList.add('is-open'));
+        setTimeout(() => {
+            try {
+                if (focusField === 'color') {
+                    const active = listForm.querySelector('.td-dot.is-active');
+                    if (active) active.focus();
+                } else {
+                    listForm.elements.name.focus();
+                    listForm.elements.name.select();
+                }
+            } catch (e) { /* */ }
+        }, 80);
+    }
+
+    function closeListModal() {
+        if (!listModal) return;
+        listModal.classList.remove('is-open');
+        setTimeout(() => { listModal.hidden = true; }, 200);
+    }
+
+    function bindListModal() {
+        if (!listModal) return;
+        $$('[data-close]', listModal).forEach((el) => el.addEventListener('click', closeListModal));
+
+        const dots = $$('.td-dot', listForm);
         dots.forEach((dot) => {
             dot.addEventListener('click', () => {
                 dots.forEach((d) => { d.classList.remove('is-active'); d.setAttribute('aria-checked', 'false'); });
@@ -710,28 +771,158 @@
             });
         });
 
-        form.querySelector('[data-cancel]').addEventListener('click', () => form.remove());
-        form.addEventListener('submit', (e) => {
+        listForm.addEventListener('submit', (e) => {
             e.preventDefault();
-            const name = (form.querySelector('[name="name"]').value || '').trim();
-            const colorBtn = form.querySelector('.td-dot.is-active');
+            const id = (listForm.elements.id.value || '').trim();
+            const name = (listForm.elements.name.value || '').trim();
+            const colorBtn = listForm.querySelector('.td-dot.is-active');
             const color = colorBtn ? colorBtn.dataset.color : 'indigo';
-            const icon = form.querySelector('[name="icon"]').value || 'bi-list-task';
+            const icon = listForm.elements.icon.value || 'bi-list-task';
             if (!name) return;
-            api('/api/todo-lists', {
-                method: 'POST',
-                body: { name: name, color: color, icon: icon }
-            }).then((created) => {
-                form.remove();
-                const newList = created && created.id ? created
-                    : { id: Date.now(), name: name, color: color, icon: icon, open_count: 0, total_count: 0 };
-                state.lists.push(newList);
-                renderRail();
-                populateListSelect();
-                selectList(newList.id);
-            }).catch(handleError);
+            const payload = { name: name, color: color, icon: icon };
+
+            if (id) {
+                // edit existing list
+                api('/api/todo-lists/' + id, { method: 'PATCH', body: payload })
+                    .then((res) => {
+                        const updated = (res && res.list) ? res.list : null;
+                        const list = state.lists.find((l) => String(l.id) === String(id));
+                        if (list) {
+                            list.name = (updated && updated.name) || name;
+                            list.color = (updated && updated.color) || color;
+                            list.icon = (updated && updated.icon) || icon;
+                        }
+                        renderRail();
+                        populateListSelect();
+                        if (state.currentListId != null && String(state.currentListId) === String(id) && progressCard) {
+                            progressCard.style.setProperty('--list-c', colorVar(color));
+                        }
+                        closeListModal();
+                    }).catch(handleError);
+            } else {
+                // create new list
+                api('/api/todo-lists', { method: 'POST', body: payload })
+                    .then((res) => {
+                        // Backend returns { success: true, list: {...} }; tolerate
+                        // the older bare-object shape too.
+                        const created = (res && res.list) ? res.list : res;
+                        const newList = created && created.id ? created
+                            : { id: Date.now(), name: name, color: color, icon: icon, open_count: 0, total_count: 0 };
+                        state.lists.push(newList);
+                        renderRail();
+                        populateListSelect();
+                        selectList(newList.id);
+                        closeListModal();
+                    }).catch(handleError);
+            }
         });
-        form.querySelector('.td-new-list-name').focus();
+    }
+
+    // -------------------------------------------------------- archived lists
+    function openArchivedModal() {
+        if (!archivedModal) cacheRefs();
+        if (!archivedModal) return;
+        const bodyEl = document.getElementById('todoArchivedBody');
+        const emptyEl = document.getElementById('todoArchivedEmpty');
+        const loadEl = document.getElementById('todoArchivedLoading');
+        if (bodyEl) bodyEl.innerHTML = '';
+        if (emptyEl) emptyEl.hidden = true;
+        if (loadEl) loadEl.hidden = false;
+
+        archivedModal.hidden = false;
+        requestAnimationFrame(() => archivedModal.classList.add('is-open'));
+
+        api('/api/todo-lists?include_archived=1').then((res) => {
+            const all = Array.isArray(res) ? res : ((res && (res.lists || res.data)) || []);
+            const archived = all.filter((l) => l.archived_at);
+            if (loadEl) loadEl.hidden = true;
+            renderArchived(archived);
+        }).catch((e) => {
+            if (loadEl) loadEl.hidden = true;
+            handleError(e);
+        });
+    }
+
+    function renderArchived(archived) {
+        const bodyEl = document.getElementById('todoArchivedBody');
+        const emptyEl = document.getElementById('todoArchivedEmpty');
+        if (!bodyEl) return;
+        bodyEl.innerHTML = '';
+        if (!archived.length) {
+            if (emptyEl) emptyEl.hidden = false;
+            return;
+        }
+        if (emptyEl) emptyEl.hidden = true;
+        const tpl = document.getElementById('tpl-td-archived-row');
+        const frag = document.createDocumentFragment();
+        archived.forEach((l) => {
+            const row = tpl.content.firstElementChild.cloneNode(true);
+            row.dataset.listId = String(l.id);
+            row.style.setProperty('--list-c', colorVar(l.color));
+            row.querySelector('.td-archived-icon').classList.add(l.icon || 'bi-list-task');
+            row.querySelector('.td-archived-name').textContent = l.name || 'List';
+            const total = (l.total_count != null) ? l.total_count : 0;
+            row.querySelector('.td-archived-count').textContent =
+                total > 0 ? (total + (total === 1 ? ' task' : ' tasks')) : 'Empty';
+            row.querySelector('[data-act="restore"]').addEventListener('click', () => restoreList(l.id, row));
+            row.querySelector('[data-act="delete"]').addEventListener('click', () => deleteArchivedList(l, row));
+            frag.appendChild(row);
+        });
+        bodyEl.appendChild(frag);
+    }
+
+    function restoreList(id, row) {
+        api('/api/todo-lists/' + id + '/restore', { method: 'POST' }).then((res) => {
+            const restored = (res && res.list) ? res.list : null;
+            if (row && row.parentNode) row.parentNode.removeChild(row);
+            // pull it back into the active rail
+            const existing = state.lists.find((l) => String(l.id) === String(id));
+            if (!existing) {
+                state.lists.push(restored || { id: id, name: 'List', color: 'indigo', icon: 'bi-list-task', open_count: 0, total_count: 0 });
+            } else if (restored) {
+                existing.archived_at = null;
+            }
+            renderRail();
+            populateListSelect();
+            const bodyEl = document.getElementById('todoArchivedBody');
+            const emptyEl = document.getElementById('todoArchivedEmpty');
+            if (bodyEl && !bodyEl.children.length && emptyEl) emptyEl.hidden = false;
+            if (typeof window.__refreshTodoHeaderBadge === 'function') window.__refreshTodoHeaderBadge();
+        }).catch(handleError);
+    }
+
+    function deleteArchivedList(list, row) {
+        const msg = 'Permanently delete "' + (list.name || 'this list') +
+            '" and all of its tasks? This cannot be undone.';
+        const run = function () {
+            api('/api/todo-lists/' + list.id, { method: 'DELETE', body: { force: true } }).then(() => {
+                if (row && row.parentNode) row.parentNode.removeChild(row);
+                state.lists = state.lists.filter((l) => String(l.id) !== String(list.id));
+                const bodyEl = document.getElementById('todoArchivedBody');
+                const emptyEl = document.getElementById('todoArchivedEmpty');
+                if (bodyEl && !bodyEl.children.length && emptyEl) emptyEl.hidden = false;
+                if (typeof window.__refreshTodoHeaderBadge === 'function') window.__refreshTodoHeaderBadge();
+            }).catch(handleError);
+        };
+        if (typeof window.mkConfirmModal === 'function') {
+            window.mkConfirmModal({
+                title: 'Delete list', message: msg,
+                okText: 'Delete', okVariant: 'danger', cancelText: 'Cancel'
+            }).then((ok) => { if (ok) run(); });
+        } else if (window.confirm(msg)) {
+            run();
+        }
+    }
+
+    function closeArchivedModal() {
+        if (!archivedModal) return;
+        archivedModal.classList.remove('is-open');
+        setTimeout(() => { archivedModal.hidden = true; }, 200);
+    }
+
+    function bindArchivedModal() {
+        if (!archivedModal) return;
+        $$('[data-close]', archivedModal).forEach((el) => el.addEventListener('click', closeArchivedModal));
     }
 
     // -------------------------------------------------------- list popover
@@ -771,14 +962,9 @@
             const list = popoverList;
             hidePopover();
             if (act === 'rename') {
-                const next = window.prompt('Rename list', list.name || '');
-                if (next && next.trim() && next.trim() !== list.name) {
-                    api('/api/todo-lists/' + list.id, {
-                        method: 'PATCH', body: { name: next.trim() }
-                    }).then(() => { list.name = next.trim(); renderRail(); populateListSelect(); }).catch(handleError);
-                }
+                openListModal(list, 'name');
             } else if (act === 'color') {
-                cycleColor(list);
+                openListModal(list, 'color');
             } else if (act === 'up' || act === 'down') {
                 moveList(list.id, act === 'up' ? -1 : 1);
             } else if (act === 'archive') {
@@ -810,21 +996,6 @@
         });
         window.addEventListener('scroll', hidePopover, true);
         window.addEventListener('resize', hidePopover);
-    }
-
-    function cycleColor(list) {
-        const order = ['indigo', 'emerald', 'rose', 'amber', 'ocean', 'slate'];
-        const idx = order.indexOf(list.color || 'indigo');
-        const next = order[(idx + 1) % order.length];
-        api('/api/todo-lists/' + list.id, {
-            method: 'PATCH', body: { color: next }
-        }).then(() => {
-            list.color = next;
-            renderRail();
-            if (state.currentListId === list.id) {
-                progressCard.style.setProperty('--list-c', colorVar(next));
-            }
-        }).catch(handleError);
     }
 
     function moveList(id, delta) {
@@ -1191,32 +1362,48 @@
         cacheRefs();
         if (!drawer) return;
 
+        // The drawer uses `transform` for its slide animation, which makes it
+        // the containing block for any `position: fixed` descendant AND clips
+        // them via `overflow: hidden`. The list popover must therefore live on
+        // <body> so it positions against the viewport and isn't clipped.
+        if (listPopover && listPopover.parentElement !== document.body) {
+            document.body.appendChild(listPopover);
+        }
+
         ensureHeaderButton();
 
         // close button
         $('#todoDrawerClose', drawer).addEventListener('click', close);
-        // backdrop click — but only if full modal isn't open
+        const innerModalOpen = (m) => m && !m.hidden && m.classList.contains('is-open');
+        // backdrop click — but only if no inner modal is open
         backdrop.addEventListener('click', () => {
-            if (!fullModal.hidden && fullModal.classList.contains('is-open')) return;
+            if (innerModalOpen(fullModal)) return;
+            if (innerModalOpen(listModal)) return;
+            if (innerModalOpen(archivedModal)) return;
             close();
         });
-        // ESC
+        // ESC — closes the top-most layer first (inner modals → drawer)
         document.addEventListener('keydown', (e) => {
             if (e.key !== 'Escape') return;
             if (!drawer.classList.contains('open')) return;
-            if (!fullModal.hidden && fullModal.classList.contains('is-open')) {
-                closeFullModal();
-                return;
-            }
+            if (innerModalOpen(archivedModal)) { closeArchivedModal(); return; }
+            if (innerModalOpen(listModal)) { closeListModal(); return; }
+            if (innerModalOpen(fullModal)) { closeFullModal(); return; }
             close();
         });
 
         // fab
         fab.addEventListener('click', () => openFullModal(null));
 
+        // Archived-lists entry point in the header.
+        const archivedBtn = document.getElementById('todoArchivedBtn');
+        if (archivedBtn) archivedBtn.addEventListener('click', openArchivedModal);
+
         bindQuickAdd();
         bindFilters();
         bindFullModal();
+        bindListModal();
+        bindArchivedModal();
         bindPopover();
         bindDrag();
 

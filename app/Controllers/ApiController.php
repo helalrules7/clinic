@@ -3241,7 +3241,8 @@ class ApiController
             $data['dose'] ?? '',
             $data['frequency'] ?? '',
             $data['duration'] ?? '',
-            $data['route'] ?? 'Topical',
+            // Route is optional in the UI; fall back to the column default.
+            (isset($data['route']) && trim((string) $data['route']) !== '') ? $data['route'] : 'Topical',
             $data['notes'] ?? null
         ]);
 
@@ -4382,7 +4383,8 @@ class ApiController
                 $data['dose'] ?? '',
                 $data['frequency'] ?? '',
                 $data['duration'] ?? '',
-                $data['route'] ?? 'Topical',
+                // Route is optional in the UI; fall back to the column default.
+                (isset($data['route']) && trim((string) $data['route']) !== '') ? $data['route'] : 'Topical',
                 $data['notes'] ?? null,
                 $id
             ]);
@@ -7280,6 +7282,142 @@ class ApiController
             \PDO::ATTR_EMULATE_PREPARES => false,
             \PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci"
         ]);
+    }
+
+    /**
+     * Drug defaults (per-doctor saved route + instructions for a drug).
+     *
+     * GET /api/drug-defaults?drug_name=...  -> { success, default: {route, instructions} | null }
+     * The add-prescription modal calls this when a drug is picked so the
+     * doctor's saved route + notes auto-fill (still editable before saving).
+     */
+    public function getDrugDefault()
+    {
+        if (!$this->auth->check()) {
+            return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+        }
+
+        $user = $this->auth->user();
+        $drugName = trim((string) ($_GET['drug_name'] ?? ''));
+        if ($drugName === '') {
+            return $this->jsonResponse(['success' => true, 'default' => null]);
+        }
+
+        try {
+            $stmt = $this->pdo->prepare(
+                "SELECT dose, frequency, duration, route, instructions
+                 FROM drug_defaults WHERE doctor_id = ? AND drug_name = ? LIMIT 1"
+            );
+            $stmt->execute([$user['id'], $drugName]);
+            $row = $stmt->fetch(\PDO::FETCH_ASSOC);
+
+            return $this->jsonResponse(['success' => true, 'default' => $row ?: null]);
+        } catch (\Exception $e) {
+            return $this->jsonResponse(['success' => false, 'message' => 'Failed to load drug default'], 500);
+        }
+    }
+
+    /**
+     * POST /api/drug-defaults  body: drug_name, dose, frequency, duration, route, instructions
+     * Upserts the current doctor's prescription template for a drug. Empty
+     * fields are stored as NULL ("no default for that field").
+     */
+    public function saveDrugDefault()
+    {
+        if (!$this->auth->check()) {
+            return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+        }
+
+        $user = $this->auth->user();
+        if ($user['role'] !== 'doctor') {
+            return $this->jsonResponse(['error' => 'Only doctors can save drug defaults'], 403);
+        }
+
+        $drugName = trim((string) ($_POST['drug_name'] ?? ''));
+        if ($drugName === '' || mb_strlen($drugName) > 120) {
+            return $this->jsonResponse(['success' => false, 'message' => 'Invalid drug name'], 400);
+        }
+
+        // Short text fields capped at 60 chars (matches the prescriptions schema).
+        $clip = function ($key) {
+            $v = trim((string) ($_POST[$key] ?? ''));
+            return $v !== '' ? mb_substr($v, 0, 60) : null;
+        };
+        $dose      = $clip('dose');
+        $frequency = $clip('frequency');
+        $duration  = $clip('duration');
+        $route     = $clip('route');
+
+        $instructions = trim((string) ($_POST['instructions'] ?? ''));
+        $instructions = $instructions !== '' ? $instructions : null;
+
+        // Nothing to save -> treat as a delete so we don't keep empty rows around.
+        if ($dose === null && $frequency === null && $duration === null && $route === null && $instructions === null) {
+            return $this->deleteDrugDefault();
+        }
+
+        try {
+            $stmt = $this->pdo->prepare("
+                INSERT INTO drug_defaults (doctor_id, drug_name, dose, frequency, duration, route, instructions)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+                ON DUPLICATE KEY UPDATE
+                    dose = VALUES(dose),
+                    frequency = VALUES(frequency),
+                    duration = VALUES(duration),
+                    route = VALUES(route),
+                    instructions = VALUES(instructions),
+                    updated_at = CURRENT_TIMESTAMP
+            ");
+            $stmt->execute([$user['id'], $drugName, $dose, $frequency, $duration, $route, $instructions]);
+
+            return $this->jsonResponse([
+                'success' => true,
+                'default' => [
+                    'dose' => $dose,
+                    'frequency' => $frequency,
+                    'duration' => $duration,
+                    'route' => $route,
+                    'instructions' => $instructions
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return $this->jsonResponse(['success' => false, 'message' => 'Failed to save drug default'], 500);
+        }
+    }
+
+    /**
+     * DELETE /api/drug-defaults?drug_name=...  (drug_name also accepted via body)
+     * Removes the current doctor's saved default for a drug.
+     */
+    public function deleteDrugDefault()
+    {
+        if (!$this->auth->check()) {
+            return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+        }
+
+        $user = $this->auth->user();
+        if ($user['role'] !== 'doctor') {
+            return $this->jsonResponse(['error' => 'Only doctors can delete drug defaults'], 403);
+        }
+
+        $drugName = trim((string) ($_GET['drug_name'] ?? ($_POST['drug_name'] ?? '')));
+        if ($drugName === '') {
+            // Fall back to a raw form-encoded DELETE body.
+            parse_str(file_get_contents('php://input'), $body);
+            $drugName = trim((string) ($body['drug_name'] ?? ''));
+        }
+        if ($drugName === '') {
+            return $this->jsonResponse(['success' => false, 'message' => 'Invalid drug name'], 400);
+        }
+
+        try {
+            $stmt = $this->pdo->prepare("DELETE FROM drug_defaults WHERE doctor_id = ? AND drug_name = ?");
+            $stmt->execute([$user['id'], $drugName]);
+
+            return $this->jsonResponse(['success' => true]);
+        } catch (\Exception $e) {
+            return $this->jsonResponse(['success' => false, 'message' => 'Failed to delete drug default'], 500);
+        }
     }
 
     public function getMostUsedDrugs()

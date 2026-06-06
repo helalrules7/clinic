@@ -152,53 +152,49 @@ function showPrescriptionModal(appointmentId) {
                                         <input type="text" class="form-control" name="drug_name" id="drugNameInput" required autocomplete="off">
                                         <div id="drugSuggestions" class="position-absolute w-100 border border-top-0 rounded-bottom shadow-sm drug-suggest-dropdown" style="z-index: 1050; display: none; max-height: 200px; overflow-y: auto;"></div>
                                     </div>
+                                    <div id="rxTemplateHint" class="form-text text-success mt-1" style="display: none;">
+                                        <i class="bi bi-bookmark-star-fill me-1"></i>Template loaded for this drug.
+                                    </div>
                                 </div>
-                                <div class="col-md-4 mb-3" style="display: none;">
-                                    <label class="form-label">Dose</label>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Dose <span class="text-muted small">(optional)</span></label>
                                     <input type="text" class="form-control" name="dose" placeholder="e.g., 1 tablet, 2 drops">
                                 </div>
-                                <div class="col-md-4 mb-3" style="display: none;">
-                                    <label class="form-label">Frequency</label>
-                                    <input type="text" class="form-control" name="frequency" placeholder="e.g., Twice daily, Every 6 hours">
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Frequency <span class="text-muted small">(optional)</span></label>
+                                    <input type="text" class="form-control" name="frequency" placeholder="e.g., Twice daily">
                                 </div>
-                                <div class="col-md-4 mb-3" style="display: none;">
-                                    <label class="form-label">Duration</label>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Duration <span class="text-muted small">(optional)</span></label>
                                     <input type="text" class="form-control" name="duration" placeholder="e.g., 7 days, 2 weeks">
                                 </div>
-                                <div class="col-12 mb-3" style="display: none;">
-                                    <label class="form-label">Route</label>
-                                    <section class="field menu" style="min-width: 100%;">
-                                        <div class="control">
-                                            <select class="form-control d-none" name="route">
-                                                <option value="Topical" selected>Topical</option>
-                                                <option value="Oral">Oral</option>
-                                                <option value="IV">IV</option>
-                                                <option value="IM">IM</option>
-                                                <option value="Sublingual">Sublingual</option>
-                                                <option value="Inhalation">Inhalation</option>
-                                                <option value="Other">Other</option>
-                                            </select>
-                                            <button type="button" class="custom-select-toggle" aria-expanded="false">Topical</button>
-                                            <menu>
-                                                <li data-option="Topical" tabindex="0" role="button" class="selected"><i class="bi-arrow-right-circle fs-5"></i><h3>Topical</h3></li>
-                                                <li data-option="Oral" tabindex="0" role="button"><i class="bi-arrow-right-circle fs-5"></i><h3>Oral</h3></li>
-                                                <li data-option="IV" tabindex="0" role="button"><i class="bi-arrow-right-circle fs-5"></i><h3>IV</h3></li>
-                                                <li data-option="IM" tabindex="0" role="button"><i class="bi-arrow-right-circle fs-5"></i><h3>IM</h3></li>
-                                                <li data-option="Sublingual" tabindex="0" role="button"><i class="bi-arrow-right-circle fs-5"></i><h3>Sublingual</h3></li>
-                                                <li data-option="Inhalation" tabindex="0" role="button"><i class="bi-arrow-right-circle fs-5"></i><h3>Inhalation</h3></li>
-                                                <li data-option="Other" tabindex="0" role="button"><i class="bi-arrow-right-circle fs-5"></i><h3>Other</h3></li>
-                                            </menu>
-                                        </div>
-                                    </section>
+                                <div class="col-12 mb-3">
+                                    <label class="form-label">Route <span class="text-muted small">(optional)</span></label>
+                                    <select class="form-select" name="route" id="prescriptionRoute">
+                                        <option value="">— None —</option>
+                                        <option value="Topical">Topical</option>
+                                        <option value="Oral">Oral</option>
+                                        <option value="IV">IV</option>
+                                        <option value="IM">IM</option>
+                                        <option value="Sublingual">Sublingual</option>
+                                        <option value="Inhalation">Inhalation</option>
+                                        <option value="Other">Other</option>
+                                    </select>
                                 </div>
                                 <div class="col-12 mb-3">
-                                    <label class="form-label">Notes</label>
+                                    <label class="form-label">Instructions / Notes</label>
                                     <textarea class="form-control" name="notes" rows="3"></textarea>
                                 </div>
                             </div>
                         </div>
                         <div class="modal-footer">
+                            <button type="button" class="btn btn-outline-secondary me-auto" id="clearRxFieldsBtn" title="Clear dose, frequency, duration and notes">
+                                <i class="bi bi-eraser me-1"></i>Clear fields
+                            </button>
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="button" class="btn btn-outline-primary" id="saveRxTemplateBtn" title="Save these fields as the default template for this drug">
+                                <i class="bi bi-bookmark-star me-1"></i>Add &amp; save as template
+                            </button>
                             <button type="submit" class="btn btn-primary">Save Prescription</button>
                         </div>
                     </form>
@@ -216,35 +212,75 @@ function showPrescriptionModal(appointmentId) {
         initCustomSelects();
     }, 100);
     
-    // Handle form submission
-    document.getElementById('prescriptionForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        const formData = new FormData(this);
-        
-        fetch('/api/prescriptions/meds', {
-            method: 'POST',
-            credentials: 'same-origin',
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest'
-            },
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
+    const form = document.getElementById('prescriptionForm');
+
+    // POST the prescription. When saveTemplate is true we first persist the
+    // entered fields as this drug's default template (per doctor).
+    async function submitPrescription(saveTemplate) {
+        const drugName = (form.elements['drug_name'].value || '').trim();
+        if (!drugName) {
+            showErrorMessage('Please enter a drug name first.');
+            form.elements['drug_name'].focus();
+            return;
+        }
+
+        try {
+            if (saveTemplate) {
+                await saveDrugTemplate(drugName, form);
+            }
+
+            const response = await fetch('/api/prescriptions/meds', {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                body: new FormData(form)
+            });
+            const data = await response.json();
+
             if (data.success) {
                 modal.hide();
-                showSuccessMessage('Prescription added successfully');
-                setTimeout(() => {
-                    reloadMedications();
-                }, 300);
+                showSuccessMessage(saveTemplate ? 'Prescription added and template saved' : 'Prescription added successfully');
+                setTimeout(() => { reloadMedications(); }, 300);
             } else {
-                showErrorMessage('Error: ' + data.message);
+                showErrorMessage('Error: ' + (data.message || data.error || 'Could not add prescription'));
             }
-        })
-        .catch(error => {
+        } catch (error) {
             showErrorMessage('Error: ' + error.message);
-        });
+        }
+    }
+
+    // Plain "Save Prescription"
+    form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        submitPrescription(false);
     });
+
+    // "Add & save as template"
+    const tplBtn = document.getElementById('saveRxTemplateBtn');
+    if (tplBtn) {
+        tplBtn.addEventListener('click', function () {
+            submitPrescription(true);
+        });
+    }
+
+    // Unified "Clear fields" button
+    const clearBtn = document.getElementById('clearRxFieldsBtn');
+    if (clearBtn) {
+        clearBtn.addEventListener('click', function () {
+            clearRxFields(form);
+        });
+    }
+
+    // Auto-load a saved template the moment a drug name is chosen / changed.
+    const drugInput = form.elements['drug_name'];
+    if (drugInput) {
+        drugInput.addEventListener('change', function () {
+            applyDrugTemplateToForm((this.value || '').trim(), form);
+        });
+    }
+    // Expose so the suggestion pickers (most-used badges, autocomplete list)
+    // can trigger an instant template load after they set the drug name.
+    window.__rxApplyDrugTemplate = (name) => applyDrugTemplateToForm(name, form);
     
     // Load most used drugs suggestions
     loadMostUsedDrugs();
@@ -254,8 +290,120 @@ function showPrescriptionModal(appointmentId) {
     
     // Clean up modal on hide
     document.getElementById('prescriptionModal').addEventListener('hidden.bs.modal', function() {
+        window.__rxApplyDrugTemplate = null;
         this.remove();
     });
+}
+
+// Renders the per-doctor saved template for the drug-details popover, using the
+// teal rx-meta chips so it matches the medications cards.
+function renderPopoverSavedTemplate(tpl) {
+    const hasAny = tpl && (tpl.dose || tpl.frequency || tpl.duration || tpl.route || tpl.instructions);
+    if (!hasAny) {
+        return `
+            <div class="forum-drug-popover-label"><i class="bi bi-bookmark me-1"></i>Saved instructions</div>
+            <div class="forum-drug-popover-value" style="font-size: .9em; opacity: .75;">No saved template for this drug yet.</div>
+        `;
+    }
+    const chip = (icon, label, val) => val
+        ? `<span class="rx-meta-chip me-1 mb-1"><i class="bi ${icon} me-1"></i><span class="rx-meta-k">${label}:</span>&nbsp;${escapeHtml(val)}</span>`
+        : '';
+    return `
+        <div class="forum-drug-popover-label"><i class="bi bi-bookmark-star-fill me-1"></i>Saved instructions</div>
+        <div class="forum-drug-popover-value">
+            <div class="d-flex flex-wrap mb-1">
+                ${chip('bi-capsule', 'Dose', tpl.dose)}
+                ${chip('bi-arrow-repeat', 'Frequency', tpl.frequency)}
+                ${chip('bi-calendar3', 'Duration', tpl.duration)}
+                ${chip('bi-signpost-2', 'Route', tpl.route)}
+            </div>
+            ${tpl.instructions ? `<div style="font-size: .92em;"><strong>Instructions:</strong> ${escapeHtml(tpl.instructions)}</div>` : ''}
+        </div>
+    `;
+}
+
+// Generic: fetch a drug's saved template and render it into #elId via renderer.
+async function loadSavedTemplateInto(elId, drugName, renderer) {
+    const el = document.getElementById(elId);
+    if (!el || !drugName) return;
+    try {
+        const res = await fetch(`/api/drug-defaults?drug_name=${encodeURIComponent(drugName)}`, {
+            credentials: 'same-origin',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+        const data = await res.json();
+        el.innerHTML = renderer(data && data.success ? data.default : null);
+    } catch (e) {
+        el.innerHTML = '';
+    }
+}
+
+// Unified "Clear fields" action shared by the add + edit prescription modals:
+// wipes dose / frequency / duration / notes (leaves the drug name + route).
+function clearRxFields(form) {
+    if (!form) return;
+    ['dose', 'frequency', 'duration', 'notes'].forEach(name => {
+        const el = form.elements[name];
+        if (el) el.value = '';
+    });
+}
+
+// Persist the add-prescription form's fields as this drug's default template
+// (per doctor). Returns the fetch promise so callers can await it.
+function saveDrugTemplate(drugName, form) {
+    const body = new URLSearchParams();
+    body.append('drug_name', drugName);
+    ['dose', 'frequency', 'duration', 'route', 'notes'].forEach(name => {
+        const el = form.elements[name];
+        if (!el) return;
+        // The template's "instructions" column is fed from the notes field.
+        body.append(name === 'notes' ? 'instructions' : name, el.value || '');
+    });
+
+    return fetch('/api/drug-defaults', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: body.toString()
+    }).then(r => r.json());
+}
+
+// Fetch the doctor's saved template for a drug and fill the form fields.
+// Only overwrites a field when the template actually has a value for it, so a
+// half-typed prescription is never silently wiped.
+async function applyDrugTemplateToForm(drugName, form) {
+    if (!drugName || !form) return;
+    const hint = document.getElementById('rxTemplateHint');
+    try {
+        const res = await fetch(`/api/drug-defaults?drug_name=${encodeURIComponent(drugName)}`, {
+            credentials: 'same-origin',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+        const data = await res.json();
+        const tpl = data && data.success ? data.default : null;
+
+        if (!tpl) {
+            if (hint) hint.style.display = 'none';
+            return;
+        }
+
+        const setVal = (name, value) => {
+            const el = form.elements[name];
+            if (el && value != null && value !== '') el.value = value;
+        };
+        setVal('dose', tpl.dose);
+        setVal('frequency', tpl.frequency);
+        setVal('duration', tpl.duration);
+        setVal('route', tpl.route);
+        setVal('notes', tpl.instructions);
+
+        if (hint) hint.style.display = '';
+    } catch (e) {
+        // Silent — templates are a convenience, never block prescribing.
+    }
 }
 
 // Show prescription suggestions modal based on diagnosis
@@ -538,7 +686,13 @@ async function loadMostUsedDrugs(containerId = 'mostUsedDrugs', targetInputId = 
                         // Trigger input event if needed
                         targetInput.dispatchEvent(new Event('input'));
                     }
-                    
+
+                    // Instantly load this drug's saved template (route/dose/...)
+                    // into whichever prescription modal is currently open.
+                    if (typeof window.__rxApplyDrugTemplate === 'function') {
+                        window.__rxApplyDrugTemplate(drug.drug_name);
+                    }
+
                     // Hide suggestions when drug is selected (only if using main input)
                     if (targetInputId === 'drugNameInput') {
                         const suggestions = document.getElementById('drugSuggestions');
@@ -637,6 +791,10 @@ function setupDrugNameAutocomplete() {
                 suggestionItem.addEventListener('click', () => {
                     document.getElementById('drugNameInput').value = drug.drug_name;
                     suggestionsContainer.style.display = 'none';
+                    // Instantly load this drug's saved template (route/dose/...).
+                    if (typeof window.__rxApplyDrugTemplate === 'function') {
+                        window.__rxApplyDrugTemplate(drug.drug_name);
+                    }
                 });
                 // Hover styling is theme-aware via CSS (.drug-suggest-dropdown
                 // .suggestion-item:hover) so it works in dark + light modes.
@@ -2279,7 +2437,10 @@ function deleteMedication(medicationId) {
 }
 
 // Edit Medication Function
-function editMedication(medicationId, drugName, notes) {
+function editMedication(medicationId, drugName, notes, dose = '', frequency = '', duration = '', route = '') {
+    const routeOptions = ['Topical', 'Oral', 'IV', 'IM', 'Sublingual', 'Inhalation', 'Other']
+        .map(r => `<option value="${r}">${r}</option>`).join('');
+
     const modalHtml = `
         <div class="modal fade" id="editMedicationModal" tabindex="-1">
             <div class="modal-dialog modal-lg">
@@ -2291,126 +2452,136 @@ function editMedication(medicationId, drugName, notes) {
                     <form id="editMedicationForm">
                         <div class="modal-body">
                             <div class="row">
-                                <div class="col-md-4 mb-3" style="display: none;">
-                                    <label class="form-label">Dose</label>
-                                    <input type="text" class="form-control" name="dose" placeholder="e.g., 1 tablet, 2 drops">
+                                <div class="col-12 mb-3">
+                                    <label class="form-label">Drug Name <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" name="drug_name" id="editDrugName" value="${drugName}" required autocomplete="off">
+                                    <div id="rxTemplateHint" class="form-text text-success mt-1" style="display: none;">
+                                        <i class="bi bi-bookmark-star-fill me-1"></i>Template loaded for this drug.
+                                    </div>
                                 </div>
-                                <div class="col-md-4 mb-3" style="display: none;">
-                                    <label class="form-label">Frequency</label>
-                                    <input type="text" class="form-control" name="frequency" placeholder="e.g., Twice daily, Every 6 hours">
-                            </div>
-                                <div class="col-md-4 mb-3" style="display: none;">
-                                    <label class="form-label">Duration</label>
-                                    <input type="text" class="form-control" name="duration" placeholder="e.g., 7 days, 2 weeks">
-                                </div>
-                                <div class="col-12 mb-3" style="display: none;">
-                                    <label class="form-label">Route</label>
-                                    <section class="field menu" style="min-width: 100%;">
-                                        <div class="control">
-                                            <select class="form-control d-none" name="route">
-                                                <option value="Topical" selected>Topical</option>
-                                                <option value="Oral">Oral</option>
-                                                <option value="IV">IV</option>
-                                                <option value="IM">IM</option>
-                                                <option value="Sublingual">Sublingual</option>
-                                                <option value="Inhalation">Inhalation</option>
-                                                <option value="Other">Other</option>
-                                            </select>
-                                            <button type="button" class="custom-select-toggle" aria-expanded="false">Topical</button>
-                                            <menu>
-                                                <li data-option="Topical" tabindex="0" role="button" class="selected"><i class="bi-arrow-right-circle fs-5"></i><h3>Topical</h3></li>
-                                                <li data-option="Oral" tabindex="0" role="button"><i class="bi-arrow-right-circle fs-5"></i><h3>Oral</h3></li>
-                                                <li data-option="IV" tabindex="0" role="button"><i class="bi-arrow-right-circle fs-5"></i><h3>IV</h3></li>
-                                                <li data-option="IM" tabindex="0" role="button"><i class="bi-arrow-right-circle fs-5"></i><h3>IM</h3></li>
-                                                <li data-option="Sublingual" tabindex="0" role="button"><i class="bi-arrow-right-circle fs-5"></i><h3>Sublingual</h3></li>
-                                                <li data-option="Inhalation" tabindex="0" role="button"><i class="bi-arrow-right-circle fs-5"></i><h3>Inhalation</h3></li>
-                                                <li data-option="Other" tabindex="0" role="button"><i class="bi-arrow-right-circle fs-5"></i><h3>Other</h3></li>
-                                            </menu>
-                                        </div>
-                                    </section>
-                                </div>
-                                <div class="mb-3">
-                            <label class="form-label">Drug Name <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" name="drug_name" id="editDrugName" value="${drugName}" required>
-                        </div>
-                        
-                        <!-- Most Used Drugs Container for Edit Modal -->
-                        <div class="mb-3">
-                            <label class="form-label text-muted small"><i class="bi bi-star me-1"></i>Most Used Suggestions</label>
-                            <div id="editMostUsedDrugs" class="d-flex flex-wrap gap-1">
-                                <!-- Suggestions will be loaded here -->
-                            </div>
-                        </div>
 
-                        <div class="mb-3">
-                            <label class="form-label">Notes</label>
-                            <textarea class="form-control" name="notes" rows="3">${notes}</textarea>
+                                <!-- Most Used Drugs Container for Edit Modal -->
+                                <div class="col-12 mb-3">
+                                    <label class="form-label text-muted small"><i class="bi bi-star me-1"></i>Most Used Suggestions</label>
+                                    <div id="editMostUsedDrugs" class="d-flex flex-wrap gap-1">
+                                        <!-- Suggestions will be loaded here -->
+                                    </div>
+                                </div>
+
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Dose <span class="text-muted small">(optional)</span></label>
+                                    <input type="text" class="form-control" name="dose" value="${dose}" placeholder="e.g., 1 tablet, 2 drops">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Frequency <span class="text-muted small">(optional)</span></label>
+                                    <input type="text" class="form-control" name="frequency" value="${frequency}" placeholder="e.g., Twice daily">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Duration <span class="text-muted small">(optional)</span></label>
+                                    <input type="text" class="form-control" name="duration" value="${duration}" placeholder="e.g., 7 days, 2 weeks">
+                                </div>
+                                <div class="col-12 mb-3">
+                                    <label class="form-label">Route <span class="text-muted small">(optional)</span></label>
+                                    <select class="form-select" name="route" id="editPrescriptionRoute">
+                                        <option value="">— None —</option>
+                                        ${routeOptions}
+                                    </select>
+                                </div>
+                                <div class="col-12 mb-3">
+                                    <label class="form-label">Instructions / Notes</label>
+                                    <textarea class="form-control" name="notes" rows="3">${notes}</textarea>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary">Save Changes</button>
-                    </div>
-                </form>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-outline-secondary me-auto" id="clearEditRxFieldsBtn" title="Clear dose, frequency, duration and notes">
+                                <i class="bi bi-eraser me-1"></i>Clear fields
+                            </button>
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="button" class="btn btn-outline-primary" id="saveEditRxTemplateBtn" title="Save these fields as the default template for this drug">
+                                <i class="bi bi-bookmark-star me-1"></i>Save &amp; save as template
+                            </button>
+                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
-    </div>
     `;
-    
+
     document.body.insertAdjacentHTML('beforeend', modalHtml);
     const modal = new bootstrap.Modal(document.getElementById('editMedicationModal'));
     modal.show();
-    
-    // Initialize custom selects
-    setTimeout(() => {
-        initCustomSelects();
-    }, 100);
-    
-    // Load most used drugs for the edit modal
-    // Pass the container ID and the input ID
+
+    const form = document.getElementById('editMedicationForm');
+
+    // Pre-select the current route (value attribute can't be set on a built
+    // <select>, so apply it after insertion).
+    if (form.elements['route']) form.elements['route'].value = route || '';
+
+    // Load most used drugs for the edit modal (container + target input).
     setTimeout(() => {
         loadMostUsedDrugs('editMostUsedDrugs', 'editDrugName');
     }, 100);
-    
-    // Handle form submission
-    document.getElementById('editMedicationForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        const formData = new FormData(this);
-        
-        // Convert FormData to URLSearchParams for PUT request
-        const params = new URLSearchParams();
-        for (let [key, value] of formData.entries()) {
-            params.append(key, value);
+
+    async function submitEdit(saveTemplate) {
+        const name = (form.elements['drug_name'].value || '').trim();
+        if (!name) {
+            showErrorMessage('Please enter a drug name first.');
+            form.elements['drug_name'].focus();
+            return;
         }
-        
-        fetch(`/api/prescriptions/meds/${medicationId}`, {
-            method: 'PUT',
-            credentials: 'same-origin',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-                'X-Requested-With': 'XMLHttpRequest'
-            },
-            body: params.toString()
-        })
-        .then(response => response.json())
-        .then(data => {
+        try {
+            if (saveTemplate) {
+                await saveDrugTemplate(name, form);
+            }
+            const params = new URLSearchParams();
+            for (let [key, value] of new FormData(form).entries()) {
+                params.append(key, value);
+            }
+            const response = await fetch(`/api/prescriptions/meds/${medicationId}`, {
+                method: 'PUT',
+                credentials: 'same-origin',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: params.toString()
+            });
+            const data = await response.json();
             if (data.success) {
                 modal.hide();
-                showSuccessMessage('Medication updated successfully');
-                setTimeout(() => {
-                    reloadMedications();
-                }, 300);
+                showSuccessMessage(saveTemplate ? 'Medication updated and template saved' : 'Medication updated successfully');
+                setTimeout(() => { reloadMedications(); }, 300);
             } else {
-                showErrorMessage('Error: ' + data.message);
+                showErrorMessage('Error: ' + (data.message || data.error || 'Could not update medication'));
             }
-        })
-        .catch(error => {
+        } catch (error) {
             showErrorMessage('Error: ' + error.message);
-        });
+        }
+    }
+
+    form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        submitEdit(false);
     });
-    
+
+    const tplBtn = document.getElementById('saveEditRxTemplateBtn');
+    if (tplBtn) tplBtn.addEventListener('click', () => submitEdit(true));
+
+    const clearBtn = document.getElementById('clearEditRxFieldsBtn');
+    if (clearBtn) clearBtn.addEventListener('click', () => clearRxFields(form));
+
+    // Changing the drug (not just opening the modal) pulls in that drug's
+    // saved template. Opening keeps the prescription's existing values intact.
+    form.elements['drug_name'].addEventListener('change', function () {
+        applyDrugTemplateToForm((this.value || '').trim(), form);
+    });
+    window.__rxApplyDrugTemplate = (n) => applyDrugTemplateToForm(n, form);
+
     // Clean up modal on hide
-    document.getElementById('editMedicationModal').addEventListener('hidden.bs.modal', function() {
+    document.getElementById('editMedicationModal').addEventListener('hidden.bs.modal', function () {
+        window.__rxApplyDrugTemplate = null;
         this.remove();
     });
 }
@@ -5187,7 +5358,7 @@ function reloadMedications() {
                                         ${priceBadge}
                                     </div>
                                     <div class="btn-group btn-group-sm" role="group">
-                                        <button class="btn btn-outline-primary" onclick="event.stopPropagation(); editMedication(${med.id}, '${escapeHtml(med.drug_name).replace(/'/g, "\\'")}', '${escapeHtml(med.notes || '').replace(/'/g, "\\'")}')" title="Edit Medication">
+                                        <button class="btn btn-outline-primary" onclick="event.stopPropagation(); editMedication(${med.id}, '${escapeHtml(med.drug_name).replace(/'/g, "\\'")}', '${escapeHtml(med.notes || '').replace(/'/g, "\\'")}', '${escapeHtml(med.dose || '').replace(/'/g, "\\'")}', '${escapeHtml(med.frequency || '').replace(/'/g, "\\'")}', '${escapeHtml(med.duration || '').replace(/'/g, "\\'")}', '${escapeHtml(med.route || '').replace(/'/g, "\\'")}')" title="Edit Medication">
                                             <i class="bi bi-pencil"></i>
                                         </button>
                                         <button class="btn btn-outline-warning" onclick="event.stopPropagation(); showDrugPopoverFromName('${escapeHtml(med.drug_name).replace(/'/g, "\\'")}', event, 'card', ${med.id})" title="Replace/Alternative">
@@ -5198,6 +5369,13 @@ function reloadMedications() {
                                         </button>
                                     </div>
                                 </div>
+                                ${(med.dose || med.frequency || med.duration) ? `
+                                    <div class="rx-meta d-flex flex-wrap gap-2 mb-2">
+                                        ${med.dose ? `<span class="rx-meta-chip"><i class="bi bi-capsule me-1"></i><span class="rx-meta-k">Dose:</span>&nbsp;${escapeHtml(med.dose)}</span>` : ''}
+                                        ${med.frequency ? `<span class="rx-meta-chip"><i class="bi bi-arrow-repeat me-1"></i><span class="rx-meta-k">Frequency:</span>&nbsp;${escapeHtml(med.frequency)}</span>` : ''}
+                                        ${med.duration ? `<span class="rx-meta-chip"><i class="bi bi-calendar3 me-1"></i><span class="rx-meta-k">Duration:</span>&nbsp;${escapeHtml(med.duration)}</span>` : ''}
+                                    </div>
+                                ` : ''}
                                 ${med.notes ? `
                                     <p class="text-muted mb-0">
                                         <small>${escapeHtml(med.notes)}</small>
@@ -6645,6 +6823,9 @@ async function showDrugPopoverFromName(drugName, event, context = 'modal', curre
                                 <div class="forum-drug-popover-value">${escapeHtml(drugDetails.SRDE)}</div>
                             </div>
                         ` : ''}
+
+                        <!-- Saved instruction template (per doctor) -->
+                        <div class="forum-drug-popover-item" id="popoverSavedTemplate"></div>
                         
                         <!-- Alternatives Section -->
                         ${(exactAlternatives.length > 0 || similarProducts.length > 0) ? '<hr class="my-3">' : ''}
@@ -6676,6 +6857,9 @@ async function showDrugPopoverFromName(drugName, event, context = 'modal', curre
                         ` : ''}
                     </div>
                 `;
+
+                // Fill the saved-template block (async — per-doctor defaults).
+                loadSavedTemplateInto('popoverSavedTemplate', drugDetails.drug_name || drugName, renderPopoverSavedTemplate);
             } else {
                 popover.innerHTML = getErrorPopoverContent(drugName, 'Drug information not available');
             }

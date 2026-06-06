@@ -343,6 +343,8 @@ class DrugSearch {
                 </div>
             </div>
 
+            <div id="drugSavedTemplate" class="mb-3"></div>
+
             ${drug.GI ? `
                 <div class="mb-3">
                     <h6 class="text-primary mb-2">General Information</h6>
@@ -362,6 +364,9 @@ class DrugSearch {
 
         // Setup click handlers for alternative drugs
         this.setupAlternativeClickHandlers();
+
+        // Show this drug's saved instruction template (per doctor), if any.
+        loadDrugSavedTemplateDisplay(drug.drug_name);
 
         // Show Bootstrap modal
         const bsModal = new bootstrap.Modal(modal);
@@ -610,6 +615,201 @@ class DrugSearch {
 document.addEventListener('DOMContentLoaded', () => {
     new DrugSearch();
 });
+
+// ---------------------------------------------------------------------------
+// Drug instruction templates (per-doctor defaults) — opened from the drug
+// details modal. Saves to /api/drug-defaults so the prescription modal on the
+// appointment page can auto-fill dose/frequency/duration/route/instructions.
+// ---------------------------------------------------------------------------
+let __drugTemplateName = '';
+
+function escapeHtmlDrugs(str) {
+    return String(str == null ? '' : str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+// Renders the saved-template box shown inside the drug-details modal.
+function renderDrugSavedTemplateHtml(tpl) {
+    const hasAny = tpl && (tpl.dose || tpl.frequency || tpl.duration || tpl.route || tpl.instructions);
+    if (!hasAny) {
+        return `
+            <div class="alert alert-light border d-flex align-items-center mb-0 py-2">
+                <i class="bi bi-bookmark me-2 text-muted"></i>
+                <span class="text-muted small">No saved instruction template for this drug yet — use "Add drug instruction template" below.</span>
+            </div>`;
+    }
+    const chip = (icon, label, val) => val
+        ? `<span class="badge rounded-pill text-bg-info me-1 mb-1"><i class="bi ${icon} me-1"></i>${label}: ${escapeHtmlDrugs(val)}</span>`
+        : '';
+    return `
+        <div class="border rounded p-3" style="background: var(--bs-tertiary-bg, rgba(13,202,240,.06));">
+            <h6 class="text-info mb-2"><i class="bi bi-bookmark-star-fill me-1"></i>Saved instruction template</h6>
+            <div class="mb-1">
+                ${chip('bi-capsule', 'Dose', tpl.dose)}
+                ${chip('bi-arrow-repeat', 'Frequency', tpl.frequency)}
+                ${chip('bi-calendar3', 'Duration', tpl.duration)}
+                ${chip('bi-signpost-2', 'Route', tpl.route)}
+            </div>
+            ${tpl.instructions ? `<p class="mb-0 small"><strong>Instructions:</strong> ${escapeHtmlDrugs(tpl.instructions)}</p>` : ''}
+        </div>`;
+}
+
+async function loadDrugSavedTemplateDisplay(drugName) {
+    const el = document.getElementById('drugSavedTemplate');
+    if (!el || !drugName) return;
+    try {
+        const res = await fetch(`/api/drug-defaults?drug_name=${encodeURIComponent(drugName)}`, {
+            credentials: 'same-origin',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+        const data = await res.json();
+        el.innerHTML = renderDrugSavedTemplateHtml(data && data.success ? data.default : null);
+    } catch (e) {
+        el.innerHTML = '';
+    }
+}
+
+// Clears the template-editor inputs without deleting the saved row.
+function clearDrugTemplateFields() {
+    ['tplDose', 'tplFrequency', 'tplDuration', 'tplRoute', 'tplInstructions'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+    });
+    setTplStatus('<i class="bi bi-eraser me-1"></i>Fields cleared (not saved yet).', 'text-muted');
+}
+
+function setTplStatus(html, cls) {
+    const el = document.getElementById('tplStatus');
+    if (!el) return;
+    el.className = 'small ' + (cls || '');
+    el.innerHTML = html || '';
+}
+
+function openDrugTemplateModal() {
+    // The drug name is already shown as the details-modal title.
+    const titleEl = document.getElementById('modalDrugName');
+    const drugName = (titleEl ? titleEl.textContent : '').trim();
+    if (!drugName) return;
+
+    __drugTemplateName = drugName;
+    const set = (id, v) => { const el = document.getElementById(id); if (el) el.value = v; };
+    set('tplDrugName', drugName);
+    set('tplDose', '');
+    set('tplFrequency', '');
+    set('tplDuration', '');
+    set('tplRoute', '');
+    set('tplInstructions', '');
+    setTplStatus('');
+    const clearBtn = document.getElementById('tplClearBtn');
+    if (clearBtn) clearBtn.style.display = 'none';
+
+    loadDrugTemplateIntoModal(drugName);
+
+    const modalEl = document.getElementById('drugTemplateModal');
+    bootstrap.Modal.getOrCreateInstance(modalEl).show();
+}
+
+async function loadDrugTemplateIntoModal(drugName) {
+    try {
+        const res = await fetch(`/api/drug-defaults?drug_name=${encodeURIComponent(drugName)}`, {
+            credentials: 'same-origin',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+        const data = await res.json();
+        const tpl = data && data.success ? data.default : null;
+        const clearBtn = document.getElementById('tplClearBtn');
+
+        if (!tpl) {
+            if (clearBtn) clearBtn.style.display = 'none';
+            return;
+        }
+
+        const set = (id, v) => { const el = document.getElementById(id); if (el) el.value = v || ''; };
+        set('tplDose', tpl.dose);
+        set('tplFrequency', tpl.frequency);
+        set('tplDuration', tpl.duration);
+        set('tplRoute', tpl.route);
+        set('tplInstructions', tpl.instructions);
+        if (clearBtn) clearBtn.style.display = '';
+        setTplStatus('<i class="bi bi-bookmark-check-fill me-1"></i>Existing template loaded — edit and save to update.', 'text-success');
+    } catch (e) {
+        // Silent — template editing is a convenience.
+    }
+}
+
+async function saveDrugTemplateFromModal() {
+    const drugName = __drugTemplateName || (document.getElementById('tplDrugName') || {}).value || '';
+    if (!drugName.trim()) return;
+
+    const val = (id) => { const el = document.getElementById(id); return el ? el.value : ''; };
+    const body = new URLSearchParams();
+    body.append('drug_name', drugName.trim());
+    body.append('dose', val('tplDose'));
+    body.append('frequency', val('tplFrequency'));
+    body.append('duration', val('tplDuration'));
+    body.append('route', val('tplRoute'));
+    body.append('instructions', val('tplInstructions'));
+
+    setTplStatus('<i class="bi bi-hourglass-split me-1"></i>Saving...', 'text-muted');
+    try {
+        const res = await fetch('/api/drug-defaults', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: body.toString()
+        });
+        const data = await res.json();
+
+        if (data.success) {
+            setTplStatus('<i class="bi bi-check-circle-fill me-1"></i>Template saved.', 'text-success');
+            const clearBtn = document.getElementById('tplClearBtn');
+            if (clearBtn) clearBtn.style.display = '';
+            // Refresh the saved-template box in the details modal behind us.
+            loadDrugSavedTemplateDisplay(drugName.trim());
+            setTimeout(() => {
+                const inst = bootstrap.Modal.getInstance(document.getElementById('drugTemplateModal'));
+                if (inst) inst.hide();
+            }, 800);
+        } else {
+            setTplStatus('<i class="bi bi-exclamation-triangle me-1"></i>' + (data.message || 'Could not save template'), 'text-danger');
+        }
+    } catch (e) {
+        setTplStatus('<i class="bi bi-exclamation-triangle me-1"></i>' + e.message, 'text-danger');
+    }
+}
+
+async function clearDrugTemplateFromModal() {
+    const drugName = __drugTemplateName || (document.getElementById('tplDrugName') || {}).value || '';
+    if (!drugName.trim()) return;
+
+    try {
+        const res = await fetch(`/api/drug-defaults?drug_name=${encodeURIComponent(drugName.trim())}`, {
+            method: 'DELETE',
+            credentials: 'same-origin',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+        const data = await res.json();
+        if (data.success) {
+            ['tplDose', 'tplFrequency', 'tplDuration', 'tplRoute', 'tplInstructions'].forEach(id => {
+                const el = document.getElementById(id); if (el) el.value = '';
+            });
+            const clearBtn = document.getElementById('tplClearBtn');
+            if (clearBtn) clearBtn.style.display = 'none';
+            setTplStatus('<i class="bi bi-trash me-1"></i>Template deleted.', 'text-muted');
+            // Refresh the saved-template box in the details modal behind us.
+            loadDrugSavedTemplateDisplay(drugName.trim());
+        }
+    } catch (e) {
+        // Silent.
+    }
+}
 
 // Database Update Functions
 function showUpdateDatabaseModal() {
