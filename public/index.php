@@ -147,6 +147,7 @@ try {
     $router->post('/doctor/profile/change-password', 'DoctorController@changePassword');
     $router->post('/doctor/profile/update', 'DoctorController@updateProfile');
     $router->get('/doctor/drugs', 'DoctorController@drugs');
+    $router->get('/doctor/instruction-templates', 'MedicalInstructionController@page');
     $router->get('/doctor/payments', 'DoctorController@payments');
     $router->get('/doctor/daily-closure', 'DoctorController@dailyClosure');
     $router->get('/doctor/reports', 'DoctorController@reports');
@@ -240,6 +241,18 @@ try {
     $router->patch('/api/note-templates/{id}',             'NoteTemplateController@update');
     $router->delete('/api/note-templates/{id}',            'NoteTemplateController@delete');
     $router->post('/api/note-templates/{id}/used',         'NoteTemplateController@markUsed');
+
+    // v11 — Medical instruction templates + per-appointment instructions
+    $router->get('/api/instruction-templates/suggestions',                    'MedicalInstructionController@suggestions');
+    $router->get('/api/instruction-templates',                                'MedicalInstructionController@indexTemplates');
+    $router->post('/api/instruction-templates',                               'MedicalInstructionController@createTemplate');
+    $router->get('/api/instruction-templates/{id}',                           'MedicalInstructionController@showTemplate');
+    $router->patch('/api/instruction-templates/{id}',                         'MedicalInstructionController@updateTemplate');
+    $router->delete('/api/instruction-templates/{id}',                          'MedicalInstructionController@deleteTemplate');
+    $router->get('/api/appointments/{id}/medical-instructions',               'MedicalInstructionController@indexAppointment');
+    $router->post('/api/appointments/{id}/medical-instructions',              'MedicalInstructionController@createAppointment');
+    $router->patch('/api/appointments/{id}/medical-instructions/{instId}',    'MedicalInstructionController@updateAppointment');
+    $router->delete('/api/appointments/{id}/medical-instructions/{instId}',   'MedicalInstructionController@deleteAppointment');
 
     // v11.0.0 — Activity, Cmd+K, hover-card, settings extensions
     $router->get('/api/activity',                       'ActivityController@feed');

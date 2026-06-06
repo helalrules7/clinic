@@ -273,6 +273,12 @@
                     </a>
                 </div>
                 <div class="nav-item">
+                    <a href="/doctor/instruction-templates" class="nav-link <?= $this->isActiveRoute('/doctor/instruction-templates') ? 'active' : '' ?>">
+                        <i class="bi bi-journal-medical"></i>
+                        Instruction Templates
+                    </a>
+                </div>
+                <div class="nav-item">
                     <a href="/doctor/payments" class="nav-link <?= $this->isActiveRoute('/doctor/payments') ? 'active' : '' ?>">
                         <i class="bi bi-credit-card"></i>
                         Financial Management
@@ -814,7 +820,7 @@
                 <?php if ($this->getCurrentUser()['role'] === 'doctor'): ?>
                 <!-- Global Search Bar -->
                 <div class="global-search-wrapper">
-                    <button type="button" class="global-search-toggle d-md-none" id="globalSearchToggle" title="Search" aria-label="Search">
+                    <button type="button" class="global-search-toggle d-xl-none" id="globalSearchToggle" title="Search" aria-label="Search">
                         <i class="bi bi-search"></i>
                     </button>
                     <div class="global-search-container" id="globalSearchContainer">

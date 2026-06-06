@@ -504,8 +504,8 @@ body.kbd-help-open {
 }
 [dir="rtl"] .kbd-help-toggle { margin-right: 0; margin-left: 6px; }
 
-/* Mobile: hide "?" only — palette dot is in the quick-tools row. */
-@media (max-width: 767.98px) {
+/* Mobile + tablet: hide "?" — palette dot lives in the quick-tools row. */
+@media (max-width: 1199.98px) {
   .kbd-help-toggle,
   #kbdHelpToggle {
     display: none !important;

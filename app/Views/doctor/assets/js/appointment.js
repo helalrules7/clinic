@@ -112,9 +112,52 @@ function viewPatient(patientId) {
     window.location.href = `/doctor/patients/${patientId}`;
 }
 
+function showPrintPrescriptionChoiceModal(appointmentId) {
+    const hasInstructions = document.querySelectorAll('#medicalInstructionsList .mi-item').length > 0;
+
+    const prev = document.getElementById('printRxChoiceModal');
+    if (prev) prev.remove();
+
+    const html = `
+        <div class="modal fade mi-theme-modal" id="printRxChoiceModal" tabindex="-1">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title"><i class="bi bi-printer me-2"></i>Print Prescription</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body d-grid gap-3">
+                        <button type="button" class="print-rx-option" data-mode="rx-only">
+                            <strong>Print Prescription Only</strong>
+                            <span>Medications on a single page — same as before.</span>
+                        </button>
+                        <button type="button" class="print-rx-option" data-mode="rx-instructions" ${hasInstructions ? '' : 'disabled'}>
+                            <strong>Print Prescription With Medical Instructions</strong>
+                            <span>${hasInstructions ? 'Two pages: medications, then general instructions.' : 'Add medical instructions first to enable this option.'}</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>`;
+    document.body.insertAdjacentHTML('beforeend', html);
+    const el = document.getElementById('printRxChoiceModal');
+    const modal = new bootstrap.Modal(el);
+    modal.show();
+
+    el.querySelector('[data-mode="rx-only"]')?.addEventListener('click', () => {
+        modal.hide();
+        window.open(`/print/prescription/${appointmentId}`, '_blank');
+    });
+    el.querySelector('[data-mode="rx-instructions"]')?.addEventListener('click', () => {
+        if (!hasInstructions) return;
+        modal.hide();
+        window.open(`/print/prescription/${appointmentId}?instructions=1`, '_blank');
+    });
+    el.addEventListener('hidden.bs.modal', () => el.remove());
+}
+
 function printPrescription(appointmentId) {
-    // Open prescription print view
-    window.open(`/print/prescription/${appointmentId}`, '_blank');
+    showPrintPrescriptionChoiceModal(appointmentId);
 }
 
 function printGlassesPrescription(appointmentId) {
@@ -4600,8 +4643,7 @@ function viewPatient(patientId) {
 }
 
 function printPrescription(appointmentId) {
-    // Open prescription print view
-    window.open(`/print/prescription/${appointmentId}`, '_blank');
+    showPrintPrescriptionChoiceModal(appointmentId);
 }
 
 function printGlassesPrescription(appointmentId) {
@@ -5876,7 +5918,7 @@ function renderAppointmentHistory(appointments, container) {
         
         html += '<div class="appointment-history-item mb-3">';
         html += '<div class="card border-' + statusColor + ' border-start border-3">';
-        html += '<div class="card-header appointment-header collapsed history-collapse-trigger" data-collapse-id="' + collapseId + '" style="cursor: pointer;">';
+        html += '<div class="card-header history-item-header collapsed history-collapse-trigger" data-collapse-id="' + collapseId + '" style="cursor: pointer;">';
         html += '<div class="d-flex justify-content-between align-items-start w-100">';
         html += '<div class="flex-grow-1">';
         html += '<h6 class="mb-1">';

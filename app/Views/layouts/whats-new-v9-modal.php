@@ -6,7 +6,7 @@
 // RESETS the timer / opt-out / session-shown for every browser so the
 // new wizard surfaces fresh after the v11 deploy.
 //
-// Slide track: 19 slides covering every v11 feature with pure-CSS animated
+// Slide track: 20 slides covering every v11 feature with pure-CSS animated
 // mockups. ALL v10 slides removed in this release.
 ?>
 <style>
@@ -2204,6 +2204,33 @@
     @keyframes wn-drugs-count{0%,20%{opacity:.5;}30%,75%{opacity:1;}85%,100%{opacity:.5;}}
     @keyframes wn-drugs-bar{0%,18%{transform:scaleY(.3);opacity:.4;}28%,78%{transform:scaleY(1);opacity:1;}88%,100%{transform:scaleY(.3);opacity:.4;}}
 
+    /* ===== wn-mi — Medical Instructions (templates + 2-page Rx) ===== */
+    .wn-mi-scene { position:absolute; inset:10px 12px; display:flex; flex-direction:column; gap:6px; }
+    .wn-mi-card { background:var(--wn-bg-card); border:1px solid var(--wn-border); border-radius:8px; padding:6px 7px; text-align:left; position:relative; }
+    .wn-mi-card-head { font-size:8px; font-weight:800; color:var(--wn-text); display:flex; align-items:center; gap:4px; margin-bottom:4px; }
+    .wn-mi-card-head i { color:var(--wn-accent-soft); font-size:9px; }
+    .wn-mi-line { height:5px; border-radius:3px; background:var(--wn-bg-inset); border:1px solid var(--wn-border); width:72%; animation:wn-mi-line 6s ease-in-out infinite; }
+    .wn-mi-print { position:absolute; right:6px; top:6px; font-size:8px; color:var(--wn-muted); padding:2px 5px; border-radius:5px; border:1px solid var(--wn-border); background:var(--wn-bg-inset); animation:wn-mi-print 6s ease-in-out infinite; }
+    .wn-mi-actions { display:flex; gap:4px; margin-bottom:5px; }
+    .wn-mi-actions span { font-size:6.5px; font-weight:700; padding:2px 5px; border-radius:999px; border:1px solid var(--wn-border); color:var(--wn-muted); background:var(--wn-bg-inset); }
+    .wn-mi-actions span:nth-child(1) { animation:wn-mi-chip 6s ease-in-out infinite 0s; }
+    .wn-mi-actions span:nth-child(2) { animation:wn-mi-chip 6s ease-in-out infinite .15s; }
+    .wn-mi-actions span:nth-child(3) { animation:wn-mi-chip 6s ease-in-out infinite .3s; }
+    .wn-mi-body-ar { font-size:7px; font-weight:600; color:#0f766e; line-height:1.35; padding:4px 5px; border-radius:5px; background:rgba(16,185,129,.08); border:1px dashed rgba(16,185,129,.35); animation:wn-mi-body 6s ease-in-out infinite; }
+    .wn-mi-pages { display:flex; align-items:center; justify-content:center; gap:6px; margin-top:auto; padding-top:2px; }
+    .wn-mi-page { width:34px; height:42px; border-radius:4px; border:1px solid var(--wn-border); background:var(--wn-bg-inset); font-size:7px; font-weight:800; display:flex; align-items:center; justify-content:center; color:var(--wn-muted); }
+    .wn-mi-page-rx { animation:wn-mi-pagerx 6s ease-in-out infinite; }
+    .wn-mi-page-inst { border-color:rgba(16,185,129,.45); color:#10b981; animation:wn-mi-pageinst 6s ease-in-out infinite; }
+    .wn-mi-page-break { width:14px; height:1px; background:var(--wn-border); position:relative; }
+    .wn-mi-page-break::after { content:''; position:absolute; top:-3px; left:50%; transform:translateX(-50%); width:0; height:0; border-left:4px solid transparent; border-right:4px solid transparent; border-top:5px solid var(--wn-accent-soft); animation:wn-mi-break 6s ease-in-out infinite; }
+    @keyframes wn-mi-line{0%,20%{width:40%;opacity:.5;}35%,75%{width:72%;opacity:1;}88%,100%{width:40%;opacity:.5;}}
+    @keyframes wn-mi-print{0%,38%{box-shadow:none;color:var(--wn-muted);}45%,62%{box-shadow:0 0 0 2px rgba(99,102,241,.35);color:var(--wn-accent-soft);}70%,100%{box-shadow:none;color:var(--wn-muted);}}
+    @keyframes wn-mi-chip{0%,25%{opacity:.55;}35%,70%{opacity:1;border-color:rgba(99,102,241,.4);color:var(--wn-accent-soft);}80%,100%{opacity:.55;}}
+    @keyframes wn-mi-body{0%,30%{opacity:0;transform:translateY(4px);}42%,78%{opacity:1;transform:translateY(0);}90%,100%{opacity:0;transform:translateY(4px);}}
+    @keyframes wn-mi-pagerx{0%,48%{opacity:1;}55%,100%{opacity:.55;}}
+    @keyframes wn-mi-pageinst{0%,48%{opacity:.4;transform:scale(.92);}55%,78%{opacity:1;transform:scale(1.06);box-shadow:0 4px 14px rgba(16,185,129,.35);}88%,100%{opacity:.4;transform:scale(.92);}}
+    @keyframes wn-mi-break{0%,50%{opacity:0;}58%,75%{opacity:1;}85%,100%{opacity:0;}}
+
     /* ===== wn-fixes — Bug fixes & polish (static list) ===== */
     .wn-fixes-stage {
         height: auto;
@@ -2317,7 +2344,7 @@
                 </div>
               </div>
               <h3>Welcome to v11.0.0</h3>
-              <p>Our biggest release yet brings a <strong>redesigned notification center</strong>, drug reports, per-doctor Rx templates, notes drawer, theme palettes, Cmd+K, and more.</p>
+              <p>Our biggest release yet brings a <strong>redesigned notification center</strong>, drug reports, medical instructions, per-doctor Rx templates, notes drawer, theme palettes, Cmd+K, and more.</p>
             </div>
 
             <!-- v11.0.0 #2 — wn-prefetch (Speculation Rules — safe navigation prefetch) -->
@@ -2357,6 +2384,7 @@
                   <li><i class="bi bi-palette-fill"></i><span>Theme palettes (6)</span></li>
                   <li><i class="bi bi-journal-text"></i><span>Quick Notes + drawer</span></li>
                   <li><i class="bi bi-capsule"></i><span>Drug Rx templates</span></li>
+                  <li><i class="bi bi-journal-medical"></i><span>Medical Instructions</span></li>
                   <li><i class="bi bi-bar-chart-fill"></i><span>Drug Reports</span></li>
                   <li><i class="bi bi-command"></i><span>Cmd+K command palette</span></li>
                   <li><i class="bi bi-keyboard-fill"></i><span>Keyboard shortcuts (?)</span></li>
@@ -3012,6 +3040,34 @@
               <p>A new <strong>Drug Reports</strong> type shows prescription writes, new starts vs continuations, demand by company, monthly trends, regimen breakdown, and estimated units — with filters and PDF export.</p>
             </div>
 
+            <!-- v11.0.0 — wn-mi (Medical Instructions — clinic templates + 2-page Rx) -->
+            <div class="wn-slide">
+              <span class="wn-kicker">Patient education</span>
+              <div class="wn-stage">
+                <div class="wn-mi-scene">
+                  <div class="wn-mi-card wn-mi-card-rx">
+                    <div class="wn-mi-card-head"><i class="bi bi-capsule"></i> Medications</div>
+                    <div class="wn-mi-line"></div>
+                    <span class="wn-mi-print"><i class="bi bi-printer"></i></span>
+                  </div>
+                  <div class="wn-mi-card wn-mi-card-mi">
+                    <div class="wn-mi-card-head"><i class="bi bi-journal-medical"></i> Medical Instructions</div>
+                    <div class="wn-mi-actions">
+                      <span>Suggested</span><span>Templates</span><span>Custom</span>
+                    </div>
+                    <div class="wn-mi-body-ar" dir="rtl">خشونة المفاصل — تعليمات عامة</div>
+                  </div>
+                  <div class="wn-mi-pages" aria-hidden="true">
+                    <span class="wn-mi-page wn-mi-page-rx">Rx</span>
+                    <span class="wn-mi-page-break"></span>
+                    <span class="wn-mi-page wn-mi-page-inst">Tips</span>
+                  </div>
+                </div>
+              </div>
+              <h3>Medical instructions — on their own page</h3>
+              <p><strong>Clinic-wide templates</strong> match diagnosis keywords. Copy suggestions, pick from the library, or add custom text — <strong>Save as template</strong> pulls diagnosis + ICD from the visit and confirms in a modal. Print from Medications: Rx only, or Rx + instructions on a separate A4 page.</p>
+            </div>
+
             <!-- v11.0.0 — wn-fixes (Bug fixes & polish) -->
             <div class="wn-slide wn-slide-fixes">
               <span class="wn-kicker">Fixes</span>
@@ -3042,6 +3098,9 @@
                   <li><i class="bi bi-check-circle-fill"></i><span>Notification row text no longer truncated</span></li>
                   <li><i class="bi bi-check-circle-fill"></i><span>Quick Note + To-Do API signatures fixed</span></li>
                   <li><i class="bi bi-check-circle-fill"></i><span>Wizard slides render correctly</span></li>
+                  <li><i class="bi bi-check-circle-fill"></i><span>Medical Instructions: clinic-wide templates + edit/delete</span></li>
+                  <li><i class="bi bi-check-circle-fill"></i><span>Rx print: instructions forced to page 2 (page-break)</span></li>
+                  <li><i class="bi bi-check-circle-fill"></i><span>Instruction modals: dark/light theme-aware (mi-theme-modal)</span></li>
                 </ul>
               </div>
               <h3>30+ fixes under the hood</h3>

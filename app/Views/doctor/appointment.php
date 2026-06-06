@@ -890,6 +890,38 @@ if ($status === 'completed') {
             }
         </style>
 
+        <!-- Medical Instructions -->
+        <div class="card mb-4" id="medicalInstructionsCard">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <h5 class="mb-0">
+                        <i class="bi bi-journal-medical me-2"></i>
+                        Medical Instructions
+                    </h5>
+                    <div class="btn-group btn-group-sm" role="group">
+                        <button type="button" class="btn btn-sm btn-outline-info" id="miCopySuggestedBtn" title="Copy suggested instructions from diagnosis or patient history">
+                            <i class="bi bi-lightbulb me-1"></i>Copy Suggested
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-primary" id="miFromTemplatesBtn" title="Choose from instruction templates">
+                            <i class="bi bi-collection me-1"></i>Templates
+                        </button>
+                        <button type="button" class="btn btn-sm btn-primary" id="miAddCustomBtn" title="Add custom instructions">
+                            <i class="bi bi-plus me-1"></i>Add Custom
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body" id="medicalInstructionsContainer">
+                <div id="medicalInstructionsSuggestions" class="mi-suggestions-panel" hidden></div>
+                <div id="medicalInstructionsList"></div>
+                <div class="text-center" id="emptyMedicalInstructionsMessage"<?= !empty($medicalInstructions) ? ' style="display:none"' : '' ?>>
+                    <i class="bi bi-journal-medical text-muted" style="font-size: 2rem;"></i>
+                    <p class="text-muted mt-2 mb-0">No medical instructions yet</p>
+                    <p class="text-muted small mb-0">Suggestions appear when a diagnosis matches a template.</p>
+                </div>
+            </div>
+        </div>
+
         <!-- Glasses Prescriptions -->
         <div class="card mb-4">
             <div class="card-header">
@@ -1586,9 +1618,14 @@ window.APPOINTMENT_CONFIG = {
     doctorId: <?= isset($appointment['doctor_id']) ? (int)$appointment['doctor_id'] : 'null' ?>,
     followupAppointment: <?= !empty($followupAppointment) ? 'true' : 'false' ?>,
     followupAppointmentDate: <?= !empty($followupAppointment) && isset($followupAppointment['date']) ? "'" . date('Y-m-d', strtotime($followupAppointment['date'])) . "'" : 'null' ?>,
-    followupAppointmentTime: <?= !empty($followupAppointment) && isset($followupAppointment['start_time']) ? "'" . date('H:i:s', strtotime($followupAppointment['start_time'])) . "'" : 'null' ?>
+    followupAppointmentTime: <?= !empty($followupAppointment) && isset($followupAppointment['start_time']) ? "'" . date('H:i:s', strtotime($followupAppointment['start_time'])) . "'" : 'null' ?>,
+    latestDiagnosis: <?= json_encode($latestDiagnosis ?? '', JSON_UNESCAPED_UNICODE) ?>,
+    latestDiagnosisCode: <?= json_encode($latestDiagnosisCode ?? '', JSON_UNESCAPED_UNICODE) ?>,
+    medicalInstructions: <?= json_encode($medicalInstructions ?? [], JSON_UNESCAPED_UNICODE) ?>
 };
 </script>
+<link rel="stylesheet" href="/app/Views/doctor/assets/css/mi-modals.css?v=<?= file_exists(__DIR__ . '/assets/css/mi-modals.css') ? filemtime(__DIR__ . '/assets/css/mi-modals.css') : time() ?>">
+<link rel="stylesheet" href="/app/Views/doctor/assets/css/medical-instructions.css?v=<?= file_exists(__DIR__ . '/assets/css/medical-instructions.css') ? filemtime(__DIR__ . '/assets/css/medical-instructions.css') : time() ?>">
 <link rel="stylesheet" href="/app/Views/doctor/assets/css/ai-chat-widget.css?v=<?= file_exists(__DIR__ . '/assets/css/ai-chat-widget.css') ? filemtime(__DIR__ . '/assets/css/ai-chat-widget.css') : time() ?>">
 <link rel="stylesheet" href="/app/Views/doctor/assets/css/draw-consultation.css?v=<?= file_exists(__DIR__ . '/assets/css/draw-consultation.css') ? filemtime(__DIR__ . '/assets/css/draw-consultation.css') : time() ?>">
 <!-- AI Tools modal — roaya's consultation AI Assistant (from edit_consultation), in an ortho-style modal -->
@@ -1651,6 +1688,7 @@ window.APPOINTMENT_CONFIG = {
 <link rel="stylesheet" href="/app/Views/doctor/assets/css/consultation-ai.css?v=<?= file_exists(__DIR__ . '/assets/css/consultation-ai.css') ? filemtime(__DIR__ . '/assets/css/consultation-ai.css') : time() ?>">
 <script defer src="/app/Views/doctor/assets/js/consultation-ai.js?v=<?= file_exists(__DIR__ . '/assets/js/consultation-ai.js') ? filemtime(__DIR__ . '/assets/js/consultation-ai.js') : time() ?>"></script>
 <script src="/app/Views/doctor/assets/js/appointment.js?v=<?= file_exists(__DIR__ . '/assets/js/appointment.js') ? filemtime(__DIR__ . '/assets/js/appointment.js') : time() ?>"></script>
+<script src="/app/Views/doctor/assets/js/medical-instructions.js?v=<?= file_exists(__DIR__ . '/assets/js/medical-instructions.js') ? filemtime(__DIR__ . '/assets/js/medical-instructions.js') : time() ?>"></script>
 <script src="/app/Views/doctor/assets/js/ai-chat-widget.js?v=<?= file_exists(__DIR__ . '/assets/js/ai-chat-widget.js') ? filemtime(__DIR__ . '/assets/js/ai-chat-widget.js') : time() ?>"></script>
 <script src="/app/Views/layouts/vendor/fabric.min.js?v=<?= file_exists(dirname(__DIR__) . '/layouts/vendor/fabric.min.js') ? filemtime(dirname(__DIR__) . '/layouts/vendor/fabric.min.js') : '5.3.1' ?>"></script>
 <script src="/app/Views/doctor/assets/js/draw-consultation.js?v=<?= file_exists(__DIR__ . '/assets/js/draw-consultation.js') ? filemtime(__DIR__ . '/assets/js/draw-consultation.js') : time() ?>"></script>

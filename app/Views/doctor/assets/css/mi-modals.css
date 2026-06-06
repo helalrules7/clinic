@@ -1,0 +1,268 @@
+/* =====================================================================
+   Medical Instructions — theme-aware modals (light + dark)
+   Scoped under .mi-theme-modal on the outer .modal element.
+   Uses app tokens: --text, --card, --muted, --border, --accent, --glass-*
+   ===================================================================== */
+
+.mi-theme-modal .modal-content {
+    border: 1px solid var(--glass-border, var(--border, #e2e8f0));
+    border-radius: var(--r-lg, 16px);
+    overflow: hidden;
+    background: var(--glass-bg-strong, var(--card, #ffffff));
+    color: var(--text, #0f172a);
+    box-shadow: var(--glass-shadow, 0 18px 60px rgba(15, 23, 42, .18));
+}
+.dark .mi-theme-modal .modal-content {
+    background: var(--glass-bg-strong, var(--card, #1e293b));
+    color: var(--text, #e2e8f0);
+    border-color: var(--glass-border, rgba(148, 163, 184, .22));
+    box-shadow: 0 22px 70px rgba(0, 0, 0, .45);
+}
+
+.mi-theme-modal .modal-header {
+    border-bottom: 1px solid var(--border, #e2e8f0);
+    background: linear-gradient(
+        135deg,
+        color-mix(in srgb, var(--accent) 10%, transparent),
+        transparent 72%
+    );
+    padding: .85rem 1.1rem;
+}
+.dark .mi-theme-modal .modal-header {
+    border-bottom-color: rgba(148, 163, 184, .16);
+    background: linear-gradient(
+        135deg,
+        color-mix(in srgb, var(--accent) 18%, transparent),
+        transparent 72%
+    );
+}
+.mi-theme-modal .modal-title {
+    font-weight: 700;
+    color: var(--text);
+}
+.mi-theme-modal .modal-body {
+    color: var(--text);
+}
+.mi-theme-modal .modal-footer {
+    border-top: 1px solid var(--border, #e2e8f0);
+    background: color-mix(in srgb, var(--card) 92%, var(--accent) 8%);
+}
+.dark .mi-theme-modal .modal-footer {
+    border-top-color: rgba(148, 163, 184, .16);
+    background: color-mix(in srgb, var(--card) 96%, transparent);
+}
+.mi-theme-modal .btn-close {
+    filter: none;
+    opacity: .65;
+}
+.mi-theme-modal .btn-close:hover {
+    opacity: 1;
+}
+.dark .mi-theme-modal .btn-close {
+    filter: invert(1) grayscale(100%) brightness(1.25);
+    opacity: .75;
+}
+
+/* Form controls */
+.mi-theme-modal .form-label {
+    color: var(--text);
+    font-weight: 600;
+    font-size: .88rem;
+}
+.mi-theme-modal .form-text {
+    color: var(--muted, #64748b) !important;
+}
+.mi-theme-modal .form-control,
+.mi-theme-modal .form-select {
+    background: var(--card, #fff);
+    border: 1px solid var(--border, #e2e8f0);
+    color: var(--text, #0f172a);
+}
+.mi-theme-modal .form-control::placeholder {
+    color: color-mix(in srgb, var(--muted) 70%, transparent);
+}
+.mi-theme-modal .form-control:focus,
+.mi-theme-modal .form-select:focus {
+    background: var(--card, #fff);
+    border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
+    color: var(--text);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
+}
+.dark .mi-theme-modal .form-control,
+.dark .mi-theme-modal .form-select {
+    background: rgba(15, 23, 42, .55);
+    border-color: rgba(148, 163, 184, .28);
+    color: var(--text, #e2e8f0);
+}
+.dark .mi-theme-modal .form-control:focus,
+.dark .mi-theme-modal .form-select:focus {
+    background: rgba(15, 23, 42, .72);
+    border-color: color-mix(in srgb, var(--accent) 50%, rgba(148, 163, 184, .3));
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
+}
+.dark .mi-theme-modal .form-select option {
+    background: #1e293b;
+    color: #e2e8f0;
+}
+
+/* Print prescription choice cards */
+.mi-theme-modal .print-rx-option {
+    display: block;
+    border: 2px solid var(--border, rgba(148, 163, 184, .35));
+    border-radius: 12px;
+    padding: 1rem 1.05rem;
+    cursor: pointer;
+    transition: border-color .15s, background .15s, box-shadow .15s;
+    text-align: left;
+    width: 100%;
+    background: color-mix(in srgb, var(--card) 94%, var(--accent) 6%);
+    color: var(--text);
+}
+.mi-theme-modal .print-rx-option strong {
+    display: block;
+    margin-bottom: .3rem;
+    font-size: .95rem;
+    color: var(--text);
+}
+.mi-theme-modal .print-rx-option span {
+    font-size: .84rem;
+    color: var(--muted, #64748b);
+    line-height: 1.45;
+}
+.mi-theme-modal .print-rx-option:hover:not(:disabled),
+.mi-theme-modal .print-rx-option:focus:not(:disabled) {
+    border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
+    background: color-mix(in srgb, var(--accent) 10%, var(--card));
+    outline: none;
+    box-shadow: 0 4px 18px color-mix(in srgb, var(--accent) 14%, transparent);
+}
+.dark .mi-theme-modal .print-rx-option {
+    background: rgba(15, 23, 42, .45);
+    border-color: rgba(148, 163, 184, .28);
+}
+.dark .mi-theme-modal .print-rx-option span {
+    color: var(--muted, #94a3b8);
+}
+.dark .mi-theme-modal .print-rx-option:hover:not(:disabled),
+.dark .mi-theme-modal .print-rx-option:focus:not(:disabled) {
+    background: color-mix(in srgb, var(--accent) 16%, rgba(15, 23, 42, .55));
+    border-color: color-mix(in srgb, var(--accent) 50%, rgba(148, 163, 184, .3));
+    box-shadow: 0 6px 22px rgba(0, 0, 0, .28);
+}
+.mi-theme-modal .print-rx-option:disabled {
+    opacity: .5;
+    cursor: not-allowed;
+    background: color-mix(in srgb, var(--muted) 8%, var(--card));
+}
+.dark .mi-theme-modal .print-rx-option:disabled {
+    background: rgba(15, 23, 42, .25);
+}
+
+/* Template picker list */
+.mi-theme-modal .list-group-item.mi-tpl-pick {
+    border: none;
+    border-bottom: 1px solid var(--border, #e2e8f0) !important;
+    background: transparent;
+    color: var(--text);
+    padding: .75rem 1rem;
+    transition: background .12s;
+}
+.mi-theme-modal .list-group-item.mi-tpl-pick:last-child {
+    border-bottom: none !important;
+}
+.mi-theme-modal .list-group-item.mi-tpl-pick strong {
+    color: var(--text);
+}
+.mi-theme-modal .list-group-item.mi-tpl-pick .text-muted {
+    color: var(--muted) !important;
+}
+.mi-theme-modal .list-group-item.mi-tpl-pick:hover,
+.mi-theme-modal .list-group-item.mi-tpl-pick:focus {
+    background: color-mix(in srgb, var(--accent) 10%, var(--card));
+    color: var(--text);
+    outline: none;
+}
+.dark .mi-theme-modal .list-group-item.mi-tpl-pick {
+    border-bottom-color: rgba(148, 163, 184, .14) !important;
+}
+.dark .mi-theme-modal .list-group-item.mi-tpl-pick:hover,
+.dark .mi-theme-modal .list-group-item.mi-tpl-pick:focus {
+    background: color-mix(in srgb, var(--accent) 14%, rgba(15, 23, 42, .5));
+}
+
+/* Footer buttons */
+.mi-theme-modal .modal-footer .btn-secondary {
+    background: color-mix(in srgb, var(--muted) 12%, var(--card));
+    border-color: var(--border, #e2e8f0);
+    color: var(--text);
+}
+.mi-theme-modal .modal-footer .btn-secondary:hover {
+    background: color-mix(in srgb, var(--muted) 20%, var(--card));
+    border-color: var(--border);
+    color: var(--text);
+}
+.dark .mi-theme-modal .modal-footer .btn-secondary {
+    background: rgba(148, 163, 184, .12);
+    border-color: rgba(148, 163, 184, .28);
+    color: var(--text, #e2e8f0);
+}
+.dark .mi-theme-modal .modal-footer .btn-secondary:hover {
+    background: rgba(148, 163, 184, .2);
+    border-color: rgba(148, 163, 184, .38);
+}
+
+/* Required asterisk */
+.mi-theme-modal .text-danger {
+    color: #ef4444 !important;
+}
+.dark .mi-theme-modal .text-danger {
+    color: #f87171 !important;
+}
+
+/* Confirm dialogs (save / delete template) */
+.mi-confirm-body {
+    font-size: .9rem;
+    color: var(--text);
+}
+.mi-confirm-note {
+    font-size: .82rem;
+    color: var(--muted, #64748b);
+}
+.mi-confirm-details {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border: 1px solid var(--border, #e2e8f0);
+    border-radius: 10px;
+    overflow: hidden;
+}
+.mi-confirm-details li {
+    display: flex;
+    gap: .65rem;
+    padding: .5rem .65rem;
+    border-bottom: 1px solid var(--border, #e2e8f0);
+    align-items: flex-start;
+}
+.mi-confirm-details li:last-child {
+    border-bottom: none;
+}
+.mi-confirm-k {
+    flex: 0 0 88px;
+    font-size: .72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    color: var(--muted, #64748b);
+}
+.mi-confirm-v {
+    flex: 1;
+    font-size: .86rem;
+    color: var(--text);
+    word-break: break-word;
+}
+.dark .mi-confirm-details {
+    border-color: rgba(148, 163, 184, .22);
+}
+.dark .mi-confirm-details li {
+    border-bottom-color: rgba(148, 163, 184, .14);
+}

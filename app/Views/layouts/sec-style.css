@@ -1693,6 +1693,43 @@ body::before {
     }
 }
 
+/* Tablet (769–1199px) — RTL secretary header containment (mirrors doctor style.css) */
+@media (min-width: 769px) and (max-width: 1199.98px) {
+    .main-content {
+        overflow-x: clip;
+        max-width: 100%;
+    }
+
+    .top-bar {
+        overflow-x: clip;
+        align-items: flex-start;
+        margin-right: -2rem;
+        margin-left: -2rem;
+        padding-right: 2rem;
+        padding-left: 2rem;
+        width: calc(100% + 4rem);
+        box-sizing: border-box;
+    }
+
+    .top-bar > .page-title {
+        min-width: 0;
+        flex: 1 1 0;
+        overflow: hidden;
+    }
+
+    .page-title small {
+        display: none;
+    }
+
+    .top-bar-cluster {
+        flex-shrink: 0;
+    }
+
+    .top-bar .switch {
+        --scale: 0.88;
+    }
+}
+
 .sidebar-toggle:hover {
     background: var(--success);
     transform: scale(1.05);
@@ -3798,5 +3835,12 @@ body.sidebar-mini .sidebar .user-avatar {
     body.sidebar-mini .main-content {
         margin-right: var(--sidebar-width-mini);
         padding: 1rem;
+    }
+    body.sidebar-mini .top-bar {
+        margin-right: -1rem;
+        margin-left: -1rem;
+        padding-right: 1rem;
+        padding-left: 1rem;
+        width: calc(100% + 2rem);
     }
 }

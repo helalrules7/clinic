@@ -5554,6 +5554,118 @@
                 margin-left: 0.35rem;
             }
         }
+
+        /* Tablet (769–1199px) — 2-row chip grid + full-bleed header background.
+           Chips: overflow-x clip on .top-bar only. Background: cancel .main-content
+           horizontal padding (same -2rem / +4rem as desktop); max-width:100% was
+           blocking the bleed and left a grey gutter on the right. */
+        @media (min-width: 769px) and (max-width: 1199.98px) {
+            .main-content {
+                overflow-x: clip;
+                max-width: 100%;
+            }
+
+            .top-bar {
+                overflow-x: clip;
+                align-items: flex-start;
+                padding-top: calc(0.65rem + 20px);
+                padding-bottom: 0.65rem;
+                margin-bottom: 1.25rem;
+                margin-left: -2rem;
+                margin-right: -2rem;
+                padding-left: 2rem;
+                padding-right: 2rem;
+                width: calc(100% + 4rem);
+                box-sizing: border-box;
+            }
+
+            .top-bar > .page-title {
+                min-width: 0;
+                flex: 1 1 0;
+                overflow: hidden;
+                align-self: center;
+            }
+
+            .page-title h1 {
+                font-size: 1.35rem;
+                font-weight: 600;
+                line-height: 1.25;
+                white-space: normal;
+                overflow: hidden;
+                display: -webkit-box;
+                -webkit-line-clamp: 2;
+                -webkit-box-orient: vertical;
+                text-overflow: ellipsis;
+                word-break: break-word;
+            }
+
+            .page-title small {
+                display: none;
+            }
+
+            .top-bar-cluster {
+                flex-shrink: 0;
+                align-self: center;
+            }
+
+            .top-bar .switch {
+                --scale: 0.88;
+            }
+
+            .sidebar-toggle {
+                align-self: center;
+                flex-shrink: 0;
+            }
+
+            .top-bar .global-search-toggle {
+                display: flex;
+            }
+
+            .top-bar .global-search-wrapper {
+                margin-right: 0;
+            }
+
+            [dir="rtl"] .top-bar .global-search-wrapper {
+                margin-left: 0;
+            }
+
+            .top-bar .global-search-wrapper > .global-search-container:not(.expanded):not(.show) {
+                position: absolute;
+                width: 0;
+                height: 0;
+                overflow: hidden;
+                opacity: 0;
+                pointer-events: none;
+            }
+
+            .top-bar .global-search-container.show,
+            .top-bar .global-search-container.expanded {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                width: 100%;
+                padding: 1rem;
+                background: var(--card);
+                border-bottom: 1px solid var(--border);
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+                z-index: 10000;
+                display: block;
+                opacity: 1;
+                pointer-events: auto;
+                width: 100%;
+                height: auto;
+                overflow: visible;
+            }
+
+            .top-bar .global-search-container.expanded {
+                padding-top: 10vh;
+            }
+
+            .top-bar .global-search-results {
+                max-height: calc(100vh - 80px);
+            }
+        }
         
         .top-actions {
             display: flex;
@@ -11425,6 +11537,14 @@ body.sidebar-mini.sidebar-has-expanded-submenu .main-content {
     }
     /* Slightly tighter page padding so the rail doesn't squeeze the grid. */
     body.sidebar-mini .main-content { padding: 1rem; }
+    /* Match top-bar bleed to 1rem padding (not the 2rem tablet default). */
+    body.sidebar-mini .top-bar {
+        margin-left: -1rem;
+        margin-right: -1rem;
+        padding-left: 1rem;
+        padding-right: 1rem;
+        width: calc(100% + 2rem);
+    }
 }
 
 /* === ORTHO SIDEBAR PARITY (2026-05-22) — 3 rules missing vs ortho fork === */

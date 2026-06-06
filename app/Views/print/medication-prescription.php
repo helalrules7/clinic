@@ -11,6 +11,64 @@
                 size: A4;
                 margin: 0.7cm;
             }
+
+            .prescription-page {
+                page-break-after: always;
+                break-after: page;
+            }
+
+            .instructions-page {
+                page-break-before: always;
+                break-before: page;
+            }
+
+            .instructions-page,
+            .prescription-page {
+                page-break-inside: avoid;
+            }
+        }
+
+        .instructions-page {
+            margin-top: 0;
+        }
+
+        .instructions-page-title {
+            font-size: 15px;
+            font-weight: bold;
+            text-align: center;
+            margin: 12px 0 14px;
+            color: #2c3e50;
+            border: 2px solid #10b981;
+            padding: 8px;
+            border-radius: 5px;
+        }
+
+        .instruction-block {
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 10px 12px;
+            margin-bottom: 10px;
+            break-inside: avoid;
+        }
+
+        .instruction-block h4 {
+            font-size: 12px;
+            color: #0f766e;
+            margin: 0 0 6px;
+        }
+
+        .instruction-block .body-ar {
+            font-size: 11px;
+            line-height: 1.55;
+            white-space: pre-wrap;
+        }
+
+        .instruction-block .body-en {
+            font-size: 10px;
+            color: #555;
+            margin-top: 6px;
+            line-height: 1.45;
+            white-space: pre-wrap;
         }
         
         * {
@@ -299,16 +357,23 @@
                 margin: 0;
                 padding: 0.4cm;
             }
+
+            .prescription-page.has-instructions-page .footer-section {
+                page-break-after: always;
+                break-after: page;
+            }
             
             .prescription-header,
             .patient-info,
-            .medication-item {
+            .medication-item,
+            .instruction-block {
                 break-inside: avoid;
             }
         }
     </style>
 </head>
 <body>
+    <div class="prescription-page<?= (!empty($includeInstructions) && !empty($medicalInstructions)) ? ' has-instructions-page' : '' ?>">
     <div class="prescription-number">Rx #<?= str_pad($appointment['id'], 6, '0', STR_PAD_LEFT) ?></div>
     <div class="watermark">
         <img src="<?= htmlspecialchars($clinic['logo_watermark']) ?>" alt="Watermark">
@@ -397,6 +462,42 @@
             <div class="date-value"><?= date('d/m/Y') ?></div>
         </div>
     </div>
+    </div><!-- /.prescription-page -->
+
+    <?php if (!empty($includeInstructions) && !empty($medicalInstructions)): ?>
+    <div class="instructions-page">
+        <div class="prescription-header">
+            <div class="logo-section">
+                <img src="<?= htmlspecialchars($clinic['logo_print']) ?>" alt="<?= htmlspecialchars($clinic['name']) ?> Logo" class="clinic-logo">
+                <div class="clinic-name"><?= htmlspecialchars($clinic['name']) ?></div>
+                <div class="clinic-name-ar"><?= htmlspecialchars($clinic['name_arabic']) ?></div>
+            </div>
+        </div>
+
+        <div class="instructions-page-title">تعليمات عامة — General Medical Instructions</div>
+
+        <div class="patient-info" style="margin-bottom: 12px;">
+            <div class="patient-details">
+                <p><strong>الاسم:</strong> <?= htmlspecialchars($patient['first_name'] . ' ' . $patient['last_name']) ?></p>
+                <p><strong>التاريخ:</strong> <?= date('d/m/Y', strtotime($appointment['date'])) ?></p>
+            </div>
+            <div class="appointment-details">
+                <p><strong>الطبيب:</strong> <?= htmlspecialchars($doctor['display_name']) ?></p>
+                <p><strong>Rx #:</strong> <?= str_pad($appointment['id'], 6, '0', STR_PAD_LEFT) ?></p>
+            </div>
+        </div>
+
+        <?php foreach ($medicalInstructions as $instruction): ?>
+        <div class="instruction-block">
+            <h4><?= htmlspecialchars($instruction['title']) ?></h4>
+            <div class="body-ar" dir="rtl"><?= nl2br(htmlspecialchars($instruction['body_ar'])) ?></div>
+            <?php if (!empty($instruction['body_en'])): ?>
+            <div class="body-en"><?= nl2br(htmlspecialchars($instruction['body_en'])) ?></div>
+            <?php endif; ?>
+        </div>
+        <?php endforeach; ?>
+    </div>
+    <?php endif; ?>
     
     <script>
         // Auto-print when page loads

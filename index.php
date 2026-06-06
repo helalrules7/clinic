@@ -144,6 +144,7 @@ try {
     $router->post('/doctor/profile/change-password', 'DoctorController@changePassword');
     $router->post('/doctor/profile/update', 'DoctorController@updateProfile');
     $router->get('/doctor/drugs', 'DoctorController@drugs');
+    $router->get('/doctor/instruction-templates', 'MedicalInstructionController@page');
     $router->get('/doctor/payments', 'DoctorController@payments');
     $router->get('/doctor/daily-closure', 'DoctorController@dailyClosure');
     $router->get('/doctor/reports', 'DoctorController@reports');

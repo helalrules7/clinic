@@ -1,0 +1,90 @@
+#medicalInstructionsCard .mi-item {
+    border: 1px solid var(--border, #e2e8f0);
+    border-radius: 10px;
+    padding: .75rem;
+    margin-bottom: .65rem;
+    background: var(--card, #fff);
+    text-align: left;
+    color: var(--text);
+}
+.dark #medicalInstructionsCard .mi-item {
+    background: rgba(30, 41, 59, .55);
+    border-color: rgba(148, 163, 184, .22);
+}
+
+.mi-item-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: .5rem;
+    margin-bottom: .35rem;
+}
+.mi-item-title {
+    font-weight: 700;
+    font-size: .92rem;
+    color: var(--accent, #6366f1);
+    margin: 0;
+}
+.mi-item-body {
+    font-size: .84rem;
+    line-height: 1.55;
+    color: var(--text, #334155);
+    white-space: pre-wrap;
+    margin: 0;
+}
+.dark .mi-item-body { color: var(--text, #cbd5e1); }
+.mi-item-body-en {
+    font-size: .78rem;
+    color: var(--muted, #64748b);
+    margin-top: .35rem;
+    white-space: pre-wrap;
+}
+.mi-source-badge {
+    font-size: .62rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    padding: .1rem .35rem;
+    border-radius: 999px;
+    background: rgba(99,102,241,.12);
+    color: var(--accent, #6366f1);
+}
+
+.mi-suggestions-panel {
+    border: 1px dashed color-mix(in srgb, var(--accent) 35%, var(--border));
+    border-radius: 10px;
+    padding: .65rem .75rem;
+    margin-bottom: .75rem;
+    background: color-mix(in srgb, var(--accent) 6%, var(--card));
+    text-align: left;
+    color: var(--text);
+}
+.dark .mi-suggestions-panel {
+    background: color-mix(in srgb, var(--accent) 10%, rgba(15, 23, 42, .45));
+    border-color: color-mix(in srgb, var(--accent) 30%, rgba(148, 163, 184, .25));
+}
+.mi-suggestions-panel h6 {
+    font-size: .78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: var(--accent, #6366f1);
+    margin: 0 0 .5rem;
+}
+.mi-suggest-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: .5rem;
+    padding: .4rem 0;
+    border-top: 1px solid var(--border, rgba(148, 163, 184, .2));
+}
+.dark .mi-suggest-row {
+    border-top-color: rgba(148, 163, 184, .14);
+}
+.mi-suggest-row:first-of-type { border-top: 0; padding-top: 0; }
+.mi-suggest-meta {
+    font-size: .7rem;
+    color: var(--muted, #64748b);
+}
+

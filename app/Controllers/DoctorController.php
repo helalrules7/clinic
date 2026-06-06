@@ -291,12 +291,20 @@ class DoctorController
         
         // Get medical history for the patient
         $medicalHistory = $this->getMedicalHistory($appointment['patient_id']);
+
+        $medicalInstructions = $this->getAppointmentMedicalInstructions($id);
+        $latestNote = !empty($consultationNotes) ? $consultationNotes[0] : null;
+        $latestDiagnosis = $latestNote['diagnosis'] ?? '';
+        $latestDiagnosisCode = trim((string) ($latestNote['diagnosis_code'] ?? ''));
         
         $content = $this->view->render('doctor/appointment', [
             'appointment' => $appointment,
             'patient' => $patient,
             'consultationNotes' => $consultationNotes,
             'medications' => $medications,
+            'medicalInstructions' => $medicalInstructions,
+            'latestDiagnosis' => $latestDiagnosis,
+            'latestDiagnosisCode' => $latestDiagnosisCode,
             'glasses' => $glasses,
             'labTests' => $labTests,
             'attachments' => $attachments,
@@ -1247,6 +1255,21 @@ class DoctorController
         ");
         $stmt->execute([$appointmentId]);
         return $stmt->fetchAll();
+    }
+
+    private function getAppointmentMedicalInstructions($appointmentId)
+    {
+        try {
+            $stmt = $this->pdo->prepare("
+                SELECT * FROM appointment_medical_instructions
+                WHERE appointment_id = ?
+                ORDER BY sort_order ASC, id ASC
+            ");
+            $stmt->execute([$appointmentId]);
+            return $stmt->fetchAll() ?: [];
+        } catch (\Exception $e) {
+            return [];
+        }
     }
 
     private function getGlassesPrescriptions($appointmentId)

@@ -199,11 +199,17 @@
         0 1px 4px color-mix(in srgb, var(--accent) 25%, rgba(0, 0, 0, 0.18));
 }
 
-/* mobile — 4-column grid so row 1/2 chips stack vertically:
+/* mobile + tablet (≤1199px) — 4-column grid so row 1/2 chips stack vertically:
    col1 search ↔ notes · col2 bell ↔ to-do · cols3–4 theme / ⌘K · palette */
-@media (max-width: 767.98px) {
+@media (max-width: 1199.98px) {
     .top-bar {
         --header-chip-size: 34px;
+    }
+
+    @media (min-width: 768px) {
+        .top-bar {
+            --header-chip-size: 36px;
+        }
     }
 
     .top-bar .top-bar-cluster {
@@ -292,7 +298,7 @@
     }
 }
 
-@media (min-width: 768px) {
+@media (min-width: 1200px) {
     [dir="rtl"] .top-bar .cmdk-toggle,
     [dir="rtl"] .top-bar #cmdkToggle {
         padding: 0 7px 0 8px;

@@ -1257,21 +1257,20 @@
     padding: 1rem;
     color: var(--text);
     background: transparent !important;
+    overflow-x: hidden;
 }
 
 .appointment-history-item {
-    transition: transform 0.2s ease;
-}
-
-.appointment-history-item:hover {
-    transform: translateY(-2px);
+    transition: box-shadow 0.2s ease;
 }
 
 .appointment-history-item .card {
     background: var(--card);
     border-color: var(--border);
     color: var(--text);
-    transition: all 0.3s ease;
+    transition: box-shadow 0.3s ease;
+    overflow: hidden;
+    isolation: isolate;
 }
 
 .appointment-history-item .card:hover {
@@ -1283,41 +1282,105 @@
     border-color: var(--border);
 }
 
-.appointment-history-item .card-header {
-    background: var(--bg-alt);
-    border-bottom: 1px solid var(--border);
-    padding: 1rem 1.25rem;
+.dark .appointment-history-item .card:hover {
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+}
+
+/* History item header — scoped class (NOT page-level .appointment-header) */
+.appointment-history-item .history-item-header {
+    background: linear-gradient(
+        135deg,
+        color-mix(in srgb, var(--accent) 7%, var(--card, #fff)),
+        color-mix(in srgb, var(--accent) 3%, var(--bg-alt, #f8fafc))
+    ) !important;
+    border-bottom: 1px solid var(--border) !important;
+    color: var(--text) !important;
+    padding: 0.85rem 1rem !important;
+    margin-bottom: 0 !important;
+    border-radius: 0 !important;
     cursor: pointer;
     transition: background-color 0.2s ease;
+    position: relative;
+    z-index: 1;
 }
 
-.appointment-history-item .card-header:hover {
-    background: var(--bg);
+.appointment-history-item .history-item-header:hover {
+    background: linear-gradient(
+        135deg,
+        color-mix(in srgb, var(--accent) 12%, var(--card, #fff)),
+        color-mix(in srgb, var(--accent) 6%, var(--bg-alt, #f1f5f9))
+    ) !important;
 }
 
-.dark .appointment-history-item .card-header {
-    background: var(--bg-alt);
-    border-bottom-color: var(--border);
+.dark .appointment-history-item .history-item-header {
+    background: var(--card, #1e293b) !important;
+    border-bottom-color: var(--border) !important;
+    color: var(--text) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
-.dark .appointment-history-item .card-header:hover {
-    background: rgba(255, 255, 255, 0.05);
+.dark .appointment-history-item .history-item-header:hover {
+    background: color-mix(in srgb, var(--accent) 6%, var(--card, #1e293b)) !important;
+    box-shadow: none;
 }
 
-.appointment-history-item .card-header .collapse-icon {
+.appointment-history-item .history-item-header h6,
+.appointment-history-item .history-item-header h6 a {
+    color: var(--text) !important;
+    font-weight: 700;
+}
+
+.appointment-history-item .history-item-header h6 a:hover {
+    color: var(--accent) !important;
+}
+
+.appointment-history-item .history-item-header .text-muted,
+.appointment-history-item .history-item-header small {
+    color: var(--muted) !important;
+}
+
+.appointment-history-item .history-item-header .btn-outline-primary {
+    border-color: color-mix(in srgb, var(--accent) 40%, var(--border));
+    color: var(--accent);
+    background: var(--card, #fff);
+    font-weight: 600;
+}
+
+.appointment-history-item .history-item-header .btn-outline-primary:hover,
+.appointment-history-item .history-item-header .btn-outline-primary:focus {
+    background: color-mix(in srgb, var(--accent) 10%, var(--card, #fff));
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.dark .appointment-history-item .history-item-header .btn-outline-primary {
+    background: rgba(15, 23, 42, 0.45);
+    border-color: color-mix(in srgb, var(--accent) 35%, rgba(148, 163, 184, 0.35));
+    color: var(--accent);
+}
+
+.dark .appointment-history-item .history-item-header .btn-outline-primary:hover {
+    background: color-mix(in srgb, var(--accent) 18%, rgba(15, 23, 42, 0.55));
+}
+
+.appointment-history-item .history-item-header .collapse-icon {
     transition: transform 0.3s ease;
     color: var(--muted);
     font-size: 1.2rem;
 }
 
-.appointment-history-item .card-header.expanded .collapse-icon {
+.appointment-history-item .history-item-header.expanded .collapse-icon {
     transform: rotate(180deg);
 }
 
 .appointment-history-item .card-body {
     padding: 1.5rem;
-    background: transparent !important;
+    background: var(--card) !important;
     color: var(--text);
+}
+
+.dark .appointment-history-item .card-body {
+    background: var(--card) !important;
 }
 
 /* Image Modal Glass Effect */
@@ -3118,11 +3181,11 @@
 /* ORTHO PER-PAGE PARITY (appointment, 2026-05-22) — missing visual polish ported  */
 /* verbatim from the ortho fork (additive, last-wins; markup classes match). */
 /* ===================================================================== */
-.appointment-header:not(.missed):not(.completed) {
+.appointment-header:not(.missed):not(.completed):not(.history-collapse-trigger) {
     background: linear-gradient(135deg, rgba(79,70,229,.92) 0%, rgba(99,102,241,.55) 60%, rgba(14,165,233,.5) 100%) !important;
 }
 
-.dark .appointment-header:not(.missed):not(.completed) {
+.dark .appointment-header:not(.missed):not(.completed):not(.history-collapse-trigger) {
     background: linear-gradient(135deg, rgba(30,27,75,.92) 0%, rgba(49,46,129,.6) 60%, rgba(14,116,144,.5) 100%) !important;
 }
 
@@ -3132,6 +3195,11 @@
 .card > .card-header {
     background: transparent !important;
     border-bottom: 1px solid var(--glass-border) !important;
+}
+
+/* Appointment History popover — keep header fill inside rounded card (no corner bleed) */
+.appointment-history-popover-wrapper .appointment-history-item .card > .card-header.history-item-header {
+    border-bottom-color: var(--border) !important;
 }
 
 .card > .card-header h5,

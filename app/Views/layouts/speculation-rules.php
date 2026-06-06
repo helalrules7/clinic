@@ -39,6 +39,7 @@ $speculationRules = [
                             ['href_matches' => '/doctor/patients'],
                             ['href_matches' => '/doctor/profile'],
                             ['href_matches' => '/doctor/drugs'],
+                            ['href_matches' => '/doctor/instruction-templates'],
                             ['href_matches' => '/doctor/payments'],
                             ['href_matches' => '/doctor/daily-closure'],
                             ['href_matches' => '/doctor/reports'],

@@ -52,6 +52,15 @@ class PrintController
             // Get patient and doctor details
             $patient = $this->getPatient($appointment['patient_id']);
             $doctor = $this->getDoctor($appointment['doctor_id']);
+
+            $includeInstructions = isset($_GET['instructions']) && $_GET['instructions'] === '1';
+            $medicalInstructions = [];
+            if ($includeInstructions) {
+                $medicalInstructions = $this->getAppointmentMedicalInstructions($id);
+                if (empty($medicalInstructions)) {
+                    $includeInstructions = false;
+                }
+            }
             
             // Set print-specific headers
             header('Content-Type: text/html; charset=utf-8');
@@ -61,7 +70,9 @@ class PrintController
                 'patient' => $patient,
                 'appointment' => $appointment,
                 'doctor' => $doctor,
-                'clinic' => $this->getClinicInfo()
+                'clinic' => $this->getClinicInfo(),
+                'includeInstructions' => $includeInstructions,
+                'medicalInstructions' => $medicalInstructions,
             ]);
             
         } catch (\Exception $e) {
@@ -522,6 +533,21 @@ class PrintController
         ");
         $stmt->execute([$appointmentId]);
         return $stmt->fetchAll();
+    }
+
+    private function getAppointmentMedicalInstructions($appointmentId)
+    {
+        try {
+            $stmt = $this->pdo->prepare("
+                SELECT * FROM appointment_medical_instructions
+                WHERE appointment_id = ?
+                ORDER BY sort_order ASC, id ASC
+            ");
+            $stmt->execute([$appointmentId]);
+            return $stmt->fetchAll() ?: [];
+        } catch (\Exception $e) {
+            return [];
+        }
     }
 
     private function getGlassesPrescriptions($appointmentId)
