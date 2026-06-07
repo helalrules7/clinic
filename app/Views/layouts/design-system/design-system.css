@@ -290,7 +290,19 @@ body { font-family: var(--font-ui); }
     background: radial-gradient(circle, rgba(255, 255, 255, 0.22), transparent 70%);
     pointer-events: none;
 }
-.ds-hero h1 { font-size: 30px; font-weight: 800; letter-spacing: -.02em; margin: 0 0 8px; position: relative; z-index: 1; }
+.ds-hero h1 {
+    font-size: 30px;
+    font-weight: 800;
+    letter-spacing: -.02em;
+    margin: 0 0 8px;
+    position: relative;
+    z-index: 1;
+    color: #ffffff;
+}
+.dark .ds-hero h1,
+html[data-palette] .ds-hero h1 {
+    color: #ffffff;
+}
 .ds-hero p { margin: 0; opacity: .94; font-size: 15px; max-width: 640px; position: relative; z-index: 1; }
 .ds-hero p strong { font-weight: 800; }
 .ds-hero .ds-hero-actions { margin-block-start: 22px; display: flex; flex-wrap: wrap; gap: 10px; position: relative; z-index: 1; }

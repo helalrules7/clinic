@@ -113,6 +113,19 @@ try {
     $router->get('/secretary/payments', 'SecretaryController@payments');
     $router->get('/secretary/patients', 'SecretaryController@patients');
     $router->get('/api/secretary/patients', 'SecretaryController@getPatientsData');
+    // v11 — secretary clinic-scoped patient organization (folders/tags/markers/list/export)
+    $router->get('/api/secretary/patients-list', 'SecretaryPatientsController@list');
+    $router->get('/api/secretary/patients-export', 'SecretaryPatientsController@exportCsv');
+    $router->get('/api/secretary/patient-folders', 'SecretaryPatientsController@folders');
+    $router->post('/api/secretary/patient-folders/move', 'SecretaryPatientsController@movePatients');
+    $router->post('/api/secretary/patient-folders', 'SecretaryPatientsController@createFolder');
+    $router->post('/api/secretary/patient-folders/{id}', 'SecretaryPatientsController@updateFolder');
+    $router->delete('/api/secretary/patient-folders/{id}', 'SecretaryPatientsController@deleteFolder');
+    $router->get('/api/secretary/patient-tags', 'SecretaryPatientsController@tags');
+    $router->post('/api/secretary/patient-tags/assign', 'SecretaryPatientsController@assignTags');
+    $router->post('/api/secretary/patient-tags', 'SecretaryPatientsController@createTag');
+    $router->delete('/api/secretary/patient-tags/{id}', 'SecretaryPatientsController@deleteTag');
+    $router->post('/api/secretary/patient-marker/{id}', 'SecretaryPatientsController@setMarker');
     $router->get('/secretary/patients/new', 'SecretaryController@newPatient');
     $router->post('/secretary/patients', 'SecretaryController@createPatient');
     $router->get('/secretary/patients/{id}', 'SecretaryController@viewPatient');
