@@ -1,4 +1,26 @@
 <?php
+    // 2026-06-07: server-render the active clinics so the "Add New Patient"
+    // modal's clinic dropdown ships its <option>/<li> items in the initial HTML
+    // (mirrors calendar.php / secretary views). Fixes the undefined-$__calClinics
+    // warning. Secretaries are pinned to their clinic; doctors/admins get all.
+    try {
+        $__cal_pdo  = \App\Config\Database::getInstance()->getConnection();
+        $__cal_auth = new \App\Lib\Auth();
+        $__cal_user = $__cal_auth->user();
+        if (($__cal_user['role'] ?? null) === 'secretary' && !empty($__cal_user['clinic_id'])) {
+            $__s = $__cal_pdo->prepare("SELECT id, code, name_ar, name_en FROM clinics WHERE is_active = 1 AND id = ? ORDER BY sort_order, id");
+            $__s->execute([(int)$__cal_user['clinic_id']]);
+            $__calClinics = $__s->fetchAll(\PDO::FETCH_ASSOC);
+        } else {
+            $__calClinics = $__cal_pdo->query("SELECT id, code, name_ar, name_en FROM clinics WHERE is_active = 1 ORDER BY sort_order, id")->fetchAll(\PDO::FETCH_ASSOC);
+        }
+    } catch (\Throwable $__e) {
+        $__calClinics = [];
+    }
+    $__clinicVisuals = [
+        'riyadh' => ['icon' => 'bi-buildings-fill', 'color' => '#0d6efd'],
+        'kfs'    => ['icon' => 'bi-hospital-fill',  'color' => '#10b981'],
+    ];
 ?>
 <link href="/app/Views/doctor/assets/css/patients.css?v=<?= file_exists(__DIR__ . '/assets/css/patients.css') ? filemtime(__DIR__ . '/assets/css/patients.css') : time() ?>" rel="stylesheet">
 <link href="/app/Views/doctor/assets/css/dashboard.css?v=<?= file_exists(__DIR__ . '/assets/css/dashboard.css') ? filemtime(__DIR__ . '/assets/css/dashboard.css') : time() ?>" rel="stylesheet">
