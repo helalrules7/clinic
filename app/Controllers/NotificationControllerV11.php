@@ -249,6 +249,24 @@ class NotificationControllerV11 extends NotificationController
             return;
         }
         $uid = (int)$user['id'];
+        $isSecretary = (($user['role'] ?? '') === 'secretary');
+
+        // Secretary: own notification rows + clinic doctors' active alerts.
+        // Doctor/admin: own notifications + own alerts (legacy UNION).
+        $clinicDoctorIds = $isSecretary ? $this->resolveSecretaryClinicDoctorIds($user) : null;
+
+        $alertsWhere  = 'doctor_id = ?';
+        $alertsParams = [$uid];
+        if ($isSecretary && $clinicDoctorIds !== null) {
+            if (count($clinicDoctorIds) > 0) {
+                $ph = implode(',', array_fill(0, count($clinicDoctorIds), '?'));
+                $alertsWhere  = "doctor_id IN ($ph)";
+                $alertsParams = $clinicDoctorIds;
+            } else {
+                $alertsWhere  = '1 = 0';
+                $alertsParams = [];
+            }
+        }
 
         // ── Fetch unified feed: notifications (excluding still-snoozed) ⊎ active alerts.
         //
@@ -292,13 +310,13 @@ class NotificationControllerV11 extends NotificationController
                 patient_id,
                 created_at
             FROM alerts
-            WHERE doctor_id = ?
+            WHERE {$alertsWhere}
               AND is_active = 1
         ";
 
         try {
             $stmt = $this->pdo->prepare($sql);
-            $stmt->execute([$uid, $uid]);
+            $stmt->execute(array_merge([$uid], $alertsParams));
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         } catch (\PDOException $e) {
             error_log('NotificationControllerV11::grouped SQL Error: ' . $e->getMessage());
@@ -349,23 +367,9 @@ class NotificationControllerV11 extends NotificationController
             $pid  = !empty($r['patient_id']) ? (int)$r['patient_id'] : null;
             $type = (string)($r['type'] ?? 'system');
 
-            // Derive a deep-link from related_type/related_id, falling back to type.
-            $link = null;
             $rt = $r['related_type'] ?? null;
             $ri = $r['related_id']   ?? null;
-            if ($rt === 'alert' && $ri) {
-                $link = '/doctor/alerts#' . (int)$ri;
-            } elseif ($rt === 'appointment' && $ri) {
-                $link = '/doctor/appointments/' . (int)$ri;
-            } elseif ($rt === 'patient' && $ri) {
-                $link = '/doctor/patients/' . (int)$ri;
-            } elseif ($rt === 'todo' && $ri) {
-                $link = '/doctor/todos?focus=' . (int)$ri;
-            } elseif ($rt === 'payment' && $ri) {
-                $link = '/doctor/payments?focus=' . (int)$ri;
-            } elseif ($pid) {
-                $link = '/doctor/patients/' . $pid;
-            }
+            $link = $this->deriveNotificationLink($rt, $ri, $pid, $isSecretary);
 
             $items[] = [
                 'id'            => (int)$r['id'],
@@ -464,6 +468,98 @@ class NotificationControllerV11 extends NotificationController
     // ─────────────────────────────────────────────────────────────────────
     //  Helpers
     // ─────────────────────────────────────────────────────────────────────
+
+    /**
+     * Secretary clinic scope: doctor user-ids sharing the secretary's clinic_id.
+     * Returns null when the caller is not a secretary (caller should use own uid).
+     */
+    protected function resolveSecretaryClinicDoctorIds(array $user): ?array
+    {
+        if (($user['role'] ?? '') !== 'secretary') {
+            return null;
+        }
+
+        $clinicId = null;
+        if (!empty($user['clinic_id'])) {
+            $clinicId = (int)$user['clinic_id'];
+        } else {
+            try {
+                $stmt = $this->pdo->prepare('SELECT clinic_id FROM users WHERE id = ? LIMIT 1');
+                $stmt->execute([(int)$user['id']]);
+                $row = $stmt->fetch(\PDO::FETCH_ASSOC);
+                if ($row && $row['clinic_id'] !== null) {
+                    $clinicId = (int)$row['clinic_id'];
+                }
+            } catch (\PDOException $e) {
+                error_log('NotificationControllerV11::resolveSecretaryClinicDoctorIds: ' . $e->getMessage());
+                return [];
+            }
+        }
+
+        if ($clinicId === null) {
+            return [];
+        }
+
+        try {
+            $stmt = $this->pdo->prepare(
+                "SELECT id FROM users WHERE clinic_id = ? AND role = 'doctor'"
+            );
+            $stmt->execute([$clinicId]);
+            return array_map('intval', $stmt->fetchAll(\PDO::FETCH_COLUMN));
+        } catch (\PDOException $e) {
+            error_log('NotificationControllerV11::resolveSecretaryClinicDoctorIds doctors: ' . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * Map related_type/related_id → deep-link. Secretary routes use /secretary/…
+     */
+    protected function deriveNotificationLink($relatedType, $relatedId, $patientId, bool $isSecretary): ?string
+    {
+        $rt = $relatedType;
+        $ri = $relatedId !== null ? (int)$relatedId : null;
+        $pid = $patientId !== null ? (int)$patientId : null;
+
+        if ($isSecretary) {
+            if ($rt === 'appointment' && $ri) {
+                return '/secretary/bookings/' . $ri;
+            }
+            if ($rt === 'patient' && $ri) {
+                return '/secretary/patients/' . $ri;
+            }
+            if ($rt === 'payment' && $ri) {
+                return '/secretary/payments?focus=' . $ri;
+            }
+            if ($rt === 'alert' && $pid) {
+                return '/secretary/patients/' . $pid;
+            }
+            if ($pid) {
+                return '/secretary/patients/' . $pid;
+            }
+            return null;
+        }
+
+        if ($rt === 'alert' && $ri) {
+            return '/doctor/alerts#' . $ri;
+        }
+        if ($rt === 'appointment' && $ri) {
+            return '/doctor/appointments/' . $ri;
+        }
+        if ($rt === 'patient' && $ri) {
+            return '/doctor/patients/' . $ri;
+        }
+        if ($rt === 'todo' && $ri) {
+            return '/doctor/todos?focus=' . $ri;
+        }
+        if ($rt === 'payment' && $ri) {
+            return '/doctor/payments?focus=' . $ri;
+        }
+        if ($pid) {
+            return '/doctor/patients/' . $pid;
+        }
+        return null;
+    }
 
     /**
      * Collapse items sharing the same non-empty group_key when 3+ siblings exist.

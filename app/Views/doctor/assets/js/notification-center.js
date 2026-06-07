@@ -338,12 +338,37 @@
             .then(function () { state.loading = false; });
     }
 
+    /**
+     * ActivityController returns { success, events: [...] }.
+     * Older drafts used { items: [...] } — accept both (+ raw array).
+     */
+    function parseActivityPayload(data) {
+        if (Array.isArray(data)) return data;
+        if (!data) return [];
+        if (Array.isArray(data.events)) return data.events;
+        if (Array.isArray(data.items)) return data.items;
+        return [];
+    }
+
+    function formatActivityLine(a) {
+        if (!a) return '';
+        if (a.text || a.message || a.title) {
+            return a.text || a.message || a.title;
+        }
+        var parts = [];
+        if (a.actor_name) parts.push(a.actor_name);
+        if (a.action) parts.push(a.action);
+        if (a.target_label) parts.push(a.target_label);
+        if (parts.length) return parts.join(' ');
+        return isAr ? 'نشاط' : 'Activity';
+    }
+
     function loadActivity(showSpinner) {
         if (showSpinner) showSkeleton();
         state.loading = true;
         return api('/api/activity')
             .then(function (data) {
-                state.activity = Array.isArray(data) ? data : (data && data.items) || [];
+                state.activity = parseActivityPayload(data);
                 if (state.tab === 'activity') renderActivity();
             })
             .catch(function () {
@@ -575,8 +600,8 @@
             node.dataset.type = type;
             var dot = node.querySelector('[data-dot]');
             dot.style.background = colorFor(type);
-            node.querySelector('[data-text]').textContent = a.text || a.message || a.title || '';
-            node.querySelector('[data-time]').textContent = timeAgo(a.created_at || a.time);
+            node.querySelector('[data-text]').textContent = formatActivityLine(a);
+            node.querySelector('[data-time]').textContent = a.time_ago || timeAgo(a.ts || a.created_at || a.time);
             wrap.appendChild(node);
         });
         body.appendChild(wrap);

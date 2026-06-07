@@ -10143,6 +10143,9 @@
             
             // Toggle notifications panel
             function toggleNotifications() {
+                // v11 notification-center removes #notificationsPanel from the DOM;
+                // bail out so classList writes never throw on a detached node.
+                if (!notificationsPanel || !notificationsOverlay) return;
                 isNotificationsOpen = !isNotificationsOpen;
                 if (isNotificationsOpen) {
                     notificationsPanel.classList.add('show');
