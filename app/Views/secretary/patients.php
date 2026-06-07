@@ -238,36 +238,35 @@ $patientTrendDeltas = $patientTrendDeltas ?? ['total' => 0, 'active' => 0, 'new'
                 </h5>
             </div>
             <div class="col-md-6 text-end">
-                <div class="d-flex align-items-center justify-content-end gap-3">
-                    <!-- Quick Search -->
-                    <div class="d-flex align-items-center">
-                        <div class="input-group input-group-sm" style="width: 200px;">
-                            <span class="input-group-text">
+                <div class="d-flex align-items-center justify-content-end gap-2 flex-wrap">
+                    <div class="d-flex align-items-center gap-2 header-actions-row">
+                        <div class="input-group input-group-sm quick-search-input-group">
+                            <span class="input-group-text bg-light border-end-0">
                                 <i class="bi bi-search"></i>
                             </span>
-                            <input type="text" 
-                                   class="form-control" 
-                                   id="quickSearch" 
+                            <input type="text"
+                                   class="form-control border-start-0 border-end-0"
+                                   id="quickSearch"
                                    placeholder="بحث سريع..."
-                                   autocomplete="off">
-                            <button class="btn btn-outline-secondary" type="button" id="clearQuickSearch">
+                                   autocomplete="off"
+                                   style="border-left: none; border-right: none;">
+                            <button class="btn btn-outline-secondary border-start-0" type="button" id="clearQuickSearch" style="display: none;">
                                 <i class="bi bi-x-lg"></i>
                             </button>
                         </div>
-                    </div>
-                    <!-- Items per page -->
-                    <div class="d-flex align-items-center">
-                        <label for="paginationLimit" class="form-label mb-0 me-2 text-muted arabic-text">عرض:</label>
-                        <select class="form-select form-select-sm" id="paginationLimit" style="width: auto;">
-                            <option value="10" class="arabic-text">10</option>
-                            <option value="20" selected class="arabic-text">20</option>
-                            <option value="30" class="arabic-text">30</option>
-                            <option value="50" class="arabic-text">50</option>
-                            <option value="all" class="arabic-text">الكل</option>
-                        </select>
-                    </div>
-                    <div class="text-muted">
-                        <small class="arabic-text">المجموع: <span id="totalPatientsCount"><?= count($patients) ?></span> مريض</small>
+                        <div class="d-flex align-items-center">
+                            <label for="paginationLimit" class="form-label mb-0 me-2 text-muted small per-page-label arabic-text">عرض:</label>
+                            <select class="form-select form-select-sm" id="paginationLimit" style="width: auto;">
+                                <option value="10" class="arabic-text">10</option>
+                                <option value="20" selected class="arabic-text">20</option>
+                                <option value="30" class="arabic-text">30</option>
+                                <option value="50" class="arabic-text">50</option>
+                                <option value="all" class="arabic-text">الكل</option>
+                            </select>
+                        </div>
+                        <div class="text-muted total-count-label">
+                            <small class="arabic-text">المجموع: <span id="totalPatientsCount"><?= count($patients) ?></span> مريض</small>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -432,28 +431,29 @@ $patientTrendDeltas = $patientTrendDeltas ?? ['total' => 0, 'active' => 0, 'new'
                                     <?php endif; ?>
                                 </td>
                                 <td>
-                                    <div class="btn-group btn-group-sm" role="group">
-                                        <a href="/secretary/patients/<?= $patient['id'] ?>" 
-                                           class="btn btn-outline-primary" 
-                                           data-bs-toggle="tooltip" 
-                                           data-bs-placement="top" 
+                                    <div class="btn-group" role="group">
+                                        <a href="/secretary/patients/<?= $patient['id'] ?>"
+                                           class="btn btn-sm btn-outline-warning"
+                                           data-bs-toggle="tooltip"
+                                           data-bs-placement="top"
                                            data-bs-title="عرض تفاصيل المريض">
                                             <i class="bi bi-eye"></i>
                                         </a>
-                                        <button class="btn btn-outline-success" 
-                                                data-bs-toggle="tooltip" 
-                                                data-bs-placement="top" 
-                                                data-bs-title="حجز موعد جديد"
-                                                onclick="openBookingModal(<?= $patient['id'] ?>, '<?= htmlspecialchars($fullName) ?>')">
-                                            <i class="bi bi-calendar-plus"></i>
-                                        </button>
-                                        <a href="/secretary/payments?patient_id=<?= $patient['id'] ?>" 
-                                           class="btn btn-outline-warning" 
-                                           data-bs-toggle="tooltip" 
-                                           data-bs-placement="top" 
+                                        <a href="/secretary/payments?patient_id=<?= $patient['id'] ?>"
+                                           class="btn btn-sm btn-outline-info"
+                                           data-bs-toggle="tooltip"
+                                           data-bs-placement="top"
                                            data-bs-title="عرض المدفوعات">
                                             <i class="bi bi-credit-card"></i>
                                         </a>
+                                        <button type="button"
+                                                class="btn btn-sm btn-outline-success"
+                                                data-bs-toggle="tooltip"
+                                                data-bs-placement="top"
+                                                data-bs-title="حجز موعد جديد"
+                                                onclick="openBookingModal(<?= $patient['id'] ?>, '<?= htmlspecialchars($fullName, ENT_QUOTES) ?>')">
+                                            <i class="bi bi-calendar-plus"></i>
+                                        </button>
                                     </div>
                                 </td>
                             </tr>
@@ -841,14 +841,14 @@ function displaySearchResults(patients, searchTerm) {
                     </div>
                     <div class="search-result-actions ms-3">
                         <div class="btn-group-vertical">
-                            <a href="/secretary/patients/${patient.id}" class="btn btn-sm btn-outline-primary arabic-text">
+                            <a href="/secretary/patients/${patient.id}" class="btn btn-sm btn-outline-warning arabic-text">
                                 <i class="bi bi-eye me-1"></i>عرض
-                            </a>
-                            <a href="/secretary/bookings?patient_id=${patient.id}" class="btn btn-sm btn-outline-success arabic-text">
-                                <i class="bi bi-calendar-plus me-1"></i>حجز
                             </a>
                             <a href="/secretary/payments?patient_id=${patient.id}" class="btn btn-sm btn-outline-info arabic-text">
                                 <i class="bi bi-credit-card me-1"></i>دفعات
+                            </a>
+                            <a href="/secretary/bookings?patient_id=${patient.id}" class="btn btn-sm btn-outline-success arabic-text">
+                                <i class="bi bi-calendar-plus me-1"></i>حجز
                             </a>
                         </div>
                     </div>
@@ -1107,12 +1107,16 @@ document.addEventListener('DOMContentLoaded', function() {
     
     if (quickSearch) {
         quickSearch.addEventListener('input', debounce(function() {
+            if (clearQuickSearch) {
+                clearQuickSearch.style.display = quickSearch.value.trim() ? 'block' : 'none';
+            }
             filterPatientsTable();
         }, 300));
         
         if (clearQuickSearch) {
             clearQuickSearch.addEventListener('click', function() {
                 quickSearch.value = '';
+                clearQuickSearch.style.display = 'none';
                 filterPatientsTable();
                 quickSearch.focus();
             });
@@ -1666,18 +1670,22 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Quick search filter
     const quickSearch = document.getElementById('quickSearch');
+    const clearQuickSearch = document.getElementById('clearQuickSearch');
     if (quickSearch) {
-        quickSearch.addEventListener('input', debounce(filterPatientsTable, 300));
+        quickSearch.addEventListener('input', debounce(function () {
+            if (clearQuickSearch) {
+                clearQuickSearch.style.display = quickSearch.value.trim() ? 'block' : 'none';
+            }
+            filterPatientsTable();
+        }, 300));
     }
     
-    // Clear quick search
-    const clearQuickSearch = document.getElementById('clearQuickSearch');
-    if (clearQuickSearch) {
-        clearQuickSearch.addEventListener('click', () => {
-            if (quickSearch) {
-                quickSearch.value = '';
-                filterPatientsTable();
-            }
+    if (clearQuickSearch && quickSearch) {
+        clearQuickSearch.addEventListener('click', function () {
+            quickSearch.value = '';
+            clearQuickSearch.style.display = 'none';
+            filterPatientsTable();
+            quickSearch.focus();
         });
     }
     
@@ -2364,9 +2372,30 @@ kbd[lang="ar"] {
 }
 
 .card-header {
-    background-color: var(--bg-alt);
+    background-color: transparent !important;
     border-bottom-color: var(--border);
     color: var(--text);
+}
+
+/* Patient list card — parity with doctor #patientsTableCard */
+#secTableView .card-header .header-actions-row {
+    flex-wrap: nowrap !important;
+    align-items: center;
+}
+#secTableView .card-header .header-actions-row .total-count-label {
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+#secTableView .table thead th,
+#secTableView .table-dark th {
+    padding: 15px !important;
+    font-weight: 600;
+    border-bottom: 2px solid var(--border) !important;
+    vertical-align: middle;
+}
+#secTableView .table tbody td {
+    padding: 15px;
+    vertical-align: middle;
 }
 
 .table {
@@ -3877,132 +3906,11 @@ color: var(--text) !important;
     }
 }
 
-/* ============================================
-       Action Buttons in Table - Ensure proper borders and styles
-       ============================================ */
-       #patientsTableBody .btn-group .btn {
-        border: 1px solid var(--border) !important;
-        border-radius: 10px !important;
-        margin: 0 !important;
-        padding: 0.375rem 0.75rem !important;
-        transition: all 0.2s ease !important;
-    }
-    
-    #patientsTableBody .btn-group .btn-outline-primary {
-        color: white !important;
-        background: var(--accent) !important;
-        border-radius: 10px !important;
-        border: 1px solid var(--accent) !important;
-    }
-    
-    #patientsTableBody .btn-group .btn-outline-primary:hover {
-        background: var(--accent) !important;
-        color: white !important;
-    }
-
-    #patientsTableBody .btn-group .btn-outline-warning {
-        color: white !important;
-        background: #ffc107 !important;
-        border: 1px solid #ffc107 !important;
-        border-radius: 10px !important;
-    }
-    
-    #patientsTableBody .btn-group .btn-outline-warning:hover {
-        background: #ffc107 !important;
-        color: white !important;
-    }
-
-    #patientsTableBody .btn-group .btn-outline-info {
-        color: white !important;
-        background: #4F46E5 !important;
-        border: 1px solid #4F46E5 !important;
-        border-radius: 10px !important;
-    }
-    
-    #patientsTableBody .btn-group .btn-outline-info:hover {
-        background: #4F46E5 !important;
-        color: white !important;
-    }
-    
-    #patientsTableBody .btn-group .btn-outline-success {
-        color: white !important;
-        background: var(--success) !important;
-        border: 1px solid var(--success) !important;
-        border-radius: 10px !important;
-    }
-    
-    #patientsTableBody .btn-group .btn-outline-success:hover {
-        background: var(--success) !important;
-        color: white !important;
-    }
-    
-    #patientsTableBody .btn-group .btn-outline-danger {
-        color: white !important;
-        background: var(--danger) !important;
-        border: 1px solid var(--danger) !important;
-        border-radius: 10px !important;
-    }
-    
-    #patientsTableBody .btn-group .btn-outline-danger:hover {
-        background: var(--danger) !important;
-        color: white !important;
-    }
-    
-    .dark #patientsTableBody .btn-group .btn-outline-primary {
-        background: var(--accent) !important;
-        border: 1px solid var(--accent) !important;
-        border-radius: 10px !important;
-        color: white !important;
-    }
-    
-    .dark #patientsTableBody .btn-group .btn-outline-primary:hover {
-        background: var(--accent) !important;
-        color: white !important;
-    }
-    
-    .dark #patientsTableBody .btn-group .btn-outline-info {
-        background: #4F46E5 !important;
-        border: 1px solid #4F46E5 !important;
-        border-radius: 10px !important;
-        color: white !important;
-    }
-    
-    .dark #patientsTableBody .btn-group .btn-outline-info:hover {
-        background: #4F46E5 !important;
-        color: white !important;
-    }
-    
-    .dark #patientsTableBody .btn-group .btn-outline-success {
-        background: var(--success) !important;
-        border: 1px solid var(--success) !important;
-        border-radius: 10px !important;
-        color: white !important;
-    }
-    
-    .dark #patientsTableBody .btn-group .btn-outline-success:hover {
-        background: var(--success) !important;
-        color: white !important;
-    }
-    
-    .dark #patientsTableBody .btn-group .btn-outline-danger {
-        background: var(--danger) !important;
-        border: 1px solid var(--danger) !important;
-        border-radius: 10px !important;
-        color: white !important;
-    }
-    
-    .dark #patientsTableBody .btn-group .btn-outline-danger:hover {
-        background: var(--danger) !important;
-        color: white !important;
-    }
-
-    .dark #patientsTableBody .btn-group .btn-outline-info,.dark #patientsTableBody .btn-group .btn-outline-warning{
-        margin-right: 0.25rem !important;
-    }
-
-    #patientsTableBody .btn-group .btn-outline-info, #patientsTableBody .btn-group .btn-outline-warning{
-        margin-right: 0.25rem !important;
-    }
+/* Table action pills + thead height — doctor patients.css; RTL column titles only */
+#secTableView .table thead th.arabic-text {
+    text-align: right !important;
+    direction: rtl;
+}
 
 /* Modal centering — backdrop/z-index: sec-style.css + modal-kit.css */
 .modal {
@@ -4029,13 +3937,8 @@ color: var(--text) !important;
 }
 
 @media screen and (max-width: 768px) {
-    
-.dark #patientsTableBody .btn-group .btn-outline-primary,
-.dark #patientsTableBody .btn-group .btn-outline-warning,
-.dark #patientsTableBody .btn-group .btn-outline-info,
-.dark #patientsTableBody .btn-group .btn-outline-success,
-.dark #patientsTableBody .btn-group .btn-outline-danger{
-    margin-bottom: 5px !important;
-}
+    #secTableView .card-header .header-actions-row {
+        flex-wrap: wrap !important;
+    }
 }
 </style>

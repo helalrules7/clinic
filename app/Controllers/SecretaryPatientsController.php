@@ -484,6 +484,78 @@ class SecretaryPatientsController
         }
     }
 
+    /** Upcoming clinic appointments (soonest first) — for the header notice bar. */
+    public function nextAppointments()
+    {
+        if (!$this->needClinic()) return;
+        try {
+            $stmt = $this->pdo->prepare("
+                SELECT a.id, a.date, a.start_time, a.status,
+                       p.first_name, p.last_name, u.name AS doctor_name
+                FROM appointments a
+                JOIN patients p ON p.id = a.patient_id
+                LEFT JOIN doctors d ON d.id = a.doctor_id
+                LEFT JOIN users u ON u.id = d.user_id
+                WHERE a.clinic_id = ?
+                  AND a.status NOT IN ('Completed', 'Cancelled', 'NoShow', 'Closed')
+                  AND a.date >= CURDATE()
+                ORDER BY a.date ASC, a.start_time ASC
+                LIMIT 10
+            ");
+            $stmt->execute([$this->clinicId]);
+            return $this->json(['ok' => true, 'items' => $stmt->fetchAll(\PDO::FETCH_ASSOC)]);
+        } catch (\Exception $e) {
+            return $this->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Clinic-scoped month appointment map for the notice-bar clock/calendar
+     * popover. Mirrors the doctor's /api/organizer/month → { dataByDate }.
+     * Shape: { ok, data: { dataByDate: { "Y-m-d": { appointments:[{start_time,status,patient_name}], count } } } }
+     */
+    public function month()
+    {
+        if (!$this->needClinic()) return;
+        try {
+            $year  = (int) ($_GET['year'] ?? 0);
+            $month = (int) ($_GET['month'] ?? 0); // 1-based
+            if ($year < 2000 || $year > 2100 || $month < 1 || $month > 12) {
+                $now = new \DateTime('now');
+                $year  = (int) $now->format('Y');
+                $month = (int) $now->format('n');
+            }
+            $start = sprintf('%04d-%02d-01', $year, $month);
+            $end   = (new \DateTime($start))->modify('first day of next month')->format('Y-m-d');
+
+            $stmt = $this->pdo->prepare("
+                SELECT a.date, a.start_time, a.status,
+                       TRIM(CONCAT(COALESCE(p.first_name,''), ' ', COALESCE(p.last_name,''))) AS patient_name
+                FROM appointments a
+                JOIN patients p ON p.id = a.patient_id
+                WHERE a.clinic_id = ?
+                  AND a.date >= ? AND a.date < ?
+                ORDER BY a.date ASC, a.start_time ASC
+            ");
+            $stmt->execute([$this->clinicId, $start, $end]);
+
+            $byDate = [];
+            foreach ($stmt->fetchAll(\PDO::FETCH_ASSOC) as $r) {
+                $d = $r['date'];
+                if (!isset($byDate[$d])) $byDate[$d] = ['appointments' => [], 'count' => 0];
+                $byDate[$d]['appointments'][] = [
+                    'start_time'   => $r['start_time'],
+                    'status'       => $r['status'],
+                    'patient_name' => $r['patient_name'] !== '' ? $r['patient_name'] : 'مريض',
+                ];
+                $byDate[$d]['count']++;
+            }
+            return $this->json(['ok' => true, 'data' => ['dataByDate' => $byDate]]);
+        } catch (\Exception $e) {
+            return $this->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
     // ========================================================================
     //  ADMINISTRATIVE FILES  (patient_files, audience='administrative')
     //  Secretary uploads operational docs (ID / insurance / receipt) — it never

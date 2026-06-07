@@ -47,6 +47,8 @@
     <link href="/app/Views/layouts/header-chips.css?v=<?= file_exists(__DIR__ . '/header-chips.css') ? filemtime(__DIR__ . '/header-chips.css') : time() ?>" rel="stylesheet">
     <link href="/app/Views/layouts/global-search-panel.css?v=<?= file_exists(__DIR__ . '/global-search-panel.css') ? filemtime(__DIR__ . '/global-search-panel.css') : time() ?>" rel="stylesheet">
     <link href="/app/Views/layouts/push-toast-center.css?v=<?= file_exists(__DIR__ . '/push-toast-center.css') ? filemtime(__DIR__ . '/push-toast-center.css') : time() ?>" rel="stylesheet">
+    <!-- v11: notice-bar clock/calendar + appointments popovers (ported from doctor style.css) -->
+    <link href="/app/Views/layouts/secretary-notice-bar.css?v=<?= file_exists(__DIR__ . '/secretary-notice-bar.css') ? filemtime(__DIR__ . '/secretary-notice-bar.css') : time() ?>" rel="stylesheet">
 
     <!-- Theme + logo + favicon pre-paint. Runs synchronously in <head> so
          #clinicLogo and the favicon <link>s are rendered with the right
@@ -356,6 +358,11 @@
         <?php endif; ?>
         
         <div class="top-bar">
+            <!-- v11: notice bar (clock + next appointment) — header-height parity with the doctor -->
+            <div class="notice-bar" id="secNoticeBar" dir="rtl">
+                <span class="notice-bar-clock"><i class="bi bi-clock"></i><span id="secNoticeClock">—</span></span>
+                <span class="notice-bar-next" id="secNoticeNext"><i class="bi bi-calendar-event"></i><span>…</span></span>
+            </div>
             <button class="btn sidebar-toggle" id="sidebarToggle">
                 <i class="bi bi-list"></i>
             </button>
@@ -406,14 +413,8 @@
                     </div>
                 </div>
 
-                <button type="button" class="notifications-toggle" id="notificationsToggle" title="الإشعارات" aria-label="الإشعارات">
-                    <i class="bi bi-bell"></i>
-                    <span class="notifications-badge" id="notificationsBadge" style="display: none;">0</span>
-                </button>
-
-                <?php 
-                // Check if admin is in View As mode using session directly
-                if (isset($_SESSION['view_as_mode']) && $_SESSION['view_as_mode'] === true): 
+                <?php
+                if (isset($_SESSION['view_as_mode']) && $_SESSION['view_as_mode'] === true):
                 ?>
                     <div class="view-as-indicator me-3">
                         <div class="alert alert-warning d-flex align-items-center mb-0 py-2 px-3" style="font-size: 0.9rem; border: 2px solid #ffc107;">
@@ -425,13 +426,16 @@
                             </a>
                         </div>
                     </div>
-                    
-                    <!-- Additional Exit Button -->
                     <a href="/admin/stop-view-as" class="btn btn-warning me-2" title="الخروج من وضع المعاينة" style="font-weight: bold;">
                         <i class="fas fa-sign-out-alt me-1"></i>
                         الخروج من المعاينة
                     </a>
                 <?php endif; ?>
+
+                <button type="button" class="btn btn-outline-secondary notifications-toggle" id="notificationsToggle" title="الإشعارات" aria-label="الإشعارات">
+                    <i class="bi bi-bell"></i>
+                    <span class="notifications-badge" id="notificationsBadge" style="display: none;">0</span>
+                </button>
             </div>
 
             <div class="top-actions-quick" id="topActionsQuick" aria-label="أدوات سريعة"></div>
@@ -1307,5 +1311,61 @@
     <script defer src="/app/Views/doctor/assets/js/focus-mode.js?v=<?= file_exists(__DIR__ . '/../doctor/assets/js/focus-mode.js') ? filemtime(__DIR__ . '/../doctor/assets/js/focus-mode.js') : time() ?>"></script>
     <script defer src="/app/Views/doctor/assets/js/notes-drawer.js?v=<?= file_exists(__DIR__ . '/../doctor/assets/js/notes-drawer.js') ? filemtime(__DIR__ . '/../doctor/assets/js/notes-drawer.js') : time() ?>"></script>
     <script defer src="/app/Views/doctor/assets/js/theme-palette.js?v=<?= file_exists(__DIR__ . '/../doctor/assets/js/theme-palette.js') ? filemtime(__DIR__ . '/../doctor/assets/js/theme-palette.js') : time() ?>"></script>
+    <!-- v11: notice-bar clock/calendar + appointments popovers -->
+    <script defer src="/app/Views/secretary/assets/js/secretary-notice-bar.js?v=<?= file_exists(__DIR__ . '/../secretary/assets/js/secretary-notice-bar.js') ? filemtime(__DIR__ . '/../secretary/assets/js/secretary-notice-bar.js') : time() ?>"></script>
+    <!-- v11: header notice bar — live clock + next appointment (clinic-scoped) -->
+    <script>
+    (function () {
+        var DAYS = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+        var MONTHS = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
+        function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[c]; }); }
+        function t12(hms) { if (!hms) return ''; var p = hms.split(':'); var H = parseInt(p[0], 10); var ap = H >= 12 ? 'م' : 'ص'; var h = H % 12 || 12; return h + ':' + p[1] + ' ' + ap; }
+
+        var clockEl = document.getElementById('secNoticeClock');
+        function tick() {
+            if (!clockEl) return;
+            var n = new Date(), h = n.getHours(), m = String(n.getMinutes()).padStart(2, '0'), s = String(n.getSeconds()).padStart(2, '0');
+            var ap = h >= 12 ? 'م' : 'ص'; h = h % 12 || 12;
+            clockEl.textContent = DAYS[n.getDay()] + ' ' + n.getDate() + ' ' + MONTHS[n.getMonth()] + ' · ' + h + ':' + m + ':' + s + ' ' + ap;
+        }
+        if (clockEl) { tick(); setInterval(tick, 1000); }
+
+        var nextEl = document.getElementById('secNoticeNext');
+        if (nextEl) {
+            fetch('/api/secretary/next-appointments', { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                .then(function (r) { return r.json(); }).then(function (res) {
+                    var items = (res && res.items) || [];
+                    if (!items.length) { nextEl.innerHTML = '<i class="bi bi-calendar-event"></i><span>لا مواعيد قادمة</span>'; return; }
+                    var today = new Date(); today.setHours(0, 0, 0, 0);
+                    var tom = new Date(today); tom.setDate(tom.getDate() + 1);
+                    function when(d) { var ad = new Date(d + 'T00:00:00'); ad.setHours(0, 0, 0, 0); if (ad.getTime() === today.getTime()) return 'اليوم'; if (ad.getTime() === tom.getTime()) return 'غداً'; return d; }
+                    function itemHtml(a) {
+                        var name = ((a.first_name || '') + ' ' + (a.last_name || '')).replace(/\s+/g, ' ').trim() || 'مريض';
+                        return '<span class="nb-next-item"><i class="bi bi-calendar-event"></i><span>الموعد التالي: <b>' + esc(name) + '</b> · ' + esc(when(a.date)) + ' ' + esc(t12(a.start_time)) + '</span></span>';
+                    }
+                    // Single appointment → no slider, no animation.
+                    if (items.length === 1) { nextEl.innerHTML = itemHtml(items[0]); return; }
+                    // Vertical slider: stack all items + a clone of the first for a seamless loop.
+                    var H = 17, n = items.length;
+                    var rows = items.map(itemHtml).join('') + itemHtml(items[0]);
+                    nextEl.innerHTML = '<span class="nb-next-vp"><span class="nb-next-track">' + rows + '</span></span>';
+                    var track = nextEl.querySelector('.nb-next-track');
+                    var i = 0;
+                    setInterval(function () {
+                        i++;
+                        track.classList.remove('no-anim');
+                        track.style.transform = 'translateY(-' + (i * H) + 'px)';
+                        if (i === n) { // landed on the clone (== first) → snap back to real first
+                            setTimeout(function () {
+                                track.classList.add('no-anim');
+                                track.style.transform = 'translateY(0px)';
+                                i = 0;
+                            }, 480);
+                        }
+                    }, 4000);
+                }).catch(function () { nextEl.innerHTML = ''; });
+        }
+    })();
+    </script>
 </body>
 </html>

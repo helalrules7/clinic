@@ -157,9 +157,12 @@
     }
 
     // Decorate the server-rendered TABLE rows with this clinic's marker + tags.
+    // Scope to the patient-name cell only — patient-hover.js also stamps profile
+    // links in the actions column (.btn-group), which must not receive org chips.
     function decorateTable() {
         if (!tableView) return;
-        var names = tableView.querySelectorAll('.patient-hover-name[data-patient-id]');
+        tableView.querySelectorAll('.btn-group .sec-table-org').forEach(function (el) { el.remove(); });
+        var names = tableView.querySelectorAll('tbody tr td:first-child .patient-hover-name[data-patient-id]');
         if (!names.length) return;
         var ids = [];
         names.forEach(function (n) { ids.push(n.getAttribute('data-patient-id')); });
@@ -222,10 +225,11 @@
                 '<div class="sec-pcard-meta"><i class="bi bi-telephone"></i> ' + esc(p.phone || '—') + '</div>' +
                 (tags ? ('<div class="sec-pcard-tags">' + tags + '</div>') : '') +
                 '<div class="sec-pcard-actions">' +
-                    '<a class="btn btn-sm btn-outline-primary" href="/secretary/patients/' + p.id + '" title="عرض"><i class="bi bi-eye"></i></a>' +
+                    '<a class="btn btn-sm btn-outline-warning" href="/secretary/patients/' + p.id + '" title="عرض"><i class="bi bi-eye"></i></a>' +
+                    '<a class="btn btn-sm btn-outline-info" href="/secretary/payments?patient_id=' + p.id + '" title="مدفوعات"><i class="bi bi-credit-card"></i></a>' +
+                    '<a class="btn btn-sm btn-outline-success" href="/secretary/bookings?patient_id=' + p.id + '" title="حجز"><i class="bi bi-calendar-plus"></i></a>' +
                     '<button class="btn btn-sm btn-outline-secondary sec-mark-btn" data-id="' + p.id + '" title="علامة لونية"><i class="bi bi-palette"></i></button>' +
                     '<button class="btn btn-sm btn-outline-secondary sec-tag-btn" data-id="' + p.id + '" title="وسوم"><i class="bi bi-tags"></i></button>' +
-                    '<a class="btn btn-sm btn-outline-success" href="/secretary/bookings?patient_id=' + p.id + '" title="حجز"><i class="bi bi-calendar-plus"></i></a>' +
                 '</div>' +
             '</div>';
     }

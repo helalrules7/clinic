@@ -394,6 +394,7 @@ body {
 .main-content {
     margin-right: var(--sidebar-width); /* Changed from margin-left for RTL */
     padding: 2rem;
+    padding-top: 0; /* top-bar bleeds to viewport top — mirrors doctor style.css */
     min-height: 100vh;
     transition: margin-right 0.3s ease; /* Changed from margin-left for RTL */
     /* Keep .main-content CONTEXT-FREE (mirrors the doctor layout's style.css note):
@@ -408,40 +409,91 @@ body {
     position: relative;
 }
 
-/* RTL Top Bar */
+/* RTL Top Bar — parity with doctor style.css (.top-bar) */
 .top-bar {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-top: -2rem;
+    margin-top: 0;
     margin-bottom: 2rem;
-    margin-right: -2rem; /* Changed from margin-left for RTL */
-    margin-left: -2rem; /* Changed from margin-right for RTL */
-    padding-top: 1rem;
-    padding-right: 2rem; /* Changed from padding-left for RTL */
-    padding-left: 2rem; /* Changed from padding-right for RTL */
+    margin-right: -2rem;
+    margin-left: -2rem;
+    padding-top: calc(1rem + 20px); /* reserves notice-bar strip (20px) */
+    padding-right: 2rem;
+    padding-left: 2rem;
     padding-bottom: 1rem;
     width: calc(100% + 4rem);
     border-bottom: 1px solid var(--border);
     position: sticky;
     top: 0;
-    z-index: 100;
-    /* Glass effect */
-    background: rgba(248, 250, 252, 0.35);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border-bottom: 1px solid rgba(226, 232, 240, 0.3);
-    transition: all 0.3s ease;
+    z-index: 999;
+    transition: padding-top 0.3s ease, background 0.3s ease, box-shadow 0.3s ease;
+    background: rgba(248, 250, 252, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     box-shadow: 0 0px 10px 0 rgba(0, 0, 0, 0.08);
 }
-        
-        .top-bar.scrolled {
-            padding-top: 1rem;
+
+.top-bar.notice-bar-hidden {
+    padding-top: 1rem;
+}
+
+.top-bar > .top-bar-cluster,
+.top-bar > .top-actions,
+.top-bar > .sidebar-toggle,
+.top-bar > .page-title {
+    margin-top: 0;
+    transition: margin-top 0.3s ease;
+}
+
+.top-bar.notice-bar-hidden > .top-bar-cluster,
+.top-bar.notice-bar-hidden > .top-actions,
+.top-bar.notice-bar-hidden > .sidebar-toggle,
+.top-bar.notice-bar-hidden > .page-title {
+    margin-top: 0;
+}
+
+.top-bar.scrolled {
+    /* Keep the 20px notice-bar reservation on scroll so the bar stays visible
+       (mirrors the doctor: the clock / next-appointment must NOT disappear). */
+    padding-top: calc(1rem + 20px);
+    background: rgba(248, 250, 252, 0.92);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    box-shadow: 0 2px 20px rgba(0, 0, 0, 0.08);
+}
+        /* v11 notice bar — live clock + next appointment (header-height parity with doctor) */
+        .notice-bar {
+            position: absolute; top: 0; left: 0; right: 0; height: 20px;
+            display: flex; align-items: center; gap: 1.2rem; padding: 4px 2rem 0;
+            font-size: 0.72rem; color: var(--muted); z-index: 1000; overflow: hidden;
+            pointer-events: none; font-family: 'Cairo', sans-serif;
         }
-        
+        .notice-bar .notice-bar-clock, .notice-bar .notice-bar-next { display: inline-flex; align-items: center; gap: 0.35rem; white-space: nowrap; }
+        /* Container stays click-through (so the empty strip doesn't block the top-bar),
+           but the clock + next-appointment are interactive popover triggers. */
+        .notice-bar .notice-bar-clock, .notice-bar .notice-bar-next { pointer-events: auto; cursor: pointer; transition: color 0.15s ease; }
+        .notice-bar .notice-bar-clock:hover, .notice-bar .notice-bar-next:hover { color: var(--text); }
+        .notice-bar .notice-bar-clock i { color: var(--accent); }
+        .notice-bar .notice-bar-next i { color: var(--success, #10b981); }
+        .notice-bar .notice-bar-next b { color: var(--text); font-weight: 700; }
+        /* Animated vertical slider for the next-appointment line (mirrors the doctor's scroll). */
+        .notice-bar .nb-next-vp { height: 17px; overflow: hidden; display: inline-block; }
+        .notice-bar .nb-next-track { display: flex; flex-direction: column; transition: transform 0.45s cubic-bezier(.4,0,.2,1); }
+        .notice-bar .nb-next-track.no-anim { transition: none; }
+        .notice-bar .nb-next-item { height: 17px; line-height: 17px; display: inline-flex; align-items: center; gap: 0.35rem; white-space: nowrap; }
+        /* Notice bar stays visible on scroll (doctor parity) — only the clock/next
+           remain interactive; the empty strip keeps passing clicks through. */
+        @media (max-width: 575.98px) { .notice-bar .notice-bar-next { display: none; } }
+
         .dark .top-bar {
-            background: rgba(11, 18, 32, 0.70);
+            background: rgba(11, 18, 32, 0.85);
             border-bottom: 1px solid rgba(51, 65, 85, 0.3);
+        }
+
+        .dark .top-bar.scrolled {
+            background: rgba(11, 18, 32, 0.92);
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.3);
         }
         
         .page-title h1 {
@@ -1604,17 +1656,17 @@ body {
     .main-content {
         margin-right: 0 !important; /* Changed from margin-left for RTL */
         padding: 1rem;
+        padding-top: 0;
         width: 100% !important;
         max-width: 100% !important;
     }
     
     .top-bar {
-        margin-top: -1rem;
-        margin-right: -1rem; /* Changed from margin-left for RTL */
-        margin-left: -1rem; /* Changed from margin-right for RTL */
-        padding-top: 0.5rem;
-        padding-right: 1rem; /* Changed from padding-left for RTL */
-        padding-left: 1rem; /* Changed from padding-right for RTL */
+        margin-right: -1rem;
+        margin-left: -1rem;
+        padding-top: calc(0.5rem + 20px);
+        padding-right: 1rem;
+        padding-left: 1rem;
         padding-bottom: 0.5rem;
         width: calc(100% + 2rem);
         margin-bottom: 1rem;
@@ -1628,6 +1680,10 @@ body {
         flex: 1 1 auto;
         overflow: hidden;
         align-self: center;
+    }
+
+    .global-search-wrapper {
+        margin-left: 0;
     }
 
     .page-title h1 {
@@ -1663,11 +1719,14 @@ body {
         opacity: 1;
         pointer-events: auto;
         transform: scale(1);
-        margin-left: 0.35rem; /* Changed from margin-right for RTL */
+        margin-left: 0.35rem;
+        margin-right: 0;
         min-width: 36px;
         min-height: 36px;
         padding: 0.45rem;
         font-size: 1rem;
+        border-radius: 8px;
+        align-self: center;
     }
     
     /* Ensure overlay covers everything */
@@ -1686,6 +1745,9 @@ body {
     .top-bar {
         overflow-x: clip;
         align-items: flex-start;
+        padding-top: calc(0.65rem + 20px);
+        padding-bottom: 0.65rem;
+        margin-bottom: 1.25rem;
         margin-right: -2rem;
         margin-left: -2rem;
         padding-right: 2rem;
@@ -1698,6 +1760,20 @@ body {
         min-width: 0;
         flex: 1 1 0;
         overflow: hidden;
+        align-self: center;
+    }
+
+    .page-title h1 {
+        font-size: 1.35rem;
+        font-weight: 600;
+        line-height: 1.25;
+        white-space: normal;
+        overflow: hidden;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        text-overflow: ellipsis;
+        word-break: break-word;
     }
 
     .page-title small {
@@ -1706,10 +1782,24 @@ body {
 
     .top-bar-cluster {
         flex-shrink: 0;
+        align-self: center;
     }
 
     .top-bar .switch {
         --scale: 0.88;
+    }
+
+    .sidebar-toggle {
+        align-self: center;
+        flex-shrink: 0;
+    }
+
+    .top-bar .global-search-toggle {
+        display: flex;
+    }
+
+    .top-bar .global-search-wrapper {
+        margin-left: 0;
     }
 }
 
@@ -4121,6 +4211,7 @@ body.sidebar-mini .sidebar .user-avatar {
     body.sidebar-mini .main-content {
         margin-right: var(--sidebar-width-mini);
         padding: 1rem;
+        padding-top: 0;
     }
     body.sidebar-mini .top-bar {
         margin-right: -1rem;
