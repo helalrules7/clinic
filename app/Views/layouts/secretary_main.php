@@ -564,67 +564,78 @@
             return null;
         }
         
-        // Initialize theme - Priority to localStorage, sync with database
+        // Exposed so theme-palette.js auto-schedule can sync header + settings toggles.
+        window.syncThemeUI = function () {
+            updateThemeUI(document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+        };
+
+        async function onManualThemePick(nextTheme) {
+            if (typeof window.disableThemeAutoSchedule === 'function') {
+                await window.disableThemeAutoSchedule(true);
+            } else {
+                localStorage.setItem('appThemeAutoSchedule', '0');
+            }
+            updateThemeUI(nextTheme);
+            localStorage.setItem('appTheme', nextTheme);
+            localStorage.setItem('theme', nextTheme);
+            await saveThemeToDatabase(nextTheme);
+        }
+
+        // Initialize theme — auto-schedule wins (pre-paint + theme-palette.js timer).
         (async function() {
-            // Read theme from localStorage first (fast, synchronous)
+            const autoSchedule = localStorage.getItem('appThemeAutoSchedule') === '1';
+            if (autoSchedule) {
+                const current = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+                updateThemeUI(current);
+                document.documentElement.classList.add('theme-loaded');
+                const themeToggleInputAuto = document.getElementById('themeToggleInput');
+                if (themeToggleInputAuto) {
+                    themeToggleInputAuto.addEventListener('change', async function () {
+                        await onManualThemePick(this.checked ? 'dark' : 'light');
+                    });
+                }
+                return;
+            }
+
             let savedTheme = localStorage.getItem('appTheme') || localStorage.getItem('theme');
-            
-            // Validate theme value
             if (savedTheme !== 'light' && savedTheme !== 'dark') {
                 savedTheme = null;
             }
-            
-            // Load from database if no valid theme in localStorage
+
             let dbTheme = null;
             if (!savedTheme) {
                 dbTheme = await loadThemeFromDatabase();
                 if (dbTheme === 'light' || dbTheme === 'dark') {
                     savedTheme = dbTheme;
-                    // Save to localStorage for next time
                     localStorage.setItem('appTheme', savedTheme);
                     localStorage.setItem('theme', savedTheme);
                 }
             } else {
-                // We have a theme in localStorage, check database in background
                 dbTheme = await loadThemeFromDatabase();
             }
-            
-            // If still no theme, default to 'dark'
+
             if (!savedTheme || (savedTheme !== 'light' && savedTheme !== 'dark')) {
                 savedTheme = 'dark';
                 localStorage.setItem('appTheme', savedTheme);
                 localStorage.setItem('theme', savedTheme);
             }
-            
-            // If localStorage theme differs from database, update database to match localStorage
+
             if (savedTheme && dbTheme && dbTheme !== savedTheme) {
-                // localStorage has priority - save it to database
                 await saveThemeToDatabase(savedTheme);
             } else if (savedTheme && !dbTheme) {
-                // No theme in database but we have one in localStorage - save it
                 await saveThemeToDatabase(savedTheme);
             }
 
-        // Apply initial theme
             updateThemeUI(savedTheme);
-            
-            // Mark theme as loaded to remove flash prevention
             document.documentElement.classList.add('theme-loaded');
-        })();
 
-        // Theme toggle switch handler
-        const themeCheckbox = document.getElementById('themeToggleInput');
-        if (themeCheckbox) {
-            themeCheckbox.addEventListener('change', async function() {
-                const next = this.checked ? 'dark' : 'light';
-                updateThemeUI(next);
-                // Save to both keys for compatibility with main layout
-                localStorage.setItem('appTheme', next);
-                localStorage.setItem('theme', next);
-                // Save to database
-                await saveThemeToDatabase(next);
-            });
-        }
+            const themeToggleInput = document.getElementById('themeToggleInput');
+            if (themeToggleInput) {
+                themeToggleInput.addEventListener('change', async function () {
+                    await onManualThemePick(this.checked ? 'dark' : 'light');
+                });
+            }
+        })();
 
         // Sidebar toggle — three modes mirroring the doctor layout (main.js):
         //   • <768px (phone)      → off-canvas overlay drawer (sidebar.show)

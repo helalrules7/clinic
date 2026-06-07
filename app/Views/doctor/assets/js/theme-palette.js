@@ -108,8 +108,29 @@
         if (typeof global.syncThemeUI === 'function') { global.syncThemeUI(); return; }
         var input = document.getElementById('themeToggleInput');
         if (input) input.checked = !!isDark;
+        var secInput = document.getElementById('secCurrentModeInput');
+        if (secInput) secInput.checked = !!isDark;
         var logo = document.getElementById('clinicLogo');
         if (logo) logo.src = isDark ? '/assets/images/Dark.png' : '/assets/images/Light.png';
+    }
+
+    /** Manual dark/light picks turn off auto-schedule so the timer stops fighting. */
+    function disableThemeAutoSchedule(persist) {
+        safeSet(LS_AUTO, '0');
+        ['secThemeAutoSchedule', 'themeAutoSchedule'].forEach(function (id) {
+            var el = document.getElementById(id);
+            if (el) el.checked = false;
+        });
+        ['secThemeScheduleTimes', 'themeScheduleTimes'].forEach(function (id) {
+            var el = document.getElementById(id);
+            if (el) el.hidden = true;
+        });
+        if (!persist) return Promise.resolve(null);
+        return postJSON('/api/settings/theme-auto-schedule', {
+            enabled: false,
+            dark_from:  safeGet(LS_DARK_FROM,  '19:00'),
+            light_from: safeGet(LS_LIGHT_FROM, '07:00'),
+        });
     }
 
     function applyThemeSchedule() {
@@ -289,9 +310,10 @@
     }
 
     /* ---------- public API ---------- */
-    global.setThemePalette    = setThemePalette;
-    global.applyThemeSchedule = applyThemeSchedule;
-    global.openThemePicker    = openThemePicker;
-    global.closeThemePicker   = closeThemePicker;
-    global.THEME_PALETTES     = PALETTES.slice();
+    global.setThemePalette           = setThemePalette;
+    global.applyThemeSchedule        = applyThemeSchedule;
+    global.disableThemeAutoSchedule  = disableThemeAutoSchedule;
+    global.openThemePicker           = openThemePicker;
+    global.closeThemePicker          = closeThemePicker;
+    global.THEME_PALETTES            = PALETTES.slice();
 })(window);

@@ -7,7 +7,7 @@
 
 <div class="container-fluid" dir="rtl">
     <div class="row">
-        <div class="col-12">
+    <div class="col-12">
             <div class="card">
                 <div class="card-header">
                     <div class="settings-page-header">
@@ -20,14 +20,52 @@
                 </div>
                 <div class="card-body">
                     <div class="settings-section">
-                        <h5 class="arabic-text"><i class="bi bi-palette me-2"></i>المظهر</h5>
+                        <h5 class="arabic-text"><i class="bi bi-palette-fill me-2"></i>المظهر</h5>
+                        <div class="form-text mb-3 arabic-text" style="margin-top:-6px">
+                            اختر لوحة الألوان وطريقة تبديل الوضع الداكن والفاتح. تُحفظ تفضيلاتك على كل الأجهزة.
+                        </div>
+
+                        <!-- Palette grid -->
+                        <div class="setting-item">
+                            <div>
+                                <label class="form-label mb-0 arabic-text">لوحة الألوان</label>
+                                <div class="form-text mb-2 arabic-text">ست لوحات مسمّاة — اضغط أيّاً منها للتبديل فوراً.</div>
+                                <div class="appearance-grid" id="secAppearanceGrid">
+                                    <?php
+                                      $__paletteRows = [
+                                          ['indigo',  'نيلي',    'أزرق-بنفسجي هادئ'],
+                                          ['emerald', 'زمردي',   'أخضر منعش'],
+                                          ['rose',    'وردي',    'وردي دافئ'],
+                                          ['slate',   'رمادي',   'أحادي هادئ'],
+                                          ['amber',   'كهرماني', 'ذهبي دافئ'],
+                                          ['ocean',   'محيطي',   'سماوي-أزرق'],
+                                      ];
+                                      foreach ($__paletteRows as $__p):
+                                    ?>
+                                      <button type="button"
+                                              class="appearance-card"
+                                              data-palette-id="<?= $__p[0] ?>"
+                                              onclick="window.secSelectPalette && window.secSelectPalette('<?= $__p[0] ?>')">
+                                          <div class="appearance-card__swatch"></div>
+                                          <div class="appearance-card__preview">
+                                              <div class="appearance-card__btn"></div>
+                                              <div class="appearance-card__bar"></div>
+                                              <div class="appearance-card__bar short"></div>
+                                          </div>
+                                          <div class="appearance-card__label arabic-text"><?= $__p[1] ?></div>
+                                          <div class="appearance-card__hint arabic-text"><?= $__p[2] ?></div>
+                                      </button>
+                                    <?php endforeach; ?>
+                                </div>
+                            </div>
+                        </div>
 
                         <!-- Dark / Light -->
                         <div class="setting-item">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
                                     <label class="form-label mb-0 arabic-text">الوضع الحالي</label>
-                                    <div class="form-text arabic-text">التبديل بين الوضع الداكن والفاتح</div>
+                                    <div class="form-text arabic-text">التبديل اليدوي يُوقِف التبديل التلقائي حسب الوقت ويُحفظ فوراً</div>
                                 </div>
                                 <label class="switch" for="secCurrentModeInput">
                                     <input id="secCurrentModeInput" type="checkbox"
@@ -52,7 +90,7 @@
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
                                     <label class="form-label mb-0 arabic-text">تبديل تلقائي حسب الوقت</label>
-                                    <div class="form-text arabic-text">تفعيل الوضع الداكن والفاتح تلقائياً حسب الساعة</div>
+                                    <div class="form-text arabic-text">عند التفعيل يختار التطبيق الوضع الداكن أو الفاتح تلقائياً حسب الأوقات أدناه</div>
                                 </div>
                                 <div class="toggle-switch-wrapper">
                                     <input type="checkbox" class="toggle-switch" id="secThemeAutoSchedule"
@@ -65,11 +103,13 @@
                             <div class="row g-3">
                                 <div class="col-md-6">
                                     <label class="form-label arabic-text" for="secThemeDarkFrom">بداية الوضع الداكن</label>
+                                    <div class="form-text mb-2 arabic-text">الساعة التي يبدأ عندها الوضع الداكن</div>
                                     <input type="time" class="form-control" id="secThemeDarkFrom" value="19:00"
                                            onchange="secSaveAutoSchedule()" />
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label arabic-text" for="secThemeLightFrom">بداية الوضع الفاتح</label>
+                                    <div class="form-text mb-2 arabic-text">الساعة التي يعود عندها الوضع الفاتح</div>
                                     <input type="time" class="form-control" id="secThemeLightFrom" value="07:00"
                                            onchange="secSaveAutoSchedule()" />
                                 </div>
@@ -93,11 +133,6 @@
                             </div>
                         </div>
                     </div>
-
-                    <p class="text-muted small arabic-text mb-0 mt-3">
-                        <i class="bi bi-info-circle me-1"></i>
-                        لتغيير لوحة الألوان استخدم نقطة الألوان في شريط الأدوات العلوي.
-                    </p>
                 </div>
             </div>
         </div>

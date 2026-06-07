@@ -448,20 +448,44 @@ body { font-family: var(--font-ui); }
    backdrop on <body> (never on .main-content → no stacking-context trap),
    plus pronounced frosted glass on the chrome and content surfaces.
    Light = airy/clinical; Dark = deep premium command-center.
+   Glow hues read live palette tokens (--accent, --ds-accent-2, --ds-primary)
+   so the header palette dot recolours the backdrop instantly.
    ===================================================================== */
 body {
     background:
-        radial-gradient(1150px 640px at 100% -10%, rgba(99, 102, 241, 0.28), transparent 56%),
-        radial-gradient(980px 560px at -10% 4%, rgba(14, 165, 233, 0.22), transparent 54%),
-        radial-gradient(900px 600px at 50% 118%, rgba(139, 92, 246, 0.20), transparent 60%),
+        radial-gradient(1150px 640px at 100% -10%, color-mix(in srgb, var(--accent) 28%, transparent), transparent 56%),
+        radial-gradient(980px 560px at -10% 4%, color-mix(in srgb, var(--ds-accent-2) 22%, transparent), transparent 54%),
+        radial-gradient(900px 600px at 50% 118%, color-mix(in srgb, var(--ds-primary) 20%, transparent), transparent 60%),
         var(--bg);
     background-attachment: fixed;
 }
 .dark body {
     background:
-        radial-gradient(1150px 640px at 100% -10%, rgba(99, 102, 241, 0.40), transparent 56%),
-        radial-gradient(980px 560px at -10% 4%, rgba(56, 189, 248, 0.24), transparent 54%),
-        radial-gradient(900px 600px at 50% 118%, rgba(139, 92, 246, 0.34), transparent 62%),
+        radial-gradient(1150px 640px at 100% -10%, color-mix(in srgb, var(--accent) 40%, transparent), transparent 56%),
+        radial-gradient(980px 560px at -10% 4%, color-mix(in srgb, var(--ds-accent-2) 24%, transparent), transparent 54%),
+        radial-gradient(900px 600px at 50% 118%, color-mix(in srgb, var(--ds-primary) 34%, transparent), transparent 62%),
+        linear-gradient(165deg, #0B1326 0%, #070B14 55%, #04060D 100%);
+    background-attachment: fixed;
+}
+
+/* Secretary RTL — mirror the doctor aurora but anchor the hero glow at the
+   physical bottom-left (south-west) of the viewport, near the main content
+   area opposite the sidebar. Sidebar-side accent stays top-right. */
+[data-layout="secretary"] body {
+    background:
+        radial-gradient(1120px 620px at 100% -8%, color-mix(in srgb, var(--accent) 26%, transparent), transparent 55%),
+        radial-gradient(880px 520px at 92% 10%, color-mix(in srgb, var(--ds-accent-2) 18%, transparent), transparent 52%),
+        radial-gradient(1100px 760px at 0% 100%, color-mix(in srgb, var(--accent) 32%, transparent), transparent 58%),
+        radial-gradient(760px 520px at 5% 94%, color-mix(in srgb, var(--ds-primary) 24%, transparent), transparent 54%),
+        var(--bg);
+    background-attachment: fixed;
+}
+.dark[data-layout="secretary"] body {
+    background:
+        radial-gradient(1120px 620px at 100% -8%, color-mix(in srgb, var(--accent) 38%, transparent), transparent 55%),
+        radial-gradient(880px 520px at 92% 10%, color-mix(in srgb, var(--ds-accent-2) 22%, transparent), transparent 52%),
+        radial-gradient(1100px 760px at 0% 100%, color-mix(in srgb, var(--accent) 42%, transparent), transparent 58%),
+        radial-gradient(760px 520px at 5% 94%, color-mix(in srgb, var(--ds-primary) 32%, transparent), transparent 54%),
         linear-gradient(165deg, #0B1326 0%, #070B14 55%, #04060D 100%);
     background-attachment: fixed;
 }

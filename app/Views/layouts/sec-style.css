@@ -34,46 +34,24 @@
 }
 
 body {
-    /* Professional gradient background - Light Mode */
-    background: linear-gradient(135deg, 
-        #f0f9ff 0%, 
-        #e0f2fe 20%, 
-        #f8fafc 40%, 
-        #f1f5f9 60%, 
-        #fafafa 80%,
-        #ffffff 100%);
-    background-attachment: fixed;
-    background-size: 100% 100%;
+    /* Aurora backdrop lives in design-system.css ([data-layout="secretary"]).
+       Keep typography / RTL / min-height only — no local background here. */
     color: var(--text);
     font-family: 'Cairo', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    transition: background 0.5s ease, color 0.3s ease;
+    transition: color 0.3s ease;
     direction: rtl;
     min-height: 100vh;
     position: relative;
 }
 
-/* Dark mode gradient background */
-.dark body {
-    background: linear-gradient(135deg, 
-        #0f172a 0%, 
-        #1e293b 20%, 
-        #0b1220 40%, 
-        #1a1f2e 60%, 
-        #0f1419 80%,
-        #0a0e17 100%);
-    background-attachment: fixed;
-    background-size: 100% 100%;
-}
-        
-        /* Prevent flash of wrong theme - default to dark */
+        /* Prevent flash of wrong theme before pre-paint script runs */
         html:not(.theme-loaded) {
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 25%, #0b1220 50%, #1a1f2e 75%, #0f1419 100%);
+            background: #070B14;
             color: #f8fafc;
         }
-        
+
         html:not(.theme-loaded) body {
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 25%, #0b1220 50%, #1a1f2e 75%, #0f1419 100%);
-            background-attachment: fixed;
+            background: #070B14;
             color: #f8fafc;
         }
         
@@ -424,36 +402,12 @@ body {
        effective root-level z-index (1). The body-level .modal-backdrop (z-index
        1000000) then paints OVER the modal, so close / Esc / every control goes
        dead — the bug being fixed here. position:relative on its own (z-index:auto)
-       does NOT create a context and still paints above body::before, so the
-       decorative gradient is unaffected. The internal modal scheme (backdrop
+       does NOT create a context. The internal modal scheme (backdrop
        1000000 < sidebar 1000001 < .modal-dialog 1000002) only resolves correctly
        once this box stops trapping it. */
     position: relative;
 }
 
-/* Subtle overlay pattern for depth - applied to body */
-body::before {
-    content: '';
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: 
-        radial-gradient(circle at 20% 50%, rgba(14, 165, 233, 0.04) 0%, transparent 50%),
-        radial-gradient(circle at 80% 80%, rgba(16, 185, 129, 0.04) 0%, transparent 50%),
-        radial-gradient(circle at 40% 20%, rgba(187, 54, 204, 0.03) 0%, transparent 50%);
-    pointer-events: none;
-    z-index: 0;
-}
-
-.dark body::before {
-    background: 
-        radial-gradient(circle at 20% 50%, rgba(56, 189, 248, 0.06) 0%, transparent 50%),
-        radial-gradient(circle at 80% 80%, rgba(74, 222, 128, 0.06) 0%, transparent 50%),
-        radial-gradient(circle at 40% 20%, rgba(192, 132, 252, 0.04) 0%, transparent 50%);
-}
-        
 /* RTL Top Bar */
 .top-bar {
     display: flex;
