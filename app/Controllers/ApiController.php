@@ -16823,8 +16823,8 @@ class ApiController
             if ($finalDoctorId === null) {
                 // Checking for global tag
                 $checkStmt = $this->pdo->prepare("
-                    SELECT id FROM patient_tags 
-                    WHERE name = ? AND doctor_id IS NULL
+                    SELECT id FROM patient_tags
+                    WHERE name = ? AND doctor_id IS NULL AND clinic_id IS NULL
                 ");
                 $checkStmt->execute([$name]);
             } else {
@@ -16917,8 +16917,8 @@ class ApiController
                 if ($tag['doctor_id'] === null) {
                     // Checking for global tag
                     $nameCheckStmt = $this->pdo->prepare("
-                        SELECT id FROM patient_tags 
-                        WHERE name = ? AND id != ? AND doctor_id IS NULL
+                        SELECT id FROM patient_tags
+                        WHERE name = ? AND id != ? AND doctor_id IS NULL AND clinic_id IS NULL
                     ");
                     $nameCheckStmt->execute([$name, $id]);
                 } else {

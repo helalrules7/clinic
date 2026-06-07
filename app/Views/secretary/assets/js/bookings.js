@@ -2486,6 +2486,23 @@ function bindClinicIconSync(selectId, iconId) {
     sync();
 }
 
+function getCustomSelectOptionText(optionEl) {
+    if (!optionEl) return '';
+    return (
+        optionEl.querySelector('.custom-select-text')?.textContent ||
+        optionEl.querySelector('h3')?.textContent ||
+        optionEl.textContent ||
+        ''
+    ).trim();
+}
+
+function setCustomSelectToggleLabel(toggle, text) {
+    if (!toggle) return;
+    const icon = toggle.querySelector('i');
+    const label = `<span class="custom-select-text">${text}</span>`;
+    toggle.innerHTML = icon ? `${icon.outerHTML} ${label}` : label;
+}
+
 function syncFieldMenuSelect(selectId) {
     const sel = document.getElementById(selectId);
     if (!sel) return;
@@ -2502,8 +2519,7 @@ function syncFieldMenuSelect(selectId) {
     if (toggle) {
         const opt = Array.from(sel.options).find((o) => o.value === value);
         const text = opt ? opt.textContent.trim() : (sel.options[0]?.textContent || '');
-        const icon = toggle.querySelector('i');
-        toggle.innerHTML = icon ? `${icon.outerHTML} <h3>${text}</h3>` : `<h3>${text}</h3>`;
+        setCustomSelectToggleLabel(toggle, text);
     }
 }
 
@@ -2528,15 +2544,16 @@ function initCustomSelects() {
         (li) => li.dataset.option === selectedOption.value
       );
       if (correspondingLi) {
-        button.textContent =
-          correspondingLi.querySelector("h3")?.textContent ||
-          selectedOption.textContent;
+        setCustomSelectToggleLabel(
+          button,
+          getCustomSelectOptionText(correspondingLi) || selectedOption.textContent.trim()
+        );
         correspondingLi.classList.add("selected");
       } else {
-        button.textContent = selectedOption.textContent;
+        setCustomSelectToggleLabel(button, selectedOption.textContent.trim());
       }
     } else {
-      button.textContent = "Select an option";
+      setCustomSelectToggleLabel(button, "Select an option");
     }
 
     function openMenu() {
@@ -2679,13 +2696,12 @@ function initCustomSelects() {
 
     function setOption(optionEl) {
       const value = optionEl.dataset.option;
-      const text =
-        optionEl.querySelector("h3")?.textContent || optionEl.textContent;
+      const text = getCustomSelectOptionText(optionEl);
 
       select.value = value;
       select.dispatchEvent(new Event("change")); // Trigger change event
 
-      button.textContent = text;
+      setCustomSelectToggleLabel(button, text);
 
       options.forEach((el) => el.classList.remove("selected"));
       optionEl.classList.add("selected");

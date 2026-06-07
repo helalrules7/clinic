@@ -1795,6 +1795,51 @@ input[readonly] {
     font-weight: 600;
 }
 
+/* Add-booking modal — normalize field typography (fix oversized h3 in custom selects) */
+#addBookingModal .form-control,
+#addBookingModal .form-select,
+#addBookingModal .field.menu .custom-select-toggle {
+    font-size: 0.875rem;
+    line-height: 1.45;
+}
+
+#addBookingModal .field.menu .custom-select-toggle {
+    padding: 0.5rem 2.25rem 0.5rem 0.75rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+}
+
+#addBookingModal .field.menu .custom-select-text,
+#addBookingModal .field.menu menu li .custom-select-text,
+#addBookingModal .field.menu button h3,
+#addBookingModal .field.menu menu li h3 {
+    font-size: inherit;
+    font-weight: 600;
+    margin: 0;
+    line-height: inherit;
+}
+
+#addBookingModal .field.menu .custom-select-toggle .bi,
+#addBookingModal .field.menu menu li > .bi {
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+#addBookingModal .clinic-input-group .form-select {
+    font-size: 0.875rem;
+    padding: 0.5rem 0.75rem;
+}
+
+#addBookingModal .form-label {
+    font-size: 0.875rem;
+}
+
+#addBookingModal .form-text {
+    font-size: 0.8rem;
+}
+
 /* Booking modals — keyboard-hint layout (scoped; global RTL header = modal-kit.css) */
 #addBookingModal .modal-header,
 #addPatientModal .modal-header,

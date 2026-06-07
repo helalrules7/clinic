@@ -327,12 +327,12 @@
                                             <option value="FollowUp" class="arabic-text" data-cost="<?= $settings['repeated_visit_cost'] ?? 100 ?>">إعادة كشف - <?= $settings['repeated_visit_cost'] ?? 100 ?> جنيه</option>
                                             <option value="Consultation" class="arabic-text" data-cost="<?= $settings['consultation_cost'] ?? 100 ?>">استشارة / إجراء طبي - <?= $settings['consultation_cost'] ?? 100 ?> جنيه</option>
                                         </select>
-                                        <button type="button" class="custom-select-toggle arabic-text" aria-expanded="false"><i class="bi bi-person-plus fs-5"></i> <h3>اختر نوع الزيارة...</h3></button>
+                                        <button type="button" class="custom-select-toggle arabic-text" aria-expanded="false"><i class="bi bi-person-plus"></i> <span class="custom-select-text">اختر نوع الزيارة...</span></button>
                                         <menu>
-                                            <li data-option="" tabindex="0" role="button" class="selected"><h3>اختر نوع الزيارة...</h3></li>
-                                            <li data-option="New" tabindex="0" role="button"><i class="bi bi-person-plus fs-5"></i> <h3>زيارة جديدة - <?= $settings['new_visit_cost'] ?? 150 ?> جنيه</h3></li>
-                                            <li data-option="FollowUp" tabindex="0" role="button"><i class="bi bi-person-check fs-5"></i> <h3>إعادة كشف - <?= $settings['repeated_visit_cost'] ?? 100 ?> جنيه</h3></li>
-                                            <li data-option="Consultation" tabindex="0" role="button"><i class="bi bi-file-earmark-medical fs-5"></i> <h3>استشارة / إجراء طبي - <?= $settings['consultation_cost'] ?? 100 ?> جنيه</h3></li>
+                                            <li data-option="" tabindex="0" role="button" class="selected"><span class="custom-select-text">اختر نوع الزيارة...</span></li>
+                                            <li data-option="New" tabindex="0" role="button"><i class="bi bi-person-plus"></i> <span class="custom-select-text">زيارة جديدة - <?= $settings['new_visit_cost'] ?? 150 ?> جنيه</span></li>
+                                            <li data-option="FollowUp" tabindex="0" role="button"><i class="bi bi-person-check"></i> <span class="custom-select-text">إعادة كشف - <?= $settings['repeated_visit_cost'] ?? 100 ?> جنيه</span></li>
+                                            <li data-option="Consultation" tabindex="0" role="button"><i class="bi bi-file-earmark-medical"></i> <span class="custom-select-text">استشارة / إجراء طبي - <?= $settings['consultation_cost'] ?? 100 ?> جنيه</span></li>
                                         </menu>
                                     </div>
                                 </section>
@@ -346,10 +346,10 @@
                                             <option value="Walk-in" class="arabic-text" selected>حضوري</option>
                                             <option value="Phone" class="arabic-text">هاتف</option>
                                         </select>
-                                        <button type="button" class="custom-select-toggle arabic-text" aria-expanded="false"><i class="bi bi-people fs-5"></i> <h3>حضوري</h3></button>
+                                        <button type="button" class="custom-select-toggle arabic-text" aria-expanded="false"><i class="bi bi-people"></i> <span class="custom-select-text">حضوري</span></button>
                                         <menu>
-                                            <li data-option="Walk-in" tabindex="0" role="button" class="selected"><i class="bi bi-people fs-5"></i> <h3>حضوري</h3></li>
-                                            <li data-option="Phone" tabindex="0" role="button"><i class="bi bi-telephone fs-5"></i> <h3>هاتف</h3></li>
+                                            <li data-option="Walk-in" tabindex="0" role="button" class="selected"><i class="bi bi-people"></i> <span class="custom-select-text">حضوري</span></li>
+                                            <li data-option="Phone" tabindex="0" role="button"><i class="bi bi-telephone"></i> <span class="custom-select-text">هاتف</span></li>
                                         </menu>
                                     </div>
                                 </section>
