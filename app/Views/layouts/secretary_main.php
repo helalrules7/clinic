@@ -571,14 +571,18 @@
             });
         }
 
-        // Sidebar toggle — collapses to a 76px icon rail on ≥768px (with
-        // localStorage persistence) and falls back to the legacy off-canvas
-        // overlay below that. Mirrors the same logic in layouts/main.js so
-        // the doctor and secretary layouts behave identically.
+        // Sidebar toggle — three modes mirroring the doctor layout (main.js):
+        //   • <768px (phone)      → off-canvas overlay drawer (sidebar.show)
+        //   • 768–1365px (tablet) → 76px icon mini-rail (body.sidebar-mini)
+        //   • ≥1366px (desktop)   → full expanded sidebar (user-toggleable)
+        // A cramped floor (<1100px effective, e.g. heavy zoom) ALWAYS forces
+        // mini even if the user previously chose wide. Mode persists across
+        // pages via localStorage; the slide drops backdrop-filter for 60fps.
         (function setupSidebarToggle() {
             const SIDEBAR_MODE_KEY = 'appSidebarMode'; // 'wide' | 'mini'
             const MOBILE_BP = 768;
-            const TABLET_BP = 1366; // tablets (≤1366) default to mini rail
+            const TABLET_BP = 1366;   // tablets (<1366) default to the mini rail
+            const FORCE_MINI_BP = 1100; // hard floor: below this, always mini
 
             const sidebarToggle = document.getElementById('sidebarToggle');
             const sidebar = document.getElementById('sidebar');
@@ -588,26 +592,47 @@
                 return;
             }
 
-            const isMobile = () => window.innerWidth < MOBILE_BP;
-            const applyMode = (mode) => {
-                if (mode === 'mini') document.body.classList.add('sidebar-mini');
-                else document.body.classList.remove('sidebar-mini');
-            };
-            const defaultMode = () => window.innerWidth < TABLET_BP ? 'mini' : 'wide';
+            const isMobile  = () => window.innerWidth < MOBILE_BP;
+            const isCramped = () => window.innerWidth < FORCE_MINI_BP;
 
-            let saved = null;
-            try { saved = localStorage.getItem(SIDEBAR_MODE_KEY); } catch (e) {}
-            applyMode(saved || defaultMode());
+            let _animTimer = null;
+            function applyMode(mode) {
+                const wantMini = (mode === 'mini');
+                const isMini = document.body.classList.contains('sidebar-mini');
+                if (wantMini === isMini) return; // no state change → skip the transition
+                // PERF: drop backdrop-filter on every glass surface for the
+                // ~0.2s width/margin slide so the reflow doesn't re-blur each
+                // frame (was dropping below 30fps on glass-heavy pages).
+                document.body.classList.add('sidebar-animating');
+                if (_animTimer) clearTimeout(_animTimer);
+                _animTimer = setTimeout(() => {
+                    document.body.classList.remove('sidebar-animating');
+                    _animTimer = null;
+                }, 280);
+                document.body.classList.toggle('sidebar-mini', wantMini);
+            }
+
+            const defaultMode = () => window.innerWidth < TABLET_BP ? 'mini' : 'wide';
+            const readSaved = () => { try { return localStorage.getItem(SIDEBAR_MODE_KEY); } catch (e) { return null; } };
+            // Effective mode: a cramped viewport ALWAYS forces mini, even if the
+            // user previously chose wide on a larger screen.
+            const effectiveMode = () => isCramped() ? 'mini' : (readSaved() || defaultMode());
+
+            applyMode(effectiveMode());
 
             sidebarToggle.addEventListener('click', () => {
                 if (isMobile()) {
+                    // Phone: classic off-canvas overlay drawer.
                     sidebar.classList.toggle('show');
                     overlay.classList.toggle('show');
                     return;
                 }
-                const isMini = document.body.classList.toggle('sidebar-mini');
-                try { localStorage.setItem(SIDEBAR_MODE_KEY, isMini ? 'mini' : 'wide'); }
-                catch (e) {}
+                // Tablet / desktop: flip the rail and persist intent. We still
+                // re-apply effectiveMode so a "wide" choice on a cramped screen
+                // is recorded but doesn't override the safety floor.
+                const wantMini = !document.body.classList.contains('sidebar-mini');
+                try { localStorage.setItem(SIDEBAR_MODE_KEY, wantMini ? 'mini' : 'wide'); } catch (e) {}
+                applyMode(effectiveMode());
             });
 
             overlay.addEventListener('click', () => {
@@ -620,10 +645,72 @@
                     sidebar.classList.remove('show');
                     overlay.classList.remove('show');
                 }
-                let userSaved = null;
-                try { userSaved = localStorage.getItem(SIDEBAR_MODE_KEY); } catch (e) {}
-                if (!userSaved) applyMode(defaultMode());
+                // Recompute every resize — handles zoom (fires resize) and
+                // rotation, toggling the force-mini floor on/off automatically.
+                applyMode(effectiveMode());
             });
+        })();
+
+        // Mini-rail hover tooltip — matches the doctor layout: hovering a
+        // collapsed icon shows a small arrow tooltip (page title + one-line
+        // description) instead of widening the whole rail. RTL-aware.
+        (function setupMiniTip() {
+            const sidebar = document.getElementById('sidebar');
+            if (!sidebar) return;
+
+            const DESC = {
+                dashboard: 'لوحة المعلومات والإحصائيات',
+                bookings:  'المواعيد والحجوزات',
+                payments:  'الإدارة المالية',
+                patients:  'سجلات المرضى',
+                profile:   'حسابك الشخصي',
+            };
+
+            const tip = document.createElement('div');
+            tip.className = 'nav-mini-tip';
+            tip.innerHTML = '<b></b><span></span>';
+            document.body.appendChild(tip);
+            const tipTitle = tip.querySelector('b');
+            const tipDesc  = tip.querySelector('span');
+
+            function railIsCollapsed() {
+                return document.body.classList.contains('sidebar-mini') &&
+                    window.innerWidth >= 768; // mobile uses the full overlay drawer
+            }
+
+            function showFor(link) {
+                if (!railIsCollapsed()) return;
+                const title = (link.textContent || '').replace(/\s+/g, ' ').trim();
+                if (!title) return;
+                const seg = (link.getAttribute('href') || '').split('?')[0].replace(/\/+$/, '').split('/').pop();
+                const desc = DESC[seg] || '';
+                tipTitle.textContent = title;
+                tipDesc.textContent = desc;
+                tipDesc.style.display = desc ? '' : 'none';
+
+                const r = link.getBoundingClientRect();
+                tip.style.visibility = 'hidden';
+                tip.classList.add('show');
+                const isRtl = (document.documentElement.getAttribute('dir') === 'rtl') ||
+                    getComputedStyle(document.documentElement).direction === 'rtl';
+                tip.classList.toggle('rtl', isRtl);
+                const th = tip.offsetHeight, tw = tip.offsetWidth;
+                let top = r.top + r.height / 2 - th / 2;
+                top = Math.max(8, Math.min(top, window.innerHeight - th - 8));
+                tip.style.top = Math.round(top) + 'px';
+                // RTL rail is on the right → tip to the icon's left; LTR → right.
+                tip.style.left = isRtl ? Math.round(r.left - tw - 12) + 'px' : Math.round(r.right + 12) + 'px';
+                tip.style.visibility = 'visible';
+            }
+            const hide = () => tip.classList.remove('show');
+
+            sidebar.querySelectorAll('.nav-link').forEach((link) => {
+                link.addEventListener('mouseenter', () => showFor(link));
+                link.addEventListener('mouseleave', hide);
+                link.addEventListener('click', hide);
+            });
+            sidebar.addEventListener('scroll', hide, true);
+            window.addEventListener('resize', hide);
         })();
         
         // Top-bar scroll effect

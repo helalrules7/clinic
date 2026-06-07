@@ -3717,6 +3717,17 @@ body.modal-open {
 
 :root { --sidebar-width-mini: 76px; }
 
+/* PERF: during the collapse/expand slide (body.sidebar-animating is added by
+   applyMode for ~0.2s) suppress backdrop-filter on every glass surface — the
+   width/margin slide would otherwise re-blur each glass backdrop every frame
+   and drop below 30fps. Paint-only; never triggers reflow. */
+body.sidebar-animating *,
+body.sidebar-animating *::before,
+body.sidebar-animating *::after {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}
+
 @media (min-width: 768px) {
     /* Toggle button visible on every viewport from tablet up. */
     .sidebar-toggle {
@@ -3780,34 +3791,60 @@ body.sidebar-mini .sidebar .user-avatar {
     height: 40px;
 }
 
-/* Peek expand on hover for desktop pointers. */
-@media (hover: hover) and (pointer: fine) {
-    body.sidebar-mini .sidebar:hover {
-        width: var(--sidebar-width);
-        box-shadow: -4px 0 18px rgba(0, 0, 0, 0.18);
-    }
-    body.sidebar-mini .sidebar:hover .nav-link {
-        font-size: 1rem;
-        justify-content: flex-start;
-        padding: 0.65rem 1.25rem;
-        text-align: right; /* RTL */
-    }
-    body.sidebar-mini .sidebar:hover .nav-link i {
-        margin-left: 0.75rem !important; /* RTL: icon spacing to the LEFT of label */
-    }
-    body.sidebar-mini .sidebar:hover .clinic-name,
-    body.sidebar-mini .sidebar:hover .user-details,
-    body.sidebar-mini .sidebar:hover .sidebar-footer,
-    body.sidebar-mini .sidebar:hover .secretary-badge,
-    body.sidebar-mini .sidebar:hover .nav-submenu,
-    body.sidebar-mini .sidebar:hover .badge {
-        display: block !important;
-    }
-    body.sidebar-mini .sidebar:hover .clinic-logo { justify-content: flex-start; }
-    body.sidebar-mini .sidebar:hover .sidebar-header { padding: 1.5rem; text-align: center; }
-    body.sidebar-mini .sidebar:hover .user-info { padding: 1rem; }
-    body.sidebar-mini .sidebar:hover .user-info .d-flex { justify-content: flex-start; }
+/* Mini-rail hover tooltip — replaces the old hover peek-expand (which widened
+   the whole rail, matching the doctor layout's deliberate removal "per request").
+   Hovering a collapsed icon now shows a small arrow tooltip (title + one-line
+   description) positioned by setupMiniTip() in secretary_main.php; it lives on
+   <body> so the 76px rail's overflow can never clip it. RTL rail = tip on the
+   LEFT, arrow points right. */
+.nav-mini-tip {
+    position: fixed;
+    z-index: 100000;
+    pointer-events: none;
+    background: #0f172a;
+    color: #f8fafc;
+    padding: 0.5rem 0.7rem;
+    border-radius: 8px;
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.35);
+    max-width: 230px;
+    opacity: 0;
+    transform: translateX(4px); /* RTL default: enters from the right */
+    transition: opacity 0.12s ease, transform 0.12s ease;
 }
+.nav-mini-tip.show { opacity: 1; transform: translateX(0); }
+.nav-mini-tip b {
+    display: block;
+    font-size: 0.82rem;
+    font-weight: 700;
+    line-height: 1.2;
+    white-space: nowrap;
+}
+.nav-mini-tip span {
+    display: block;
+    margin-top: 2px;
+    font-size: 0.7rem;
+    font-weight: 400;
+    color: #94a3b8;
+    line-height: 1.25;
+}
+/* RTL rail on the right → arrow points right (toward the icon). */
+.nav-mini-tip::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    right: -5px;
+    width: 10px;
+    height: 10px;
+    background: #0f172a;
+    transform: translateY(-50%) rotate(45deg);
+    border-radius: 1px;
+}
+.dark .nav-mini-tip,
+.dark .nav-mini-tip::before { background: #1e293b; }
+/* LTR fallback (if the layout ever runs ltr): tip on the right, arrow left. */
+.nav-mini-tip:not(.rtl) { transform: translateX(-4px); text-align: left; }
+.nav-mini-tip:not(.rtl).show { transform: translateX(0); }
+.nav-mini-tip:not(.rtl)::before { right: auto; left: -5px; }
 
 /* Mobile: revert to overlay model regardless of saved mini state. */
 @media (max-width: 767.98px) {
