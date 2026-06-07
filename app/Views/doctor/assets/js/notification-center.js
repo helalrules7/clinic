@@ -844,8 +844,34 @@
     }
 
     // --- Dock actions -------------------------------------------------------
+    // Rebuild the quick-action dock from the shared registry so the palette and
+    // the dock can never drift. Falls back to the server-rendered buttons if the
+    // registry script didn't load.
+    function renderDock() {
+        if (!dock) return;
+        if (!(window.ActionRegistry && typeof window.ActionRegistry.dockActions === 'function')) return;
+        var items = window.ActionRegistry.dockActions();
+        if (!items.length) return;
+        var html = '';
+        for (var i = 0; i < items.length; i++) {
+            var a = items[i];
+            var label = a.label || a.id;
+            var icon = a.dockIcon || 'bi-lightning-charge';
+            html += '<button type="button" class="qa-btn" data-action="' + escapeHTML(a.id) + '"'
+                  + ' aria-label="' + escapeHTML(label) + '" title="' + escapeHTML(label) + '">'
+                  + '<i class="bi ' + escapeHTML(icon) + '" aria-hidden="true"></i></button>';
+        }
+        dock.innerHTML = html;
+    }
+
     function handleDockAction(action) {
         close();
+        // Primary path: shared registry (opens here or hands off to owning page).
+        if (window.ActionRegistry && window.ActionRegistry.byId(action)) {
+            window.ActionRegistry.run(action);
+            return;
+        }
+        // Legacy fallback (registry script unavailable).
         switch (action) {
             case 'new-patient':
                 if (typeof window.openNewPatientModal === 'function') window.openNewPatientModal();
@@ -1004,6 +1030,7 @@
 
     // --- Init ---------------------------------------------------------------
     function bootstrap() {
+        renderDock();
         bindEvents();
         positionTabIndicator();
         // Initial badge: lightweight count call, doesn't require the panel open.

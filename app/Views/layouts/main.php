@@ -1339,6 +1339,8 @@
     <script defer src="/app/Views/doctor/assets/js/notes-sync.js?v=<?= file_exists(__DIR__ . '/../doctor/assets/js/notes-sync.js') ? filemtime(__DIR__ . '/../doctor/assets/js/notes-sync.js') : time() ?>"></script>
     <!-- Merged view over both note stores (quick_notes + notes) for cross-surface display -->
     <script defer src="/app/Views/doctor/assets/js/notes-bridge.js?v=<?= file_exists(__DIR__ . '/../doctor/assets/js/notes-bridge.js') ? filemtime(__DIR__ . '/../doctor/assets/js/notes-bridge.js') : time() ?>"></script>
+    <!-- Shared action registry — single source of truth for palette + dock (load before both) -->
+    <script defer src="/app/Views/doctor/assets/js/actions-registry.js?v=<?= file_exists(__DIR__ . '/../doctor/assets/js/actions-registry.js') ? filemtime(__DIR__ . '/../doctor/assets/js/actions-registry.js') : time() ?>"></script>
     <script defer src="/app/Views/doctor/assets/js/notification-center.js?v=<?= file_exists(__DIR__ . '/../doctor/assets/js/notification-center.js') ? filemtime(__DIR__ . '/../doctor/assets/js/notification-center.js') : time() ?>"></script>
     <script defer src="/app/Views/doctor/assets/js/todo-drawer.js?v=<?= file_exists(__DIR__ . '/../doctor/assets/js/todo-drawer.js') ? filemtime(__DIR__ . '/../doctor/assets/js/todo-drawer.js') : time() ?>"></script>
     <script defer src="/app/Views/doctor/assets/js/cmdk.js?v=<?= file_exists(__DIR__ . '/../doctor/assets/js/cmdk.js') ? filemtime(__DIR__ . '/../doctor/assets/js/cmdk.js') : time() ?>"></script>

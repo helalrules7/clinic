@@ -2,6 +2,29 @@
 let searchTimeout;
 let currentSearchRequest;
 
+// Stable global opener for the "Add New Patient" modal. This is the page that
+// OWNS the modal (#addPatientModal lives in patients.php), so it exposes the
+// canonical opener that the command palette, the quick-action dock, and the
+// ActionRegistry cross-page handoff (?action=new-patient) / the legacy
+// ?openModal=addPatient deep-link all converge on. Without this, those callers
+// only ever found `undefined` and silently no-op'd.
+window.openNewPatientModal = function openNewPatientModal() {
+    const el = document.getElementById('addPatientModal');
+    if (!el) return false;
+    try {
+        if (window.bootstrap && bootstrap.Modal) {
+            const inst = bootstrap.Modal.getOrCreateInstance
+                ? bootstrap.Modal.getOrCreateInstance(el)
+                : (bootstrap.Modal.getInstance(el) || new bootstrap.Modal(el));
+            inst.show();
+            return true;
+        }
+    } catch (e) { /* fall through to the data-bs trigger */ }
+    const btn = document.querySelector('[data-bs-target="#addPatientModal"]');
+    if (btn) { btn.click(); return true; }
+    return false;
+};
+
 // Helper function to convert hex color to RGB string
 /**
  * Render a small badge showing the clinic of the patient's most recent

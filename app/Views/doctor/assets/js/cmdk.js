@@ -29,7 +29,10 @@
     const DEBOUNCE_MS = 150;
 
     // ----- Local action catalogue (always available, fuzzy-matched client side) -----
-    const LOCAL_ACTIONS = [
+    // Source of truth: window.ActionRegistry (actions-registry.js, loaded first).
+    // The hardcoded list below is only a fallback if that script failed to load,
+    // so the palette degrades gracefully instead of going blank.
+    const LOCAL_ACTIONS_FALLBACK = [
         { id: 'action:new-patient',    label: 'New patient',         sub: 'Create a patient record',     icon: 'user-plus',  keys: ['new','patient','add','create'] },
         { id: 'action:new-todo',       label: 'New to-do',           sub: 'Open the to-do drawer',       icon: 'check-square', keys: ['new','todo','task'] },
         { id: 'action:new-note',       label: 'New quick note',      sub: 'Open the quick-note modal',   icon: 'sticky-note', keys: ['new','note','quick'] },
@@ -38,6 +41,17 @@
         { id: 'action:theme-picker',   label: 'Open theme picker',   sub: 'Change palette and mode',     icon: 'palette',    keys: ['theme','palette','color','dark','light'] },
         { id: 'action:keyboard-help',  label: 'Keyboard shortcuts',  sub: 'Show all shortcuts',          icon: 'keyboard',   keys: ['keyboard','shortcuts','help','keys'] }
     ];
+
+    // Pull the palette-visible actions from the shared registry, mapped to the
+    // cmdk row shape (legacy 'action:<id>' ids). Falls back when registry absent.
+    function getLocalActions() {
+        if (window.ActionRegistry && typeof window.ActionRegistry.paletteActions === 'function') {
+            return window.ActionRegistry.paletteActions().map(function (a) {
+                return { id: 'action:' + a.id, label: a.label, sub: a.sub, icon: a.icon, keys: a.keys || [] };
+            });
+        }
+        return LOCAL_ACTIONS_FALLBACK;
+    }
 
     // ----- Utility -----
     function escapeHTML(str) {
@@ -139,9 +153,10 @@
 
     // ----- Local action filtering -----
     function localActionsFor(q) {
-        if (!q) return LOCAL_ACTIONS.slice(0, 5);
+        const catalogue = getLocalActions();
+        if (!q) return catalogue.slice(0, 5);
         const needle = q.toLowerCase();
-        return LOCAL_ACTIONS.filter(function (a) {
+        return catalogue.filter(function (a) {
             if (a.label.toLowerCase().indexOf(needle) !== -1) return true;
             if (a.sub && a.sub.toLowerCase().indexOf(needle) !== -1) return true;
             for (let i = 0; i < a.keys.length; i++) {
@@ -336,6 +351,17 @@
     }
 
     function triggerAction(id, fallbackUrl) {
+        // Primary path: the shared registry resolves the action and either opens
+        // the modal on this page or hands off to the owning page (?action=…).
+        if (window.ActionRegistry && window.ActionRegistry.byId(id)) {
+            close();
+            if (window.ActionRegistry.run(id)) return;
+            // run() returned false (no opener + no page) — fall through to URL.
+            if (fallbackUrl) { window.location.href = fallbackUrl; }
+            return;
+        }
+
+        // Legacy fallback (registry script unavailable).
         switch (id) {
             case 'action:new-patient':
                 if (typeof window.openNewPatientModal === 'function') { close(); window.openNewPatientModal(); return; }
@@ -397,7 +423,7 @@
         const q = (input.value || '').trim();
         if (!q && activeScope === 'all') {
             // No query + no scope filter → friendly defaults (local actions only).
-            render({ patients: [], pages: [], actions: LOCAL_ACTIONS.slice(0, 5).map(toActionItem), todos: [] }, '');
+            render({ patients: [], pages: [], actions: getLocalActions().slice(0, 5).map(toActionItem), todos: [] }, '');
             lastQuery = '';
             return;
         }
