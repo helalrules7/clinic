@@ -1544,9 +1544,114 @@ input[readonly] {
     align-items: center;
 }
 
-/* Secretary bookings — doctor calendar parity (calendar.css owns header gradient + badge position) */
+/* Secretary bookings — glass card + doctor badge/actions (no gradient header) */
 .bookings-appointment-card {
     width: 100%;
+    padding: 0;
+    border-radius: 14px;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    border: 1px solid var(--glass-border, var(--border));
+    background: var(--glass-bg-strong, var(--card));
+    -webkit-backdrop-filter: blur(12px) saturate(150%);
+    backdrop-filter: blur(12px) saturate(150%);
+    box-shadow: var(--glass-shadow, 0 2px 12px rgba(15, 23, 42, 0.06));
+    color: var(--text);
+    overflow: hidden;
+}
+
+.bookings-appointment-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--glass-shadow-lg, 0 6px 20px rgba(15, 23, 42, 0.1));
+    border-color: color-mix(in srgb, var(--accent) 28%, var(--border));
+}
+
+/* Neutral glass header — strip calendar.css gradient; keep badge centre + action pills */
+#bookingsCalendarContainer .bookings-appointment-card .appointment-header {
+    position: relative;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.65rem;
+    margin: 0 !important;
+    padding: 0.75rem 0.85rem !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    border-bottom: 1px solid var(--border);
+}
+
+#bookingsCalendarContainer .bookings-appointment-card .appointment-header:hover {
+    background: color-mix(in srgb, var(--accent) 5%, transparent) !important;
+}
+
+#bookingsCalendarContainer .bookings-appointment-card .appointment-header.missed {
+    background: color-mix(in srgb, #ef4444 8%, transparent) !important;
+}
+
+#bookingsCalendarContainer .bookings-appointment-card .appointment-header.completed {
+    background: color-mix(in srgb, var(--success, #10b981) 8%, transparent) !important;
+}
+
+#bookingsCalendarContainer .bookings-appointment-card .appointment-header .appointment-info {
+    flex: 1 1 200px;
+    min-width: 0;
+}
+
+#bookingsCalendarContainer .bookings-appointment-card .appointment-header .appointment-info .info-line,
+#bookingsCalendarContainer .bookings-appointment-card .appointment-header .appointment-info .info-line span:not(.label) {
+    color: var(--text) !important;
+}
+
+#bookingsCalendarContainer .bookings-appointment-card .appointment-header .appointment-info .info-line .label {
+    color: var(--muted) !important;
+}
+
+/* Badge position: inherit calendar.css absolute centre (desktop) — do not set position:static */
+
+#bookingsCalendarContainer .bookings-appointment-card .appointment-header .appointment-status .badge {
+    font-size: 0.72rem !important;
+    padding: 0.35rem 0.55rem !important;
+    border-radius: 8px !important;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.12);
+    font-weight: 600;
+}
+
+#bookingsCalendarContainer .bookings-appointment-card .appointment-header .appointment-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem;
+    flex-shrink: 0;
+}
+
+#bookingsCalendarContainer .bookings-appointment-card .appointment-notes {
+    padding: 0.55rem 0.85rem 0.65rem;
+    margin: 0;
+    font-size: 0.8rem;
+    color: var(--muted);
+    background: color-mix(in srgb, var(--accent) 3%, transparent);
+}
+
+#bookingsCalendarContainer .bookings-appointment-card.booked {
+    border-inline-start: 4px solid var(--accent);
+}
+
+#bookingsCalendarContainer .bookings-appointment-card.checkedin {
+    border-inline-start: 4px solid #0ea5e9;
+}
+
+#bookingsCalendarContainer .bookings-appointment-card.inprogress {
+    border-inline-start: 4px solid #f59e0b;
+}
+
+#bookingsCalendarContainer .bookings-appointment-card.completed {
+    border-inline-start: 4px solid var(--success, #10b981);
+}
+
+#bookingsCalendarContainer .bookings-appointment-card.missed,
+#bookingsCalendarContainer .bookings-appointment-card.cancelled {
+    border-inline-start: 4px solid #ef4444;
 }
 
 /* Confirm attendance — solid green pill (secretary-only action) */
