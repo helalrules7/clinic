@@ -1319,6 +1319,27 @@ class UnifiedFilterManager {
                     tagsList.querySelectorAll('input[type="checkbox"]').forEach(cb => {
                         cb.addEventListener('change', () => this.handleTagChange());
                     });
+                    const createRow = document.createElement('div');
+                    createRow.className = 'p-2 border-top mt-1';
+                    createRow.innerHTML = `
+                        <button type="button" class="btn btn-link btn-sm p-0" id="filterCreateTagBtn">
+                            <i class="bi bi-plus-circle me-1"></i>Create new tag
+                        </button>`;
+                    tagsList.appendChild(createRow);
+                    createRow.querySelector('#filterCreateTagBtn')?.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const name = prompt('New tag name');
+                        if (!name || !name.trim()) return;
+                        fetch('/api/patient-tags', {
+                            method: 'POST',
+                            headers: { 'X-Requested-With': 'XMLHttpRequest', 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ name: name.trim(), color: '#6366f1', icon: 'bi-tag' })
+                        }).then(r => r.json()).then(d => {
+                            if (d.ok) this.loadTagOptions();
+                            else showNotification(d.error || 'Failed', 'error');
+                        });
+                    });
                 }
             }
         } catch (error) {
@@ -8154,6 +8175,22 @@ async function showTagManagementModal(patientId) {
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body">
+                        <div class="border rounded p-2 mb-3" style="background: color-mix(in srgb, var(--card) 96%, var(--accent) 4%);">
+                            <p class="small fw-semibold mb-2"><i class="bi bi-plus-circle me-1"></i>Create tag inline</p>
+                            <div class="d-flex flex-wrap gap-2 align-items-end">
+                                <div class="flex-grow-1">
+                                    <input type="text" class="form-control form-control-sm" id="inlineNewTagName" placeholder="Tag name" maxlength="50">
+                                </div>
+                                <div>
+                                    <input type="color" class="form-control form-control-color form-control-sm" id="inlineNewTagColor" value="#6366f1" title="Color">
+                                </div>
+                                <select class="form-select form-select-sm" id="inlineNewTagScope" style="width:auto">
+                                    <option value="private">Private</option>
+                                    <option value="global">Global</option>
+                                </select>
+                                <button type="button" class="btn btn-primary btn-sm" id="inlineCreateTagBtn">Create</button>
+                            </div>
+                        </div>
                         <p class="text-muted mb-3">Select tags to assign to this patient</p>
                         <div class="tags-list" id="tagsList">
                             <!-- Tags will be added here -->
@@ -8227,6 +8264,42 @@ async function showTagManagementModal(patientId) {
         });
     }
     
+    const inlineBtn = modal.querySelector('#inlineCreateTagBtn');
+    if (inlineBtn) {
+        inlineBtn.onclick = async () => {
+            const name = modal.querySelector('#inlineNewTagName')?.value?.trim();
+            const color = modal.querySelector('#inlineNewTagColor')?.value || '#6366f1';
+            const scope = modal.querySelector('#inlineNewTagScope')?.value || 'private';
+            if (!name) {
+                showNotification('Tag name required', 'error');
+                return;
+            }
+            const payload = { name, color, icon: 'bi-tag' };
+            if (scope === 'global') payload.doctor_id = null;
+            try {
+                const res = await fetch('/api/patient-tags', {
+                    method: 'POST',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest', 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                if (data.ok) {
+                    showNotification('Tag created', 'success');
+                    const inst = bootstrap.Modal.getInstance(modal);
+                    if (inst) inst.hide();
+                    showTagManagementModal(patientId);
+                    if (window.patientsFilterManager?.loadTagOptions) {
+                        window.patientsFilterManager.loadTagOptions();
+                    }
+                } else {
+                    showNotification(data.error || 'Failed to create tag', 'error');
+                }
+            } catch (e) {
+                showNotification('Failed to create tag', 'error');
+            }
+        };
+    }
+
     // Show modal
     const bsModal = new bootstrap.Modal(modal);
     bsModal.show();

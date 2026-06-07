@@ -118,6 +118,17 @@ if ($status === 'completed') {
                 <strong><?= htmlspecialchars($appointment['clinic_name_ar'] ?: $appointment['clinic_name_en']) ?></strong>
             </p>
             <?php endif; ?>
+            <div class="appt-tags-bar mt-2 d-flex flex-wrap align-items-center gap-2">
+                <span class="small opacity-75"><i class="bi bi-lightning me-1"></i>Session:</span>
+                <div id="apptSessionLabels" class="d-flex flex-wrap align-items-center gap-1"></div>
+            </div>
+            <div class="appt-tags-bar mt-1 d-flex flex-wrap align-items-center gap-2">
+                <span class="small opacity-75"><i class="bi bi-bookmark me-1"></i>Appt tags:</span>
+                <div id="apptPersistentTags" class="d-flex flex-wrap align-items-center gap-1"></div>
+                <button type="button" class="btn btn-sm btn-outline-light py-0 px-2" id="apptManagePatientTagsBtn" style="font-size:.75rem" title="Manage patient tags">
+                    <i class="bi bi-person-badge me-1"></i>Patient Tags
+                </button>
+            </div>
         </div>
         <div class="col-md-4 text-end">
             <div class="d-flex flex-column align-items-end gap-2">
@@ -1687,6 +1698,13 @@ window.APPOINTMENT_CONFIG = {
 </script>
 <link rel="stylesheet" href="/app/Views/doctor/assets/css/consultation-ai.css?v=<?= file_exists(__DIR__ . '/assets/css/consultation-ai.css') ? filemtime(__DIR__ . '/assets/css/consultation-ai.css') : time() ?>">
 <script defer src="/app/Views/doctor/assets/js/consultation-ai.js?v=<?= file_exists(__DIR__ . '/assets/js/consultation-ai.js') ? filemtime(__DIR__ . '/assets/js/consultation-ai.js') : time() ?>"></script>
+<script>
+    window.__appointmentTagsConfig = {
+        appointmentId: <?= (int)($appointment['id'] ?? 0) ?>,
+        patientId: <?= (int)($appointment['patient_id'] ?? $patient['id'] ?? 0) ?>
+    };
+</script>
+<script src="/app/Views/doctor/assets/js/appointment-tags.js?v=<?= file_exists(__DIR__ . '/assets/js/appointment-tags.js') ? filemtime(__DIR__ . '/assets/js/appointment-tags.js') : time() ?>"></script>
 <script src="/app/Views/doctor/assets/js/appointment.js?v=<?= file_exists(__DIR__ . '/assets/js/appointment.js') ? filemtime(__DIR__ . '/assets/js/appointment.js') : time() ?>"></script>
 <script src="/app/Views/doctor/assets/js/medical-instructions.js?v=<?= file_exists(__DIR__ . '/assets/js/medical-instructions.js') ? filemtime(__DIR__ . '/assets/js/medical-instructions.js') : time() ?>"></script>
 <script src="/app/Views/doctor/assets/js/ai-chat-widget.js?v=<?= file_exists(__DIR__ . '/assets/js/ai-chat-widget.js') ? filemtime(__DIR__ . '/assets/js/ai-chat-widget.js') : time() ?>"></script>

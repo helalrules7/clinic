@@ -3359,3 +3359,18 @@
 }
 .drug-suggest-dropdown .suggestion-item .fw-bold { color: var(--accent) !important; }
 .drug-suggest-dropdown .text-muted { color: var(--muted) !important; }
+
+.appt-tags-bar .appt-session-label,
+.appt-tags-bar .appt-tag-chip {
+    font-size: .78rem;
+    font-weight: 600;
+    padding: .25rem .55rem;
+}
+.appt-tags-bar .btn-outline-light {
+    border-color: rgba(255, 255, 255, .45);
+    color: #fff;
+}
+.appt-tags-bar .btn-outline-light:hover {
+    background: rgba(255, 255, 255, .15);
+    color: #fff;
+}

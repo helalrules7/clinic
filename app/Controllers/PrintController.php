@@ -470,6 +470,37 @@ class PrintController
         }
     }
 
+    public function patientMedicalRecord($id)
+    {
+        try {
+            $user = $this->auth->user();
+            if ($user['role'] !== 'doctor' && $user['role'] !== 'admin') {
+                http_response_code(403);
+                echo 'Permission denied';
+                return;
+            }
+
+            $patientId = (int) $id;
+            $patient = $this->getPatient($patientId);
+            if (!$patient) {
+                http_response_code(404);
+                echo 'Patient not found';
+                return;
+            }
+
+            header('Content-Type: text/html; charset=utf-8');
+
+            echo $this->view->render('print/patient-medical-record', [
+                'patientId' => $patientId,
+                'patient' => $patient,
+                'clinic' => $this->getClinicInfo(),
+            ]);
+        } catch (\Exception $e) {
+            http_response_code(500);
+            echo 'Error: ' . $e->getMessage();
+        }
+    }
+
     public function appointmentReport($id)
     {
         $appointment = $this->getAppointmentDetails($id);

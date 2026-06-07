@@ -32,9 +32,9 @@ class MedicalInstructionController
         $view = new \App\Lib\View();
         $content = $view->render('doctor/instruction-templates', ['user' => $user]);
         echo $view->render('layouts/main', [
-            'title'        => 'HClinic / Roaya | Instruction Templates',
-            'pageTitle'    => 'Instruction Templates',
-            'pageSubtitle' => 'قوالب التعليمات العامة',
+            'title'        => 'HClinic / Roaya | Tags and Templates',
+            'pageTitle'    => 'Tags and Templates',
+            'pageSubtitle' => 'Tags and Templates',
             'content'      => $content,
         ]);
     }

@@ -283,6 +283,10 @@ function showPrescriptionModal(appointmentId) {
             if (data.success) {
                 modal.hide();
                 showSuccessMessage(saveTemplate ? 'Prescription added and template saved' : 'Prescription added successfully');
+                const pid = window.CONSULTATION_AI?.patientId || window.__appointmentTagsConfig?.patientId;
+                if (typeof window.maybeSuggestPatientTagsFromDrug === 'function') {
+                    window.maybeSuggestPatientTagsFromDrug(drugName, pid);
+                }
                 setTimeout(() => { reloadMedications(); }, 300);
             } else {
                 showErrorMessage('Error: ' + (data.message || data.error || 'Could not add prescription'));

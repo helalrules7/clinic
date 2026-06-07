@@ -374,10 +374,27 @@ try {
     $router->delete('/api/patient-color-markers/{patient_id}', 'ApiController@deletePatientColorMarker');
 
     // Patient tags routes
+    $router->get('/api/patient-tags/reports', 'TagController@getPatientTagReports');
+    $router->get('/api/patient-tags/{id}/patients', 'TagController@getPatientsByTag');
     $router->get('/api/patient-tags', 'ApiController@getPatientTags');
     $router->post('/api/patient-tags', 'ApiController@createPatientTag');
     $router->put('/api/patient-tags/{id}', 'ApiController@updatePatientTag');
     $router->delete('/api/patient-tags/{id}', 'ApiController@deletePatientTag');
+
+    // Appointment tags, session labels, drug tag links
+    $router->get('/api/appointment-tags', 'TagController@getAppointmentTags');
+    $router->post('/api/appointment-tags', 'TagController@createAppointmentTag');
+    $router->put('/api/appointment-tags/{id}', 'TagController@updateAppointmentTag');
+    $router->delete('/api/appointment-tags/{id}', 'TagController@deleteAppointmentTag');
+    $router->get('/api/appointments/{id}/tags', 'TagController@getAppointmentAssignedTags');
+    $router->post('/api/appointments/{appointment_id}/tags/{tag_id}', 'TagController@assignAppointmentTag');
+    $router->delete('/api/appointments/{appointment_id}/tags/{tag_id}', 'TagController@removeAppointmentTag');
+    $router->get('/api/appointments/{id}/session-labels', 'TagController@getSessionLabels');
+    $router->put('/api/appointments/{id}/session-labels', 'TagController@setSessionLabels');
+    $router->get('/api/drug-tag-links/suggestions', 'TagController@getDrugTagSuggestions');
+    $router->get('/api/drug-tag-links', 'TagController@getDrugTagLinks');
+    $router->post('/api/drug-tag-links', 'TagController@createDrugTagLink');
+    $router->delete('/api/drug-tag-links/{id}', 'TagController@deleteDrugTagLink');
 
     // Patient tag assignments routes (batch route must come before parameterized routes)
     $router->post('/api/patients/tags/batch', 'ApiController@getBatchPatientTags');
@@ -465,6 +482,7 @@ try {
     $router->get('/print/lab-tests/{id}', 'PrintController@labTests');
     $router->get('/print/invoice/{id}', 'PrintController@invoice');
     $router->get('/print/appointment/{id}', 'PrintController@appointmentReport');
+    $router->get('/print/patient-record/{id}', 'PrintController@patientMedicalRecord');
     
     // Payment and Expense API routes
     $router->get('/api/payments/{id}', 'ApiController@getPayment');

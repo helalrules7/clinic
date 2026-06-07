@@ -6,7 +6,7 @@
 // RESETS the timer / opt-out / session-shown for every browser so the
 // new wizard surfaces fresh after the v11 deploy.
 //
-// Slide track: 23 slides covering every v11 feature with pure-CSS animated
+// Slide track: 24 slides covering every v11 feature with pure-CSS animated
 // mockups. ALL v10 slides removed in this release.
 ?>
 <style>
@@ -3131,7 +3131,7 @@
                 <span class="wn-pmr-badge">PDF</span>
                 <div class="wn-pmr-scene">
                   <div class="wn-pmr-doc">
-                    <div class="wn-pmr-doc-head"><i class="bi bi-file-earmark-pdf-fill"></i> Complete Medical Record</div>
+                    <div class="wn-pmr-doc-head"><i class="bi bi-file-earmark-pdf-fill"></i> Complete Integrated Report</div>
                     <div class="wn-pmr-line w1"></div>
                     <div class="wn-pmr-line w2"></div>
                     <div class="wn-pmr-chart" aria-hidden="true"></div>
@@ -3143,8 +3143,8 @@
                   </div>
                 </div>
               </div>
-              <h3>One PDF — the whole patient story</h3>
-              <p>Export a <strong>dated, comprehensive medical dossier</strong>: aggregated history, every visit with diagnosis &amp; plan, prescriptions, labs, instructions, notes, attachments, and <strong>IOP / visit charts</strong> — replacing the old Word export.</p>
+              <h3>One PDF — the complete integrated report</h3>
+              <p><strong>Export PDF</strong> downloads; <strong>Print Full Report</strong> previews the same dossier: full history, every visit, prescriptions, labs, board notes, attachments, and <strong>IOP / visit charts</strong>.</p>
             </div>
 
             <!-- v11.0.0 — wn-mh (Medical History popover) -->
@@ -3193,6 +3193,21 @@
               <p>Every image modal and board lightbox shares a <strong>glass zoom toolbar</strong> (out · reset · in). On mobile the footer stays on <strong>one row</strong> and the quick-access dock hides so nothing covers your buttons.</p>
             </div>
 
+            <!-- v11.0.0 — wn-tags (Tags v1) -->
+            <div class="wn-slide">
+              <span class="wn-kicker">Organization</span>
+              <div class="wn-stage">
+                <div style="padding:1.2rem;display:flex;flex-wrap:wrap;gap:.4rem;justify-content:center;align-items:center;height:100%">
+                  <span style="background:#6366f1;color:#fff;padding:.35rem .65rem;border-radius:999px;font-size:.72rem;font-weight:700">VIP</span>
+                  <span style="background:#f59e0b;color:#fff;padding:.35rem .65rem;border-radius:999px;font-size:.72rem;font-weight:700">Follow-up</span>
+                  <span style="background:#22c55e;color:#fff;padding:.35rem .65rem;border-radius:999px;font-size:.72rem;font-weight:700">Session: Urgent</span>
+                  <span style="background:#8b5cf6;color:#fff;padding:.35rem .65rem;border-radius:999px;font-size:.72rem;font-weight:700">Appt: Post-op</span>
+                </div>
+              </div>
+              <h3>Tags and Templates</h3>
+              <p><strong>Patient tags</strong> with reports and drill-down, <strong>appointment tags</strong> on the record, <strong>session labels</strong> in the header, and <strong>drug links</strong> that suggest patient tags when you prescribe — all under <strong>Tags and Templates</strong> in the nav.</p>
+            </div>
+
             <!-- v11.0.0 — wn-fixes (Bug fixes & polish) -->
             <div class="wn-slide wn-slide-fixes">
               <span class="wn-kicker">Fixes</span>
@@ -3232,6 +3247,7 @@
                   <li><i class="bi bi-check-circle-fill"></i><span>Patient Actions: 5×2 gradient grid on desktop</span></li>
                   <li><i class="bi bi-check-circle-fill"></i><span>Calendar desktop: no tooltips on actions column</span></li>
                   <li><i class="bi bi-check-circle-fill"></i><span>AI chat widget: safe-area insets on mobile — header no longer clipped</span></li>
+                  <li><i class="bi bi-check-circle-fill"></i><span>Tags v1: patient + appointment + session labels + drug→tag suggest</span></li>
                 </ul>
               </div>
               <h3>35+ fixes under the hood</h3>

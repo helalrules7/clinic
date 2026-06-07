@@ -275,8 +275,8 @@
                 </div>
                 <div class="nav-item">
                     <a href="/doctor/instruction-templates" class="nav-link <?= $this->isActiveRoute('/doctor/instruction-templates') ? 'active' : '' ?>">
-                        <i class="bi bi-journal-medical"></i>
-                        Instruction Templates
+                        <i class="bi bi-tags"></i>
+                        Tags and Templates
                     </a>
                 </div>
                 <div class="nav-item">

@@ -1,0 +1,86 @@
+.tags-templates-page {
+    width: 100%;
+    max-width: none;
+}
+.tags-admin-section {
+    border: 1px solid var(--border, #e2e8f0);
+    border-radius: 12px;
+    background: var(--card, #fff);
+    margin-bottom: 1.25rem;
+    overflow: hidden;
+}
+.dark .tags-admin-section {
+    border-color: rgba(148, 163, 184, .22);
+    background: var(--card, #1e293b);
+}
+.tags-admin-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .75rem;
+    flex-wrap: wrap;
+    padding: .75rem 1rem;
+    border-bottom: 1px solid var(--border, #e2e8f0);
+    background: color-mix(in srgb, var(--card) 94%, var(--accent, #6366f1) 6%);
+}
+.dark .tags-admin-head { border-bottom-color: rgba(148, 163, 184, .16); }
+.tags-admin-head h5 { margin: 0; font-weight: 700; font-size: 1rem; }
+.tags-admin-body { padding: 1rem; }
+.tags-admin-table { font-size: .88rem; }
+.tags-admin-table th { font-weight: 600; color: var(--muted, #64748b); }
+.tag-scope-badge {
+    font-size: .7rem;
+    padding: .15rem .45rem;
+    border-radius: 999px;
+    background: rgba(99, 102, 241, .12);
+    color: var(--accent, #6366f1);
+}
+.tag-scope-badge.private { background: rgba(245, 158, 11, .15); color: #d97706; }
+.tags-report-row { cursor: pointer; }
+.tags-report-row:hover { background: rgba(var(--accent-rgb, 99, 102, 241), .06); }
+.tags-inline-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+    align-items: flex-end;
+    padding: .75rem;
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--card) 96%, var(--accent) 4%);
+    margin-bottom: 1rem;
+}
+.tags-inline-form .form-label { font-size: .75rem; margin-bottom: .15rem; }
+.tags-drill-panel {
+    margin-top: 1rem;
+    padding: .75rem;
+    border: 1px dashed var(--border, #e2e8f0);
+    border-radius: 8px;
+    max-height: 220px;
+    overflow-y: auto;
+}
+.tags-templates-divider {
+    margin: 2rem 0 1.5rem;
+    border: 0;
+    border-top: 2px solid var(--border, #e2e8f0);
+}
+.tag-color-swatch {
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    border: 1px solid rgba(0,0,0,.1);
+    display: inline-block;
+    vertical-align: middle;
+}
+
+/* Row actions — btn-group like calendar / patient profile */
+.tags-admin-table td:last-child,
+.tags-admin-table th:last-child {
+    width: 96px;
+    text-align: right;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+.tags-admin-table .btn-group-sm .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}

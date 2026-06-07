@@ -79,9 +79,13 @@ function bookNewAppointment(patientId) {
     window.location.href = `/doctor/calendar?patient_id=${patientId}`;
 }
 
-function printPatientSummary() {
-    // Open print dialog for patient summary
-    window.print();
+function printPatientFullReport() {
+    const patientId = window.location.pathname.split('/').pop();
+    if (!patientId || !/^\d+$/.test(patientId)) {
+        showNotification('Invalid patient ID.', 'error');
+        return;
+    }
+    window.open('/print/patient-record/' + patientId + '?t=' + Date.now(), '_blank');
 }
 
 function exportPatientData() {

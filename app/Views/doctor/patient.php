@@ -187,11 +187,11 @@
                         <i class="bi bi-clipboard-heart"></i>Medical History
                     </button>
                     <button class="btn pa-action-btn pa-action-btn--print"
-                            onclick="printPatientSummary()"
+                            onclick="printPatientFullReport()"
                             data-bs-toggle="tooltip"
                             data-bs-placement="bottom"
-                            data-bs-title="Print patient summary report">
-                        <i class="bi bi-printer"></i>Print Summary
+                            data-bs-title="Preview and print the complete integrated medical record">
+                        <i class="bi bi-printer"></i>Print Full Report
                     </button>
                     <button class="btn pa-action-btn pa-action-btn--export"
                             onclick="exportPatientData()"

@@ -417,7 +417,7 @@
         this.pdf.setFontSize(20);
         this.pdf.setFont('helvetica', 'bold');
         this.pdf.setTextColor.apply(this.pdf, COLORS.primary);
-        this.pdf.text('Complete Medical Record', MARGIN, 50);
+        this.pdf.text('Complete Integrated Medical Report', MARGIN, 50);
         this.pdf.setTextColor(0, 0, 0);
 
         this.y = 62;
@@ -534,7 +534,7 @@
         var stats = r.statistics || {};
 
         this.newPage();
-        this.sectionTitle('Executive Summary');
+        this.sectionTitle('Integrated Medical Record');
         var visitAtt = countVisitAttachments(r.appointments || []);
         this.table(
             ['Metric', 'Value'],
@@ -791,6 +791,36 @@
         this.pdf.save(filename);
     };
 
+    PdfBuilder.prototype.getBlob = function () {
+        return this.pdf.output('blob');
+    };
+
+    PdfBuilder.prototype.download = function (filename) {
+        this.pdf.save(filename);
+    };
+
+    /** Build one complete PDF (all visits + appendix) — used for print preview & small exports. */
+    async function buildCompleteRecordPdf(record, onProgress) {
+        var logoUrl = resolveAssetUrl((record.clinic && record.clinic.logo_print)
+            ? record.clinic.logo_print : '/assets/images/Light.png');
+        if (onProgress) onProgress('Rendering charts…');
+        var charts = await buildCharts(record);
+        if (onProgress) onProgress('Building PDF…');
+        var logo = await loadImageDataUrl(logoUrl);
+        var builder = new PdfBuilder(record, logo);
+        builder.buildCover();
+        builder.buildSummarySections(charts);
+        await builder.buildBoardSection();
+        var appointments = record.appointments || [];
+        if (appointments.length) {
+            await builder.buildVisitSection(appointments, null);
+        }
+        var profileImages = record.images || [];
+        var profileDocuments = record.profile_documents || [];
+        await builder.buildProfileAppendix(profileImages, profileDocuments, onProgress);
+        return builder;
+    }
+
     function chunkArray(arr, size) {
         var out = [];
         for (var i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
@@ -798,8 +828,67 @@
     }
 
     function updateOverlay(overlay, msg) {
-        var p = overlay && overlay.querySelector('.pmr-export-status');
+        if (!overlay) return;
+        if (overlay.statusEl) {
+            overlay.statusEl.textContent = msg;
+            return;
+        }
+        var p = overlay.querySelector && overlay.querySelector('.pmr-export-status');
         if (p) p.textContent = msg;
+    }
+
+    async function fetchMedicalRecord(patientId) {
+        var res = await fetch('/api/patients/' + patientId + '/medical-record', { credentials: 'same-origin' });
+        if (!res.ok) throw new Error('Failed to load medical record (' + res.status + ')');
+        var json = await res.json();
+        if (!json.success || !json.data) throw new Error(json.error || 'Invalid response');
+        return json.data;
+    }
+
+    function baseFilename(record, patientId) {
+        var dateSlug = new Date().toISOString().split('T')[0];
+        return 'Patient_' + patientId + '_' + (record.patient.full_name || 'record').replace(/\s+/g, '_') + '_' + dateSlug;
+    }
+
+    /**
+     * Print preview — always one PDF, embedded in iframe or new tab, optional auto-print.
+     * @param {number|string} patientId
+     * @param {object|HTMLElement|null} ui — { statusEl, iframe, autoPrint } or legacy overlay element
+     */
+    async function printPatientMedicalRecordPDF(patientId, ui) {
+        if (!global.jspdf || !global.jspdf.jsPDF) {
+            throw new Error('jsPDF library not loaded');
+        }
+        updateOverlay(ui, 'Loading fonts & patient record…');
+        await ensureArabicFont();
+        var record = await fetchMedicalRecord(patientId);
+        var builder = await buildCompleteRecordPdf(record, function (m) { updateOverlay(ui, m); });
+        var blob = builder.getBlob();
+        var url = URL.createObjectURL(blob);
+        var filename = baseFilename(record, patientId) + '.pdf';
+
+        if (ui && ui.iframe) {
+            ui.iframe.style.display = 'block';
+            ui.iframe.src = url;
+            ui.iframe.onload = function () {
+                updateOverlay(ui, 'PDF ready — use Print or Download below.');
+                if (ui.autoPrint !== false) {
+                    setTimeout(function () {
+                        try {
+                            ui.iframe.contentWindow.focus();
+                            ui.iframe.contentWindow.print();
+                        } catch (_) {}
+                    }, 700);
+                }
+            };
+        } else {
+            var win = window.open(url, '_blank');
+            if (win) {
+                updateOverlay(ui, 'PDF opened in a new tab.');
+            }
+        }
+
+        return { blobUrl: url, filename: filename, parts: 1 };
     }
 
     async function exportPatientMedicalRecordPDF(patientId, overlay) {
@@ -809,16 +898,7 @@
 
         updateOverlay(overlay, 'Loading fonts & patient record…');
         await ensureArabicFont();
-        var res = await fetch('/api/patients/' + patientId + '/medical-record', { credentials: 'same-origin' });
-        if (!res.ok) throw new Error('Failed to load medical record (' + res.status + ')');
-        var json = await res.json();
-        if (!json.success || !json.data) throw new Error(json.error || 'Invalid response');
-
-        var record = json.data;
-        var logoUrl = resolveAssetUrl((record.clinic && record.clinic.logo_print) ? record.clinic.logo_print : '/assets/images/Light.png');
-
-        updateOverlay(overlay, 'Rendering charts…');
-        var charts = await buildCharts(record);
+        var record = await fetchMedicalRecord(patientId);
 
         var appointments = record.appointments || [];
         var visitChunks = chunkArray(appointments, VISITS_PER_PART);
@@ -826,29 +906,26 @@
         var profileDocuments = record.profile_documents || [];
         var appendixCount = profileImages.length + profileDocuments.length;
         var needsSplit = visitChunks.length > 1 || profileImages.length > 30;
-        var dateSlug = new Date().toISOString().split('T')[0];
-        var baseName = 'Patient_' + patientId + '_' + (record.patient.full_name || 'record').replace(/\s+/g, '_') + '_' + dateSlug;
+        var baseName = baseFilename(record, patientId);
+        var logoUrl = resolveAssetUrl((record.clinic && record.clinic.logo_print)
+            ? record.clinic.logo_print : '/assets/images/Light.png');
 
         if (!needsSplit) {
-            updateOverlay(overlay, 'Building PDF…');
-            var logo = await loadImageDataUrl(logoUrl);
-            var b = new PdfBuilder(record, logo);
-            b.buildCover();
-            b.buildSummarySections(charts);
-            await b.buildBoardSection();
-            if (appointments.length) await b.buildVisitSection(appointments, null);
-            await b.buildProfileAppendix(profileImages, profileDocuments, function (m) { updateOverlay(overlay, m); });
-            b.save(baseName + '.pdf');
+            var single = await buildCompleteRecordPdf(record, function (m) { updateOverlay(overlay, m); });
+            single.download(baseName + '.pdf');
             return { parts: 1 };
         }
 
-        updateOverlay(overlay, 'Building Part 1 (summary)…');
+        updateOverlay(overlay, 'Rendering charts…');
+        var charts = await buildCharts(record);
+
+        updateOverlay(overlay, 'Building Part 1 (complete record)…');
         var logo1 = await loadImageDataUrl(logoUrl);
         var part1 = new PdfBuilder(record, logo1);
         part1.buildCover();
         part1.buildSummarySections(charts);
         await part1.buildBoardSection();
-        part1.save(baseName + '_Part1_Summary.pdf');
+        part1.save(baseName + '_Part1_CompleteRecord.pdf');
 
         for (var c = 0; c < visitChunks.length; c++) {
             updateOverlay(overlay, 'Building visits part ' + (c + 2) + '…');
@@ -870,4 +947,5 @@
     }
 
     global.exportPatientMedicalRecordPDF = exportPatientMedicalRecordPDF;
+    global.printPatientMedicalRecordPDF = printPatientMedicalRecordPDF;
 })(window);
