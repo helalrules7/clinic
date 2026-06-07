@@ -2,6 +2,9 @@
 (function () {
     'use strict';
 
+    const t = (k, fb, vars) => (window.V11I18n && window.V11I18n.t(k, fb, vars)) || fb;
+    const actionT = (id, field, en) => (window.V11I18n && window.V11I18n.actionText(id, field, en)) || en;
+
     // ----- Elements -----
     const root      = document.getElementById('cmdk');
     if (!root) return;
@@ -48,7 +51,13 @@
     function getLocalActions() {
         if (window.ActionRegistry && typeof window.ActionRegistry.paletteActions === 'function') {
             return window.ActionRegistry.paletteActions().map(function (a) {
-                return { id: 'action:' + a.id, label: a.label, sub: a.sub, icon: a.icon, keys: a.keys || [] };
+                return {
+                    id: 'action:' + a.id,
+                    label: actionT(a.id, 'label', a.label),
+                    sub: actionT(a.id, 'sub', a.sub),
+                    icon: a.icon,
+                    keys: a.keys || []
+                };
             });
         }
         return LOCAL_ACTIONS_FALLBACK;
@@ -118,10 +127,10 @@
 
     function sectionLabel(kind) {
         switch (kind) {
-            case 'patient': return 'Patients';
-            case 'page':    return 'Pages';
-            case 'action':  return 'Actions';
-            case 'todo':    return 'To-dos';
+            case 'patient': return t('cmdk.section.patients', 'Patients');
+            case 'page':    return t('cmdk.section.pages', 'Pages');
+            case 'action':  return t('cmdk.section.actions', 'Actions');
+            case 'todo':    return t('cmdk.section.todos', 'To-dos');
             default:        return kind;
         }
     }
@@ -179,8 +188,8 @@
     function renderError() {
         renderEmptyState(
             '<div class="cmdk__empty cmdk__empty--err">' +
-                '<p class="cmdk__empty-title">Couldn&rsquo;t reach search</p>' +
-                '<p class="cmdk__empty-sub">Check your connection and try again.</p>' +
+                '<p class="cmdk__empty-title">' + escapeHTML(t('cmdk.error.title', "Couldn't reach search")) + '</p>' +
+                '<p class="cmdk__empty-sub">' + escapeHTML(t('cmdk.error.sub', 'Check your connection and try again.')) + '</p>' +
             '</div>'
         );
     }
@@ -188,8 +197,8 @@
     function renderNoResults(q) {
         renderEmptyState(
             '<div class="cmdk__empty">' +
-                '<p class="cmdk__empty-title">No results for &ldquo;' + escapeHTML(q) + '&rdquo;</p>' +
-                '<p class="cmdk__empty-sub">Try a different search or scope.</p>' +
+                '<p class="cmdk__empty-title">' + escapeHTML(t('cmdk.no_results', 'No results for "{q}"', { q: q })) + '</p>' +
+                '<p class="cmdk__empty-sub">' + escapeHTML(t('cmdk.no_results.sub', 'Try a different search or scope.')) + '</p>' +
             '</div>'
         );
     }
@@ -204,16 +213,16 @@
                 '<span class="cmdk__row-icon cmdk__row-icon--action" aria-hidden="true">' + iconFor(a.icon || 'arrow') + '</span>' +
                 '<span class="cmdk__row-body">' +
                     '<span class="cmdk__row-label">' + escapeHTML(a.label) + '</span>' +
-                    '<span class="cmdk__row-sub">' + escapeHTML(a.usage || a.sub || '') + '</span>' +
+                    '<span class="cmdk__row-sub">' + escapeHTML(actionT(a.id, 'usage', a.usage || actionT(a.id, 'sub', a.sub || ''))) + '</span>' +
                 '</span></div>';
         }).join('');
         if (!items) {
-            items = '<div class="cmdk__help-item"><span class="cmdk__row-body"><span class="cmdk__row-sub">No smart actions available.</span></span></div>';
+            items = '<div class="cmdk__help-item"><span class="cmdk__row-body"><span class="cmdk__row-sub">' + escapeHTML(t('cmdk.smart.none', 'No smart actions available.')) + '</span></span></div>';
         }
         results.innerHTML =
             '<section class="cmdk__section cmdk__help">' +
-                '<div class="cmdk__section-head">Smart actions</div>' +
-                '<div class="cmdk__help-intro">Tip: type a phone number to book the nearest free slot, or type a name to find a patient.</div>' +
+                '<div class="cmdk__section-head">' + escapeHTML(t('cmdk.smart.title', 'Smart actions')) + '</div>' +
+                '<div class="cmdk__help-intro">' + escapeHTML(t('cmdk.smart.intro', 'Tip: type a phone number to book the nearest free slot, or type a name to find a patient.')) + '</div>' +
                 items +
             '</section>';
         flatRows = [];
@@ -276,8 +285,8 @@
             out.actions.unshift({
                 kind: 'action',
                 id: 'action:book-by-phone',
-                label: 'Book nearest slot for ' + phone,
-                sub: 'Find the soonest free appointment',
+                label: t('cmdk.book_phone', 'Book nearest slot for {phone}', { phone: phone }),
+                sub: t('cmdk.book_phone.sub', 'Find the soonest free appointment'),
                 icon: 'calendar-plus',
                 payload: phone
             });
@@ -676,8 +685,8 @@
         btn.id = 'cmdkToggle';
         btn.className = 'cmdk-toggle';
         var keyHint = /Mac|iPhone|iPod|iPad/.test(navigator.platform) ? '⌘K' : 'Ctrl+K';
-        btn.setAttribute('aria-label', 'Open command palette (' + keyHint + ')');
-        btn.setAttribute('title', 'Command palette (' + keyHint + ')');
+        btn.setAttribute('aria-label', t('cmdk.open', 'Open command palette ({key})', { key: keyHint }));
+        btn.setAttribute('title', t('cmdk.open', 'Command palette ({key})', { key: keyHint }));
         btn.innerHTML =
             '<i class="bi bi-command" aria-hidden="true"></i>' +
             '<span class="cmdk-toggle__hint" aria-hidden="true">' + keyHint + '</span>';

@@ -189,6 +189,15 @@
         return document.documentElement.getAttribute('data-layout') === 'secretary';
     }
 
+    function localizeAction(a) {
+        if (!a || !(window.V11I18n && window.V11I18n.isAr && window.V11I18n.isAr())) return a;
+        return Object.assign({}, a, {
+            label: window.V11I18n.actionText(a.id, 'label', a.label),
+            sub: window.V11I18n.actionText(a.id, 'sub', a.sub),
+            usage: a.usage ? window.V11I18n.actionText(a.id, 'usage', a.usage) : a.usage
+        });
+    }
+
     function mapPageForLayout(page) {
         if (!page || !isSecretaryLayout()) return page;
         var map = {
@@ -210,17 +219,18 @@
     function all() { return ACTIONS.slice(); }
 
     function paletteActions() {
-        return ACTIONS.filter(function (a) { return a.palette !== false; });
+        return ACTIONS.filter(function (a) { return a.palette !== false; }).map(localizeAction);
     }
 
     function dockActions() {
         return ACTIONS
             .filter(function (a) { return a.dock !== false && a.dock != null; })
-            .sort(function (x, y) { return x.dock - y.dock; });
+            .sort(function (x, y) { return x.dock - y.dock; })
+            .map(localizeAction);
     }
 
     function smartActions() {
-        return ACTIONS.filter(function (a) { return a.smart === true; });
+        return ACTIONS.filter(function (a) { return a.smart === true; }).map(localizeAction);
     }
 
     // ----- Pending payload handoff -----------------------------------------

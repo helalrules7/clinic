@@ -418,8 +418,17 @@ body {
     padding: 2rem;
     min-height: 100vh;
     transition: margin-right 0.3s ease; /* Changed from margin-left for RTL */
+    /* Keep .main-content CONTEXT-FREE (mirrors the doctor layout's style.css note):
+       a positioned z-index here makes this box a CSS stacking context, which traps
+       every Bootstrap modal authored inside the page content at this box's
+       effective root-level z-index (1). The body-level .modal-backdrop (z-index
+       1000000) then paints OVER the modal, so close / Esc / every control goes
+       dead — the bug being fixed here. position:relative on its own (z-index:auto)
+       does NOT create a context and still paints above body::before, so the
+       decorative gradient is unaffected. The internal modal scheme (backdrop
+       1000000 < sidebar 1000001 < .modal-dialog 1000002) only resolves correctly
+       once this box stops trapping it. */
     position: relative;
-    z-index: 1;
 }
 
 /* Subtle overlay pattern for depth - applied to body */

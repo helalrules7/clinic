@@ -71,7 +71,7 @@ class SearchController
                 $results['pages'] = $this->searchPages($q, $limitPages, $isSecretary);
             }
             if ($scope === 'actions' || $scope === 'all') {
-                $results['actions'] = $this->searchActions($q, $limitActions);
+                $results['actions'] = $this->searchActions($q, $limitActions, $isSecretary);
             }
             if ($scope === 'todos' || $scope === 'all') {
                 $results['todos'] = $this->searchTodos($userId, $q, $limitTodos);
@@ -170,9 +170,20 @@ class SearchController
         return $out;
     }
 
-    private function searchActions(string $q, int $limit): array
+    private function searchActions(string $q, int $limit, bool $isSecretary = false): array
     {
         // Keep in sync with assets/js/actions-registry.js (palette-visible actions).
+        if ($isSecretary) {
+            $actions = [
+                ['id' => 'act-new-patient',   'label' => 'مريض جديد',           'icon' => 'person-plus',   'link' => 'action:new-patient'],
+                ['id' => 'act-new-booking',   'label' => 'حجز جديد',            'icon' => 'calendar-plus', 'link' => 'action:new-booking'],
+                ['id' => 'act-new-todo',      'label' => 'مهمة جديدة',          'icon' => 'check2-square', 'link' => 'action:new-todo'],
+                ['id' => 'act-new-note',      'label' => 'ملاحظة سريعة',        'icon' => 'sticky',        'link' => 'action:new-note'],
+                ['id' => 'act-payments',      'label' => 'المدفوعات',           'icon' => 'cash-coin',     'link' => 'action:payments'],
+                ['id' => 'act-theme-picker',  'label' => 'اختيار السمة',        'icon' => 'palette',       'link' => 'action:theme-picker'],
+                ['id' => 'act-keyboard-help', 'label' => 'اختصارات لوحة المفاتيح', 'icon' => 'keyboard',   'link' => 'action:keyboard-help'],
+            ];
+        } else {
         $actions = [
             ['id' => 'act-new-patient',    'label' => 'New Patient',            'icon' => 'person-plus',      'link' => 'action:new-patient'],
             ['id' => 'act-new-booking',    'label' => 'New Booking',            'icon' => 'calendar-plus',    'link' => 'action:new-booking'],
@@ -187,6 +198,7 @@ class SearchController
             ['id' => 'act-theme-picker',   'label' => 'Open Theme Picker',      'icon' => 'palette',          'link' => 'action:theme-picker'],
             ['id' => 'act-keyboard-help',  'label' => 'Open Keyboard Shortcuts','icon' => 'keyboard',         'link' => 'action:keyboard-help'],
         ];
+        }
 
         $needle = mb_strtolower($q);
         $out    = [];

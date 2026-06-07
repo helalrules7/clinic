@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/v11-i18n.php';
 /**
  * Todo Drawer — right-side multi-list to-do drawer.
  *
@@ -11,7 +12,7 @@
 <div class="td-backdrop" id="todoDrawerBackdrop" hidden></div>
 
 <aside class="todo-drawer" id="todoDrawer" role="complementary"
-       aria-label="To-do drawer" aria-hidden="true" tabindex="-1">
+       aria-label="<?= v11e('todo.drawer_label', 'To-do drawer') ?>" aria-hidden="true" tabindex="-1">
 
     <span class="td-drag-handle" aria-hidden="true"></span>
 
@@ -19,30 +20,30 @@
         <div class="td-header-top">
             <h2 class="td-title">
                 <i class="bi bi-check2-square" aria-hidden="true"></i>
-                <span>To-Do</span>
+                <span><?= v11e('todo.title', 'To-Do') ?></span>
             </h2>
             <div class="td-header-actions">
                 <button type="button" class="td-header-btn" id="todoArchivedBtn"
-                        aria-label="Archived lists" title="Archived lists">
+                        aria-label="<?= v11e('todo.archived_lists', 'Archived lists') ?>" title="<?= v11e('todo.archived_lists', 'Archived lists') ?>">
                     <i class="bi bi-archive" aria-hidden="true"></i>
                 </button>
                 <button type="button" class="td-close" id="todoDrawerClose"
-                        aria-label="Close to-do drawer">
+                        aria-label="<?= v11e('todo.close', 'Close to-do drawer') ?>">
                     <i class="bi bi-x-lg" aria-hidden="true"></i>
                 </button>
             </div>
         </div>
-        <div class="td-filters" role="tablist" aria-label="Filter tasks">
+        <div class="td-filters" role="tablist" aria-label="<?= v11e('todo.filter_tasks', 'Filter tasks') ?>">
             <button type="button" role="tab" class="td-filter is-active"
-                    data-filter="open" aria-selected="true">Open</button>
+                    data-filter="open" aria-selected="true"><?= v11e('todo.filter.open', 'Open') ?></button>
             <button type="button" role="tab" class="td-filter"
-                    data-filter="done" aria-selected="false">Done</button>
+                    data-filter="done" aria-selected="false"><?= v11e('todo.filter.done', 'Done') ?></button>
             <button type="button" role="tab" class="td-filter"
-                    data-filter="all" aria-selected="false">All</button>
+                    data-filter="all" aria-selected="false"><?= v11e('todo.filter.all', 'All') ?></button>
         </div>
     </header>
 
-    <nav class="td-list-rail" id="todoListRail" aria-label="Task lists">
+    <nav class="td-list-rail" id="todoListRail" aria-label="<?= v11e('todo.lists_nav', 'Task lists') ?>">
         <!-- list chips rendered by JS, trailing "+ New list" chip appended -->
         <div class="td-rail-skeleton" aria-hidden="true">
             <span class="td-rail-sk"></span>
@@ -56,12 +57,12 @@
         <section class="td-progress-card" id="todoProgressCard"
                  style="--list-c: var(--palette-indigo);">
             <div class="td-progress-meta">
-                <p class="td-progress-label">Today's progress</p>
-                <h3 class="td-progress-title" id="todoProgressTitle">Let's go!</h3>
+                <p class="td-progress-label"><?= v11e('todo.progress_label', "Today's progress") ?></p>
+                <h3 class="td-progress-title" id="todoProgressTitle"><?= v11e('todo.progress.lets_go', "Let's go!") ?></h3>
                 <p class="td-progress-sub" id="todoProgressSub">0 of 0 completed</p>
             </div>
             <div class="td-progress-badge" id="todoProgressBadge"
-                 aria-label="Completion percentage">0%</div>
+                 aria-label="<?= v11e('todo.progress_pct', 'Completion percentage') ?>">0%</div>
             <div class="td-progress-bar" role="progressbar"
                  aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
                 <div class="td-progress-fill" id="todoProgressFill" style="width:0%"></div>
@@ -72,10 +73,10 @@
             <span class="td-quick-add-bullet" aria-hidden="true"></span>
             <input type="text" class="td-quick-add-input"
                    id="todoQuickAddInput"
-                   placeholder="Add a quick task and press Enter…"
+                   placeholder="<?= v11e('todo.quick_add_ph', 'Add a quick task and press Enter…') ?>"
                    maxlength="240"
-                   aria-label="Quick add task">
-            <button type="submit" class="td-quick-add-btn" aria-label="Add task">
+                   aria-label="<?= v11e('todo.quick_add', 'Quick add task') ?>">
+            <button type="submit" class="td-quick-add-btn" aria-label="<?= v11e('todo.add_task_btn', 'Add task') ?>">
                 <i class="bi bi-arrow-return-left" aria-hidden="true"></i>
             </button>
         </form>
@@ -86,18 +87,18 @@
 
         <div class="td-empty" id="todoEmpty" hidden>
             <i class="bi bi-clipboard2-check" aria-hidden="true"></i>
-            <p class="td-empty-title">Nothing here yet</p>
-            <p class="td-empty-sub">Add your first task above to get started.</p>
+            <p class="td-empty-title"><?= v11e('todo.empty_title', 'Nothing here yet') ?></p>
+            <p class="td-empty-sub"><?= v11e('todo.empty_sub', 'Add your first task above to get started.') ?></p>
         </div>
 
         <div class="td-loading" id="todoLoading" hidden>
             <span class="td-spinner" aria-hidden="true"></span>
-            <span>Loading…</span>
+            <span><?= v11e('todo.loading', 'Loading…') ?></span>
         </div>
     </div>
 
     <button type="button" class="td-fab" id="todoFullAddFab"
-            aria-label="Add detailed task" title="Add detailed task">
+            aria-label="<?= v11e('todo.add_detailed', 'Add detailed task') ?>" title="<?= v11e('todo.add_detailed', 'Add detailed task') ?>">
         <i class="bi bi-plus-lg" aria-hidden="true"></i>
     </button>
 
@@ -107,23 +108,23 @@
          ============================================================ -->
     <div class="td-popover" id="todoListPopover" role="menu" hidden>
         <button type="button" role="menuitem" data-act="rename">
-            <i class="bi bi-pencil" aria-hidden="true"></i> Rename
+            <i class="bi bi-pencil" aria-hidden="true"></i> <?= v11e('todo.rename', 'Rename') ?>
         </button>
         <button type="button" role="menuitem" data-act="color">
-            <i class="bi bi-palette" aria-hidden="true"></i> Color
+            <i class="bi bi-palette" aria-hidden="true"></i> <?= v11e('todo.color', 'Color') ?>
         </button>
         <button type="button" role="menuitem" data-act="up">
-            <i class="bi bi-arrow-up" aria-hidden="true"></i> Move up
+            <i class="bi bi-arrow-up" aria-hidden="true"></i> <?= v11e('todo.move_up', 'Move up') ?>
         </button>
         <button type="button" role="menuitem" data-act="down">
-            <i class="bi bi-arrow-down" aria-hidden="true"></i> Move down
+            <i class="bi bi-arrow-down" aria-hidden="true"></i> <?= v11e('todo.move_down', 'Move down') ?>
         </button>
         <div class="td-popover-sep" role="separator"></div>
         <button type="button" role="menuitem" data-act="archive" data-popover-archive>
-            <i class="bi bi-archive" aria-hidden="true"></i> Archive list
+            <i class="bi bi-archive" aria-hidden="true"></i> <?= v11e('todo.archive_list', 'Archive list') ?>
         </button>
         <button type="button" role="menuitem" data-act="delete" class="is-danger" data-popover-delete>
-            <i class="bi bi-trash" aria-hidden="true"></i> Delete list
+            <i class="bi bi-trash" aria-hidden="true"></i> <?= v11e('todo.delete_list', 'Delete list') ?>
         </button>
     </div>
 
@@ -136,9 +137,9 @@
         <div class="td-modal-backdrop" data-close></div>
         <div class="td-modal-panel" role="document">
             <header class="td-modal-head">
-                <h3 id="todoFullModalTitle">New task</h3>
+                <h3 id="todoFullModalTitle"><?= v11e('todo.new_task', 'New task') ?></h3>
                 <button type="button" class="td-modal-close" data-close
-                        aria-label="Close">
+                        aria-label="<?= v11e('todo.modal_close', 'Close') ?>">
                     <i class="bi bi-x-lg" aria-hidden="true"></i>
                 </button>
             </header>
@@ -146,75 +147,75 @@
                 <input type="hidden" name="id" value="">
 
                 <div class="td-field">
-                    <label for="todoFmList">List</label>
+                    <label for="todoFmList"><?= v11e('todo.field.list', 'List') ?></label>
                     <select id="todoFmList" name="list_id" required></select>
                 </div>
 
                 <div class="td-field">
-                    <label for="todoFmTitle">Title</label>
+                    <label for="todoFmTitle"><?= v11e('todo.field.title', 'Title') ?></label>
                     <input type="text" id="todoFmTitle" name="title"
                            required maxlength="240"
-                           placeholder="What needs to be done?">
+                           placeholder="<?= v11e('todo.field.title_ph', 'What needs to be done?') ?>">
                 </div>
 
                 <div class="td-field">
-                    <label for="todoFmDesc">Description</label>
+                    <label for="todoFmDesc"><?= v11e('todo.field.desc', 'Description') ?></label>
                     <textarea id="todoFmDesc" name="description" rows="3"
-                              placeholder="Notes, links, context…"></textarea>
+                              placeholder="<?= v11e('todo.field.desc_ph', 'Notes, links, context…') ?>"></textarea>
                 </div>
 
                 <div class="td-field-row">
                     <div class="td-field">
-                        <label for="todoFmDueAt">Due</label>
+                        <label for="todoFmDueAt"><?= v11e('todo.field.due', 'Due') ?></label>
                         <input type="datetime-local" id="todoFmDueAt" name="due_at">
                     </div>
                     <div class="td-field">
-                        <label for="todoFmRemind">Remind</label>
+                        <label for="todoFmRemind"><?= v11e('todo.field.remind', 'Remind') ?></label>
                         <!-- Field name + values must match the backend's
                              ALLOWED_REMIND list in TodoController (15 / 60 /
                              240 / 1440 minutes). Anything else triggers a
                              422 "Invalid remind window" on save. -->
                         <select id="todoFmRemind" name="remind_before_minutes">
-                            <option value="">No reminder</option>
-                            <option value="15">15 min before</option>
-                            <option value="60">1 hour before</option>
-                            <option value="240">4 hours before</option>
-                            <option value="1440">1 day before</option>
+                            <option value=""><?= v11e('todo.remind.none', 'No reminder') ?></option>
+                            <option value="15"><?= v11e('todo.remind.15', '15 min before') ?></option>
+                            <option value="60"><?= v11e('todo.remind.60', '1 hour before') ?></option>
+                            <option value="240"><?= v11e('todo.remind.240', '4 hours before') ?></option>
+                            <option value="1440"><?= v11e('todo.remind.1440', '1 day before') ?></option>
                         </select>
                     </div>
                 </div>
 
                 <div class="td-field-row">
                     <div class="td-field">
-                        <label for="todoFmPatient">Patient</label>
+                        <label for="todoFmPatient"><?= v11e('todo.field.patient', 'Patient') ?></label>
                         <div class="td-typeahead">
                             <input type="text" id="todoFmPatient"
-                                   placeholder="Search patient by name or phone…"
+                                   placeholder="<?= v11e('todo.field.patient_ph', 'Search patient by name or phone…') ?>"
                                    autocomplete="off">
                             <input type="hidden" name="patient_id" id="todoFmPatientId" value="">
                             <div class="td-typeahead-results" id="todoFmPatientResults" hidden></div>
                         </div>
                     </div>
                     <div class="td-field">
-                        <label for="todoFmPriority">Priority</label>
+                        <label for="todoFmPriority"><?= v11e('todo.field.priority', 'Priority') ?></label>
                         <!-- Values must match backend's ALLOWED_PRIORITY:
                              low / med / high. Submitting 'normal' or 'urgent'
                              gets rejected with a 422 "Invalid priority". -->
                         <select id="todoFmPriority" name="priority">
-                            <option value="low">Low</option>
-                            <option value="med" selected>Medium</option>
-                            <option value="high">High</option>
+                            <option value="low"><?= v11e('todo.priority.low', 'Low') ?></option>
+                            <option value="med" selected><?= v11e('todo.priority.med', 'Medium') ?></option>
+                            <option value="high"><?= v11e('todo.priority.high', 'High') ?></option>
                         </select>
                     </div>
                 </div>
 
                 <footer class="td-modal-foot">
                     <button type="button" class="td-btn td-btn-ghost" data-close>
-                        Cancel
+                        <?= v11e('todo.cancel', 'Cancel') ?>
                     </button>
                     <button type="submit" class="td-btn td-btn-primary">
                         <i class="bi bi-check2" aria-hidden="true"></i>
-                        <span data-submit-label>Save task</span>
+                        <span data-submit-label><?= v11e('todo.save_task', 'Save task') ?></span>
                     </button>
                 </footer>
             </form>
@@ -232,24 +233,24 @@
         <div class="td-modal-backdrop" data-close></div>
         <div class="td-modal-panel" role="document">
             <header class="td-modal-head">
-                <h3 id="todoListModalTitle">New list</h3>
+                <h3 id="todoListModalTitle"><?= v11e('todo.new_list', 'New list') ?></h3>
                 <button type="button" class="td-modal-close" data-close
-                        aria-label="Close">
+                        aria-label="<?= v11e('todo.modal_close', 'Close') ?>">
                     <i class="bi bi-x-lg" aria-hidden="true"></i>
                 </button>
             </header>
             <form id="todoListForm" class="td-modal-body" autocomplete="off">
                 <input type="hidden" name="id" value="">
                 <div class="td-field">
-                    <label for="todoListName">List name</label>
+                    <label for="todoListName"><?= v11e('todo.list_name', 'List name') ?></label>
                     <input type="text" id="todoListName" name="name"
                            required maxlength="60"
-                           placeholder="e.g. Clinic follow-ups">
+                           placeholder="<?= v11e('todo.list_name_ph', 'e.g. Clinic follow-ups') ?>">
                 </div>
 
                 <div class="td-field">
-                    <label>Color</label>
-                    <div class="td-color-dots" role="radiogroup" aria-label="List color">
+                    <label><?= v11e('todo.list_color', 'Color') ?></label>
+                    <div class="td-color-dots" role="radiogroup" aria-label="<?= v11e('todo.list_color', 'List color') ?>">
                         <button type="button" class="td-dot is-active" role="radio"
                                 aria-checked="true" data-color="indigo"
                                 style="--dot:var(--palette-indigo)"></button>
@@ -272,26 +273,26 @@
                 </div>
 
                 <div class="td-field">
-                    <label for="todoListIcon">Icon</label>
+                    <label for="todoListIcon"><?= v11e('todo.list_icon', 'Icon') ?></label>
                     <select id="todoListIcon" name="icon" class="td-new-list-icon">
-                        <option value="bi-list-task">List</option>
-                        <option value="bi-briefcase">Work</option>
-                        <option value="bi-house-heart">Personal</option>
-                        <option value="bi-heart-pulse">Clinic</option>
-                        <option value="bi-cart">Shopping</option>
-                        <option value="bi-book">Study</option>
-                        <option value="bi-stars">Ideas</option>
-                        <option value="bi-flag">Goals</option>
+                        <option value="bi-list-task"><?= v11e('todo.icon.list', 'List') ?></option>
+                        <option value="bi-briefcase"><?= v11e('todo.icon.work', 'Work') ?></option>
+                        <option value="bi-house-heart"><?= v11e('todo.icon.personal', 'Personal') ?></option>
+                        <option value="bi-heart-pulse"><?= v11e('todo.icon.clinic', 'Clinic') ?></option>
+                        <option value="bi-cart"><?= v11e('todo.icon.shopping', 'Shopping') ?></option>
+                        <option value="bi-book"><?= v11e('todo.icon.study', 'Study') ?></option>
+                        <option value="bi-stars"><?= v11e('todo.icon.ideas', 'Ideas') ?></option>
+                        <option value="bi-flag"><?= v11e('todo.icon.goals', 'Goals') ?></option>
                     </select>
                 </div>
 
                 <footer class="td-modal-foot">
                     <button type="button" class="td-btn td-btn-ghost" data-close>
-                        Cancel
+                        <?= v11e('todo.cancel', 'Cancel') ?>
                     </button>
                     <button type="submit" class="td-btn td-btn-primary">
                         <i class="bi bi-check2" aria-hidden="true"></i>
-                        <span data-list-submit-label>Create list</span>
+                        <span data-list-submit-label><?= v11e('todo.create_list', 'Create list') ?></span>
                     </button>
                 </footer>
             </form>
@@ -308,10 +309,10 @@
         <div class="td-modal-panel" role="document">
             <header class="td-modal-head">
                 <h3 id="todoArchivedTitle">
-                    <i class="bi bi-archive" aria-hidden="true"></i> Archived lists
+                    <i class="bi bi-archive" aria-hidden="true"></i> <?= v11e('todo.archived_title', 'Archived lists') ?>
                 </h3>
                 <button type="button" class="td-modal-close" data-close
-                        aria-label="Close">
+                        aria-label="<?= v11e('todo.modal_close', 'Close') ?>">
                     <i class="bi bi-x-lg" aria-hidden="true"></i>
                 </button>
             </header>
@@ -321,11 +322,11 @@
                 </div>
                 <div class="td-archived-empty" id="todoArchivedEmpty" hidden>
                     <i class="bi bi-archive" aria-hidden="true"></i>
-                    <p>No archived lists</p>
+                    <p><?= v11e('todo.no_archived', 'No archived lists') ?></p>
                 </div>
                 <div class="td-archived-loading" id="todoArchivedLoading" hidden>
                     <span class="td-spinner" aria-hidden="true"></span>
-                    <span>Loading…</span>
+                    <span><?= v11e('todo.loading', 'Loading…') ?></span>
                 </div>
             </div>
         </div>
@@ -341,10 +342,10 @@
                 <button type="button" class="td-btn td-btn-ghost td-btn-sm"
                         data-act="restore">
                     <i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i>
-                    Restore
+                    <?= v11e('todo.restore', 'Restore') ?>
                 </button>
                 <button type="button" class="td-archived-del" data-act="delete"
-                        aria-label="Delete permanently" title="Delete permanently">
+                        aria-label="<?= v11e('todo.delete_perm', 'Delete permanently') ?>" title="<?= v11e('todo.delete_perm', 'Delete permanently') ?>">
                     <i class="bi bi-trash" aria-hidden="true"></i>
                 </button>
             </div>
@@ -361,9 +362,9 @@
                 aria-selected="false" data-list-id="">
             <i class="td-list-icon bi" aria-hidden="true"></i>
             <span class="td-list-name"></span>
-            <span class="td-list-count" aria-label="open tasks"></span>
+            <span class="td-list-count" aria-label="<?= v11e('todo.open_tasks', 'open tasks') ?>"></span>
             <span class="td-list-opts" role="button" tabindex="-1"
-                  aria-label="List options" title="List options">
+                  aria-label="<?= v11e('todo.list_options', 'List options') ?>" title="<?= v11e('todo.list_options', 'List options') ?>">
                 <i class="bi bi-three-dots-vertical" aria-hidden="true"></i>
             </span>
         </button>
@@ -372,7 +373,7 @@
     <!-- Task row template -->
     <template id="tpl-td-row">
         <div class="td-row" role="listitem" data-task-id="" data-status="open">
-            <button type="button" class="td-check" aria-label="Toggle complete">
+            <button type="button" class="td-check" aria-label="<?= v11e('todo.toggle_complete', 'Toggle complete') ?>">
                 <i class="bi bi-check2" aria-hidden="true"></i>
             </button>
             <div class="td-row-body">
@@ -391,15 +392,15 @@
             </div>
             <div class="td-row-actions">
                 <button type="button" class="td-row-act" data-act="snooze"
-                        aria-label="Snooze" title="Snooze">
+                        aria-label="<?= v11e('todo.snooze', 'Snooze') ?>" title="<?= v11e('todo.snooze', 'Snooze') ?>">
                     <i class="bi bi-bell-slash" aria-hidden="true"></i>
                 </button>
                 <button type="button" class="td-row-act" data-act="edit"
-                        aria-label="Edit" title="Edit">
+                        aria-label="<?= v11e('todo.edit', 'Edit') ?>" title="<?= v11e('todo.edit', 'Edit') ?>">
                     <i class="bi bi-pencil" aria-hidden="true"></i>
                 </button>
                 <button type="button" class="td-row-act" data-act="delete"
-                        aria-label="Delete" title="Delete">
+                        aria-label="<?= v11e('todo.delete', 'Delete') ?>" title="<?= v11e('todo.delete', 'Delete') ?>">
                     <i class="bi bi-trash" aria-hidden="true"></i>
                 </button>
             </div>
@@ -409,11 +410,11 @@
     <!-- Snooze options template -->
     <template id="tpl-td-snooze">
         <div class="td-snooze-menu" role="menu">
-            <button type="button" role="menuitem" data-snooze="15">15 min</button>
-            <button type="button" role="menuitem" data-snooze="60">1 hour</button>
-            <button type="button" role="menuitem" data-snooze="240">4 hours</button>
-            <button type="button" role="menuitem" data-snooze="1440">Tomorrow</button>
-            <button type="button" role="menuitem" data-snooze="10080">Next week</button>
+            <button type="button" role="menuitem" data-snooze="15"><?= v11e('todo.snooze.15', '15 min') ?></button>
+            <button type="button" role="menuitem" data-snooze="60"><?= v11e('todo.snooze.60', '1 hour') ?></button>
+            <button type="button" role="menuitem" data-snooze="240"><?= v11e('todo.snooze.240', '4 hours') ?></button>
+            <button type="button" role="menuitem" data-snooze="1440"><?= v11e('todo.snooze.1440', 'Tomorrow') ?></button>
+            <button type="button" role="menuitem" data-snooze="10080"><?= v11e('todo.snooze.10080', 'Next week') ?></button>
         </div>
     </template>
 

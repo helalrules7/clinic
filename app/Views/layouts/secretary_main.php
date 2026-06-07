@@ -1177,10 +1177,14 @@
 
     <!-- v11.0.0 feature surfaces -->
     <?php
+        $GLOBALS['v11Lang'] = 'ar';
+        $GLOBALS['v11Layout'] = 'secretary';
+        $v11Lang = 'ar';
+        $v11Layout = 'secretary';
         $notifCenterContext = 'secretary';
         $notifCenterLang = 'ar';
-        include __DIR__ . '/notification-center.php';
     ?>
+    <?php include __DIR__ . '/notification-center.php'; ?>
     <?php include __DIR__ . '/todo-drawer.php'; ?>
     <?php include __DIR__ . '/cmdk-palette.php'; ?>
     <?php include __DIR__ . '/patient-hover-card.php'; ?>
@@ -1191,7 +1195,18 @@
     <!-- v11.0.0 feature JS bundle -->
     <script>
         window.__GLOBAL_SEARCH_CONFIG__ = { mode: 'secretary' };
+        window.kbdHelpRoutes = {
+            dashboard: '/secretary/dashboard',
+            calendar: '/secretary/bookings',
+            bookings: '/secretary/bookings',
+            payments: '/secretary/payments',
+            patients: '/secretary/patients',
+            profile: '/secretary/profile',
+            board: '/secretary/dashboard',
+            settings: '/secretary/profile'
+        };
     </script>
+    <script defer src="/app/Views/layouts/v11-i18n.js?v=<?= file_exists(__DIR__ . '/v11-i18n.js') ? filemtime(__DIR__ . '/v11-i18n.js') : time() ?>"></script>
     <script defer src="/app/Views/layouts/global-search.js?v=<?= file_exists(__DIR__ . '/global-search.js') ? filemtime(__DIR__ . '/global-search.js') : time() ?>"></script>
     <script defer src="/app/Views/doctor/assets/js/patient-color.js?v=<?= file_exists(__DIR__ . '/../doctor/assets/js/patient-color.js') ? filemtime(__DIR__ . '/../doctor/assets/js/patient-color.js') : time() ?>"></script>
     <!-- Shared action registry — single source of truth for palette + dock (load before both) -->

@@ -28,6 +28,8 @@
 (function () {
     'use strict';
 
+    const tr = (k, fb, vars) => (window.V11I18n && window.V11I18n.t(k, fb, vars)) || fb;
+
     // ---------------------------------------------------------------- helpers
     const JSON_HEADERS = {
         'X-Requested-With': 'XMLHttpRequest',
@@ -187,9 +189,9 @@
 
     function handleError(e) {
         // soft toast — there's no global toast hook spec'd here so we use alert modal
-        const msg = (e && e.body) || (e && e.message) || 'Something went wrong.';
+        const msg = (e && e.body) || (e && e.message) || tr('error.generic', 'Something went wrong.');
         if (typeof window.mkAlertModal === 'function') {
-            window.mkAlertModal({ title: 'Error', message: msg });
+            window.mkAlertModal({ title: tr('error.title', 'Error'), message: msg });
         } else {
             console.error('[todo-drawer]', e);
         }
@@ -216,7 +218,7 @@
             chip.style.setProperty('--list-c', colorVar(l.color));
             const iconEl = chip.querySelector('.td-list-icon');
             iconEl.classList.add(l.icon || 'bi-list-task');
-            chip.querySelector('.td-list-name').textContent = l.name || 'List';
+            chip.querySelector('.td-list-name').textContent = l.name || tr('todo.list_default', 'List');
             const count = chip.querySelector('.td-list-count');
             const openCount = (l.open_count != null) ? l.open_count : 0;
             count.textContent = openCount > 0 ? String(openCount) : '';
@@ -249,7 +251,7 @@
         add.type = 'button';
         add.className = 'td-list-chip td-list-add';
         add.innerHTML =
-            '<i class="bi bi-plus-lg" aria-hidden="true"></i><span>New list</span>';
+            '<i class="bi bi-plus-lg" aria-hidden="true"></i><span>' + tr('todo.new_list', 'New list') + '</span>';
         add.addEventListener('click', () => openListModal(null));
         rail.appendChild(add);
     }
@@ -367,11 +369,11 @@
 
     // ------------------------------------------------- progress meter copy
     const PROGRESS_COPY = [
-        { min: 0,   max: 24,  title: "Let's go!" },
-        { min: 25,  max: 49,  title: 'Nice start' },
-        { min: 50,  max: 74,  title: 'Keep it up!' },
-        { min: 75,  max: 99,  title: 'Almost there!' },
-        { min: 100, max: 100, title: 'All done!' }
+        { min: 0,   max: 24,  title: tr('todo.progress.lets_go', "Let's go!") },
+        { min: 25,  max: 49,  title: tr('todo.progress.nice_start', 'Nice start') },
+        { min: 50,  max: 74,  title: tr('todo.progress.keep_up', 'Keep it up!') },
+        { min: 75,  max: 99,  title: tr('todo.progress.almost', 'Almost there!') },
+        { min: 100, max: 100, title: tr('todo.progress.all_done', 'All done!') }
     ];
 
     function updateProgress() {
@@ -380,7 +382,7 @@
         const pct = total === 0 ? 0 : Math.round((done / total) * 100);
         const copy = PROGRESS_COPY.find((c) => pct >= c.min && pct <= c.max) || PROGRESS_COPY[0];
         progressTitle.textContent = pct === 100 ? copy.title + ' 🎉' : copy.title;
-        progressSub.textContent = done + ' of ' + total + ' completed';
+        progressSub.textContent = tr('todo.progress.sub', done + ' of ' + total + ' completed', { done: done, total: total });
         progressBadge.textContent = pct + '%';
         progressFill.style.width = pct + '%';
         const bar = progressFill.parentElement;
@@ -522,13 +524,13 @@
         };
         if (typeof window.mkConfirmModal === 'function') {
             window.mkConfirmModal({
-                title: 'Delete task',
-                message: 'Delete "' + (t.title || 'this task') + '"? This cannot be undone.',
-                okText: 'Delete',
+                title: tr('todo.delete_task', 'Delete task'),
+                message: tr('todo.delete_task_msg', 'Delete this task?'),
+                okText: tr('todo.delete', 'Delete'),
                 okVariant: 'danger',
                 cancelText: 'Cancel'
             }).then((ok) => { if (ok) doDelete(); });
-        } else if (window.confirm('Delete this task?')) {
+        } else if (window.confirm(tr('todo.delete_task_msg', 'Delete this task?'))) {
             doDelete();
         }
     }
@@ -600,7 +602,7 @@
         populateListSelect();
         const isEdit = !!(task && task.id && !String(task.id).startsWith('tmp_'));
         state.editingTaskId = isEdit ? task.id : null;
-        $('#todoFullModalTitle').textContent = isEdit ? 'Edit task' : 'New task';
+        $('#todoFullModalTitle').textContent = isEdit ? tr('todo.edit_task', 'Edit task') : tr('todo.new_task', 'New task');
         $('[data-submit-label]', fullForm).textContent = isEdit ? 'Save changes' : 'Add task';
         fullForm.reset();
         fullForm.elements.id.value = isEdit ? task.id : '';
@@ -748,8 +750,8 @@
 
         const titleEl = document.getElementById('todoListModalTitle');
         const labelEl = listForm.querySelector('[data-list-submit-label]');
-        if (titleEl) titleEl.textContent = isEdit ? 'Edit list' : 'New list';
-        if (labelEl) labelEl.textContent = isEdit ? 'Save changes' : 'Create list';
+        if (titleEl) titleEl.textContent = isEdit ? tr('todo.edit_list_modal', 'Edit list') : tr('todo.new_list_modal', 'New list');
+        if (labelEl) labelEl.textContent = isEdit ? tr('todo.save_task', 'Save task') : tr('todo.create_list', 'Create list');
 
         listModal.hidden = false;
         requestAnimationFrame(() => listModal.classList.add('is-open'));
@@ -920,8 +922,8 @@
         };
         if (typeof window.mkConfirmModal === 'function') {
             window.mkConfirmModal({
-                title: 'Delete list', message: msg,
-                okText: 'Delete', okVariant: 'danger', cancelText: 'Cancel'
+                title: tr('todo.delete_list', 'Delete list'), message: msg,
+                okText: tr('todo.delete', 'Delete'), okVariant: 'danger', cancelText: tr('todo.cancel', 'Cancel')
             }).then((ok) => { if (ok) run(); });
         } else if (window.confirm(msg)) {
             run();
@@ -984,11 +986,11 @@
             } else if (act === 'archive') {
                 if (typeof window.mkConfirmModal === 'function') {
                     window.mkConfirmModal({
-                        title: 'Archive list',
-                        message: 'Archive "' + (list.name || 'this list') + '"? You can restore it later.',
-                        okText: 'Archive', okVariant: 'warning'
+                        title: tr('todo.archive_list', 'Archive list'),
+                        message: tr('todo.archive_list_msg', 'Archive this list?'),
+                        okText: tr('todo.archive_list', 'Archive'), okVariant: 'warning'
                     }).then((ok) => { if (ok) archiveList(list.id); });
-                } else if (window.confirm('Archive list?')) {
+                } else if (window.confirm(tr('todo.archive_list_msg', 'Archive this list?'))) {
                     archiveList(list.id);
                 }
             } else if (act === 'delete') {
@@ -1153,8 +1155,8 @@
         btn.type = 'button';
         btn.id = 'todoDrawerToggle';
         btn.className = 'todo-drawer-toggle';
-        btn.setAttribute('aria-label', 'Open to-do drawer');
-        btn.setAttribute('title', 'To-Do (T)');
+        btn.setAttribute('aria-label', tr('todo.open_drawer', 'Open to-do drawer'));
+        btn.setAttribute('title', tr('todo.title', 'To-Do') + ' (T)');
         btn.innerHTML =
             '<i class="bi bi-check2-square" aria-hidden="true"></i>' +
             '<span class="todo-drawer-toggle__badge" id="todoDrawerToggleBadge" hidden>0</span>';
@@ -1250,8 +1252,8 @@
             const extra = items.length - MAX;
             showReminderToast({
                 kind: 'summary',
-                title: extra + ' more task' + (extra === 1 ? '' : 's') + ' need attention',
-                body: 'Open the to-do drawer to review them.'
+                title: tr('todo.toast_title', extra + ' tasks need attention', { n: extra }),
+                body: tr('todo.toast_body', 'Open the to-do drawer to review them.')
             });
         }
         // Keep the bell + header badge in sync with the new notifications.

@@ -219,8 +219,9 @@
         btn.type = 'button';
         btn.id = 'paletteToggle';
         btn.className = 'palette-toggle';
-        btn.setAttribute('aria-label', 'Theme palette');
-        btn.setAttribute('title', 'Theme palette');
+        var t = function (k, fb) { return (window.V11I18n && window.V11I18n.t(k, fb)) || fb; };
+        btn.setAttribute('aria-label', t('palette.toggle', 'Theme palette'));
+        btn.setAttribute('title', t('palette.toggle', 'Theme palette'));
         btn.innerHTML = '<span class="palette-dot" aria-hidden="true"></span>';
         if (mount) {
             mount.appendChild(btn);

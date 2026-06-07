@@ -2710,4 +2710,240 @@ class SecretaryController
             exit;
         }
     }
+
+    /**
+     * Secretary settings page (appearance + preferences).
+     */
+    public function settings()
+    {
+        $user = $this->auth->user();
+
+        if (!isset($_SESSION['csrf_token'])) {
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+        }
+
+        echo $this->view->render('layouts/secretary_main', [
+            'title' => 'الإعدادات - السكرتارية',
+            'page' => 'settings',
+            'pageTitle' => 'الإعدادات',
+            'user' => $user,
+            'content' => $this->view->render('secretary/settings', [
+                'csrf_token' => $_SESSION['csrf_token'],
+            ]),
+        ]);
+    }
+
+    /**
+     * GET /api/secretary/settings — load secretary-scoped preferences.
+     */
+    public function getSecretarySettings()
+    {
+        if (ob_get_level() > 0) {
+            ob_end_clean();
+        }
+        ob_start();
+        header('Content-Type: application/json; charset=utf-8');
+
+        if (!$this->auth->check()) {
+            ob_clean();
+            http_response_code(401);
+            echo json_encode(['success' => false, 'message' => 'Unauthorized'], JSON_UNESCAPED_UNICODE);
+            ob_end_flush();
+            exit;
+        }
+
+        $user = $this->auth->user();
+        if (!in_array($user['role'] ?? '', ['secretary', 'admin'], true)) {
+            ob_clean();
+            http_response_code(403);
+            echo json_encode(['success' => false, 'message' => 'Access denied'], JSON_UNESCAPED_UNICODE);
+            ob_end_flush();
+            exit;
+        }
+
+        try {
+            $settings = $this->fetchSecretarySettingsRows((int) $user['id']);
+            ob_clean();
+            echo json_encode(['success' => true, 'settings' => $settings], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            ob_end_flush();
+            exit;
+        } catch (\Exception $e) {
+            ob_clean();
+            http_response_code(500);
+            echo json_encode(['success' => false, 'message' => 'An error occurred while loading settings'], JSON_UNESCAPED_UNICODE);
+            ob_end_flush();
+            exit;
+        }
+    }
+
+    /**
+     * PUT /api/secretary/settings — persist secretary-scoped preferences.
+     */
+    public function updateSecretarySettings()
+    {
+        if (ob_get_level() > 0) {
+            ob_end_clean();
+        }
+        ob_start();
+        header('Content-Type: application/json; charset=utf-8');
+
+        if (!$this->auth->check()) {
+            ob_clean();
+            http_response_code(401);
+            echo json_encode(['success' => false, 'message' => 'Unauthorized'], JSON_UNESCAPED_UNICODE);
+            ob_end_flush();
+            exit;
+        }
+
+        $user = $this->auth->user();
+        if (!in_array($user['role'] ?? '', ['secretary', 'admin'], true)) {
+            ob_clean();
+            http_response_code(403);
+            echo json_encode(['success' => false, 'message' => 'Access denied'], JSON_UNESCAPED_UNICODE);
+            ob_end_flush();
+            exit;
+        }
+
+        $rawInput = file_get_contents('php://input');
+        $input = json_decode($rawInput, true);
+        if (!$input || !is_array($input)) {
+            ob_clean();
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'Invalid input data'], JSON_UNESCAPED_UNICODE);
+            ob_end_flush();
+            exit;
+        }
+
+        $allowedSettings = [
+            'theme',
+            'back_to_top_display',
+            'theme_palette',
+            'theme_auto_schedule',
+            'theme_dark_from',
+            'theme_light_from',
+            'push_notifications_enabled',
+            'push_subscription',
+            'dont_ask_push_notifications_browsers',
+            'push_notification_remind_later',
+        ];
+
+        try {
+            $this->pdo->beginTransaction();
+            $savedCount = 0;
+
+            foreach ($input as $key => $value) {
+                if (!in_array($key, $allowedSettings, true)) {
+                    continue;
+                }
+
+                [$dbValue, $settingType] = $this->normalizeSecretarySettingValue($key, $value);
+
+                $stmt = $this->pdo->prepare("
+                    INSERT INTO secretary_settings (user_id, setting_key, setting_value, setting_type)
+                    VALUES (?, ?, ?, ?)
+                    ON DUPLICATE KEY UPDATE
+                        setting_value = VALUES(setting_value),
+                        setting_type  = VALUES(setting_type),
+                        updated_at    = CURRENT_TIMESTAMP
+                ");
+                if ($stmt->execute([(int) $user['id'], $key, $dbValue, $settingType])) {
+                    $savedCount++;
+                }
+            }
+
+            $this->pdo->commit();
+
+            ob_clean();
+            echo json_encode([
+                'success' => true,
+                'message' => 'Settings updated successfully',
+                'saved_count' => $savedCount,
+            ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            ob_end_flush();
+            exit;
+        } catch (\Exception $e) {
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+            ob_clean();
+            http_response_code(500);
+            echo json_encode([
+                'success' => false,
+                'message' => 'An error occurred while updating settings',
+                'error' => $e->getMessage(),
+            ], JSON_UNESCAPED_UNICODE);
+            ob_end_flush();
+            exit;
+        }
+    }
+
+    private function fetchSecretarySettingsRows(int $userId): array
+    {
+        $stmt = $this->pdo->prepare("
+            SELECT setting_key, setting_value, setting_type
+            FROM secretary_settings
+            WHERE user_id = ?
+        ");
+        $stmt->execute([$userId]);
+        $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        $result = [];
+        foreach ($rows as $setting) {
+            $key = $setting['setting_key'];
+            $value = $setting['setting_value'];
+            $type = $setting['setting_type'];
+
+            switch ($type) {
+                case 'integer':
+                    $result[$key] = (int) $value;
+                    break;
+                case 'boolean':
+                    $result[$key] = !($value === '0' || $value === 0 || $value === false);
+                    break;
+                case 'json':
+                    $result[$key] = json_decode($value, true);
+                    break;
+                default:
+                    $result[$key] = $value;
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * @return array{0: string, 1: string} [dbValue, settingType]
+     */
+    private function normalizeSecretarySettingValue(string $key, $value): array
+    {
+        $settingType = 'string';
+
+        if ($key === 'push_notification_remind_later') {
+            $settingType = 'integer';
+            $value = is_numeric($value) ? (int) $value : (int) time();
+        } elseif (is_bool($value)) {
+            $settingType = 'boolean';
+        } elseif (is_int($value) || (is_string($value) && is_numeric($value) && strpos((string) $value, '.') === false)) {
+            $settingType = 'integer';
+            $value = (int) $value;
+        } elseif (is_array($value) || $key === 'push_subscription' || $key === 'dont_ask_push_notifications_browsers') {
+            if (is_string($value)) {
+                $decoded = json_decode($value, true);
+                $value = json_last_error() === JSON_ERROR_NONE ? json_encode($decoded) : json_encode([$value]);
+            } else {
+                $value = json_encode($value);
+            }
+            $settingType = 'json';
+        }
+
+        if ($settingType === 'boolean') {
+            $dbValue = $value ? '1' : '0';
+        } elseif ($settingType === 'integer') {
+            $dbValue = (string) $value;
+        } else {
+            $dbValue = (string) $value;
+        }
+
+        return [$dbValue, $settingType];
+    }
 }

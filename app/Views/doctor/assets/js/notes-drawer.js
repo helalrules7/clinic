@@ -16,6 +16,10 @@
 
     try {
 
+    var t = function (k, fb, vars) {
+        return (window.V11I18n && window.V11I18n.t(k, fb, vars)) || fb;
+    };
+
     // -------------------------------------------------------- DOM refs
     var drawer, panel, backdrop, listEl, searchInput, searchClear,
         quickAdd, quickInput, quickSubmit, fab, modal, modalForm, modalCloseBtn, countEl;
@@ -62,13 +66,13 @@
         var d = new Date(iso.replace(' ', 'T'));
         if (isNaN(d.getTime())) return '';
         var diff = (Date.now() - d.getTime()) / 1000;
-        if (diff < 60) return 'just now';
-        if (diff < 3600) return Math.floor(diff / 60) + ' min ago';
-        if (diff < 86400) return Math.floor(diff / 3600) + ' hr ago';
+        if (diff < 60) return t('notes.time.just_now', 'just now');
+        if (diff < 3600) return t('notes.time.min', Math.floor(diff / 60) + ' min ago', { n: Math.floor(diff / 60) });
+        if (diff < 86400) return t('notes.time.hr', Math.floor(diff / 3600) + ' hr ago', { n: Math.floor(diff / 3600) });
         var today = new Date(); today.setHours(0, 0, 0, 0);
         var yesterday = new Date(today.getTime() - 86400000);
-        if (d >= today) return 'Today';
-        if (d >= yesterday) return 'Yesterday';
+        if (d >= today) return t('notes.time.today', 'Today');
+        if (d >= yesterday) return t('notes.time.yesterday', 'Yesterday');
         return d.toLocaleDateString([], { month: 'short', day: 'numeric' });
     }
 
@@ -150,8 +154,8 @@
                 listEl.innerHTML =
                     '<div class="nd-empty nd-empty--error">' +
                       '<i class="bi bi-cloud-slash" aria-hidden="true"></i>' +
-                      '<p>Couldn&rsquo;t load notes.</p>' +
-                      '<button type="button" class="nd-btn nd-btn--ghost" data-retry>Retry</button>' +
+                      '<p>' + t('notes.couldnt_load', "Couldn't load notes.") + '</p>' +
+                      '<button type="button" class="nd-btn nd-btn--ghost" data-retry>' + t('notes.retry', 'Retry') + '</button>' +
                     '</div>';
             })
             .then(function () { state.loading = false; });
@@ -196,9 +200,9 @@
             listEl.innerHTML =
                 '<div class="nd-empty">' +
                   '<i class="bi bi-journal" aria-hidden="true"></i>' +
-                  '<p>' + (state.query ? 'No notes match your search.' : 'No notes yet.') + '</p>' +
+                  '<p>' + (state.query ? t('notes.no_match', 'No notes match your search.') : t('notes.no_notes', 'No notes yet.')) + '</p>' +
                   (state.query ? '' :
-                    '<p class="nd-empty__sub">Jot something above to start.</p>') +
+                    '<p class="nd-empty__sub">' + t('notes.empty_sub', 'Jot something above to start.') + '</p>') +
                 '</div>';
             return;
         }
@@ -221,7 +225,7 @@
             var titleWrap = $('.nd-row__title-wrap', node) || node;
             var tag = document.createElement('span');
             tag.className = 'nd-row__origin';
-            tag.title = 'From the notes board';
+            tag.title = t('notes.from_board', 'From the notes board');
             tag.innerHTML = '<i class="bi bi-easel" aria-hidden="true"></i>';
             titleWrap.appendChild(tag);
         }
@@ -231,7 +235,7 @@
         var title   = (n.title || '').trim();
         if (!title) {
             // First line of body becomes the title
-            title = (n.body || '').split('\n')[0].slice(0, 80) || '(untitled)';
+            title = (n.body || '').split('\n')[0].slice(0, 80) || t('notes.untitled', '(untitled)');
             titleEl.classList.add('is-derived');
         }
         titleEl.textContent = title;
@@ -387,12 +391,12 @@
         // Use modal-kit confirm if available, otherwise a plain confirm()
         if (window.mkConfirmModal) {
             window.mkConfirmModal({
-                title: 'Delete note',
-                message: 'This note will be permanently removed.',
-                confirmText: 'Delete',
+                title: t('notes.delete_note', 'Delete note'),
+                message: t('notes.delete_msg', 'Delete this note permanently?'),
+                confirmText: t('notes.delete', 'Delete'),
                 confirmVariant: 'danger'
             }).then(function (ok) { if (ok) run(); });
-        } else if (confirm('Delete this note?')) {
+        } else if (confirm(t('notes.delete_msg', 'Delete this note?'))) {
             run();
         }
     }
@@ -420,7 +424,7 @@
             // Board notes can't be pinned — hide the pin row in the editor.
             var pinField = pinInput.closest('.nd-field--inline');
             if (pinField) pinField.style.display = (note.origin === 'board') ? 'none' : '';
-            titleEl.textContent = note.origin === 'board' ? 'Edit board note' : 'Edit note';
+            titleEl.textContent = t('notes.edit_note', 'Edit note');
         } else {
             titleInput.value = '';
             bodyInput.value  = '';
@@ -429,7 +433,7 @@
             var pinFieldNew = pinInput.closest('.nd-field--inline');
             if (pinFieldNew) pinFieldNew.style.display = '';
             renderModalSwatches('');
-            titleEl.textContent = 'New note';
+            titleEl.textContent = t('notes.new_note', 'New note');
         }
         setTimeout(function () { bodyInput.focus(); }, 200);
     }
@@ -532,7 +536,7 @@
         btn.type = 'button';
         btn.id = 'notesDrawerToggle';
         btn.className = 'notes-drawer-toggle';
-        btn.setAttribute('aria-label', 'Open notes');
+        btn.setAttribute('aria-label', t('notes.open_drawer', 'Open notes'));
         btn.setAttribute('title', 'Notes');
         btn.innerHTML =
             '<i class="bi bi-journal-text" aria-hidden="true"></i>' +

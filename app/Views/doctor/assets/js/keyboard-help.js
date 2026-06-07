@@ -38,13 +38,13 @@
     return '?page=' + encodeURIComponent(slug);
   }
 
-  var NAV_CHORDS = {
-    d: 'dashboard',
-    c: 'calendar',
-    b: 'board',
-    p: 'patients',
-    s: 'settings'
-  };
+  var NAV_CHORDS = (function () {
+    var isSec = document.documentElement.getAttribute('data-layout') === 'secretary';
+    if (isSec) {
+      return { d: 'dashboard', b: 'bookings', m: 'payments', p: 'patients', r: 'profile' };
+    }
+    return { d: 'dashboard', c: 'calendar', b: 'board', p: 'patients', s: 'settings' };
+  })();
 
   // ---------------------------------------------------------------------------
   // State
@@ -429,8 +429,9 @@
     btn.type = 'button';
     btn.id = 'kbdHelpToggle';
     btn.className = 'kbd-help-toggle';
-    btn.setAttribute('aria-label', 'Keyboard shortcuts');
-    btn.setAttribute('title', 'Keyboard shortcuts (?)');
+    var t = function (k, fb) { return (window.V11I18n && window.V11I18n.t(k, fb)) || fb; };
+    btn.setAttribute('aria-label', t('kbd.open_help', 'Keyboard shortcuts'));
+    btn.setAttribute('title', t('kbd.open_help_title', 'Keyboard shortcuts (?)'));
     btn.innerHTML = '<i class="bi bi-question-lg" aria-hidden="true"></i>';
     btn.addEventListener('click', function (e) {
       e.preventDefault();
