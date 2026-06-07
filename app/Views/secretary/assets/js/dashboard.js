@@ -603,35 +603,8 @@ function initWeatherCard(useCached = true) {
         locationElement.innerHTML = `<i class="bi bi-geo-alt-fill"></i><span>${DEFAULT_LOCATION_NAME}</span>`;
     }
 
-    // Try browser geolocation - only 1 attempt, then fallback to default
-    if ('geolocation' in navigator) {
-        const geoOptions = {
-            enableHighAccuracy: false,
-            timeout: 3000,  // 3 second timeout - quick fallback
-            maximumAge: 600000
-        };
-
-        navigator.geolocation.getCurrentPosition(
-            (position) => {
-                // Success - update location and fetch weather
-                if (locationElement) {
-                    locationElement.innerHTML = `<i class="bi bi-geo-alt-fill"></i><span>جاري جلب بيانات الطقس...</span>`;
-                }
-                fetchWeatherData(position.coords.latitude, position.coords.longitude, true);
-            },
-            (error) => {
-                // Error - use default location immediately (no retry)
-                if (locationElement) {
-                    locationElement.innerHTML = `<i class="bi bi-geo-alt-fill"></i><span>${DEFAULT_LOCATION_NAME}</span>`;
-                }
-                fetchWeatherData(DEFAULT_LAT, DEFAULT_LON, true);
-            },
-            geoOptions
-        );
-    } else {
-        // Geolocation not supported - use default location
-        fetchWeatherData(DEFAULT_LAT, DEFAULT_LON, true);
-    }
+    // Site Permissions-Policy blocks geolocation — use clinic default coords.
+    fetchWeatherData(DEFAULT_LAT, DEFAULT_LON, true);
 }
 
 // Fallback: fetch weather based on IP location (DISABLED for now)

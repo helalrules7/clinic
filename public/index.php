@@ -128,6 +128,9 @@ try {
     $router->get('/secretary/profile', 'SecretaryController@profile');
     $router->post('/secretary/profile/update', 'SecretaryController@updateProfile');
     $router->post('/secretary/profile/change-password', 'SecretaryController@changePassword');
+    $router->get('/secretary/settings', 'SecretaryController@settings');
+    $router->get('/api/secretary/settings', 'SecretaryController@getSecretarySettings');
+    $router->put('/api/secretary/settings', 'SecretaryController@updateSecretarySettings');
     
     // Doctor routes
     $router->get('/doctor/dashboard', 'DoctorController@dashboard');

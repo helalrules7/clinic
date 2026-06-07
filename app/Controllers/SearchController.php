@@ -132,6 +132,7 @@ class SearchController
                 ['id' => 'page-bookings',  'label' => 'الحجوزات',          'icon' => 'calendar3',    'link' => '/secretary/bookings'],
                 ['id' => 'page-payments',  'label' => 'المدفوعات',         'icon' => 'cash-coin',    'link' => '/secretary/payments'],
                 ['id' => 'page-patients',  'label' => 'المرضى',            'icon' => 'people',       'link' => '/secretary/patients'],
+                ['id' => 'page-settings',  'label' => 'الإعدادات',         'icon' => 'sliders',      'link' => '/secretary/settings'],
                 ['id' => 'page-profile',   'label' => 'الملف الشخصي',      'icon' => 'person-gear',  'link' => '/secretary/profile'],
             ];
         } else {

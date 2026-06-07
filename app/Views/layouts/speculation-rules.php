@@ -59,6 +59,7 @@ $speculationRules = [
                             ['href_matches' => '/secretary/bookings'],
                             ['href_matches' => '/secretary/payments'],
                             ['href_matches' => '/secretary/patients'],
+                            ['href_matches' => '/secretary/settings'],
                             ['href_matches' => '/secretary/profile'],
                             // Secretary — patient / booking detail views
                             ['href_matches' => '/secretary/patients/*'],

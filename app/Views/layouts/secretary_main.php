@@ -271,6 +271,12 @@
                 </a>
             </div>
             <div class="nav-item">
+                <a href="/secretary/settings" class="nav-link <?= $this->isActiveRoute('/secretary/settings') ? 'active' : '' ?>">
+                    <i class="bi bi-sliders"></i>
+                    الإعدادات
+                </a>
+            </div>
+            <div class="nav-item">
                 <a href="/secretary/profile" class="nav-link <?= $this->isActiveRoute('/secretary/profile') ? 'active' : '' ?>">
                     <i class="bi bi-person-circle"></i>
                     الملف الشخصي
@@ -502,7 +508,7 @@
             localStorage.setItem('theme', theme);
             
             try {
-                const response = await fetch('/api/doctor/settings', {
+                const response = await fetch('/api/secretary/settings', {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
@@ -524,7 +530,7 @@
         // Function to load theme from database
         async function loadThemeFromDatabase() {
             try {
-                const response = await fetch('/api/doctor/settings', {
+                const response = await fetch('/api/secretary/settings', {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
@@ -1203,7 +1209,7 @@
             patients: '/secretary/patients',
             profile: '/secretary/profile',
             board: '/secretary/dashboard',
-            settings: '/secretary/profile'
+            settings: '/secretary/settings'
         };
     </script>
     <script defer src="/app/Views/layouts/v11-i18n.js?v=<?= file_exists(__DIR__ . '/v11-i18n.js') ? filemtime(__DIR__ . '/v11-i18n.js') : time() ?>"></script>

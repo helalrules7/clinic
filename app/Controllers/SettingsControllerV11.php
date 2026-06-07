@@ -70,18 +70,24 @@ class SettingsControllerV11
         return is_array($data) ? $data : [];
     }
 
-    /**
-     * UPSERT a single key on doctor_settings via the key-value pattern.
-     */
-    private function setKey(int $userId, string $key, string $value, string $type = 'string'): bool
+    private function settingsTableForRole(?string $role): string
     {
+        return ($role === 'secretary') ? 'secretary_settings' : 'doctor_settings';
+    }
+
+    /**
+     * UPSERT a single key on doctor_settings / secretary_settings via the key-value pattern.
+     */
+    private function setKey(int $userId, string $key, string $value, string $type = 'string', ?string $role = null): bool
+    {
+        $table = $this->settingsTableForRole($role);
         try {
             $stmt = $this->pdo->prepare(
-                'INSERT INTO doctor_settings (user_id, setting_key, setting_value, setting_type)
+                "INSERT INTO {$table} (user_id, setting_key, setting_value, setting_type)
                  VALUES (:uid, :k, :v, :t)
                  ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value),
                                          setting_type  = VALUES(setting_type),
-                                         updated_at    = CURRENT_TIMESTAMP'
+                                         updated_at    = CURRENT_TIMESTAMP"
             );
             return $stmt->execute([
                 ':uid' => $userId,
@@ -94,13 +100,14 @@ class SettingsControllerV11
         }
     }
 
-    private function getKeys(int $userId, array $keys): array
+    private function getKeys(int $userId, array $keys, ?string $role = null): array
     {
         if (!$keys) return [];
+        $table = $this->settingsTableForRole($role);
         $placeholders = implode(',', array_fill(0, count($keys), '?'));
         $stmt = $this->pdo->prepare(
             "SELECT setting_key, setting_value
-               FROM doctor_settings
+               FROM {$table}
               WHERE user_id = ? AND setting_key IN ($placeholders)"
         );
         $stmt->execute(array_merge([$userId], $keys));
@@ -132,7 +139,7 @@ class SettingsControllerV11
             return;
         }
 
-        $ok = $this->setKey((int)$user['id'], 'theme_palette', $palette, 'string');
+        $ok = $this->setKey((int)$user['id'], 'theme_palette', $palette, 'string', $user['role'] ?? null);
         if (!$ok) {
             $this->respond(500, ['success' => false, 'message' => 'Failed to save palette']);
             return;
@@ -158,11 +165,12 @@ class SettingsControllerV11
         }
 
         $uid = (int)$user['id'];
+        $role = $user['role'] ?? null;
         try {
             $this->pdo->beginTransaction();
-            $this->setKey($uid, 'theme_auto_schedule', $enabled ? '1' : '0', 'bool');
-            $this->setKey($uid, 'theme_dark_from',  $darkFrom,  'string');
-            $this->setKey($uid, 'theme_light_from', $lightFrom, 'string');
+            $this->setKey($uid, 'theme_auto_schedule', $enabled ? '1' : '0', 'bool', $role);
+            $this->setKey($uid, 'theme_dark_from',  $darkFrom,  'string', $role);
+            $this->setKey($uid, 'theme_light_from', $lightFrom, 'string', $role);
             $this->pdo->commit();
         } catch (Throwable $e) {
             if ($this->pdo->inTransaction()) $this->pdo->rollBack();
@@ -186,13 +194,14 @@ class SettingsControllerV11
         if (!$user) return;
 
         $uid = (int)$user['id'];
+        $role = $user['role'] ?? null;
         try {
             $vals = $this->getKeys($uid, [
                 'theme_palette',
                 'theme_auto_schedule',
                 'theme_dark_from',
                 'theme_light_from',
-            ]);
+            ], $role);
         } catch (Throwable $e) {
             $vals = [];
         }
