@@ -28,6 +28,7 @@ require_once __DIR__ . '/app/Lib/global_helpers.php';
 require_once __DIR__ . '/app/Controllers/SecretaryController.php';
 require_once __DIR__ . '/app/Controllers/SecretaryPatientsController.php';
 require_once __DIR__ . '/app/Controllers/AlertController.php';
+require_once __DIR__ . '/app/Controllers/PatientSummaryController.php';
 // require_once __DIR__ . '/app/Controllers/NotesController.php';
 
 // Load environment variables
@@ -103,6 +104,7 @@ try {
     // Secretary routes
     $router->get('/secretary/dashboard', 'SecretaryController@dashboard');
     $router->get('/api/secretary/dashboard', 'SecretaryController@getDashboardData');
+    $router->get('/api/secretary/today-appointments', 'SecretaryController@getTodayAppointmentsApi');
     $router->get('/secretary/bookings', 'SecretaryController@bookings');
     $router->get('/secretary/bookings/calendar', 'SecretaryController@getBookingsCalendar');
     $router->post('/secretary/bookings', 'SecretaryController@createBooking');

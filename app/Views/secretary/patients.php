@@ -321,7 +321,7 @@ $patientTrendDeltas = $patientTrendDeltas ?? ['total' => 0, 'active' => 0, 'new'
                                             <?= $avatarInitials ?>
                                         </div>
                                         <div>
-                                            <h6 class="mb-1 arabic-text"><?= htmlspecialchars($fullName) ?></h6>
+                                            <h6 class="mb-1 arabic-text patient-hover-name" data-patient-id="<?= (int)$patient['id'] ?>"><?= htmlspecialchars($fullName) ?></h6>
                                             <small class="text-muted">ID: #<?= $patient['id'] ?></small>
                                             <?php if (!empty($patient['gender'])): ?>
                                                 <br><small class="text-muted">

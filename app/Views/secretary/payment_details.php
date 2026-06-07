@@ -118,7 +118,7 @@
                     <div class="col-md-6">
                         <div class="mb-3">
                             <label class="form-label fw-bold arabic-text">الاسم:</label>
-                            <p class="form-control-plaintext"><?= htmlspecialchars($payment['patient_name']) ?></p>
+                            <p class="form-control-plaintext arabic-text patient-hover-name" data-patient-id="<?= (int)($payment['patient_id'] ?? 0) ?>"><?= htmlspecialchars($payment['patient_name']) ?></p>
                         </div>
                         <div class="mb-3">
                             <label class="form-label fw-bold arabic-text">رقم الهاتف:</label>

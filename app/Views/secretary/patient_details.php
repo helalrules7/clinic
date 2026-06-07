@@ -29,21 +29,19 @@
         </div>
     </div>
     <div class="col-md-4 text-end">
-        <div class="d-flex gap-2 justify-content-end flex-wrap">
-            <button type="button" class="btn btn-outline-secondary" id="secEditPatientBtn">
-                <i class="bi bi-pencil me-2"></i>تعديل البيانات
+        <div class="d-flex gap-2 justify-content-end flex-wrap sec-pa-actions">
+            <a href="/secretary/bookings?patient_id=<?= $patient['id'] ?>" class="sec-pa-btn sec-pa-btn--book">
+                <i class="bi bi-calendar-plus"></i>حجز موعد جديد
+            </a>
+            <a href="/secretary/payments?patient_id=<?= $patient['id'] ?>" class="sec-pa-btn sec-pa-btn--pay">
+                <i class="bi bi-credit-card"></i>المعاملات المالية
+            </a>
+            <a href="/secretary/patients/<?= $patient['id'] ?>/invoice" target="_blank" class="sec-pa-btn sec-pa-btn--invoice">
+                <i class="bi bi-receipt"></i>طباعة الفاتورة
+            </a>
+            <button type="button" class="sec-pa-btn sec-pa-btn--edit" id="secEditPatientBtn">
+                <i class="bi bi-pencil"></i>تعديل البيانات
             </button>
-            <a href="/secretary/patients/<?= $patient['id'] ?>/invoice" target="_blank" class="btn btn-outline-primary">
-                <i class="bi bi-receipt me-2"></i>طباعة الفاتورة
-            </a>
-            <a href="/secretary/bookings?patient_id=<?= $patient['id'] ?>" class="btn btn-success">
-                <i class="bi bi-calendar-plus me-2"></i>
-                حجز موعد جديد
-            </a>
-            <a href="/secretary/payments?patient_id=<?= $patient['id'] ?>" class="btn btn-info">
-                <i class="bi bi-credit-card me-2"></i>
-                المعاملات المالية
-            </a>
         </div>
     </div>
 </div>
@@ -334,7 +332,7 @@
 </div>
 
 <!-- v11: Administrative documents (secretary scope: audience='administrative') -->
-<div class="row mb-4">
+<div class="row mb-4 mt-4 pt-2">
   <div class="col-12">
     <div class="card shadow dashboard-card">
       <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between flex-wrap gap-2">

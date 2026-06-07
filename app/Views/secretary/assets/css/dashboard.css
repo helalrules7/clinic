@@ -1369,3 +1369,51 @@ h2, h3, h4, h5, h6 {
 .ds-hero h1 {
     color: #fff !important;
 }
+
+/* حالة اليوم — دونات أكبر + نص عربي HTML (ليس SVG text) */
+[data-layout="secretary"] .sec-dash-donut-wrap {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 138px;
+}
+
+[data-layout="secretary"] .dash-donut--ring {
+    width: 132px;
+    height: 132px;
+}
+
+[data-layout="secretary"] .dash-donut-center {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    pointer-events: none;
+    text-align: center;
+    font-family: 'Cairo', sans-serif;
+}
+
+[data-layout="secretary"] .dash-donut-center .dash-donut-num {
+    font-size: 1.85rem;
+    font-weight: 800;
+    line-height: 1.1;
+    color: var(--text);
+}
+
+[data-layout="secretary"] .dash-donut-center .dash-donut-sub {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: none;
+    letter-spacing: 0;
+    line-height: 1.3;
+}
+
+[data-layout="secretary"] svg.dash-donut .dash-donut-num,
+[data-layout="secretary"] svg.dash-donut .dash-donut-sub {
+    display: none;
+}

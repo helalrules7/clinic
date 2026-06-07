@@ -114,9 +114,12 @@
             var list = (res && res.files) || [];
             filesBody.innerHTML = list.length
                 ? '<div class="sec-files-grid">' + list.map(function (f) {
-                    return '<div class="sec-file-card">' +
-                        '<a href="/api/secretary/patient-files/view/' + f.id + '" target="_blank" class="sec-file-link">' +
-                          '<i class="bi ' + fileIcon(f.file_type) + '"></i><span class="sec-file-name">' + esc(f.original_filename) + '</span></a>' +
+                    var url = '/api/secretary/patient-files/view/' + f.id;
+                    var isImg = /image/.test(f.file_type || '');
+                    var link = isImg
+                        ? '<a href="#" class="sec-file-link sec-img-open" data-url="' + url + '" data-name="' + esc(f.original_filename) + '"><i class="bi ' + fileIcon(f.file_type) + '"></i><span class="sec-file-name">' + esc(f.original_filename) + '</span></a>'
+                        : '<a href="' + url + '" target="_blank" class="sec-file-link"><i class="bi ' + fileIcon(f.file_type) + '"></i><span class="sec-file-name">' + esc(f.original_filename) + '</span></a>';
+                    return '<div class="sec-file-card">' + link +
                         '<span class="sec-file-cat">' + esc(CAT[f.category] || f.category || '') + '</span>' +
                         '<button class="sec-file-del" data-id="' + f.id + '" title="حذف"><i class="bi bi-trash"></i></button>' +
                       '</div>';
@@ -137,7 +140,39 @@
                 }).catch(function () { fileInput.value = ''; loadFiles(); });
         });
     }
+    // Image viewer modal — zoom in / out / reset / download (doctor-style).
+    function openImageViewer(url, name) {
+        var scale = 1;
+        var bd = document.createElement('div');
+        bd.className = 'sec-img-modal-backdrop';
+        bd.innerHTML =
+            '<div class="sec-img-toolbar">' +
+                '<button class="sec-img-zin" title="تكبير"><i class="bi bi-zoom-in"></i></button>' +
+                '<button class="sec-img-zout" title="تصغير"><i class="bi bi-zoom-out"></i></button>' +
+                '<button class="sec-img-reset" title="استعادة"><i class="bi bi-arrow-counterclockwise"></i></button>' +
+                '<a class="sec-img-dl" href="' + url + '" download="' + esc(name) + '" title="تحميل"><i class="bi bi-download"></i></a>' +
+                '<button class="sec-img-close" title="إغلاق"><i class="bi bi-x-lg"></i></button>' +
+            '</div>' +
+            '<div class="sec-img-stage"><img src="' + url + '" alt="' + esc(name) + '"></div>';
+        document.body.appendChild(bd);
+        var img = bd.querySelector('img');
+        function apply() { img.style.transform = 'scale(' + scale + ')'; }
+        function close() { bd.remove(); document.removeEventListener('keydown', onKey); }
+        function onKey(e) { if (e.key === 'Escape') close(); }
+        bd.querySelector('.sec-img-zin').addEventListener('click', function () { scale = Math.min(scale + 0.25, 5); apply(); });
+        bd.querySelector('.sec-img-zout').addEventListener('click', function () { scale = Math.max(scale - 0.25, 0.25); apply(); });
+        bd.querySelector('.sec-img-reset').addEventListener('click', function () { scale = 1; apply(); });
+        bd.querySelector('.sec-img-close').addEventListener('click', close);
+        bd.addEventListener('click', function (e) { if (e.target === bd) close(); });
+        bd.querySelector('.sec-img-stage').addEventListener('wheel', function (e) {
+            e.preventDefault(); scale = Math.min(5, Math.max(0.25, scale + (e.deltaY < 0 ? 0.12 : -0.12))); apply();
+        }, { passive: false });
+        document.addEventListener('keydown', onKey);
+    }
+
     document.addEventListener('click', function (e) {
+        var img = e.target.closest('.sec-img-open');
+        if (img) { e.preventDefault(); openImageViewer(img.dataset.url, img.dataset.name || ''); return; }
         var d = e.target.closest('.sec-file-del'); if (!d) return;
         pConfirm('حذف هذا المستند الإداري؟').then(function (ok) {
             if (ok) api('/api/secretary/patient-files/' + d.dataset.id, { method: 'DELETE' }).then(loadFiles);

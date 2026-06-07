@@ -40,8 +40,7 @@ class SecretaryController
         $trends = $this->syncTrendsWithTodayStats($this->getDashboardTrends(9), $stats);
         $trendDeltas = $this->getDashboardTrendDeltas($stats, $yesterdayStats);
         
-        // Get today's appointments
-        $todayAppointments = $this->getTodayAppointments($today);
+        $todayAppointmentsPage = $this->getTodayAppointmentsPaginated($today, 1, 5);
         
         // Get recent payments
         $recentPayments = $this->getRecentPayments();
@@ -51,7 +50,8 @@ class SecretaryController
             'stats' => $stats,
             'trends' => $trends,
             'trendDeltas' => $trendDeltas,
-            'todayAppointments' => $todayAppointments,
+            'todayAppointments' => $todayAppointmentsPage['items'],
+            'todayAppointmentsMeta' => $todayAppointmentsPage,
             'recentPayments' => $recentPayments,
             'revenue' => $revenue
         ]);
@@ -79,9 +79,6 @@ class SecretaryController
             // Get today's statistics
             $stats = $this->getTodayStats($today);
             
-            // Get today's appointments
-            $todayAppointments = $this->getTodayAppointments($today);
-            
             // Get recent payments
             $recentPayments = $this->getRecentPayments(5);
             $revenue = $this->getDailyBalance();
@@ -102,7 +99,6 @@ class SecretaryController
                     'trends' => $trends,
                     'trendDeltas' => $trendDeltas,
                     'revenue' => $revenue,
-                    'todayAppointments' => $todayAppointments,
                     'recentPayments' => $recentPayments
                 ]
             ]);
@@ -1068,6 +1064,28 @@ class SecretaryController
 
     private function getTodayAppointments($date)
     {
+        return $this->getTodayAppointmentsPaginated($date, 1, PHP_INT_MAX)['items'];
+    }
+
+    /**
+     * Paginated today's appointments for dashboard card (AJAX).
+     */
+    private function getTodayAppointmentsPaginated($date, $page = 1, $perPage = 5)
+    {
+        $page = max(1, (int) $page);
+        $perPage = max(1, min(20, (int) $perPage));
+        $offset = ($page - 1) * $perPage;
+
+        $countStmt = $this->pdo->prepare('SELECT COUNT(*) FROM appointments WHERE date = ?');
+        $countStmt->execute([$date]);
+        $total = (int) $countStmt->fetchColumn();
+        $totalPages = $total > 0 ? (int) ceil($total / $perPage) : 0;
+
+        if ($page > $totalPages && $totalPages > 0) {
+            $page = $totalPages;
+            $offset = ($page - 1) * $perPage;
+        }
+
         $stmt = $this->pdo->prepare("
             SELECT a.*, p.first_name, p.last_name, p.phone, d.display_name as doctor_name
             FROM appointments a
@@ -1075,9 +1093,44 @@ class SecretaryController
             JOIN doctors d ON a.doctor_id = d.id
             WHERE a.date = ?
             ORDER BY a.start_time
+            LIMIT ? OFFSET ?
         ");
-        $stmt->execute([$date]);
-        return $stmt->fetchAll();
+        $stmt->bindValue(1, $date);
+        $stmt->bindValue(2, $perPage, \PDO::PARAM_INT);
+        $stmt->bindValue(3, $offset, \PDO::PARAM_INT);
+        $stmt->execute();
+
+        return [
+            'items' => $stmt->fetchAll(),
+            'total' => $total,
+            'page' => $page,
+            'per_page' => $perPage,
+            'total_pages' => $totalPages,
+        ];
+    }
+
+    /**
+     * GET /api/secretary/today-appointments?page=1&per_page=5
+     */
+    public function getTodayAppointmentsApi()
+    {
+        try {
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['ok' => false, 'error' => 'Unauthorized'], 401);
+            }
+
+            $today = date('Y-m-d');
+            $page = (int) ($_GET['page'] ?? 1);
+            $perPage = (int) ($_GET['per_page'] ?? 5);
+            $data = $this->getTodayAppointmentsPaginated($today, $page, $perPage);
+
+            return $this->jsonResponse([
+                'ok' => true,
+                'data' => $data,
+            ]);
+        } catch (\Exception $e) {
+            return $this->jsonResponse(['ok' => false, 'error' => $e->getMessage()], 500);
+        }
     }
 
     private function getRecentPayments($limit = 10)

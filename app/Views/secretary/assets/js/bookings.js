@@ -371,6 +371,9 @@ function renderCalendar(data) {
 
     html += '</div>';
     container.innerHTML = html;
+    if (window.patientHover && typeof window.patientHover.retag === 'function') {
+        window.patientHover.retag(container);
+    }
 }
 
 function renderAppointmentSlot(appointment) {

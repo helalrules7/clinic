@@ -15,7 +15,8 @@
 
     var todayPage = 1;
     var todayPerPage = 5;
-    var todayItems = [];
+    var todayMeta = { total: 0, total_pages: 0 };
+    var todayLoading = false;
 
     function esc(s) {
         var d = document.createElement('div');
@@ -25,6 +26,14 @@
 
     function fmtMoney(n) {
         return Number(n || 0).toLocaleString('ar-EG', { maximumFractionDigits: 0 });
+    }
+
+    function apptCountLabel(n) {
+        n = Number(n || 0);
+        if (n === 1) return 'موعد';
+        if (n === 2) return 'موعدان';
+        if (n >= 3 && n <= 10) return 'مواعيد';
+        return 'موعداً';
     }
 
     function dashDonutSvg(segments, total, centerNum, centerSub) {
@@ -38,12 +47,15 @@
             off += len;
             return c;
         }).join('');
-        return '<svg viewBox="0 0 120 120" class="dash-donut">' +
+        return '<div class="dash-donut-wrap sec-dash-donut-wrap">' +
+            '<svg viewBox="0 0 120 120" class="dash-donut dash-donut--ring" aria-hidden="true">' +
             '<circle cx="60" cy="60" r="42" fill="none" stroke="var(--border)" stroke-width="13" opacity="0.35"/>' +
             segs +
-            '<text x="60" y="57" text-anchor="middle" class="dash-donut-num">' + centerNum + '</text>' +
-            '<text x="60" y="75" text-anchor="middle" class="dash-donut-sub">' + centerSub + '</text>' +
-            '</svg>';
+            '</svg>' +
+            '<div class="dash-donut-center arabic-text">' +
+            '<span class="dash-donut-num">' + centerNum + '</span>' +
+            '<span class="dash-donut-sub">' + esc(centerSub) + '</span>' +
+            '</div></div>';
     }
 
     function renderStatusDonut(stats) {
@@ -69,7 +81,7 @@
                 '<span class="dash-legend-lbl arabic-text">' + STATUS_LABELS_AR[s] + '</span>' +
                 '<span class="dash-legend-val">' + counts[s] + '</span></div>';
         }).join('');
-        body.innerHTML = '<div class="dash-donut-wrap">' + dashDonutSvg(segments, total, total, 'موعد') + '</div>' +
+        body.innerHTML = dashDonutSvg(segments, total, total, apptCountLabel(total)) +
             '<div class="dash-legend">' + legend + '</div>';
     }
 
@@ -103,39 +115,45 @@
         return map[status] || 'bg-secondary';
     }
 
-    function renderTodayAppointments(list) {
-        todayItems = Array.isArray(list) ? list : [];
+    function retagPatientHover(root) {
+        if (window.patientHover && typeof window.patientHover.retag === 'function') {
+            window.patientHover.retag(root || document.getElementById('secTodayApptContainer') || document);
+        }
+    }
+
+    function renderTodayAppointmentsPage(items, meta) {
         var container = document.getElementById('secTodayApptContainer');
         var nav = document.getElementById('secTodayApptPagination');
         if (!container) return;
 
-        if (!todayItems.length) {
+        meta = meta || {};
+        todayMeta.total = meta.total != null ? meta.total : (items ? items.length : 0);
+        todayMeta.total_pages = meta.total_pages != null ? meta.total_pages : 0;
+        todayPage = meta.page || todayPage;
+
+        if (!items || !items.length) {
             container.innerHTML = '<div class="appt-empty arabic-text"><i class="bi bi-calendar-x"></i><p>لا توجد مواعيد اليوم</p>' +
                 '<a href="/secretary/bookings" class="btn btn-sm btn-primary">حجز موعد</a></div>';
             if (nav) nav.style.display = 'none';
             return;
         }
 
-        var totalPages = Math.ceil(todayItems.length / todayPerPage);
-        if (todayPage > totalPages) todayPage = totalPages;
-        var start = (todayPage - 1) * todayPerPage;
-        var pageItems = todayItems.slice(start, start + todayPerPage);
-
         var html = '<div class="list-group list-group-flush">';
-        pageItems.forEach(function (apt, idx) {
-            var globalIdx = start + idx;
+        items.forEach(function (apt, idx) {
+            var globalIdx = ((todayPage - 1) * todayPerPage) + idx;
             var sColor = STATUS_COLORS[apt.status] || '#64748b';
             var initials = ((apt.first_name || '').charAt(0) + (apt.last_name || '').charAt(0)).toUpperCase() || '?';
             var startT = apt.start_time ? String(apt.start_time).substr(0, 5) : '';
             var isNext = globalIdx === 0;
             var pid = apt.patient_id || apt.patientId || '';
+            var fullName = ((apt.first_name || '') + ' ' + (apt.last_name || '')).trim();
             html += '<div class="list-group-item appt-list-item appt-card border-0 mb-2' + (isNext ? ' appt-next' : '') + '" style="--appt-color:' + sColor + '">' +
                 '<div class="appt-row">' +
                 '<div class="appt-avatar" style="background:' + sColor + '">' + esc(initials) + '</div>' +
                 '<div class="appt-main">' +
                 '<div class="appt-name-row">' +
-                '<a href="/secretary/bookings/' + apt.id + '" class="appt-name" data-patient-id="' + pid + '">' +
-                esc((apt.first_name || '') + ' ' + (apt.last_name || '')) + '</a>' +
+                '<a href="/secretary/patients/' + pid + '" class="appt-name patient-hover-name" data-patient-id="' + pid + '">' +
+                esc(fullName) + '</a>' +
                 (isNext ? '<span class="appt-nextup-chip arabic-text"><i class="bi bi-stars"></i> التالي</span>' : '') +
                 '</div>' +
                 '<div class="appt-meta arabic-text">' +
@@ -146,34 +164,73 @@
                 '<div class="appt-side">' +
                 '<span class="badge ' + statusBadgeClass(apt.status) + ' arabic-text">' + esc(STATUS_LABELS_AR[apt.status] || apt.status || '') + '</span>' +
                 '<div class="appt-actions">' +
-                '<button type="button" class="btn btn-sm btn-outline-primary" onclick="viewAppointment(' + apt.id + ')" title="عرض"><i class="bi bi-eye"></i></button>' +
+                '<a href="/secretary/bookings/' + apt.id + '" class="btn btn-sm btn-outline-primary" title="عرض"><i class="bi bi-eye"></i></a>' +
                 (apt.status === 'Booked' ? '<button type="button" class="btn btn-sm btn-outline-success" onclick="checkInPatient(' + apt.id + ')" title="تسجيل حضور"><i class="bi bi-check-circle"></i></button>' : '') +
                 '</div></div></div></div>';
         });
         html += '</div>';
         container.innerHTML = html;
+        retagPatientHover(container);
 
         if (nav) {
+            var totalPages = todayMeta.total_pages || Math.ceil(todayMeta.total / todayPerPage);
             if (totalPages <= 1) {
                 nav.style.display = 'none';
             } else {
                 nav.style.display = '';
                 var ul = nav.querySelector('.pagination') || nav;
-                var items = '';
+                var itemsHtml = '';
                 for (var p = 1; p <= totalPages; p++) {
-                    items += '<li class="page-item' + (p === todayPage ? ' active' : '') + '">' +
-                        '<a class="page-link" href="#" data-page="' + p + '">' + p + '</a></li>';
+                    itemsHtml += '<li class="page-item' + (p === todayPage ? ' active' : '') + '">' +
+                        '<a class="page-link" href="#" data-page="' + p + '" aria-label="صفحة ' + p + '">' + p + '</a></li>';
                 }
-                ul.innerHTML = items;
+                ul.innerHTML = itemsHtml;
                 ul.querySelectorAll('[data-page]').forEach(function (a) {
                     a.addEventListener('click', function (e) {
                         e.preventDefault();
-                        todayPage = parseInt(a.getAttribute('data-page'), 10) || 1;
-                        renderTodayAppointments(todayItems);
+                        var page = parseInt(a.getAttribute('data-page'), 10) || 1;
+                        loadTodayAppointmentsPage(page);
                     });
                 });
             }
         }
+    }
+
+    function loadTodayAppointmentsPage(page) {
+        if (todayLoading) return Promise.resolve();
+        todayLoading = true;
+        todayPage = page || 1;
+
+        var container = document.getElementById('secTodayApptContainer');
+        if (container) {
+            container.innerHTML = '<div class="text-center py-4"><div class="spinner-border spinner-border-sm text-primary"></div></div>';
+        }
+
+        return fetch('/api/secretary/today-appointments?page=' + todayPage + '&per_page=' + todayPerPage, {
+            credentials: 'same-origin',
+            headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+        })
+            .then(function (r) {
+                if (!r.ok) throw new Error('HTTP ' + r.status);
+                return r.json();
+            })
+            .then(function (res) {
+                if (!res || !res.ok || !res.data) throw new Error('bad response');
+                renderTodayAppointmentsPage(res.data.items || [], res.data);
+            })
+            .catch(function () {
+                if (container) {
+                    container.innerHTML = '<div class="appt-empty arabic-text text-danger"><i class="bi bi-exclamation-triangle"></i><p>تعذّر تحميل المواعيد</p></div>';
+                }
+            })
+            .finally(function () {
+                todayLoading = false;
+            });
+    }
+
+    function renderTodayAppointments(list) {
+        /* Legacy: full list from poll — re-fetch current AJAX page instead. */
+        loadTodayAppointmentsPage(todayPage);
     }
 
     function loadDailyTips() {
@@ -209,12 +266,13 @@
         if (!data) return;
         if (data.stats) renderStatusDonut(data.stats);
         if (data.revenue) renderRevenue(data.revenue);
-        if (data.todayAppointments) renderTodayAppointments(data.todayAppointments);
+        loadTodayAppointmentsPage(todayPage);
     }
 
     window.secDashboardWidgets = {
         refresh: refreshWidgets,
         renderTodayAppointments: renderTodayAppointments,
+        loadTodayAppointmentsPage: loadTodayAppointmentsPage,
         renderStatusDonut: renderStatusDonut,
         renderRevenue: renderRevenue
     };
@@ -223,18 +281,24 @@
         renderTipOfDay();
 
         var stats = null;
-        var appts = null;
+        var apptsMeta = null;
         try {
             var sEl = document.getElementById('secDashboardStatsInitial');
             if (sEl) stats = JSON.parse(sEl.textContent || '{}');
         } catch (_) {}
         try {
-            var aEl = document.getElementById('secTodayApptsInitial');
-            if (aEl) appts = JSON.parse(aEl.textContent || '[]');
+            var mEl = document.getElementById('secTodayApptsMetaInitial');
+            if (mEl) apptsMeta = JSON.parse(mEl.textContent || '{}');
         } catch (_) {}
 
         if (stats) renderStatusDonut(stats);
-        if (appts) renderTodayAppointments(appts);
+
+        if (apptsMeta && apptsMeta.items) {
+            todayPage = apptsMeta.page || 1;
+            renderTodayAppointmentsPage(apptsMeta.items, apptsMeta);
+        } else {
+            loadTodayAppointmentsPage(1);
+        }
 
         var revenue = null;
         try {

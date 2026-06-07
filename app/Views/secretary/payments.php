@@ -381,7 +381,7 @@ $paymentTrendDeltas = $paymentTrendDeltas ?? ['opening' => 0, 'received' => 0, '
                                             <i class="bi bi-person-circle"></i>
                                         </div>
                                         <div>
-                                            <div class="fw-semibold arabic-text"><?= $payment['patient_name'] ?? 'غير محدد' ?></div>
+                                            <div class="fw-semibold arabic-text patient-hover-name" data-patient-id="<?= (int)($payment['patient_id'] ?? 0) ?>"><?= htmlspecialchars($payment['patient_name'] ?? 'غير محدد') ?></div>
                                             <small class="text-muted"><?= $payment['patient_phone'] ?? 'غير محدد' ?></small>
                                         </div>
                                     </div>

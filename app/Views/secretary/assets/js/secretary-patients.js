@@ -176,7 +176,7 @@
                 '<div class="sec-pcard-top">' + sel + marker +
                     '<span class="sec-avatar ' + (p.gender === 'Female' ? 'female' : 'male') + '">' + esc(initials(p)) + '</span>' +
                 '</div>' +
-                '<div class="sec-pcard-name">' + fullName(p) + '</div>' +
+                '<div class="sec-pcard-name patient-hover-name" data-patient-id="' + p.id + '">' + fullName(p) + '</div>' +
                 '<div class="sec-pcard-meta">' + (age(p.dob) !== '' ? (age(p.dob) + ' سنة · ') : '') + (p.gender === 'Female' ? 'أنثى' : 'ذكر') + '</div>' +
                 '<div class="sec-pcard-meta"><i class="bi bi-telephone"></i> ' + esc(p.phone || '—') + '</div>' +
                 (tags ? ('<div class="sec-pcard-tags">' + tags + '</div>') : '') +
@@ -208,6 +208,9 @@
                 '</div>' +
                 (list.length ? ('<div class="sec-pgrid">' + list.map(function (p) { return patientCardHtml(p); }).join('') + '</div>')
                              : '<div class="text-center py-5 text-muted arabic-text">لا يوجد مرضى مطابقون</div>');
+            if (window.patientHover && typeof window.patientHover.retag === 'function') {
+                window.patientHover.retag(cardsView);
+            }
         });
     }
 
@@ -258,6 +261,9 @@
                              : '<div class="text-center py-5 text-muted arabic-text">المجلد فارغ</div>') +
                 bulkBarHtml();
             updateBulkBar();
+            if (window.patientHover && typeof window.patientHover.retag === 'function') {
+                window.patientHover.retag(foldersView);
+            }
         });
     }
 

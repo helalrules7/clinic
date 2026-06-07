@@ -25,23 +25,42 @@ class PatientSummaryController
         while (ob_get_level()) { ob_end_clean(); }
         header('Content-Type: application/json; charset=utf-8');
 
-        $user = $this->auth->user();
-        if (!$user) {
-            http_response_code(401);
-            echo json_encode(['success' => false, 'message' => 'Unauthorized'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-            return;
-        }
+        try {
+            if (!$this->auth->check()) {
+                http_response_code(401);
+                echo json_encode(['success' => false, 'message' => 'Unauthorized'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                return;
+            }
 
-        $patientId = (int) $patientId;
-        if ($patientId <= 0) {
-            http_response_code(422);
-            echo json_encode(['success' => false, 'message' => 'Invalid patient id'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-            return;
-        }
+            $patientId = (int) $patientId;
+            if ($patientId <= 0) {
+                http_response_code(422);
+                echo json_encode(['success' => false, 'message' => 'Invalid patient id'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                return;
+            }
 
+            $payload = $this->buildSummaryPayload($patientId);
+            if ($payload === null) {
+                http_response_code(404);
+                echo json_encode(['success' => false, 'message' => 'Patient not found'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                return;
+            }
+
+            $json = json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE);
+            if ($json === false) {
+                throw new \RuntimeException('Failed to encode patient summary');
+            }
+            echo $json;
+        } catch (Throwable $e) {
+            error_log('[PatientSummaryController::summary] id=' . $patientId . ': ' . $e->getMessage());
+            http_response_code(500);
+            echo json_encode(['success' => false, 'message' => 'Summary error'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        }
+    }
+
+    private function buildSummaryPayload($patientId)
+    {
         // --- Patient base (required) ---
-        // Schema note: real column is `dob` (not `date_of_birth`). We alias it
-        // so the rest of this method keeps the readable name.
         try {
             $stmt = $this->pdo->prepare('SELECT id, first_name, last_name, dob AS date_of_birth, gender, phone FROM patients WHERE id = ? LIMIT 1');
             $stmt->execute([$patientId]);
@@ -52,9 +71,7 @@ class PatientSummaryController
         }
 
         if (!$patientRow) {
-            http_response_code(404);
-            echo json_encode(['success' => false, 'message' => 'Patient not found'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-            return;
+            return null;
         }
 
         $first = trim((string) ($patientRow['first_name'] ?? ''));
@@ -88,7 +105,7 @@ class PatientSummaryController
             $sql = "SELECT date, visit_type, status
                     FROM appointments
                     WHERE patient_id = ?
-                      AND (date < CURDATE() OR (date = CURDATE() AND end_time < NOW()))
+                      AND (date < CURDATE() OR (date = CURDATE() AND end_time < CURTIME()))
                       AND status != 'Cancelled'
                     ORDER BY date DESC, start_time DESC
                     LIMIT 1";
@@ -170,13 +187,13 @@ class PatientSummaryController
             $activeAlerts = [];
         }
 
-        echo json_encode([
+        return [
             'success'             => true,
             'patient'             => $patient,
             'last_visit'          => $lastVisit,
             'next_appointment'    => $nextAppointment,
             'active_alerts_count' => $activeAlertsCount,
             'active_alerts'       => $activeAlerts,
-        ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        ];
     }
 }

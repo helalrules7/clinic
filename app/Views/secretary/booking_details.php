@@ -139,7 +139,7 @@
                         <i class="bi bi-person-circle"></i>
                     </div>
                     <div>
-                        <h6 class="mb-0 arabic-text"><?= htmlspecialchars($booking['patient_name'] ?? 'غير محدد') ?></h6>
+                        <h6 class="mb-0 arabic-text patient-hover-name" data-patient-id="<?= (int)($booking['patient_id'] ?? 0) ?>"><?= htmlspecialchars($booking['patient_name'] ?? 'غير محدد') ?></h6>
                         <small class="text-muted arabic-text"><?= $booking['patient_phone'] ?? 'غير محدد' ?></small>
                     </div>
                 </div>

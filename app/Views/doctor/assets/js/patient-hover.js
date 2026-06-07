@@ -276,9 +276,28 @@
             signal: controller ? controller.signal : undefined
         }).then(function (res) {
             clearTimeout(timeout);
-            if (!res.ok) throw new Error('HTTP ' + res.status);
-            return res.json();
+            return res.text().then(function (text) {
+                if (!res.ok) {
+                    var errMsg = 'HTTP ' + res.status;
+                    try {
+                        var errJson = JSON.parse(text);
+                        if (errJson && errJson.message) errMsg = errJson.message;
+                    } catch (ignore) {}
+                    throw new Error(errMsg);
+                }
+                try {
+                    return JSON.parse(text);
+                } catch (parseErr) {
+                    throw new Error('invalid summary response');
+                }
+            });
         }).then(function (json) {
+            if (!json || json.success === false) {
+                throw new Error((json && json.message) || 'summary failed');
+            }
+            if (!json.patient || !json.patient.id) {
+                throw new Error('missing patient payload');
+            }
             var data = normalizeSummary(json);
             cache[id] = { data: data, expiresAt: Date.now() + CACHE_TTL };
             return data;
@@ -353,7 +372,8 @@
         }
         setText('[data-pc-age]', ageStr, '');
 
-        setText('[data-pc-gender]', translateGender(p && p.gender), '');
+        var gender = translateGender(p && p.gender);
+        setText('[data-pc-gender]', gender, '');
 
         // Hide the “·” separator when age or gender is missing.
         var sep = card.querySelector('.pc-meta-sep');
@@ -515,12 +535,18 @@
         fetchSummary(currentId).then(function (data) {
             // Bail if the user has since opened a different patient.
             if (currentId !== String(id)) return;
-            paint(id, data || {});
+            try {
+                paint(id, data || {});
+            } catch (paintErr) {
+                console.error('[patient-hover] paint failed:', paintErr);
+                showError();
+            }
             // Re-position after the body height changes.
             position(triggerEl, !!opts.centered);
         }).catch(function (err) {
             if (currentId !== String(id)) return;
             if (err && err.name === 'AbortError') return;
+            console.error('[patient-hover] summary fetch failed:', err);
             showError();
             position(triggerEl, !!opts.centered);
         });
@@ -719,27 +745,51 @@
         return !el || el.hasAttribute('data-no-hover') || el.closest('[data-no-hover]');
     }
 
+    function stampPatientHoverEl(el, id) {
+        if (!el || shouldSkipTag(el)) return;
+        id = String(id || '').trim();
+        if (!id || id === '0') return;
+        el.setAttribute('data-patient-id', id);
+        if (!el.classList.contains('patient-hover-name') &&
+            !el.classList.contains('patient-name-link') &&
+            !el.classList.contains('appt-name') &&
+            !el.classList.contains('patient-name')) {
+            el.classList.add('patient-hover-name');
+        }
+    }
+
     /** Stamp data-patient-id on any patient profile link / name hook site-wide. */
     function tagPatientHoverTriggers(root) {
         root = root || document;
         if (!root.querySelectorAll) return;
 
         root.querySelectorAll('a[href*="/doctor/patient"], a[href*="/secretary/patient"]').forEach(function (a) {
-            if (shouldSkipTag(a) || a.hasAttribute('data-patient-id')) return;
-            var id = extractPatientIdFromHref(a.getAttribute('href'));
-            if (id && id !== '0') a.setAttribute('data-patient-id', id);
+            if (shouldSkipTag(a)) return;
+            var id = a.getAttribute('data-patient-id') || extractPatientIdFromHref(a.getAttribute('href'));
+            if (id && id !== '0') stampPatientHoverEl(a, id);
         });
 
         root.querySelectorAll('[data-patient-id]').forEach(function (el) {
             if (shouldSkipTag(el)) return;
             var id = el.getAttribute('data-patient-id');
             if (!id || id === '0') return;
-            el.querySelectorAll('.patient-name, .patient-name-link, .appt-name, .patient-hover-name, .card-title span, h6 .patient-name-link').forEach(function (nameEl) {
+            stampPatientHoverEl(el, id);
+            el.querySelectorAll('.patient-name, .patient-name-link, .appt-name, .patient-hover-name, .fw-semibold.patient-hover-name, h6.arabic-text, .sec-pcard-name').forEach(function (nameEl) {
                 if (!nameEl.hasAttribute('data-patient-id')) {
-                    nameEl.setAttribute('data-patient-id', id);
+                    stampPatientHoverEl(nameEl, id);
                 }
             });
         });
+
+        var isSecretary = document.documentElement.getAttribute('data-layout') === 'secretary';
+        if (isSecretary) {
+            root.querySelectorAll('tr[data-patient-id] .arabic-text, [data-payment-patient-id]').forEach(function (el) {
+                if (shouldSkipTag(el)) return;
+                var row = el.closest('[data-patient-id], [data-payment-patient-id]');
+                var pid = row && (row.getAttribute('data-patient-id') || row.getAttribute('data-payment-patient-id'));
+                if (pid) stampPatientHoverEl(el, pid);
+            });
+        }
     }
 
     function scheduleTag(root) {

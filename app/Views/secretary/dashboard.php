@@ -283,7 +283,7 @@ $secTipToday = $secDailyTips[$secTipIndex];
                         <?php foreach (array_slice($recentPayments, 0, 5) as $payment): ?>
                             <div class="list-group-item d-flex justify-content-between align-items-center">
                                 <div>
-                                    <div class="fw-semibold"><?= $payment['first_name'] . ' ' . $payment['last_name'] ?></div>
+                                    <div class="fw-semibold arabic-text patient-hover-name" data-patient-id="<?= (int)($payment['patient_id'] ?? 0) ?>"><?= htmlspecialchars(trim(($payment['first_name'] ?? '') . ' ' . ($payment['last_name'] ?? ''))) ?></div>
                                     <small class="text-muted"><?= $payment['type'] ?></small>
                                 </div>
                                 <div class="text-end">
@@ -304,7 +304,7 @@ $secTipToday = $secDailyTips[$secTipIndex];
 <script src="/app/Views/secretary/assets/js/sec-mini-stats.js?v=<?= file_exists(__DIR__ . '/assets/js/sec-mini-stats.js') ? filemtime(__DIR__ . '/assets/js/sec-mini-stats.js') : time() ?>"></script>
 <script src="/app/Views/secretary/assets/js/dashboard.js?v=<?= file_exists(__DIR__ . '/assets/js/dashboard.js') ? filemtime(__DIR__ . '/assets/js/dashboard.js') : time() ?>"></script>
 <script src="/app/Views/secretary/assets/js/sec-dashboard-widgets.js?v=<?= file_exists(__DIR__ . '/assets/js/sec-dashboard-widgets.js') ? filemtime(__DIR__ . '/assets/js/sec-dashboard-widgets.js') : time() ?>"></script>
-<script type="application/json" id="secTodayApptsInitial"><?= json_encode($todayAppointments ?? [], JSON_UNESCAPED_UNICODE) ?></script>
+<script type="application/json" id="secTodayApptsMetaInitial"><?= json_encode($todayAppointmentsMeta ?? ['items' => [], 'total' => 0, 'page' => 1, 'per_page' => 5, 'total_pages' => 0], JSON_UNESCAPED_UNICODE) ?></script>
 <script type="application/json" id="secDashboardStatsInitial"><?= json_encode([
     'total_appointments' => (int)($stats['total_appointments'] ?? 0),
     'booked' => (int)($stats['booked'] ?? 0),
@@ -345,9 +345,9 @@ $secTipToday = $secDailyTips[$secTipIndex];
     /**
      * Update today's appointments table
      */
-    function updateAppointmentsTable(appointments) {
-        if (window.secDashboardWidgets && typeof window.secDashboardWidgets.renderTodayAppointments === 'function') {
-            window.secDashboardWidgets.renderTodayAppointments(appointments);
+    function updateAppointmentsTable() {
+        if (window.secDashboardWidgets && typeof window.secDashboardWidgets.loadTodayAppointmentsPage === 'function') {
+            window.secDashboardWidgets.loadTodayAppointmentsPage();
         }
     }
 
@@ -371,7 +371,7 @@ $secTipToday = $secDailyTips[$secTipIndex];
             payments.map(payment => `
             <div class="list-group-item d-flex justify-content-between align-items-center">
                 <div>
-                    <div class="fw-semibold">${payment.first_name} ${payment.last_name}</div>
+                    <div class="fw-semibold arabic-text patient-hover-name" data-patient-id="${payment.patient_id || ''}">${payment.first_name} ${payment.last_name}</div>
                     <small class="text-muted">${payment.type || ''}</small>
                 </div>
                 <div class="text-end">
@@ -380,6 +380,9 @@ $secTipToday = $secDailyTips[$secTipIndex];
                 </div>
             </div>`).join('')
         }</div>`;
+        if (window.patientHover && typeof window.patientHover.retag === 'function') {
+            window.patientHover.retag(body);
+        }
     }
 
     /**
@@ -447,9 +450,7 @@ $secTipToday = $secDailyTips[$secTipIndex];
                 if (window.secDashboardWidgets && typeof window.secDashboardWidgets.refresh === 'function') {
                     window.secDashboardWidgets.refresh(result.data);
                 } else {
-                    if (result.data.todayAppointments) {
-                        updateAppointmentsTable(result.data.todayAppointments);
-                    }
+                    updateAppointmentsTable();
                 }
                 
                 // Update recent payments
