@@ -3961,6 +3961,56 @@ body.sidebar-mini .sidebar .user-avatar {
     transition: opacity 0.35s ease-out, transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), visibility 0s linear 0s;
 }
 
+/* EXPANDED = full-viewport fixed overlay. The doctor gets this from style.css;
+   global-search-panel.css only sets it inside @media(max-width:768px), so on
+   DESKTOP the secretary had nothing — global-search.js relocates the container to
+   <body> with no positioning, so it dropped to the bottom of the page (RTL →
+   bottom-right: the "search jumps to a weird place" bug). z-index must also clear
+   the secretary's inflated sidebar (1000001/1000002), so the whole overlay (which
+   is its own stacking context) sits ABOVE everything. */
+.global-search-container.expanded,
+body > .global-search-container.expanded {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    margin: 0 !important;
+    z-index: 1000010 !important; /* above sidebar (1000002) — full-screen search */
+    display: flex !important;
+}
+.global-search-container.collapsing { pointer-events: none !important; }
+
+/* Backdrop — fixed full-viewport dimmer (tint/blur come from global-search-panel.css). */
+.global-search-backdrop {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    z-index: 999998 !important; /* inside the .expanded stacking context, below the panel */
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.global-search-container.expanded .global-search-backdrop {
+    opacity: 1 !important;
+    pointer-events: all !important;
+    display: block !important;
+    visibility: visible !important;
+}
+.global-search-container:not(.expanded) .global-search-backdrop {
+    display: none !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    z-index: -1 !important;
+    visibility: hidden !important;
+}
+
 /* THE FIX: stack input-field → hint → results vertically. */
 .global-search-input-wrapper {
     position: relative;
