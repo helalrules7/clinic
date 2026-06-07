@@ -374,7 +374,30 @@ async function updatePersonalPreference(key, value) {
         
         if (data.success) {
             personalPreferences[key] = value;
-            
+
+            if (key === 'theme') {
+                if (typeof window.disableThemeAutoSchedule === 'function') {
+                    await window.disableThemeAutoSchedule(true);
+                } else {
+                    try { localStorage.setItem('appThemeAutoSchedule', '0'); } catch (_) {}
+                }
+                const isDark = value === 'dark';
+                document.documentElement.classList.toggle('dark', isDark);
+                try {
+                    localStorage.setItem('appTheme', value);
+                    localStorage.setItem('theme', value);
+                } catch (_) {}
+                const headerToggle = document.getElementById('themeToggleInput');
+                if (headerToggle) headerToggle.checked = isDark;
+                const logo = document.getElementById('clinicLogo');
+                if (logo) {
+                    logo.src = isDark ? '/assets/images/Dark.png' : '/assets/images/Light.png';
+                }
+                if (typeof window.syncThemeUI === 'function') {
+                    window.syncThemeUI();
+                }
+            }
+
             // If push notifications enabled, automatically subscribe current browser (same as enablePushBtn)
             if (key === 'push_notifications_enabled' && value === true) {
                 // Request notification permission

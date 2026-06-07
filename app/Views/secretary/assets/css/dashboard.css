@@ -9,6 +9,64 @@
     right: auto;
 }
 
+/* ============================================
+   Secretary dashboard — mini-stat RTL + danger variant
+   (base mini-stat chrome from doctor/assets/css/dashboard.css)
+   ============================================ */
+
+[dir="rtl"] .sec-dashboard-stats .mini-stat-icon {
+    right: auto;
+    left: 12px;
+}
+
+[dir="rtl"] .sec-dashboard-stats .mini-stat-label {
+    text-transform: none;
+    letter-spacing: 0;
+}
+
+/* Danger — لم يحضر */
+.sec-dashboard-stats .mini-stat-danger {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.08) 0%, rgba(239, 68, 68, 0.02) 100%);
+    border-color: rgba(239, 68, 68, 0.2);
+}
+.sec-dashboard-stats .mini-stat-danger .mini-stat-icon {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.35);
+}
+.sec-dashboard-stats .mini-stat-danger .mini-stat-value {
+    color: #ef4444;
+}
+.sec-dashboard-stats .mini-stat-danger:hover {
+    border-color: rgba(239, 68, 68, 0.4);
+}
+.dark .sec-dashboard-stats .mini-stat-danger {
+    background: linear-gradient(135deg, rgba(248, 113, 113, 0.1) 0%, rgba(248, 113, 113, 0.02) 100%);
+    border-color: rgba(248, 113, 113, 0.2);
+}
+.dark .sec-dashboard-stats .mini-stat-danger .mini-stat-value {
+    color: #fb7185;
+}
+.sec-dashboard-stats .mini-stat-danger .sparkline-path { stroke: #ef4444; }
+.sec-dashboard-stats .mini-stat-danger .sparkline-area { fill: #ef4444; }
+.dark .sec-dashboard-stats .mini-stat-danger .sparkline-path { stroke: #fb7185; }
+.dark .sec-dashboard-stats .mini-stat-danger .sparkline-area { fill: #fb7185; }
+
+/* Palette-aware primary accent (follows data-palette) */
+.sec-dashboard-stats .mini-stat-primary {
+    background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 10%, transparent) 0%, color-mix(in srgb, var(--accent) 3%, transparent) 100%);
+    border-color: color-mix(in srgb, var(--accent) 22%, transparent);
+}
+.sec-dashboard-stats .mini-stat-primary .mini-stat-icon {
+    background: linear-gradient(135deg, var(--accent) 0%, var(--ds-accent-2) 100%);
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--accent) 35%, transparent);
+}
+.sec-dashboard-stats .mini-stat-primary .mini-stat-value {
+    color: var(--accent);
+}
+.sec-dashboard-stats .mini-stat-primary .sparkline-path { stroke: var(--accent); }
+.sec-dashboard-stats .mini-stat-primary .sparkline-area { fill: var(--accent); }
+
 
 
 

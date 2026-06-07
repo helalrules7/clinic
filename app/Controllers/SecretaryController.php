@@ -36,17 +36,21 @@ class SecretaryController
         // Get today's statistics
         $today = date('Y-m-d');
         $stats = $this->getTodayStats($today);
+        $trends = $this->getDashboardTrends(9);
         
         // Get today's appointments
         $todayAppointments = $this->getTodayAppointments($today);
         
         // Get recent payments
         $recentPayments = $this->getRecentPayments();
+        $revenue = $this->getDailyBalance();
         
         $content = $this->view->render('secretary/dashboard', [
             'stats' => $stats,
+            'trends' => $trends,
             'todayAppointments' => $todayAppointments,
-            'recentPayments' => $recentPayments
+            'recentPayments' => $recentPayments,
+            'revenue' => $revenue
         ]);
         
         echo $this->view->render('layouts/secretary_main', [
@@ -77,19 +81,7 @@ class SecretaryController
             
             // Get recent payments
             $recentPayments = $this->getRecentPayments(5);
-            
-            // Add missed appointments count
-            $missedCount = 0;
-            if ($stats) {
-                $stmt = $this->pdo->prepare("
-                    SELECT COUNT(*) as missed
-                    FROM appointments 
-                    WHERE date = ? AND status NOT IN ('Completed', 'Cancelled', 'CheckedIn', 'Booked')
-                ");
-                $stmt->execute([$today]);
-                $missedResult = $stmt->fetch();
-                $missedCount = $missedResult['missed'] ?? 0;
-            }
+            $revenue = $this->getDailyBalance();
             
             return $this->jsonResponse([
                 'ok' => true,
@@ -99,8 +91,10 @@ class SecretaryController
                         'booked' => (int)($stats['booked'] ?? 0),
                         'checked_in' => (int)($stats['checked_in'] ?? 0),
                         'completed' => (int)($stats['completed'] ?? 0),
-                        'missed' => (int)$missedCount
+                        'missed' => (int)($stats['missed'] ?? 0)
                     ],
+                    'trends' => $this->getDashboardTrends(9),
+                    'revenue' => $revenue,
                     'todayAppointments' => $todayAppointments,
                     'recentPayments' => $recentPayments
                 ]
@@ -775,12 +769,55 @@ class SecretaryController
                 COUNT(*) as total_appointments,
                 SUM(CASE WHEN status = 'Booked' THEN 1 ELSE 0 END) as booked,
                 SUM(CASE WHEN status = 'CheckedIn' THEN 1 ELSE 0 END) as checked_in,
-                SUM(CASE WHEN status = 'Completed' THEN 1 ELSE 0 END) as completed
+                SUM(CASE WHEN status = 'Completed' THEN 1 ELSE 0 END) as completed,
+                SUM(CASE WHEN status NOT IN ('Completed', 'Cancelled', 'CheckedIn', 'Booked') THEN 1 ELSE 0 END) as missed
             FROM appointments 
             WHERE date = ?
         ");
         $stmt->execute([$date]);
         return $stmt->fetch();
+    }
+
+    /**
+     * Last N days appointment metrics for dashboard sparklines (oldest → newest).
+     */
+    private function getDashboardTrends(int $days = 9): array
+    {
+        $days = max(2, min(30, $days));
+        $end = date('Y-m-d');
+        $start = date('Y-m-d', strtotime('-' . ($days - 1) . ' days'));
+
+        $stmt = $this->pdo->prepare("
+            SELECT
+                date,
+                COUNT(*) AS total,
+                SUM(CASE WHEN status = 'Booked' THEN 1 ELSE 0 END) AS booked,
+                SUM(CASE WHEN status = 'CheckedIn' THEN 1 ELSE 0 END) AS checked_in,
+                SUM(CASE WHEN status = 'Completed' THEN 1 ELSE 0 END) AS completed,
+                SUM(CASE WHEN status NOT IN ('Completed', 'Cancelled', 'CheckedIn', 'Booked') THEN 1 ELSE 0 END) AS missed
+            FROM appointments
+            WHERE date BETWEEN ? AND ?
+            GROUP BY date
+            ORDER BY date ASC
+        ");
+        $stmt->execute([$start, $end]);
+        $byDate = [];
+        foreach ($stmt->fetchAll(\PDO::FETCH_ASSOC) as $row) {
+            $byDate[$row['date']] = $row;
+        }
+
+        $keys = ['total', 'booked', 'checked_in', 'completed', 'missed'];
+        $out = array_fill_keys($keys, []);
+        for ($i = $days - 1; $i >= 0; $i--) {
+            $d = date('Y-m-d', strtotime("-{$i} days"));
+            $row = $byDate[$d] ?? null;
+            $out['total'][] = (int)($row['total'] ?? 0);
+            $out['booked'][] = (int)($row['booked'] ?? 0);
+            $out['checked_in'][] = (int)($row['checked_in'] ?? 0);
+            $out['completed'][] = (int)($row['completed'] ?? 0);
+            $out['missed'][] = (int)($row['missed'] ?? 0);
+        }
+        return $out;
     }
 
     private function getTodayAppointments($date)

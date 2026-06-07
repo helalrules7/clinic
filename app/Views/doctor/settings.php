@@ -188,7 +188,7 @@
                                 <div class="d-flex justify-content-between align-items-center">
                                     <div>
                                         <label class="form-label mb-0">Current Mode</label>
-                                        <div class="form-text">Switch between dark and light theme</div>
+                                        <div class="form-text">Manual dark/light override turns off auto-schedule and saves immediately</div>
                                     </div>
                                     <label class="switch" for="currentModeInput">
                                         <input id="currentModeInput" type="checkbox" 

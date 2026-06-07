@@ -167,6 +167,19 @@
             return null;
         }
         
+        async function onManualThemePick(nextTheme) {
+            if (typeof window.disableThemeAutoSchedule === 'function') {
+                await window.disableThemeAutoSchedule(true);
+            } else {
+                localStorage.setItem('appThemeAutoSchedule', '0');
+            }
+            apply(nextTheme);
+            updateThemeUI(nextTheme);
+            localStorage.setItem('appTheme', nextTheme);
+            localStorage.setItem('theme', nextTheme);
+            await saveThemeToDatabase(nextTheme);
+        }
+
         // Initialize theme - Priority to localStorage, sync with database
         (async function() {
             // Auto dark/light schedule takes precedence: the pre-paint script
@@ -181,12 +194,7 @@
                 const themeToggleInputAuto = document.getElementById('themeToggleInput');
                 if (themeToggleInputAuto) {
                     themeToggleInputAuto.addEventListener('change', async function () {
-                        // Manual override turns off auto so the timer stops fighting it.
-                        localStorage.setItem('appThemeAutoSchedule', '0');
-                        const nextTheme = this.checked ? 'dark' : 'light';
-                        apply(nextTheme);
-                        updateThemeUI(nextTheme);
-                        await saveThemeToDatabase(nextTheme);
+                        await onManualThemePick(this.checked ? 'dark' : 'light');
                     });
                 }
                 return;
@@ -243,17 +251,8 @@
             // Theme toggle checkbox change handler
             const themeToggleInput = document.getElementById('themeToggleInput');
             if (themeToggleInput) {
-                themeToggleInput.addEventListener('change', async function() {
-                    const nextTheme = this.checked ? 'dark' : 'light';
-                    
-                    // Apply theme immediately
-                    apply(nextTheme);
-                    
-                    // Update UI elements
-                    updateThemeUI(nextTheme);
-                    
-                    // Save to localStorage and database
-                    await saveThemeToDatabase(nextTheme);
+                themeToggleInput.addEventListener('change', async function () {
+                    await onManualThemePick(this.checked ? 'dark' : 'light');
                 });
             }
         })();

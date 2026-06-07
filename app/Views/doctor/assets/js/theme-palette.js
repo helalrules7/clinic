@@ -110,6 +110,8 @@
         if (input) input.checked = !!isDark;
         var secInput = document.getElementById('secCurrentModeInput');
         if (secInput) secInput.checked = !!isDark;
+        var docInput = document.getElementById('currentModeInput');
+        if (docInput) docInput.checked = !!isDark;
         var logo = document.getElementById('clinicLogo');
         if (logo) logo.src = isDark ? '/assets/images/Dark.png' : '/assets/images/Light.png';
     }

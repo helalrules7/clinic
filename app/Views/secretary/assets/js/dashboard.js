@@ -1,4 +1,98 @@
 // ============================================
+// Mini Sparkline Charts — secretary dashboard stats
+// ============================================
+
+function secGenerateSparklineSVG(data) {
+    var width = 100;
+    var height = 35;
+    var padding = 2;
+    if (!data || data.length < 2) {
+        data = [0, 0];
+    }
+    var min = Math.min.apply(null, data);
+    var max = Math.max.apply(null, data);
+    var range = max - min || 1;
+    var points = data.map(function (value, index) {
+        var x = padding + (index / (data.length - 1)) * (width - padding * 2);
+        var y = height - padding - ((value - min) / range) * (height - padding * 2);
+        return x + ',' + y;
+    });
+    var linePath = 'M ' + points.join(' L ');
+    var areaPath = 'M ' + padding + ',' + height + ' L ' + points.join(' L ') + ' L ' + (width - padding) + ',' + height + ' Z';
+    return '<svg viewBox="0 0 ' + width + ' ' + height + '" preserveAspectRatio="none">' +
+        '<path class="sparkline-area" d="' + areaPath + '"/>' +
+        '<path class="sparkline-path" d="' + linePath + '"/>' +
+        '</svg>';
+}
+
+function secFormatTrendBadge(series, invert) {
+    if (!series || series.length < 2) {
+        return { cls: 'trend-neutral', icon: 'bi-calendar-day', text: 'اليوم' };
+    }
+    var cur = series[series.length - 1];
+    var prev = series[series.length - 2];
+    var diff = cur - prev;
+    if (diff === 0) {
+        return { cls: 'trend-neutral', icon: 'bi-dash-lg', text: 'مثل أمس' };
+    }
+    var up = diff > 0;
+    if (invert) up = !up;
+    return {
+        cls: up ? 'trend-up' : 'trend-down',
+        icon: up ? 'bi-graph-up-arrow' : 'bi-graph-down-arrow',
+        text: (diff > 0 ? '+' : '') + diff + ' عن أمس'
+    };
+}
+
+function secApplyTrendBadge(elId, series, invert) {
+    var el = document.getElementById(elId);
+    if (!el) return;
+    var b = secFormatTrendBadge(series, invert);
+    el.className = 'mini-stat-trend ' + b.cls;
+    el.innerHTML = '<i class="bi ' + b.icon + '"></i><span class="arabic-text">' + b.text + '</span>';
+}
+
+function secInitDashboardCharts(trends) {
+    trends = trends || {};
+    var map = [
+        { chart: 'chartSecTotal', key: 'total', trend: 'trendSecTotal', invert: false, staticToday: true },
+        { chart: 'chartSecBooked', key: 'booked', trend: 'trendSecBooked', invert: false },
+        { chart: 'chartSecCheckedIn', key: 'checked_in', trend: 'trendSecCheckedIn', invert: false },
+        { chart: 'chartSecCompleted', key: 'completed', trend: 'trendSecCompleted', invert: false },
+        { chart: 'chartSecMissed', key: 'missed', trend: 'trendSecMissed', invert: true }
+    ];
+    map.forEach(function (cfg) {
+        var container = document.getElementById(cfg.chart);
+        if (!container) return;
+        var series = trends[cfg.key] || [];
+        container.innerHTML = secGenerateSparklineSVG(series);
+        if (cfg.staticToday) return;
+        secApplyTrendBadge(cfg.trend, series, cfg.invert);
+    });
+}
+
+function secReadTrendsFromDom() {
+    var el = document.getElementById('secDashboardTrends');
+    if (!el) return {};
+    try { return JSON.parse(el.textContent || '{}'); } catch (_) { return {}; }
+}
+
+window.secInitDashboardCharts = secInitDashboardCharts;
+window.secRefreshDashboardCharts = function (trends) {
+    if (trends) {
+        var jsonEl = document.getElementById('secDashboardTrends');
+        if (jsonEl) jsonEl.textContent = JSON.stringify(trends);
+    }
+    secInitDashboardCharts(trends || secReadTrendsFromDom());
+};
+
+document.addEventListener('DOMContentLoaded', function () {
+    setTimeout(function () {
+        secInitDashboardCharts(secReadTrendsFromDom());
+    }, 80);
+});
+
+// ============================================
 // Weather & Allergy Index Card
 // ============================================
 
@@ -440,11 +534,13 @@ function getLevelText(score) {
     return 'Very High';
 }
 
-// Update weather card UI
+// Update weather card UI (glass weather-widget + legacy card)
 function updateWeatherCard(weatherData) {
+    const widget = document.getElementById('weatherWidget');
     const iconContainer = document.getElementById('weatherIconContainer');
     const tempElement = document.getElementById('weatherTemp');
     const descElement = document.getElementById('weatherDesc');
+    const dateElement = document.getElementById('weatherDate');
     const locationElement = document.getElementById('weatherLocation');
     const pollenValue = document.getElementById('pollenIndexValue');
     const pollenBar = document.getElementById('pollenIndexFill');
@@ -455,20 +551,33 @@ function updateWeatherCard(weatherData) {
         return;
     }
 
-    // Update weather display
+    const isNight = (weatherData.isDay !== undefined && weatherData.isDay !== null)
+        ? (Number(weatherData.isDay) === 0)
+        : isNightTime();
+    if (widget) {
+        widget.classList.toggle('weather-widget--night', isNight);
+        widget.classList.toggle('weather-widget--day', !isNight);
+    }
+
     const iconType = getWeatherIconType(weatherData.condition || 'clear');
     iconContainer.innerHTML = renderWeatherIcon(iconType);
 
     if (tempElement) {
-        tempElement.textContent = `${Math.round(weatherData.temperature || 0)}°C`;
+        tempElement.innerHTML = `${Math.round(weatherData.temperature || 0)}<span class="weather-deg">°</span>`;
     }
 
     if (descElement) {
         descElement.textContent = weatherData.condition || 'Clear';
     }
 
+    if (dateElement) {
+        dateElement.textContent = new Date().toLocaleDateString('ar-EG', {
+            weekday: 'long', day: 'numeric', month: 'long'
+        });
+    }
+
     if (locationElement) {
-        locationElement.innerHTML = `<i class="bi bi-geo-alt"></i> ${weatherData.location || 'Unknown'}`;
+        locationElement.innerHTML = `<i class="bi bi-geo-alt-fill"></i> <span>${weatherData.location || 'كفر الشيخ'}</span>`;
     }
 
     // Calculate and update health indices
@@ -766,10 +875,21 @@ function renderWeatherForecast(forecast) {
 
 // Initialize weather on page load - load last after all dashboard content
 document.addEventListener('DOMContentLoaded', function() {
-    // Forecast button handler
+    // Forecast button handler (legacy) + glass weather-widget click
     const forecastBtn = document.getElementById('weatherForecastBtn');
     if (forecastBtn) {
         forecastBtn.addEventListener('click', showWeatherForecastPopover);
+    }
+    const weatherWidget = document.getElementById('weatherWidget');
+    if (weatherWidget) {
+        const openForecast = () => showWeatherForecastPopover();
+        weatherWidget.addEventListener('click', openForecast);
+        weatherWidget.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                openForecast();
+            }
+        });
     }
 
     // Load weather data from cache first (fast)

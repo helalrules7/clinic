@@ -12,19 +12,23 @@
     </div>
 </div>
 
-<div class="row stats-cards-wrapper">
-    <!-- Statistics Cards -->
+<?php
+$trends = $trends ?? ['total' => [], 'booked' => [], 'checked_in' => [], 'completed' => [], 'missed' => []];
+?>
+<script type="application/json" id="secDashboardTrends"><?= json_encode($trends, JSON_UNESCAPED_UNICODE) ?></script>
+
+<div class="row stats-cards-wrapper sec-dashboard-stats">
     <div class="col-xl col-lg-4 col-md-6 mb-4 px-2">
         <div class="stats-card-wrapper">
-            <div class="stats-card stats-card-primary">
-                <div class="stats-card-content">
-                    <div class="stats-card-header">
-                        <h4 class="stats-card-title arabic-text">إجمالي المواعيد</h4>
-                        <h3 class="stats-card-value arabic-text"><?= $stats['total_appointments'] ?? 0 ?></h3>
-                    </div>
-                    <div class="stats-card-icon">
-                        <i class="bi bi-calendar3"></i>
-                    </div>
+            <div class="mini-stat-card mini-stat-primary">
+                <div class="mini-stat-icon"><i class="bi bi-calendar3-fill"></i></div>
+                <div class="mini-stat-content">
+                    <span class="mini-stat-value arabic-text" id="secStatTotal"><?= (int)($stats['total_appointments'] ?? 0) ?></span>
+                    <span class="mini-stat-label arabic-text">إجمالي المواعيد اليوم</span>
+                </div>
+                <div class="mini-stat-chart" id="chartSecTotal" data-trend-key="total"></div>
+                <div class="mini-stat-trend trend-neutral" id="trendSecTotal">
+                    <i class="bi bi-calendar-day"></i><span class="arabic-text">اليوم</span>
                 </div>
             </div>
         </div>
@@ -32,15 +36,15 @@
 
     <div class="col-xl col-lg-4 col-md-6 mb-4 px-2">
         <div class="stats-card-wrapper">
-            <div class="stats-card stats-card-warning">
-                <div class="stats-card-content">
-                    <div class="stats-card-header">
-                        <h4 class="stats-card-title arabic-text arabic-font">في الإنتظار</h4>
-                        <h3 class="stats-card-value arabic-text arabic-font"><?= $stats['booked'] ?? 0 ?></h3>
-                    </div>
-                    <div class="stats-card-icon">
-                        <i class="bi bi-calendar2-range"></i>
-                    </div>
+            <div class="mini-stat-card mini-stat-warning">
+                <div class="mini-stat-icon"><i class="bi bi-hourglass-split"></i></div>
+                <div class="mini-stat-content">
+                    <span class="mini-stat-value arabic-text" id="secStatBooked"><?= (int)($stats['booked'] ?? 0) ?></span>
+                    <span class="mini-stat-label arabic-text">في الانتظار</span>
+                </div>
+                <div class="mini-stat-chart" id="chartSecBooked" data-trend-key="booked"></div>
+                <div class="mini-stat-trend trend-neutral" id="trendSecBooked">
+                    <i class="bi bi-graph-up-arrow"></i><span>--</span>
                 </div>
             </div>
         </div>
@@ -48,15 +52,15 @@
 
     <div class="col-xl col-lg-4 col-md-6 mb-4 px-2">
         <div class="stats-card-wrapper">
-            <div class="stats-card stats-card-success">
-                <div class="stats-card-content">
-                    <div class="stats-card-header">
-                        <h4 class="stats-card-title arabic-text">تم الحضور</h4>
-                        <h3 class="stats-card-value arabic-text arabic-font font"><?= $stats['checked_in'] ?? 0 ?></h3>
-                    </div>
-                    <div class="stats-card-icon">
-                        <i class="bi bi-calendar-check"></i>
-                    </div>
+            <div class="mini-stat-card mini-stat-info">
+                <div class="mini-stat-icon"><i class="bi bi-person-check-fill"></i></div>
+                <div class="mini-stat-content">
+                    <span class="mini-stat-value arabic-text" id="secStatCheckedIn"><?= (int)($stats['checked_in'] ?? 0) ?></span>
+                    <span class="mini-stat-label arabic-text">تم الحضور</span>
+                </div>
+                <div class="mini-stat-chart" id="chartSecCheckedIn" data-trend-key="checked_in"></div>
+                <div class="mini-stat-trend trend-neutral" id="trendSecCheckedIn">
+                    <i class="bi bi-graph-up-arrow"></i><span>--</span>
                 </div>
             </div>
         </div>
@@ -64,15 +68,15 @@
 
     <div class="col-xl col-lg-4 col-md-6 mb-4 px-2">
         <div class="stats-card-wrapper">
-            <div class="stats-card stats-card-info">
-                <div class="stats-card-content">
-                    <div class="stats-card-header">
-                        <h4 class="stats-card-title arabic-text arabic-font">مواعيد مكتملة</h4>
-                        <h3 class="stats-card-value arabic-text arabic-font"><?= $stats['completed'] ?? 0 ?></h3>
-                    </div>
-                    <div class="stats-card-icon">
-                        <i class="bi bi-calendar-heart"></i>
-                    </div>
+            <div class="mini-stat-card mini-stat-success">
+                <div class="mini-stat-icon"><i class="bi bi-check-circle-fill"></i></div>
+                <div class="mini-stat-content">
+                    <span class="mini-stat-value arabic-text" id="secStatCompleted"><?= (int)($stats['completed'] ?? 0) ?></span>
+                    <span class="mini-stat-label arabic-text">مواعيد مكتملة</span>
+                </div>
+                <div class="mini-stat-chart" id="chartSecCompleted" data-trend-key="completed"></div>
+                <div class="mini-stat-trend trend-neutral" id="trendSecCompleted">
+                    <i class="bi bi-graph-up-arrow"></i><span>--</span>
                 </div>
             </div>
         </div>
@@ -80,46 +84,65 @@
 
     <div class="col-xl col-lg-4 col-md-6 mb-4 px-2">
         <div class="stats-card-wrapper">
-            <div class="stats-card stats-card-danger">
-                <div class="stats-card-content">
-                    <div class="stats-card-header">
-                        <h4 class="stats-card-title arabic-text arabic-font">لم يحضر</h4>
-                        <h3 class="stats-card-value arabic-text arabic-font"><?= $stats['missed'] ?? 0 ?></h3>
-                    </div>
-                    <div class="stats-card-icon">
-                        <i class="bi bi-calendar-x"></i>
-                    </div>
+            <div class="mini-stat-card mini-stat-danger">
+                <div class="mini-stat-icon"><i class="bi bi-x-circle-fill"></i></div>
+                <div class="mini-stat-content">
+                    <span class="mini-stat-value arabic-text" id="secStatMissed"><?= (int)($stats['missed'] ?? 0) ?></span>
+                    <span class="mini-stat-label arabic-text">لم يحضر</span>
+                </div>
+                <div class="mini-stat-chart" id="chartSecMissed" data-trend-key="missed"></div>
+                <div class="mini-stat-trend trend-down" id="trendSecMissed">
+                    <i class="bi bi-graph-down-arrow"></i><span>--</span>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Weather & Allergy Index Card -->
+    <!-- بطاقة الطقس — نسخة الطبيب الزجاجية -->
     <div class="col-xl col-lg-4 col-md-6 mb-4 px-2">
         <div class="stats-card-wrapper">
             <div class="stats-card stats-card-weather">
                 <div class="stats-card-content">
-                    <div class="weather-card-inner">
-                        <!-- Weather Section -->
-                        <div class="weather-main">
-                            <button class="weather-forecast-btn" id="weatherForecastBtn" title="5-Day Forecast">
-                                <i class="bi bi-calendar3"></i>
-                            </button>
-                            <div class="weather-icon-container" id="weatherIconContainer">
-                                <div class="weather-icon-loading">
-                                    <div class="spinner-border spinner-border-sm text-light" role="status">
-                                        <span class="visually-hidden">Loading...</span>
+                    <div class="weather-widget weather-widget--day" id="weatherWidget"
+                         role="button" tabindex="0" title="تفاصيل الطقس والتوقعات"
+                         aria-label="تفاصيل الطقس والتوقعات">
+                        <div class="weather-widget-top">
+                            <div class="weather-widget-body">
+                                <div class="weather-widget-primary">
+                                    <div class="weather-desc arabic-text" id="weatherDesc">جاري التحميل…</div>
+                                    <div class="weather-temp" id="weatherTemp">--<span class="weather-deg">°</span></div>
+                                </div>
+                                <div class="weather-widget-meta">
+                                    <div class="weather-date arabic-text" id="weatherDate">—</div>
+                                    <div class="weather-location arabic-text" id="weatherLocation">
+                                        <i class="bi bi-geo-alt-fill"></i>
+                                        <span>كفر الشيخ</span>
                                     </div>
                                 </div>
                             </div>
-                            <div class="weather-info">
-                                <div class="weather-temp" id="weatherTemp">--°C</div>
-                                <div class="weather-desc" id="weatherDesc">Loading...</div>
-                                <div class="weather-location" id="weatherLocation">
-                                    <i class="bi bi-geo-alt-fill"></i>
-                                    <span>جاري تحديد الموقع...</span>
+                            <div class="weather-icon-container" id="weatherIconContainer">
+                                <div class="weather-icon-loading">
+                                    <div class="spinner-border spinner-border-sm text-light" role="status"></div>
+                                </div>
                             </div>
                         </div>
+                        <div class="health-indices">
+                            <div class="health-index pollen-index">
+                                <div class="index-icon"><i class="bi bi-flower1"></i></div>
+                                <div class="index-info">
+                                    <span class="index-label arabic-text">مؤشر حبوب اللقاح</span>
+                                    <div class="index-bar"><div class="index-fill" id="pollenIndexFill" style="width:0%"></div></div>
+                                    <span class="index-value" id="pollenIndexValue">--</span>
+                                </div>
+                            </div>
+                            <div class="health-index dry-eye-index">
+                                <div class="index-icon"><i class="bi bi-eye"></i></div>
+                                <div class="index-info">
+                                    <span class="index-label arabic-text">جفاف العين</span>
+                                    <div class="index-bar"><div class="index-fill" id="dryEyeIndexFill" style="width:0%"></div></div>
+                                    <span class="index-value" id="dryEyeIndexValue">--</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -128,101 +151,84 @@
     </div>
 </div>
 
-
-
-
-<div class="row mb-4">
-    <!-- Today's Appointments -->
-    <div class="col-md-8">
-        <div class="card shadow dashboard-card">
-            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                <h6 class="m-0 font-weight-bold text-primary arabic-text">
-                    <i class="bi bi-calendar-event me-2">&nbsp;</i>
-                    مواعيد اليوم
-                </h6>
-                <a href="/secretary/bookings" class="btn btn-sm btn-primary arabic-text">
-                    <i class="bi bi-calendar-event me-1">&nbsp;</i>عرض الكل
-                </a>
-            </div>
-            <div class="card-body p-0">
-                <?php if (empty($todayAppointments)): ?>
-                    <div class="text-center py-4">
-                        <i class="bi bi-calendar-x display-4 text-muted"></i>
-                        <p class="text-muted mt-2 arabic-text">لا توجد مواعيد مجدولة لهذا اليوم</p>
-                        <a href="/secretary/bookings" class="btn btn-primary arabic-text">حجز أول موعد</a>
-                    </div>
-                <?php else: ?>
-                    <div class="table-responsive">
-                        <table class="table table-hover mb-0">
-                            <thead class="table-light">
-                                <tr>
-                                    <th class="arabic-text">الوقت</th>
-                                    <th class="arabic-text">المريض</th>
-                                    <th class="arabic-text">الطبيب</th>
-                                    <th class="arabic-text">النوع</th>
-                                    <th class="arabic-text">الحالة</th>
-                                    <th class="arabic-text">الإجراءات</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php foreach ($todayAppointments as $appointment): ?>
-                                    <tr>
-                                        <td>
-                                            <div class="d-flex align-items-center">
-                                                <i class="bi bi-clock me-2 text-primary"></i>
-                                                <?= date('H:i', strtotime($appointment['start_time'])) ?>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <div class="d-flex align-items-center">
-                                                <div class="avatar-sm me-2">
-                                                    <i class="bi bi-person-circle"></i>
-                                                </div>
-                                                <div>
-                                                    <div class="fw-semibold"><?= $appointment['first_name'] . ' ' . $appointment['last_name'] ?></div>
-                                                    <small class="text-muted"><?= $appointment['phone'] ?></small>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <span class="badge bg-info"><?= $appointment['doctor_name'] ?></span>
-                                        </td>
-                                        <td>
-                                            <span class="badge <?= $this->getVisitTypeBadgeClass($appointment['visit_type']) ?>">
-                                                <?= $appointment['visit_type'] ?>
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <span class="badge <?= $this->getStatusBadgeClass($appointment['status']) ?>">
-                                                <?= $appointment['status'] ?>
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <div class="btn-group btn-group-sm">
-                                                <button type="button" class="btn btn-outline-primary btn-sm" 
-                                                        onclick="viewAppointment(<?= $appointment['id'] ?>)">
-                                                    <i class="bi bi-eye"></i>
-                                                </button>
-                                                <?php if ($appointment['status'] === 'Booked'): ?>
-                                                    <button type="button" class="btn btn-outline-success btn-sm"
-                                                            onclick="checkInPatient(<?= $appointment['id'] ?>)">
-                                                        <i class="bi bi-check-circle"></i>
-                                                    </button>
-                                                <?php endif; ?>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                <?php endforeach; ?>
-                            </tbody>
-                        </table>
-                    </div>
-                <?php endif; ?>
+<!-- شريط أخبار طب العيون -->
+<div class="news-bar-wrapper mb-3">
+    <div class="news-bar">
+        <span class="label arabic-text">
+            <i class="bi bi-broadcast"></i>
+            <span class="news-bar-live"></span>
+            أخبار طب العيون
+        </span>
+        <div class="ticker-wrap">
+            <div class="ticker" id="secNewsTicker">
+                <span class="arabic-text">جاري التحميل...</span>
             </div>
         </div>
     </div>
-    
+</div>
+
+<div class="row mb-4">
+    <div class="col-xl-6 col-lg-6 col-md-12 mb-4">
+        <div class="card shadow dashboard-card h-100">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary arabic-text">
+                    <i class="bi bi-calendar-event me-2"></i>مواعيد اليوم
+                </h6>
+                <a href="/secretary/bookings" class="btn btn-sm btn-primary arabic-text">
+                    <i class="bi bi-calendar3 me-1"></i>عرض الكل
+                </a>
+            </div>
+            <div class="card-body" id="secTodayApptContainer">
+                <?php if (empty($todayAppointments)): ?>
+                    <div class="appt-empty arabic-text text-center py-4">
+                        <i class="bi bi-calendar-x display-6 text-muted"></i>
+                        <p class="text-muted mt-2">لا توجد مواعيد اليوم</p>
+                        <a href="/secretary/bookings" class="btn btn-primary btn-sm">حجز موعد</a>
+                    </div>
+                <?php endif; ?>
+            </div>
+            <nav class="px-3 pb-3" id="secTodayApptPagination" style="display:none" aria-label="ترقيم مواعيد اليوم">
+                <ul class="pagination pagination-sm justify-content-center mb-0"></ul>
+            </nav>
+        </div>
+    </div>
+
+    <div class="col-xl-6 col-lg-6 col-md-12 mb-4">
+        <div class="dash-mini-grid h-100">
+            <div class="dash-mini-card" id="secDashStatusCard">
+                <div class="dash-mini-head arabic-text"><i class="bi bi-pie-chart-fill"></i><span>حالة اليوم</span></div>
+                <div class="dash-mini-body" id="secDashStatusBody">
+                    <div class="dash-mini-spinner"><div class="spinner-border spinner-border-sm text-primary"></div></div>
+                </div>
+            </div>
+            <div class="dash-mini-card" id="secDashRevenueCard">
+                <div class="dash-mini-head arabic-text"><i class="bi bi-cash-coin"></i><span>إيرادات اليوم</span></div>
+                <div class="dash-mini-body" id="secDashRevenueBody">
+                    <div class="dash-mini-spinner"><div class="spinner-border spinner-border-sm text-primary"></div></div>
+                </div>
+            </div>
+            <div class="dash-mini-card" id="secDashQuickCard">
+                <div class="dash-mini-head arabic-text"><i class="bi bi-lightning-charge-fill"></i><span>إجراءات سريعة</span></div>
+                <div class="dash-mini-body dash-quick-actions">
+                    <a href="/secretary/bookings?openModal=addBooking" class="dash-quick-tile dqt-indigo arabic-text"><i class="bi bi-calendar-plus"></i><span>حجز جديد</span></a>
+                    <a href="/secretary/patients?openModal=addPatient" class="dash-quick-tile dqt-teal arabic-text"><i class="bi bi-person-plus"></i><span>مريض جديد</span></a>
+                    <a href="/secretary/payments" class="dash-quick-tile dqt-violet arabic-text"><i class="bi bi-credit-card"></i><span>المدفوعات</span></a>
+                    <a href="/secretary/bookings" class="dash-quick-tile dqt-amber arabic-text"><i class="bi bi-calendar3"></i><span>التقويم</span></a>
+                </div>
+            </div>
+            <div class="dash-mini-card dash-mini-clickable" onclick="window.location.href='/secretary/payments'" role="button" tabindex="0">
+                <div class="dash-mini-head arabic-text"><i class="bi bi-wallet2"></i><span>ملخص مالي</span></div>
+                <div class="dash-mini-body arabic-text" style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--muted);font-size:.85rem;">
+                    <span>عرض التحصيل والرصيد اليومي ←</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
     <!-- Recent Payments -->
-    <div class="col-md-4">
+    <div class="col-md-12">
         <div class="card shadow dashboard-card h-100">
             <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
                 <h6 class="m-0 font-weight-bold text-primary arabic-text">
@@ -263,6 +269,16 @@
 
 
 <script src="/app/Views/secretary/assets/js/dashboard.js?v=<?= file_exists(__DIR__ . '/assets/js/dashboard.js') ? filemtime(__DIR__ . '/assets/js/dashboard.js') : time() ?>"></script>
+<script src="/app/Views/secretary/assets/js/sec-dashboard-widgets.js?v=<?= file_exists(__DIR__ . '/assets/js/sec-dashboard-widgets.js') ? filemtime(__DIR__ . '/assets/js/sec-dashboard-widgets.js') : time() ?>"></script>
+<script type="application/json" id="secTodayApptsInitial"><?= json_encode($todayAppointments ?? [], JSON_UNESCAPED_UNICODE) ?></script>
+<script type="application/json" id="secDashboardStatsInitial"><?= json_encode([
+    'total_appointments' => (int)($stats['total_appointments'] ?? 0),
+    'booked' => (int)($stats['booked'] ?? 0),
+    'checked_in' => (int)($stats['checked_in'] ?? 0),
+    'completed' => (int)($stats['completed'] ?? 0),
+    'missed' => (int)($stats['missed'] ?? 0),
+], JSON_UNESCAPED_UNICODE) ?></script>
+<script type="application/json" id="secRevenueInitial"><?= json_encode($revenue ?? null, JSON_UNESCAPED_UNICODE) ?></script>
 
 <script>
 // Dashboard auto-refresh using API polling
@@ -274,44 +290,20 @@
     /**
      * Update statistics cards
      */
-    function updateStatsCards(stats) {
-        // Update total appointments
-        const totalEl = document.querySelector('.stats-card-primary .stats-card-value');
-        if (totalEl) {
-            totalEl.textContent = stats.total_appointments || 0;
-        }
-
-        // Update booked
-        const bookedCard = Array.from(document.querySelectorAll('.stats-card-warning')).find(card => 
-            card.querySelector('.stats-card-title')?.textContent.includes('في الإنتظار')
-        );
-        if (bookedCard) {
-            const valueEl = bookedCard.querySelector('.stats-card-value');
-            if (valueEl) valueEl.textContent = stats.booked || 0;
-        }
-
-        // Update checked in
-        const checkedInEl = document.querySelector('.stats-card-success .stats-card-value');
-        if (checkedInEl) {
-            checkedInEl.textContent = stats.checked_in || 0;
-        }
-
-        // Update completed
-        const completedCard = Array.from(document.querySelectorAll('.stats-card-info')).find(card => 
-            card.querySelector('.stats-card-title')?.textContent.includes('مواعيد مكتملة')
-        );
-        if (completedCard) {
-            const valueEl = completedCard.querySelector('.stats-card-value');
-            if (valueEl) valueEl.textContent = stats.completed || 0;
-        }
-
-        // Update missed
-        const missedCard = Array.from(document.querySelectorAll('.stats-card-danger')).find(card => 
-            card.querySelector('.stats-card-title')?.textContent.includes('لم يحضر')
-        );
-        if (missedCard) {
-            const valueEl = missedCard.querySelector('.stats-card-value');
-            if (valueEl) valueEl.textContent = stats.missed || 0;
+    function updateStatsCards(stats, trends) {
+        var fields = [
+            ['secStatTotal', 'total_appointments'],
+            ['secStatBooked', 'booked'],
+            ['secStatCheckedIn', 'checked_in'],
+            ['secStatCompleted', 'completed'],
+            ['secStatMissed', 'missed']
+        ];
+        fields.forEach(function (pair) {
+            var el = document.getElementById(pair[0]);
+            if (el) el.textContent = stats[pair[1]] || 0;
+        });
+        if (typeof window.secRefreshDashboardCharts === 'function') {
+            window.secRefreshDashboardCharts(trends);
         }
     }
 
@@ -319,71 +311,8 @@
      * Update today's appointments table
      */
     function updateAppointmentsTable(appointments) {
-        const container = document.querySelector('#todayAppointmentsContainer') || 
-                         document.querySelector('.table-responsive tbody');
-        
-        if (!container) return;
-
-        if (appointments.length === 0) {
-            const table = container.closest('.table-responsive');
-            if (table) {
-                table.outerHTML = `
-                    <div class="text-center py-4">
-                        <i class="bi bi-calendar-x display-4 text-muted"></i>
-                        <p class="text-muted mt-2 arabic-text">لا توجد مواعيد مجدولة لهذا اليوم</p>
-                        <a href="/secretary/bookings" class="btn btn-primary arabic-text">حجز أول موعد</a>
-                    </div>
-                `;
-            }
-            return;
-        }
-
-        // If container is tbody, update it
-        if (container.tagName === 'TBODY') {
-            container.innerHTML = appointments.map(apt => `
-                <tr>
-                    <td>
-                        <div class="d-flex align-items-center">
-                            <i class="bi bi-clock me-2 text-primary"></i>
-                            ${new Date('2000-01-01 ' + apt.start_time).toLocaleTimeString('ar-EG', {hour: '2-digit', minute: '2-digit'})}
-                    </div>
-                    </td>
-                    <td>
-                        <div class="d-flex align-items-center">
-                            <div class="avatar-sm me-2">
-                                <i class="bi bi-person-circle"></i>
-                </div>
-                            <div>
-                                <div class="fw-semibold">${apt.first_name} ${apt.last_name}</div>
-                                <small class="text-muted">${apt.phone || ''}</small>
-            </div>
-        </div>
-                    </td>
-                    <td>
-                        <span class="badge bg-info">${apt.doctor_name || ''}</span>
-                    </td>
-                    <td>
-                        <span class="badge bg-secondary">${apt.visit_type || ''}</span>
-                    </td>
-                    <td>
-                        <span class="badge ${getStatusBadgeClass(apt.status)}">${apt.status || ''}</span>
-                    </td>
-                    <td>
-                        <div class="btn-group btn-group-sm">
-                            <button type="button" class="btn btn-outline-primary btn-sm" 
-                                    onclick="viewAppointment(${apt.id})">
-                                <i class="bi bi-eye"></i>
-                            </button>
-                            ${apt.status === 'Booked' ? `
-                                <button type="button" class="btn btn-outline-success btn-sm"
-                                        onclick="checkInPatient(${apt.id})">
-                                    <i class="bi bi-check-circle"></i>
-                                </button>
-                            ` : ''}
-    </div>
-                    </td>
-                </tr>
-            `).join('');
+        if (window.secDashboardWidgets && typeof window.secDashboardWidgets.renderTodayAppointments === 'function') {
+            window.secDashboardWidgets.renderTodayAppointments(appointments);
         }
     }
 
@@ -477,12 +406,15 @@
             if (result.ok && result.data) {
                 // Update stats cards
                 if (result.data.stats) {
-                    updateStatsCards(result.data.stats);
+                    updateStatsCards(result.data.stats, result.data.trends);
                 }
-                
-                // Update appointments table
-                if (result.data.todayAppointments) {
-                    updateAppointmentsTable(result.data.todayAppointments);
+
+                if (window.secDashboardWidgets && typeof window.secDashboardWidgets.refresh === 'function') {
+                    window.secDashboardWidgets.refresh(result.data);
+                } else {
+                    if (result.data.todayAppointments) {
+                        updateAppointmentsTable(result.data.todayAppointments);
+                    }
                 }
                 
                 // Update recent payments
@@ -949,219 +881,11 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize draggable modals after a short delay to ensure modals are ready
     setTimeout(initializeDraggableModals, 200);
-    const cards = document.querySelectorAll('.stats-card');
-    const wrapper = document.querySelector('.stats-cards-wrapper');
-
-    if (wrapper && cards.length > 0) {
-        wrapper.addEventListener('mousemove', function (event) {
-            cards.forEach((card) => {
-                const cardContent = card.querySelector('.stats-card-content');
-                if (!cardContent) return;
-                
-                const rect = cardContent.getBoundingClientRect();
-                const x = event.clientX - rect.left;
-                const y = event.clientY - rect.top;
-
-                // Get card type and corresponding color
-                let color = 'rgba(59, 248, 251, 0.3)';
-                if (card.classList.contains('stats-card-primary')) {
-                    color = 'rgba(14, 165, 233, 0.4)';
-                } else if (card.classList.contains('stats-card-success')) {
-                    color = 'rgba(16, 185, 129, 0.4)';
-                } else if (card.classList.contains('stats-card-danger')) {
-                    color = 'rgba(239, 68, 68, 0.4)';
-                } else if (card.classList.contains('stats-card-warning')) {
-                    color = 'rgba(245, 158, 11, 0.4)';
-                } else if (card.classList.contains('stats-card-info')) {
-                    color = 'rgba(187, 54, 204, 0.4)';
-                } else if (card.classList.contains('stats-card-weather')) {
-                    // Skip weather card - don't apply hover effect
-                    return;
-                }
-
-                // Apply gradient to card-content, overlay on top of background-color
-                // Use multiple backgrounds: gradient on top, solid color below
-                cardContent.style.background = `radial-gradient(960px circle at ${x}px ${y}px, ${color}, transparent 15%), var(--card)`;
-            });
-        });
-        
-        // Reset background when mouse leaves wrapper
-        wrapper.addEventListener('mouseleave', function() {
-            cards.forEach((card) => {
-                const cardContent = card.querySelector('.stats-card-content');
-                if (cardContent) {
-                    cardContent.style.background = '';
-                }
-            });
-        });
-    }
 });
 </script>
 
 <style>
     
-/* Stats Cards - Center Content and Background Colors */
-.stats-cards-wrapper {
-    margin: 0 -0.5rem;
-}
-
-.stats-card-wrapper {
-    position: relative;
-    width: 100%;
-    height: 100%;
-    min-height: 180px;
-}
-
-.stats-card {
-    width: 100%;
-    height: 100%;
-    background: none;
-    border-radius: 20px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    position: relative;
-    transition: all 0.2s ease;
-    cursor: pointer;
-}
-
-.stats-card-content {
-    background-color: var(--card);
-    border-radius: inherit;
-    transition: all 0.25s ease;
-    height: calc(100% - 2px);
-    width: calc(100% - 2px);
-    position: relative;
-    overflow: hidden;
-    box-shadow: 0 4px 20px var(--shadow);
-    border: 1px solid var(--border);
-    z-index: 2;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
-}
-
-.stats-card:hover {
-    transform: scale(0.98);
-}
-
-.stats-card-header {
-    padding: 1.5rem 1rem 0.5rem 1rem;
-    text-align: center;
-    position: relative;
-    z-index: 10;
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-}
-
-.stats-card-title {
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    color: var(--muted);
-    font-weight: 600;
-    letter-spacing: 0.5px;
-    margin-bottom: 0.5rem;
-    line-height: 1.2;
-}
-
-.stats-card-value {
-    font-size: 2rem;
-    font-weight: 700;
-    color: var(--text);
-    margin: 0.5rem 0;
-    line-height: 1.2;
-}
-
-.stats-card-icon {
-    position: absolute;
-    right: 1rem; /* RTL: right instead of left */
-    top: 50%;
-    transform: translateY(-50%);
-    z-index: 3;
-    opacity: 0.15;
-    pointer-events: none;
-}
-
-.stats-card-icon i {
-    font-size: 4rem;
-    color: var(--text);
-}
-
-/* Background colors for stats cards - Light Mode */
-.stats-card-primary .stats-card-content {
-    background: linear-gradient(135deg, rgba(14, 165, 233, 0.1) 0%, rgba(14, 165, 233, 0.05) 100%), var(--card);
-    border-color: rgba(14, 165, 233, 0.3);
-}
-
-.stats-card-success .stats-card-content {
-    background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0.05) 100%), var(--card);
-    border-color: rgba(16, 185, 129, 0.3);
-}
-
-.stats-card-info .stats-card-content {
-    background: linear-gradient(135deg, rgba(187, 54, 204, 0.1) 0%, rgba(187, 54, 204, 0.05) 100%), var(--card);
-    border-color: rgba(187, 54, 204, 0.3);
-}
-
-.stats-card-warning .stats-card-content {
-    background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(245, 158, 11, 0.05) 100%), var(--card);
-    border-color: rgba(245, 158, 11, 0.3);
-}
-
-.stats-card-danger .stats-card-content {
-    background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(239, 68, 68, 0.05) 100%), var(--card);
-    border-color: rgba(239, 68, 68, 0.3);
-}
-
-/* Dark Mode Stats Cards */
-.dark .stats-card-content {
-    background-color: var(--card);
-    border-color: var(--border);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
-}
-
-.dark .stats-card-primary .stats-card-content {
-    background: linear-gradient(135deg, rgba(56, 189, 248, 0.15) 0%, rgba(56, 189, 248, 0.08) 100%), var(--card);
-    border-color: rgba(56, 189, 248, 0.4);
-}
-
-.dark .stats-card-success .stats-card-content {
-    background: linear-gradient(135deg, rgba(74, 222, 128, 0.15) 0%, rgba(74, 222, 128, 0.08) 100%), var(--card);
-    border-color: rgba(74, 222, 128, 0.4);
-}
-
-.dark .stats-card-info .stats-card-content {
-    background: linear-gradient(135deg, rgba(192, 132, 252, 0.15) 0%, rgba(192, 132, 252, 0.08) 100%), var(--card);
-    border-color: rgba(192, 132, 252, 0.4);
-}
-
-.dark .stats-card-warning .stats-card-content {
-    background: linear-gradient(135deg, rgba(251, 191, 36, 0.15) 0%, rgba(251, 191, 36, 0.08) 100%), var(--card);
-    border-color: rgba(251, 191, 36, 0.4);
-}
-
-.dark .stats-card-danger .stats-card-content {
-    background: linear-gradient(135deg, rgba(248, 113, 113, 0.15) 0%, rgba(248, 113, 113, 0.08) 100%), var(--card);
-    border-color: rgba(248, 113, 113, 0.4);
-}
-
-.dark .stats-card-title {
-    color: var(--muted);
-}
-
-.dark .stats-card-value {
-    color: var(--text);
-}
-
-.dark .stats-card-icon i {
-    opacity: 0.2;
-}
-
 /* Table header RTL alignment */
 .table thead th {
     text-align: right !important;
@@ -1172,26 +896,6 @@ document.addEventListener('DOMContentLoaded', function() {
     text-align: right !important;
     direction: rtl;
 }
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-    .stats-card-wrapper {
-        min-height: 160px;
-    }
-    
-    .stats-card-value {
-        font-size: 1.75rem;
-    }
-    
-    .stats-card-title {
-        font-size: 0.7rem;
-    }
-    
-    .stats-card-header {
-        padding: 1.25rem 0.75rem 0.5rem 0.75rem;
-    }
-}
-
 
 /* ============================================
        Action Buttons in Table - Ensure proper borders and styles
