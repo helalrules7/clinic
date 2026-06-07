@@ -1544,20 +1544,38 @@ input[readonly] {
     align-items: center;
 }
 
+/* Secretary bookings — doctor calendar parity (calendar.css owns header gradient + badge position) */
 .bookings-appointment-card {
     width: 100%;
-    padding: 0.75rem;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    border: 1px solid var(--border);
-    background: var(--card);
-    color: var(--text);
 }
 
-.bookings-appointment-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+/* Confirm attendance — solid green pill (secretary-only action) */
+#bookingsCalendarContainer .confirm-attendance-btn {
+    padding: 0.375rem 0.75rem !important;
+    font-size: 0.875rem !important;
+    border-radius: 10px !important;
+    border: 1px solid #10b981 !important;
+    transition: all 0.2s ease !important;
+    opacity: 0.9;
+    background-color: #10b981 !important;
+    color: #ffffff !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+#bookingsCalendarContainer .confirm-attendance-btn:hover {
+    opacity: 1 !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.35) !important;
+    background-color: #059669 !important;
+    border-color: #059669 !important;
+    color: #ffffff !important;
+}
+#bookingsCalendarContainer .confirm-attendance-btn:hover i { color: #ffffff !important; }
+.dark #bookingsCalendarContainer .confirm-attendance-btn {
+    border-color: #10b981 !important;
+    background-color: #10b981 !important;
+    color: #ffffff !important;
 }
 
 /* Booking Card Responsive Layout */

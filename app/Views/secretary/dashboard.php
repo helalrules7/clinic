@@ -270,14 +270,14 @@ $secTipToday = $secDailyTips[$secTipIndex];
                     <i class="bi bi-credit-card me-1">&nbsp;</i>عرض الكل
                 </a>
             </div>
-            <div class="card-body p-0">
+            <div class="card-body p-0" id="secRecentPaymentsBody">
                 <?php if (empty($recentPayments)): ?>
-                    <div class="text-center py-4">
+                    <div class="text-center py-4" id="secRecentPaymentsEmpty">
                         <i class="bi bi-credit-card text-muted"></i>
                         <p class="text-muted mt-2 arabic-text">لا توجد مدفوعات حديثة</p>
                     </div>
                 <?php else: ?>
-                    <div class="list-group list-group-flush">
+                    <div class="list-group list-group-flush" id="secRecentPaymentsList">
                         <?php foreach (array_slice($recentPayments, 0, 5) as $payment): ?>
                             <div class="list-group-item d-flex justify-content-between align-items-center">
                                 <div>
@@ -352,20 +352,20 @@ $secTipToday = $secDailyTips[$secTipIndex];
      * Update recent payments list
      */
     function updateRecentPayments(payments) {
-        const container = document.querySelector('.list-group-flush');
-        if (!container) return;
+        const body = document.getElementById('secRecentPaymentsBody');
+        if (!body) return;
 
-        if (payments.length === 0) {
-            container.outerHTML = `
-                <div class="text-center py-4">
+        if (!payments || payments.length === 0) {
+            body.innerHTML = `
+                <div class="text-center py-4" id="secRecentPaymentsEmpty">
                     <i class="bi bi-credit-card text-muted"></i>
                     <p class="text-muted mt-2 arabic-text">لا توجد مدفوعات حديثة</p>
-</div>
-            `;
+                </div>`;
             return;
         }
 
-        container.innerHTML = payments.map(payment => `
+        body.innerHTML = `<div class="list-group list-group-flush" id="secRecentPaymentsList">${
+            payments.map(payment => `
             <div class="list-group-item d-flex justify-content-between align-items-center">
                 <div>
                     <div class="fw-semibold">${payment.first_name} ${payment.last_name}</div>
@@ -375,8 +375,8 @@ $secTipToday = $secDailyTips[$secTipIndex];
                     <div class="fw-bold text-success">${formatMoney(payment.amount)}</div>
                     <small class="text-muted">${formatTime(payment.created_at)}</small>
                 </div>
-            </div>
-        `).join('');
+            </div>`).join('')
+        }</div>`;
     }
 
     /**

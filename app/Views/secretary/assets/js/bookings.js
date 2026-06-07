@@ -389,7 +389,7 @@ function renderAppointmentSlot(appointment) {
                         ? `<div class="info-line arabic-text"><span class="label">العيادة:</span> ${renderClinicChip(appointment)}</div>` : ''}
                     <div class="info-line arabic-text"><span class="label">النوع:</span> ${getVisitTypeInArabic(appointment.visit_type)}</div>
                     <div class="info-line arabic-text"><span class="label">الوقت:</span> ${formatTime(appointment.start_time)} - ${formatTime(appointment.end_time)}</div>
-                    <div class="info-line arabic-text small text-success">المدفوع: ${totalPaid} جنيه · المتبقي: ${remainingAmount} جنيه</div>
+                    <div class="info-line arabic-text small">المدفوع: ${totalPaid} جنيه · المتبقي: ${remainingAmount} جنيه</div>
                     ${showProgress ? `
                     <div class="appointment-progress-container mt-2"
                          data-appointment-id="${appointment.id}"
@@ -439,18 +439,18 @@ function renderAppointmentSlot(appointment) {
                         <i class="bi bi-person-circle"></i>
                     </a>
                     ${appointment.status === 'Booked' && !isMissed ? `
-                    <button class="btn btn-sm btn-outline-success"
+                    <button class="btn btn-sm confirm-attendance-btn"
                             onclick="event.stopPropagation(); confirmAttendance(${appointment.id}, '${safeName}', '${timeShort}', '${safeDoctor}', '${appointment.visit_type}', ${totalPaid}, ${remainingAmount})"
                             data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="تأكيد الحضور">
                         <i class="bi bi-check-circle"></i>
                     </button>` : ''}
                     ${appointment.status !== 'CheckedIn' && appointment.status !== 'Completed' ? `
-                    <button class="btn btn-sm btn-outline-primary"
+                    <button class="btn btn-sm btn-outline-primary edit-appointment-btn"
                             onclick="event.stopPropagation(); editBooking(${appointment.id})"
                             data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="تعديل الحجز">
                         <i class="bi bi-pencil-square"></i>
                     </button>
-                    <button class="btn btn-sm btn-outline-danger"
+                    <button class="btn btn-sm btn-outline-danger delete-appointment-btn"
                             onclick="event.stopPropagation(); deleteBooking(${appointment.id}, '${safeName}', '${timeShort}', '${safeDoctor}', '${safeVisitAr}', ${totalPaid}, ${remainingAmount}, '${safeNotes}')"
                             data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="حذف الحجز">
                         <i class="bi bi-trash"></i>

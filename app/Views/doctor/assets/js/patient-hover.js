@@ -37,6 +37,77 @@
     var REQUEST_TIMEOUT  = 8000;  // ms — fetch abort threshold
     var MOBILE_BP        = 575.98;
 
+    var I18N = {
+        lastVisit:       { en: 'Last visit', ar: 'آخر زيارة' },
+        nextAppt:        { en: 'Next appointment', ar: 'الموعد القادم' },
+        activeAlerts:    { en: 'Active alerts', ar: 'تنبيهات نشطة' },
+        openProfile:     { en: 'Open profile', ar: 'فتح الملف' },
+        unknownPatient:  { en: 'Unknown patient', ar: 'مريض غير معروف' },
+        noPrevVisits:    { en: 'No previous visits', ar: 'لا زيارات سابقة' },
+        noneScheduled:   { en: 'None scheduled', ar: 'لا موعد مجدول' },
+        alert:           { en: 'alert', ar: 'تنبيه' },
+        alerts:          { en: 'alerts', ar: 'تنبيهات' },
+        loadError:       { en: 'Couldn’t load patient summary.', ar: 'تعذّر تحميل ملخص المريض.' },
+        loading:         { en: 'Loading patient summary…', ar: 'جاري تحميل ملخص المريض…' },
+        yrs:             { en: 'yrs', ar: 'سنة' }
+    };
+
+    function isArabicUI() {
+        var html = document.documentElement;
+        var lang = (html.getAttribute('lang') || '').toLowerCase();
+        return lang.indexOf('ar') === 0 || html.getAttribute('dir') === 'rtl';
+    }
+
+    function uiLocale() {
+        return isArabicUI() ? 'ar-EG' : undefined;
+    }
+
+    function t(key) {
+        var row = I18N[key];
+        if (!row) return key;
+        return isArabicUI() ? row.ar : row.en;
+    }
+
+    function patientProfilePath(id) {
+        var layout = document.documentElement.getAttribute('data-layout');
+        if (layout === 'secretary') return '/secretary/patients/' + encodeURIComponent(id);
+        return '/doctor/patients/' + encodeURIComponent(id);
+    }
+
+    function translateGender(g) {
+        if (!g) return '';
+        var s = String(g).trim().toLowerCase();
+        if (!isArabicUI()) {
+            return s.charAt(0).toUpperCase() + s.slice(1);
+        }
+        if (s === 'male' || s === 'm') return 'ذكر';
+        if (s === 'female' || s === 'f') return 'أنثى';
+        return g;
+    }
+
+    function applyLocaleLabels() {
+        if (!card) return;
+        var map = [
+            ['[data-pc-row="last-visit"] .pc-stat-label span:last-child', 'lastVisit'],
+            ['[data-pc-row="next-appt"] .pc-stat-label span:last-child', 'nextAppt'],
+            ['[data-pc-row="alerts"] .pc-stat-label span:last-child', 'activeAlerts'],
+            ['[data-pc-link] span:first-child', 'openProfile']
+        ];
+        map.forEach(function (pair) {
+            var el = card.querySelector(pair[0]);
+            if (el) el.textContent = t(pair[1]);
+        });
+        var skelHidden = card.querySelector('.pc-skeleton .visually-hidden');
+        if (skelHidden) skelHidden.textContent = t('loading');
+        var errMsg = card.querySelector('[data-pc-error-msg]');
+        if (errMsg && !errMsg.dataset.userMsg) errMsg.textContent = t('loadError');
+        var ctaIcon = card.querySelector('[data-pc-link] i');
+        if (ctaIcon) {
+            ctaIcon.classList.toggle('bi-arrow-right-short', !isArabicUI());
+            ctaIcon.classList.toggle('bi-arrow-left-short', isArabicUI());
+        }
+    }
+
     // ---------------------------------------------------------------- state
     var card           = null;   // <aside id="patientCard">
     var bodyEl         = null;
@@ -87,7 +158,7 @@
         var d = (value instanceof Date) ? value : new Date(value);
         if (isNaN(d.getTime())) return null;
         try {
-            return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+            return d.toLocaleDateString(uiLocale(), { year: 'numeric', month: 'short', day: 'numeric' });
         } catch (e) {
             return d.toDateString();
         }
@@ -98,11 +169,12 @@
         var d = (value instanceof Date) ? value : new Date(value);
         if (isNaN(d.getTime())) return null;
         try {
-            var datePart = d.toLocaleDateString(undefined, {
+            var loc = uiLocale();
+            var datePart = d.toLocaleDateString(loc, {
                 year: 'numeric', month: 'short', day: 'numeric'
             });
-            var timePart = d.toLocaleTimeString(undefined, {
-                hour: 'numeric', minute: '2-digit', hour12: true
+            var timePart = d.toLocaleTimeString(loc, {
+                hour: 'numeric', minute: '2-digit', hour12: !isArabicUI()
             });
             return datePart + ' · ' + timePart;
         } catch (e) {
@@ -118,10 +190,16 @@
         var abs  = Math.abs(diff);
         var DAY  = 86400000;
         var HOUR = 3600000;
-        if (abs < HOUR)  return diff < 0 ? 'just now' : 'soon';
-        if (abs < DAY)   return Math.round(abs / HOUR) + 'h ' + (diff < 0 ? 'ago' : 'from now');
+        var ar = isArabicUI();
+        if (abs < HOUR)  return diff < 0 ? (ar ? 'الآن' : 'just now') : (ar ? 'قريباً' : 'soon');
+        if (abs < DAY) {
+            var hrs = Math.round(abs / HOUR);
+            if (ar) return diff < 0 ? ('منذ ' + hrs + ' س') : ('بعد ' + hrs + ' س');
+            return hrs + 'h ' + (diff < 0 ? 'ago' : 'from now');
+        }
         if (abs < 30 * DAY) {
             var days = Math.round(abs / DAY);
+            if (ar) return diff < 0 ? ('منذ ' + days + ' ي') : ('بعد ' + days + ' ي');
             return days + 'd ' + (diff < 0 ? 'ago' : 'from now');
         }
         return null;
@@ -259,24 +337,23 @@
         if (initialsEl) initialsEl.textContent = inits || '?';
 
         // Identity.
-        setText('[data-pc-name]', p && p.name, 'Unknown patient');
+        setText('[data-pc-name]', p && p.name, t('unknownPatient'));
 
         var ageStr = '';
+        var ageUnit = t('yrs');
         if (p && (p.age != null && p.age !== '')) {
-            ageStr = p.age + (typeof p.age === 'number' ? ' yrs' : '');
+            ageStr = p.age + (typeof p.age === 'number' ? ' ' + ageUnit : '');
         } else if (p && p.dob) {
             var dob = new Date(p.dob);
             if (!isNaN(dob.getTime())) {
                 var diffMs = Date.now() - dob.getTime();
                 var years = Math.floor(diffMs / (365.25 * 86400000));
-                if (years >= 0 && years < 130) ageStr = years + ' yrs';
+                if (years >= 0 && years < 130) ageStr = years + ' ' + ageUnit;
             }
         }
         setText('[data-pc-age]', ageStr, '');
 
-        var gender = (p && p.gender) ? String(p.gender) : '';
-        gender = gender.charAt(0).toUpperCase() + gender.slice(1);
-        setText('[data-pc-gender]', gender, '');
+        setText('[data-pc-gender]', translateGender(p && p.gender), '');
 
         // Hide the “·” separator when age or gender is missing.
         var sep = card.querySelector('.pc-meta-sep');
@@ -305,7 +382,7 @@
             var lvRel  = relativeFromNow(lv);
             lastVisitText = (lvDate || '—') + (lvRel ? ' · ' + lvRel : '');
         } else {
-            lastVisitText = 'No previous visits';
+            lastVisitText = t('noPrevVisits');
         }
         setText('[data-pc-last-visit]', lastVisitText);
 
@@ -318,7 +395,7 @@
             var nxRel  = relativeFromNow(nx);
             nextText = (nxDate || '—') + (nxRel ? ' · ' + nxRel : '');
         } else {
-            nextText = 'None scheduled';
+            nextText = t('noneScheduled');
         }
         setText('[data-pc-next-appt]', nextText);
 
@@ -336,7 +413,7 @@
                 var countEl = alertsRow.querySelector('[data-pc-alerts-count]');
                 var labelEl = alertsRow.querySelector('[data-pc-alerts-label]');
                 if (countEl) countEl.textContent = alertCount;
-                if (labelEl) labelEl.textContent = alertCount === 1 ? 'alert' : 'alerts';
+                if (labelEl) labelEl.textContent = alertCount === 1 ? t('alert') : t('alerts');
                 var chip = alertsRow.querySelector('.pc-alerts-chip');
                 if (chip) chip.classList.add('pc-alerts-chip--pulse');
             } else {
@@ -346,7 +423,7 @@
 
         // CTA link.
         var link = card.querySelector('[data-pc-link]');
-        if (link) link.setAttribute('href', '/doctor/patients/' + encodeURIComponent(id));
+        if (link) link.setAttribute('href', patientProfilePath(id));
 
         showBody();
     }
@@ -629,7 +706,7 @@
     }
 
     // ---------------------------------------- universal trigger tagging
-    var PATIENT_HREF_RE = /\/doctor\/patients?\/(\d+)/i;
+    var PATIENT_HREF_RE = /\/(?:doctor|secretary)\/patients?\/(\d+)/i;
     var tagTimer = null;
 
     function extractPatientIdFromHref(href) {
@@ -647,7 +724,7 @@
         root = root || document;
         if (!root.querySelectorAll) return;
 
-        root.querySelectorAll('a[href*="/doctor/patient"]').forEach(function (a) {
+        root.querySelectorAll('a[href*="/doctor/patient"], a[href*="/secretary/patient"]').forEach(function (a) {
             if (shouldSkipTag(a) || a.hasAttribute('data-patient-id')) return;
             var id = extractPatientIdFromHref(a.getAttribute('href'));
             if (id && id !== '0') a.setAttribute('data-patient-id', id);
@@ -698,6 +775,8 @@
         bodyEl  = card.querySelector('[data-pc-body]');
         skelEl  = card.querySelector('[data-pc-skeleton]');
         errorEl = card.querySelector('[data-pc-error]');
+
+        applyLocaleLabels();
 
         // Delegated trigger listeners.
         document.addEventListener('mouseover',  onPointerOver, true);
