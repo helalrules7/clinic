@@ -93,65 +93,75 @@
     </div>
 </div>
 
+<?php
+$bookingStats = $bookingStats ?? [];
+$bookingTrends = $bookingTrends ?? ['total' => [], 'booked' => [], 'checked_in' => [], 'completed' => []];
+$bookingTrendDeltas = $bookingTrendDeltas ?? ['total' => 0, 'booked' => 0, 'checked_in' => 0, 'completed' => 0];
+$bookingTrendDates = $bookingTrendDates ?? [];
+?>
+<script type="application/json" id="secBookingsTrends"><?= json_encode($bookingTrends, JSON_UNESCAPED_UNICODE) ?></script>
+<script type="application/json" id="secBookingsTrendDates"><?= json_encode($bookingTrendDates, JSON_UNESCAPED_UNICODE) ?></script>
+<script type="application/json" id="secBookingsStatsInitial"><?= json_encode([
+    'total_appointments' => (int)($bookingStats['total_appointments'] ?? 0),
+    'booked' => (int)($bookingStats['booked'] ?? 0),
+    'checked_in' => (int)($bookingStats['checked_in'] ?? 0),
+    'completed' => (int)($bookingStats['completed'] ?? 0),
+], JSON_UNESCAPED_UNICODE) ?></script>
+<script type="application/json" id="secBookingsTrendDeltas"><?= json_encode($bookingTrendDeltas, JSON_UNESCAPED_UNICODE) ?></script>
+
 <!-- Bookings Statistics -->
-<div class="row mb-4 stats-cards-wrapper">
-    <div class="col-md-3 mb-4 px-2">
+<div class="row stats-cards-wrapper sec-mini-stats sec-bookings-stats mb-4">
+    <div class="col-xl col-lg-4 col-md-6 mb-4 px-2">
         <div class="stats-card-wrapper">
-            <div class="stats-card stats-card-primary">
-                <div class="stats-card-content">
-                    <div class="stats-card-header">
-                        <h4 class="stats-card-title arabic-text">إجمالي الحجوزات</h4>
-                        <h3 class="stats-card-value arabic-text" id="totalBookings">0</h3>
-                    </div>
-                    <div class="stats-card-icon">
-                        <i class="bi bi-calendar-check"></i>
-                    </div>
+            <div class="mini-stat-card mini-stat-primary">
+                <div class="mini-stat-icon"><i class="bi bi-calendar-check-fill"></i></div>
+                <div class="mini-stat-content">
+                    <span class="mini-stat-value arabic-text" id="totalBookings"><?= (int)($bookingStats['total_appointments'] ?? 0) ?></span>
+                    <span class="mini-stat-label arabic-text">إجمالي الحجوزات</span>
+                </div>
+                <div class="mini-stat-chart" id="chartBkTotal"></div>
+                <div class="mini-stat-trend trend-neutral" id="trendBkTotal">
+                    <i class="bi bi-calendar-day"></i><span class="arabic-text">اليوم</span>
                 </div>
             </div>
         </div>
     </div>
-    <div class="col-md-3 mb-4 px-2">
+    <div class="col-xl col-lg-4 col-md-6 mb-4 px-2">
         <div class="stats-card-wrapper">
-            <div class="stats-card stats-card-success">
-                <div class="stats-card-content">
-                    <div class="stats-card-header">
-                        <h4 class="stats-card-title arabic-text">في الإنتظار</h4>
-                        <h3 class="stats-card-value arabic-text" id="pendingBookings">0</h3>
-                    </div>
-                    <div class="stats-card-icon">
-                        <i class="bi bi-calendar2-range"></i>
-                    </div>
+            <div class="mini-stat-card mini-stat-warning">
+                <div class="mini-stat-icon"><i class="bi bi-hourglass-split"></i></div>
+                <div class="mini-stat-content">
+                    <span class="mini-stat-value arabic-text" id="pendingBookings"><?= (int)($bookingStats['booked'] ?? 0) ?></span>
+                    <span class="mini-stat-label arabic-text">في الانتظار</span>
                 </div>
+                <div class="mini-stat-chart" id="chartBkBooked"></div>
+                <div class="mini-stat-trend trend-neutral" id="trendBkBooked"><span>--</span></div>
             </div>
         </div>
     </div>
-    <div class="col-md-3 mb-4 px-2">
+    <div class="col-xl col-lg-4 col-md-6 mb-4 px-2">
         <div class="stats-card-wrapper">
-            <div class="stats-card stats-card-info">
-                <div class="stats-card-content">
-                    <div class="stats-card-header">
-                        <h4 class="stats-card-title arabic-text">تم الحضور</h4>
-                        <h3 class="stats-card-value arabic-text" id="checkedInBookings">0</h3>
-                    </div>
-                    <div class="stats-card-icon">
-                        <i class="bi bi-calendar-check"></i>
-                    </div>
+            <div class="mini-stat-card mini-stat-info">
+                <div class="mini-stat-icon"><i class="bi bi-person-check-fill"></i></div>
+                <div class="mini-stat-content">
+                    <span class="mini-stat-value arabic-text" id="checkedInBookings"><?= (int)($bookingStats['checked_in'] ?? 0) ?></span>
+                    <span class="mini-stat-label arabic-text">تم الحضور</span>
                 </div>
+                <div class="mini-stat-chart" id="chartBkCheckedIn"></div>
+                <div class="mini-stat-trend trend-neutral" id="trendBkCheckedIn"><span>--</span></div>
             </div>
         </div>
     </div>
-    <div class="col-md-3 mb-4 px-2">
+    <div class="col-xl col-lg-4 col-md-6 mb-4 px-2">
         <div class="stats-card-wrapper">
-            <div class="stats-card stats-card-warning">
-                <div class="stats-card-content">
-                    <div class="stats-card-header">
-                        <h4 class="stats-card-title arabic-text">مكتملة</h4>
-                        <h3 class="stats-card-value arabic-text" id="completedBookings">0</h3>
-                    </div>
-                    <div class="stats-card-icon">
-                        <i class="bi bi-calendar-heart"></i>
-                    </div>
+            <div class="mini-stat-card mini-stat-success">
+                <div class="mini-stat-icon"><i class="bi bi-check-circle-fill"></i></div>
+                <div class="mini-stat-content">
+                    <span class="mini-stat-value arabic-text" id="completedBookings"><?= (int)($bookingStats['completed'] ?? 0) ?></span>
+                    <span class="mini-stat-label arabic-text">مكتملة</span>
                 </div>
+                <div class="mini-stat-chart" id="chartBkCompleted"></div>
+                <div class="mini-stat-trend trend-neutral" id="trendBkCompleted"><span>--</span></div>
             </div>
         </div>
     </div>
@@ -943,4 +953,5 @@ window.BOOKINGS_CONFIG = {
     }
 };
 </script>
+<script src="/app/Views/secretary/assets/js/sec-mini-stats.js?v=<?= file_exists(__DIR__ . '/assets/js/sec-mini-stats.js') ? filemtime(__DIR__ . '/assets/js/sec-mini-stats.js') : time() ?>"></script>
 <script src="/app/Views/secretary/assets/js/bookings.js?v=<?= file_exists(__DIR__ . '/assets/js/bookings.js') ? filemtime(__DIR__ . '/assets/js/bookings.js') : time() ?>"></script>

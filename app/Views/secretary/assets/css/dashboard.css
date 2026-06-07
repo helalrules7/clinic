@@ -110,11 +110,13 @@
    (base mini-stat chrome from doctor/assets/css/dashboard.css)
    ============================================ */
 
+[dir="rtl"] .sec-mini-stats .mini-stat-icon,
 [dir="rtl"] .sec-dashboard-stats .mini-stat-icon {
     right: auto;
     left: 12px;
 }
 
+[dir="rtl"] .sec-mini-stats .mini-stat-label,
 [dir="rtl"] .sec-dashboard-stats .mini-stat-label {
     text-transform: none;
     letter-spacing: 0;
@@ -149,18 +151,23 @@
 .dark .sec-dashboard-stats .mini-stat-danger .sparkline-area { fill: #fb7185; }
 
 /* Palette-aware primary accent (follows data-palette) */
+.sec-mini-stats .mini-stat-primary,
 .sec-dashboard-stats .mini-stat-primary {
     background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 10%, transparent) 0%, color-mix(in srgb, var(--accent) 3%, transparent) 100%);
     border-color: color-mix(in srgb, var(--accent) 22%, transparent);
 }
+.sec-mini-stats .mini-stat-primary .mini-stat-icon,
 .sec-dashboard-stats .mini-stat-primary .mini-stat-icon {
     background: linear-gradient(135deg, var(--accent) 0%, var(--ds-accent-2) 100%);
     box-shadow: 0 4px 12px color-mix(in srgb, var(--accent) 35%, transparent);
 }
+.sec-mini-stats .mini-stat-primary .mini-stat-value,
 .sec-dashboard-stats .mini-stat-primary .mini-stat-value {
     color: var(--accent);
 }
+.sec-mini-stats .mini-stat-primary .sparkline-path,
 .sec-dashboard-stats .mini-stat-primary .sparkline-path { stroke: var(--accent); }
+.sec-mini-stats .mini-stat-primary .sparkline-area,
 .sec-dashboard-stats .mini-stat-primary .sparkline-area { fill: var(--accent); }
 
 

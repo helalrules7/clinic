@@ -80,65 +80,70 @@
     </div>
 </div>
 
+<?php
+$patientTrends = $patientTrends ?? ['total' => [], 'active' => [], 'new' => [], 'payments' => []];
+$patientTrendDeltas = $patientTrendDeltas ?? ['total' => 0, 'active' => 0, 'new' => 0, 'payments' => 0];
+?>
+<script type="application/json" id="secPatientsTrends"><?= json_encode($patientTrends, JSON_UNESCAPED_UNICODE) ?></script>
+<script type="application/json" id="secPatientsStatsInitial"><?= json_encode([
+    'total' => (int)($stats['total'] ?? 0),
+    'active' => (int)($stats['active'] ?? 0),
+    'recent' => (int)($stats['recent'] ?? 0),
+    'total_paid' => (float)($stats['total_paid'] ?? 0),
+], JSON_UNESCAPED_UNICODE) ?></script>
+<script type="application/json" id="secPatientsTrendDeltas"><?= json_encode($patientTrendDeltas, JSON_UNESCAPED_UNICODE) ?></script>
+
 <!-- Patient Statistics -->
-<div class="row mb-4 stats-cards-wrapper">
-    <div class="col-md-3 mb-4 px-2">
+<div class="row stats-cards-wrapper sec-mini-stats sec-patients-stats mb-4">
+    <div class="col-xl col-lg-4 col-md-6 mb-4 px-2">
         <div class="stats-card-wrapper">
-            <div class="stats-card stats-card-primary">
-                <div class="stats-card-content">
-                    <div class="stats-card-header">
-                        <h4 class="stats-card-title arabic-text">إجمالي المرضى</h4>
-                        <h3 class="stats-card-value arabic-text"><?= $stats['total'] ?? 0 ?></h3>
-                    </div>
-                    <div class="stats-card-icon">
-                        <i class="bi bi-people"></i>
-                    </div>
+            <div class="mini-stat-card mini-stat-primary">
+                <div class="mini-stat-icon"><i class="bi bi-people-fill"></i></div>
+                <div class="mini-stat-content">
+                    <span class="mini-stat-value arabic-text" id="secPatStatTotal"><?= (int)($stats['total'] ?? 0) ?></span>
+                    <span class="mini-stat-label arabic-text">إجمالي المرضى</span>
                 </div>
+                <div class="mini-stat-chart" id="chartPatTotal"></div>
+                <div class="mini-stat-trend trend-neutral" id="trendPatTotal"><span>--</span></div>
             </div>
         </div>
     </div>
-    <div class="col-md-3 mb-4 px-2">
+    <div class="col-xl col-lg-4 col-md-6 mb-4 px-2">
         <div class="stats-card-wrapper">
-            <div class="stats-card stats-card-success">
-                <div class="stats-card-content">
-                    <div class="stats-card-header">
-                        <h4 class="stats-card-title arabic-text">مرضى نشطين</h4>
-                        <h3 class="stats-card-value arabic-text"><?= $stats['active'] ?? 0 ?></h3>
-                    </div>
-                    <div class="stats-card-icon">
-                        <i class="bi bi-person-check"></i>
-                    </div>
+            <div class="mini-stat-card mini-stat-success">
+                <div class="mini-stat-icon"><i class="bi bi-person-check-fill"></i></div>
+                <div class="mini-stat-content">
+                    <span class="mini-stat-value arabic-text" id="secPatStatActive"><?= (int)($stats['active'] ?? 0) ?></span>
+                    <span class="mini-stat-label arabic-text">مرضى نشطين</span>
                 </div>
+                <div class="mini-stat-chart" id="chartPatActive"></div>
+                <div class="mini-stat-trend trend-neutral" id="trendPatActive"><span>--</span></div>
             </div>
         </div>
     </div>
-    <div class="col-md-3 mb-4 px-2">
+    <div class="col-xl col-lg-4 col-md-6 mb-4 px-2">
         <div class="stats-card-wrapper">
-            <div class="stats-card stats-card-warning">
-                <div class="stats-card-content">
-                    <div class="stats-card-header">
-                        <h4 class="stats-card-title arabic-text">جدد هذا الشهر</h4>
-                        <h3 class="stats-card-value arabic-text"><?= $stats['recent'] ?? 0 ?></h3>
-                    </div>
-                    <div class="stats-card-icon">
-                        <i class="bi bi-person-plus"></i>
-                    </div>
+            <div class="mini-stat-card mini-stat-warning">
+                <div class="mini-stat-icon"><i class="bi bi-person-plus-fill"></i></div>
+                <div class="mini-stat-content">
+                    <span class="mini-stat-value arabic-text" id="secPatStatRecent"><?= (int)($stats['recent'] ?? 0) ?></span>
+                    <span class="mini-stat-label arabic-text">جدد (٣٠ يوم)</span>
                 </div>
+                <div class="mini-stat-chart" id="chartPatNew"></div>
+                <div class="mini-stat-trend trend-neutral" id="trendPatNew"><span>--</span></div>
             </div>
         </div>
     </div>
-    <div class="col-md-3 mb-4 px-2">
+    <div class="col-xl col-lg-4 col-md-6 mb-4 px-2">
         <div class="stats-card-wrapper">
-            <div class="stats-card stats-card-info">
-                <div class="stats-card-content">
-                    <div class="stats-card-header">
-                        <h4 class="stats-card-title arabic-text">مدفوعات إجمالية</h4>
-                        <h3 class="stats-card-value arabic-text"><?= ($stats['total_paid'] ?? 0) ?></h3>
-                    </div>
-                    <div class="stats-card-icon">
-                        <i class="bi bi-credit-card"></i>
-                    </div>
+            <div class="mini-stat-card mini-stat-info">
+                <div class="mini-stat-icon"><i class="bi bi-credit-card-fill"></i></div>
+                <div class="mini-stat-content">
+                    <span class="mini-stat-value arabic-text" id="secPatStatPaid"><?= number_format((float)($stats['total_paid'] ?? 0), 0) ?></span>
+                    <span class="mini-stat-label arabic-text">مدفوعات إجمالية</span>
                 </div>
+                <div class="mini-stat-chart" id="chartPatPayments"></div>
+                <div class="mini-stat-trend trend-neutral" id="trendPatPayments"><span>--</span></div>
             </div>
         </div>
     </div>
@@ -463,6 +468,7 @@
 <!-- v11: API-driven Cards + Folders views (rendered by secretary-patients.js) -->
 <div id="secCardsView" class="sec-view-pane" style="display:none"></div>
 <div id="secFoldersView" class="sec-view-pane" style="display:none"></div>
+<script src="/app/Views/secretary/assets/js/sec-mini-stats.js?v=<?= file_exists(__DIR__ . '/assets/js/sec-mini-stats.js') ? filemtime(__DIR__ . '/assets/js/sec-mini-stats.js') : time() ?>"></script>
 <script src="/app/Views/secretary/assets/js/secretary-patients.js?v=<?= file_exists(__DIR__ . '/assets/js/secretary-patients.js') ? filemtime(__DIR__ . '/assets/js/secretary-patients.js') : time() ?>"></script>
 
 <!-- Search Modal -->
@@ -1767,7 +1773,7 @@ function refreshPatientsData() {
         if (data.ok && data.data) {
             // Update statistics cards
             if (data.data.stats) {
-                updatePatientsStats(data.data.stats);
+                updatePatientsStats(data.data.stats, data.data.trends, data.data.trendDeltas);
             }
             
             // Note: We don't update the table automatically to avoid disrupting user's current view
@@ -1787,79 +1793,44 @@ function refreshPatientsData() {
     });
 }
 
-// Update patients statistics cards
-function updatePatientsStats(stats) {
-    // Update total patients
-    const totalEl = document.querySelector('.stats-card-primary .stats-card-value');
-    if (totalEl) {
-        totalEl.textContent = stats.total || 0;
-    }
+window.SEC_PATIENTS_MINI_CARDS = [
+    { chartId: 'chartPatTotal', trendId: 'trendPatTotal', trendKey: 'total', statKey: 'total', valueId: 'secPatStatTotal' },
+    { chartId: 'chartPatActive', trendId: 'trendPatActive', trendKey: 'active', statKey: 'active', valueId: 'secPatStatActive' },
+    { chartId: 'chartPatNew', trendId: 'trendPatNew', trendKey: 'new', statKey: 'recent', valueId: 'secPatStatRecent', syncStatToSeries: false },
+    { chartId: 'chartPatPayments', trendId: 'trendPatPayments', trendKey: 'payments', statKey: 'total_paid', valueId: 'secPatStatPaid', syncStatToSeries: false, format: 'money' }
+];
 
-    // Update active patients
-    const activeEl = document.querySelector('.stats-card-success .stats-card-value');
-    if (activeEl) {
-        activeEl.textContent = stats.active || 0;
-    }
+function initPatientsMiniStats() {
+    if (!window.secMiniStats) return;
+    window.secMiniStats.init(window.SEC_PATIENTS_MINI_CARDS, {
+        trendsId: 'secPatientsTrends',
+        statsId: 'secPatientsStatsInitial',
+        deltasId: 'secPatientsTrendDeltas'
+    });
+}
 
-    // Update recent patients
-    const recentEl = document.querySelector('.stats-card-info .stats-card-value');
-    if (recentEl) {
-        recentEl.textContent = stats.recent || 0;
-    }
-
-    // Update female count
-    const femaleEl = document.querySelector('.stats-card-warning .stats-card-value');
-    if (femaleEl) {
-        femaleEl.textContent = stats.gender?.Female || 0;
+function updatePatientsStats(stats, trends, trendDeltas) {
+    if (!stats) return;
+    const payload = {
+        total: stats.total || 0,
+        active: stats.active || 0,
+        recent: stats.recent || 0,
+        total_paid: stats.total_paid || 0
+    };
+    if (window.secMiniStats && window.SEC_PATIENTS_MINI_CARDS) {
+        window.secMiniStats.updateStatValues(window.SEC_PATIENTS_MINI_CARDS, payload);
+        const t = trends || window.secMiniStats.readJsonScript('secPatientsTrends') || {};
+        const d = trendDeltas || window.secMiniStats.readJsonScript('secPatientsTrendDeltas') || {};
+        window.secMiniStats.refresh(window.SEC_PATIENTS_MINI_CARDS, t, payload, d, {
+            trendsId: 'secPatientsTrends',
+            statsId: 'secPatientsStatsInitial',
+            deltasId: 'secPatientsTrendDeltas'
+        });
     }
 }
 
-
-// Hover effect with radial gradient - glowing effect following mouse
 document.addEventListener('DOMContentLoaded', function() {
-    const cards = document.querySelectorAll('.stats-card');
-    const wrapper = document.querySelector('.stats-cards-wrapper');
-
-    if (wrapper && cards.length > 0) {
-        wrapper.addEventListener('mousemove', function (event) {
-            cards.forEach((card) => {
-                const cardContent = card.querySelector('.stats-card-content');
-                if (!cardContent) return;
-                
-                const rect = cardContent.getBoundingClientRect();
-                const x = event.clientX - rect.left;
-                const y = event.clientY - rect.top;
-
-                // Get card type and corresponding color
-                let color = 'rgba(59, 248, 251, 0.3)';
-                if (card.classList.contains('stats-card-primary')) {
-                    color = 'rgba(14, 165, 233, 0.4)';
-                } else if (card.classList.contains('stats-card-success')) {
-                    color = 'rgba(16, 185, 129, 0.4)';
-                } else if (card.classList.contains('stats-card-danger')) {
-                    color = 'rgba(239, 68, 68, 0.4)';
-                } else if (card.classList.contains('stats-card-warning')) {
-                    color = 'rgba(245, 158, 11, 0.4)';
-                } else if (card.classList.contains('stats-card-info')) {
-                    color = 'rgba(187, 54, 204, 0.4)';
-                }
-
-                // Apply gradient to card-content, overlay on top of background-color
-                // Use multiple backgrounds: gradient on top, solid color below
-                cardContent.style.background = `radial-gradient(960px circle at ${x}px ${y}px, ${color}, transparent 15%), var(--card)`;
-            });
-        });
-        
-        // Reset background when mouse leaves wrapper
-        wrapper.addEventListener('mouseleave', function() {
-            cards.forEach((card) => {
-                const cardContent = card.querySelector('.stats-card-content');
-                if (cardContent) {
-                    cardContent.style.background = '';
-                }
-            });
-        });
-    }
+    initPatientsMiniStats();
 });
 </script>
 

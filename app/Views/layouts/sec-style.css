@@ -4184,3 +4184,96 @@ body > .global-search-container.expanded {
     font-weight: 600;
 }
 .global-search-result-item.active .global-search-result-type { background: rgba(255, 255, 255, 0.2); color: white; }
+
+/* ============================================================================
+   Secretary patient list — v11 organizational views (cards / folders / markers
+   / tags / multi-select). RTL + glass/indigo. Rendered by secretary-patients.js.
+   ============================================================================ */
+.sec-view-toggle { display: flex; gap: 0.4rem; }
+.sec-view-btn {
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--muted);
+    border-radius: var(--r-md, 12px);
+    padding: 0.4rem 0.9rem;
+    font-weight: 600;
+    font-family: 'Cairo', sans-serif;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+.sec-view-btn:hover { color: var(--text); border-color: var(--accent); }
+.sec-view-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+.sec-toolbar {
+    display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;
+    padding: 0.6rem 0.9rem; margin-bottom: 0.9rem;
+    background: var(--card); border: 1px solid var(--border); border-radius: var(--r-md, 12px);
+}
+.sec-toolbar .sec-export { margin-inline-start: auto; }
+
+.sec-pgrid {
+    display: grid; gap: 0.9rem;
+    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+}
+.sec-pcard {
+    position: relative; background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--r-lg, 16px); padding: 1rem; text-align: center;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+.sec-pcard:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(15,23,42,.10); }
+.sec-pcard.is-selected { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent) inset; }
+.sec-pcard-top { display: flex; align-items: center; justify-content: center; position: relative; min-height: 56px; }
+.sec-pcard-top .sec-pcheck { position: absolute; top: 0; inset-inline-start: 0; }
+.sec-avatar {
+    width: 52px; height: 52px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;
+    color: #fff; font-weight: 700; font-size: 1.1rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+.sec-avatar.female { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+.sec-marker-dot { position: absolute; top: 2px; inset-inline-end: 2px; width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--card); }
+.sec-pcard-name { font-weight: 700; margin-top: 0.5rem; color: var(--text); }
+.sec-pcard-meta { font-size: 0.8rem; color: var(--muted); margin-top: 0.15rem; }
+.sec-pcard-tags { display: flex; flex-wrap: wrap; gap: 0.25rem; justify-content: center; margin-top: 0.4rem; }
+.sec-tag-chip { font-size: 0.7rem; padding: 0.1rem 0.5rem; border-radius: 999px; border: 1px solid; font-weight: 600; }
+.sec-pcard-actions { display: flex; gap: 0.3rem; justify-content: center; margin-top: 0.7rem; }
+
+.sec-color-filters { display: flex; gap: 0.3rem; }
+.sec-color-filter { width: 20px; height: 20px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; opacity: 0.55; }
+.sec-color-filter:hover { opacity: 1; }
+.sec-color-filter.active { opacity: 1; border-color: var(--text); transform: scale(1.15); }
+
+.sec-folder-grid { display: grid; gap: 0.9rem; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
+.sec-folder-card {
+    position: relative; border-radius: var(--r-lg, 16px); padding: 1.2rem 1rem; color: #fff; cursor: pointer;
+    min-height: 140px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
+    box-shadow: 0 4px 14px rgba(15,23,42,.12); transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.sec-folder-card:hover { transform: translateY(-3px); box-shadow: 0 10px 28px rgba(15,23,42,.20); }
+.sec-folder-icon { font-size: 2rem; margin-bottom: 0.4rem; }
+.sec-folder-name { font-weight: 700; }
+.sec-folder-count { font-size: 0.8rem; opacity: 0.9; margin-top: 0.2rem; }
+.sec-folder-del, .sec-folder-edit {
+    position: absolute; top: 6px; width: 26px; height: 26px; border-radius: 50%;
+    border: none; background: rgba(0,0,0,.25); color: #fff; cursor: pointer; opacity: 0; transition: opacity 0.15s ease;
+}
+.sec-folder-del { inset-inline-start: 6px; }
+.sec-folder-edit { inset-inline-start: 38px; }
+.sec-folder-card:hover .sec-folder-del, .sec-folder-card:hover .sec-folder-edit { opacity: 1; }
+
+.sec-bulk-bar {
+    position: fixed; bottom: 18px; inset-inline-start: 50%; transform: translateX(-50%);
+    display: flex; align-items: center; gap: 0.5rem; z-index: 1000015;
+    background: var(--accent); color: #fff; padding: 0.5rem 0.9rem; border-radius: 999px;
+    box-shadow: 0 8px 28px rgba(15,23,42,.30);
+}
+.sec-bulk-bar .sec-bulk-count { font-weight: 700; margin-inline-end: 0.3rem; }
+
+.sec-popover {
+    background: var(--card); border: 1px solid var(--border); border-radius: var(--r-md, 12px);
+    box-shadow: 0 10px 28px rgba(15,23,42,.22); padding: 0.5rem; display: flex; flex-wrap: wrap; gap: 0.35rem; max-width: 220px;
+}
+.sec-pop-color { width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--card); cursor: pointer; color: #fff; }
+.sec-pop-clear { background: var(--bg-alt, #e2e8f0) !important; color: var(--muted); }
+.sec-popover-tags { flex-direction: column; align-items: stretch; min-width: 180px; }
+.sec-pop-tag { display: flex; align-items: center; gap: 0.4rem; padding: 0.2rem 0.3rem; cursor: pointer; font-family: 'Cairo', sans-serif; }
+.sec-pop-newtag { display: flex; gap: 0.3rem; margin-top: 0.3rem; }

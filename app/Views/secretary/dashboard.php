@@ -19,7 +19,7 @@ $trendDeltas = $trendDeltas ?? ['total' => 0, 'booked' => 0, 'checked_in' => 0, 
 <script type="application/json" id="secDashboardTrends"><?= json_encode($trends, JSON_UNESCAPED_UNICODE) ?></script>
 <script type="application/json" id="secDashboardTrendDeltas"><?= json_encode($trendDeltas, JSON_UNESCAPED_UNICODE) ?></script>
 
-<div class="row stats-cards-wrapper sec-dashboard-stats">
+<div class="row stats-cards-wrapper sec-mini-stats sec-dashboard-stats">
     <div class="col-xl col-lg-4 col-md-6 mb-4 px-2">
         <div class="stats-card-wrapper">
             <div class="mini-stat-card mini-stat-primary">
@@ -301,6 +301,7 @@ $secTipToday = $secDailyTips[$secTipIndex];
 
 
 
+<script src="/app/Views/secretary/assets/js/sec-mini-stats.js?v=<?= file_exists(__DIR__ . '/assets/js/sec-mini-stats.js') ? filemtime(__DIR__ . '/assets/js/sec-mini-stats.js') : time() ?>"></script>
 <script src="/app/Views/secretary/assets/js/dashboard.js?v=<?= file_exists(__DIR__ . '/assets/js/dashboard.js') ? filemtime(__DIR__ . '/assets/js/dashboard.js') : time() ?>"></script>
 <script src="/app/Views/secretary/assets/js/sec-dashboard-widgets.js?v=<?= file_exists(__DIR__ . '/assets/js/sec-dashboard-widgets.js') ? filemtime(__DIR__ . '/assets/js/sec-dashboard-widgets.js') : time() ?>"></script>
 <script type="application/json" id="secTodayApptsInitial"><?= json_encode($todayAppointments ?? [], JSON_UNESCAPED_UNICODE) ?></script>

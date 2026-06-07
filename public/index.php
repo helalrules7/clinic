@@ -26,6 +26,7 @@ require_once __DIR__ . '/app/Lib/global_helpers.php';
 
 // Load Controllers
 require_once __DIR__ . '/app/Controllers/SecretaryController.php';
+require_once __DIR__ . '/app/Controllers/SecretaryPatientsController.php';
 require_once __DIR__ . '/app/Controllers/AlertController.php';
 require_once __DIR__ . '/app/Controllers/BoardController.php';
 require_once __DIR__ . '/app/Controllers/CommentsController.php';
@@ -113,6 +114,7 @@ try {
     $router->post('/secretary/bookings/{id}/update', 'SecretaryController@updateBooking');
     $router->get('/secretary/bookings/{id}', 'SecretaryController@viewBooking');
     $router->get('/secretary/payments', 'SecretaryController@payments');
+    $router->get('/api/secretary/payments', 'SecretaryController@getPaymentsData');
     $router->get('/secretary/patients', 'SecretaryController@patients');
     $router->get('/api/secretary/patients', 'SecretaryController@getPatientsData');
     // v11 — secretary clinic-scoped patient organization (folders/tags/markers/list/export)

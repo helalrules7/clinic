@@ -110,6 +110,7 @@ try {
     $router->post('/secretary/bookings/{id}/update', 'SecretaryController@updateBooking');
     $router->get('/secretary/bookings/{id}', 'SecretaryController@viewBooking');
     $router->get('/secretary/payments', 'SecretaryController@payments');
+    $router->get('/api/secretary/payments', 'SecretaryController@getPaymentsData');
     $router->get('/secretary/patients', 'SecretaryController@patients');
     $router->get('/api/secretary/patients', 'SecretaryController@getPatientsData');
     $router->get('/secretary/patients/new', 'SecretaryController@newPatient');

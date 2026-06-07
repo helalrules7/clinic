@@ -121,10 +121,21 @@ class SecretaryController
         
         // Get system settings for payment limits
         $settings = $this->getSystemSettings();
+
+        $today = date('Y-m-d');
+        $bookingStats = $this->getTodayStats($today);
+        $yesterdayStats = $this->getTodayStats(date('Y-m-d', strtotime('-1 day')));
+        $bookingTrends = $this->syncTrendsWithTodayStats($this->getDashboardTrends(9), $bookingStats);
+        $bookingTrendDeltas = $this->getDashboardTrendDeltas($bookingStats, $yesterdayStats);
+        $bookingTrendDates = $this->getTrendDateRange(9)['dates'];
         
         $content = $this->view->render('secretary/bookings', [
             'doctors' => $doctors,
-            'settings' => $settings
+            'settings' => $settings,
+            'bookingStats' => $bookingStats,
+            'bookingTrends' => $bookingTrends,
+            'bookingTrendDeltas' => $bookingTrendDeltas,
+            'bookingTrendDates' => $bookingTrendDates,
         ]);
         
         echo $this->view->render('layouts/secretary_main', [
@@ -145,6 +156,9 @@ class SecretaryController
         
         // Get daily balance information
         $dailyBalance = $this->getDailyBalance();
+        $yesterdayBalance = $this->getDailyBalance(date('Y-m-d', strtotime('-1 day')));
+        $paymentTrends = $this->syncPaymentTrendsWithStats($this->getPaymentTrends(9), $dailyBalance);
+        $paymentTrendDeltas = $this->getPaymentTrendDeltas($dailyBalance, $yesterdayBalance);
         
         // Get payment types summary
         $paymentTypes = $this->getPaymentTypesSummary();
@@ -160,6 +174,8 @@ class SecretaryController
         
         $content = $this->view->render('secretary/payments', [
             'dailyBalance' => $dailyBalance,
+            'paymentTrends' => $paymentTrends,
+            'paymentTrendDeltas' => $paymentTrendDeltas,
             'paymentTypes' => $paymentTypes,
             'payments' => $payments,
             'patient' => $patient,
@@ -546,6 +562,8 @@ class SecretaryController
         
         // Get patient statistics
         $stats = $this->getPatientStats();
+        $patientTrends = $this->syncPatientTrendsWithStats($this->getPatientTrends(9), $stats);
+        $patientTrendDeltas = $this->getPatientTrendDeltas($patientTrends, $stats);
         
         // Get gender options for filter
         $genderOptions = [
@@ -576,6 +594,8 @@ class SecretaryController
         $content = $this->view->render('secretary/patients', [
             'patients' => $patients,
             'stats' => $stats,
+            'patientTrends' => $patientTrends,
+            'patientTrendDeltas' => $patientTrendDeltas,
             'currentPage' => $page,
             'search' => $search,
             'gender' => $gender,
@@ -594,6 +614,41 @@ class SecretaryController
             'content' => $content,
             'viewHelper' => $this->view
         ]);
+    }
+
+    /**
+     * API endpoint for payments page polling (balance + types + trends).
+     */
+    public function getPaymentsData()
+    {
+        try {
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            }
+
+            $dailyBalance = $this->getDailyBalance();
+            $yesterdayBalance = $this->getDailyBalance(date('Y-m-d', strtotime('-1 day')));
+            $paymentTrends = $this->syncPaymentTrendsWithStats($this->getPaymentTrends(9), $dailyBalance);
+            $paymentTrendDeltas = $this->getPaymentTrendDeltas($dailyBalance, $yesterdayBalance);
+
+            return $this->jsonResponse([
+                'ok' => true,
+                'data' => [
+                    'dailyBalance' => [
+                        'opening_balance' => (float)($dailyBalance['opening_balance'] ?? 0),
+                        'total_received' => (float)($dailyBalance['total_received'] ?? 0),
+                        'total_expenses' => (float)($dailyBalance['total_expenses'] ?? 0),
+                        'current_balance' => (float)($dailyBalance['current_balance'] ?? 0),
+                        'transactions_count' => (int)($dailyBalance['transactions_count'] ?? 0),
+                    ],
+                    'paymentTypes' => $this->getPaymentTypesSummary(),
+                    'trends' => $paymentTrends,
+                    'trendDeltas' => $paymentTrendDeltas,
+                ],
+            ]);
+        } catch (\Exception $e) {
+            return $this->jsonResponse(['error' => 'فشل في تحميل البيانات: ' . $e->getMessage()], 500);
+        }
     }
 
     /**
@@ -618,6 +673,8 @@ class SecretaryController
             
             // Get patient statistics
             $stats = $this->getPatientStats();
+            $patientTrends = $this->syncPatientTrendsWithStats($this->getPatientTrends(9), $stats);
+            $patientTrendDeltas = $this->getPatientTrendDeltas($patientTrends, $stats);
             
             return $this->jsonResponse([
                 'ok' => true,
@@ -627,11 +684,14 @@ class SecretaryController
                         'total' => (int)($stats['total'] ?? 0),
                         'active' => (int)($stats['active'] ?? 0),
                         'recent' => (int)($stats['recent'] ?? 0),
+                        'total_paid' => (float)($stats['total_paid'] ?? 0),
                         'gender' => [
                             'Female' => (int)($stats['gender']['Female'] ?? 0),
                             'Male' => (int)($stats['gender']['Male'] ?? 0)
                         ]
-                    ]
+                    ],
+                    'trends' => $patientTrends,
+                    'trendDeltas' => $patientTrendDeltas,
                 ]
             ]);
             
@@ -874,6 +934,130 @@ class SecretaryController
         return $deltas;
     }
 
+    /**
+     * Ordered date labels for sparkline series (oldest → newest).
+     */
+    private function getTrendDateRange(int $days = 9): array
+    {
+        $days = max(2, min(30, $days));
+        $start = date('Y-m-d', strtotime('-' . ($days - 1) . ' days'));
+        $dates = [];
+        for ($offset = 0; $offset < $days; $offset++) {
+            $dates[] = date('Y-m-d', strtotime($start . " +{$offset} days"));
+        }
+        return ['start' => $start, 'end' => date('Y-m-d'), 'dates' => $dates, 'days' => $days];
+    }
+
+    /**
+     * Patient metrics for mini-stat sparklines (last N days).
+     */
+    private function getPatientTrends(int $days = 9): array
+    {
+        $range = $this->getTrendDateRange($days);
+        $start = $range['start'];
+        $end = $range['end'];
+
+        $newByDate = [];
+        $stmt = $this->pdo->prepare("
+            SELECT DATE(created_at) AS d, COUNT(*) AS cnt
+            FROM patients
+            WHERE DATE(created_at) BETWEEN ? AND ?
+            GROUP BY DATE(created_at)
+        ");
+        $stmt->execute([$start, $end]);
+        foreach ($stmt->fetchAll(\PDO::FETCH_ASSOC) as $row) {
+            $newByDate[date('Y-m-d', strtotime($row['d']))] = (int)$row['cnt'];
+        }
+
+        $payByDate = [];
+        $stmt = $this->pdo->prepare("
+            SELECT DATE(created_at) AS d, COALESCE(SUM(amount), 0) AS total
+            FROM payments
+            WHERE DATE(created_at) BETWEEN ? AND ?
+            GROUP BY DATE(created_at)
+        ");
+        $stmt->execute([$start, $end]);
+        foreach ($stmt->fetchAll(\PDO::FETCH_ASSOC) as $row) {
+            $payByDate[date('Y-m-d', strtotime($row['d']))] = (float)$row['total'];
+        }
+
+        $stmtBefore = $this->pdo->prepare("SELECT COUNT(*) AS cnt FROM patients WHERE DATE(created_at) < ?");
+        $stmtBefore->execute([$start]);
+        $cumulative = (int)($stmtBefore->fetch(\PDO::FETCH_ASSOC)['cnt'] ?? 0);
+
+        $out = ['total' => [], 'active' => [], 'new' => [], 'payments' => []];
+        $activeStmt = $this->pdo->prepare("
+            SELECT COUNT(DISTINCT p.id) AS cnt
+            FROM patients p
+            JOIN appointments a ON p.id = a.patient_id
+            WHERE a.date BETWEEN DATE_SUB(?, INTERVAL 30 DAY) AND ?
+        ");
+
+        foreach ($range['dates'] as $d) {
+            $cumulative += (int)($newByDate[$d] ?? 0);
+            $out['total'][] = $cumulative;
+            $out['new'][] = (int)($newByDate[$d] ?? 0);
+            $out['payments'][] = (int)round($payByDate[$d] ?? 0);
+
+            $activeStmt->execute([$d, $d]);
+            $out['active'][] = (int)($activeStmt->fetch(\PDO::FETCH_ASSOC)['cnt'] ?? 0);
+        }
+
+        return $out;
+    }
+
+    private function syncPatientTrendsWithStats(array $trends, $stats): array
+    {
+        if (!empty($trends['total']) && is_array($trends['total'])) {
+            $idx = count($trends['total']) - 1;
+            $trends['total'][$idx] = (int)($stats['total'] ?? $trends['total'][$idx]);
+        }
+        if (!empty($trends['active']) && is_array($trends['active'])) {
+            $idx = count($trends['active']) - 1;
+            $trends['active'][$idx] = (int)($stats['active'] ?? $trends['active'][$idx]);
+        }
+        if (!empty($trends['new']) && is_array($trends['new'])) {
+            $idx = count($trends['new']) - 1;
+            $todayNew = $this->pdo->query("
+                SELECT COUNT(*) AS cnt FROM patients WHERE DATE(created_at) = CURDATE()
+            ")->fetch(\PDO::FETCH_ASSOC);
+            $trends['new'][$idx] = (int)($todayNew['cnt'] ?? 0);
+        }
+        if (!empty($trends['payments']) && is_array($trends['payments'])) {
+            $idx = count($trends['payments']) - 1;
+            $todayPay = $this->pdo->query("
+                SELECT COALESCE(SUM(amount), 0) AS total FROM payments WHERE DATE(created_at) = CURDATE()
+            ")->fetch(\PDO::FETCH_ASSOC);
+            $trends['payments'][$idx] = (int)round((float)($todayPay['total'] ?? 0));
+        }
+
+        return $trends;
+    }
+
+    /**
+     * Day-over-day deltas for patient mini-stat badges.
+     */
+    private function getPatientTrendDeltas(array $trends, $stats): array
+    {
+        $deltas = [];
+        foreach (['total', 'active', 'new', 'payments'] as $key) {
+            $series = $trends[$key] ?? [];
+            if (count($series) < 2) {
+                $deltas[$key] = 0;
+                continue;
+            }
+            $today = (int)$series[count($series) - 1];
+            $yesterday = (int)$series[count($series) - 2];
+            if ($key === 'total') {
+                $today = (int)($stats['total'] ?? $today);
+            } elseif ($key === 'active') {
+                $today = (int)($stats['active'] ?? $today);
+            }
+            $deltas[$key] = $today - $yesterday;
+        }
+        return $deltas;
+    }
+
     private function getTodayAppointments($date)
     {
         $stmt = $this->pdo->prepare("
@@ -1109,6 +1293,9 @@ class SecretaryController
             WHERE a.date >= DATE_SUB(NOW(), INTERVAL 30 DAY)
         ");
         $stats['active'] = $stmt->fetch()['count'];
+
+        $stmt = $this->pdo->query("SELECT COALESCE(SUM(amount), 0) AS total FROM payments");
+        $stats['total_paid'] = (float)($stmt->fetch(\PDO::FETCH_ASSOC)['total'] ?? 0);
         
         return $stats;
     }
@@ -2009,10 +2196,10 @@ class SecretaryController
     /**
      * Get daily balance information
      */
-    private function getDailyBalance()
+    private function getDailyBalance(?string $date = null)
     {
         try {
-            $today = date('Y-m-d');
+            $today = $date ?? date('Y-m-d');
 
             // Secretary scope: only their own clinic's books.
             $user = $this->auth->user();
@@ -2103,10 +2290,73 @@ class SecretaryController
             return [
                 'opening_balance' => 0,
                 'total_received' => 0,
+                'total_expenses' => 0,
                 'current_balance' => 0,
                 'transactions_count' => 0
             ];
         }
+    }
+
+    /**
+     * Last N days payment/balance metrics for sparklines (oldest → newest).
+     */
+    private function getPaymentTrends(int $days = 9): array
+    {
+        $range = $this->getTrendDateRange($days);
+        $out = [
+            'opening' => [],
+            'received' => [],
+            'expenses' => [],
+            'current' => [],
+            'transactions' => [],
+        ];
+
+        foreach ($range['dates'] as $d) {
+            $bal = $this->getDailyBalance($d);
+            $out['opening'][] = round((float)($bal['opening_balance'] ?? 0), 2);
+            $out['received'][] = round((float)($bal['total_received'] ?? 0), 2);
+            $out['expenses'][] = round((float)($bal['total_expenses'] ?? 0), 2);
+            $out['current'][] = round((float)($bal['current_balance'] ?? 0), 2);
+            $out['transactions'][] = (int)($bal['transactions_count'] ?? 0);
+        }
+
+        return $out;
+    }
+
+    private function syncPaymentTrendsWithStats(array $trends, array $balance): array
+    {
+        $map = [
+            'opening' => 'opening_balance',
+            'received' => 'total_received',
+            'expenses' => 'total_expenses',
+            'current' => 'current_balance',
+            'transactions' => 'transactions_count',
+        ];
+
+        foreach ($map as $trendKey => $statKey) {
+            if (empty($trends[$trendKey]) || !is_array($trends[$trendKey])) {
+                continue;
+            }
+            $idx = count($trends[$trendKey]) - 1;
+            if ($statKey === 'transactions_count') {
+                $trends[$trendKey][$idx] = (int)($balance[$statKey] ?? $trends[$trendKey][$idx]);
+            } else {
+                $trends[$trendKey][$idx] = round((float)($balance[$statKey] ?? $trends[$trendKey][$idx]), 2);
+            }
+        }
+
+        return $trends;
+    }
+
+    private function getPaymentTrendDeltas(array $todayBalance, array $yesterdayBalance): array
+    {
+        return [
+            'opening' => round((float)($todayBalance['opening_balance'] ?? 0) - (float)($yesterdayBalance['opening_balance'] ?? 0), 2),
+            'received' => round((float)($todayBalance['total_received'] ?? 0) - (float)($yesterdayBalance['total_received'] ?? 0), 2),
+            'expenses' => round((float)($todayBalance['total_expenses'] ?? 0) - (float)($yesterdayBalance['total_expenses'] ?? 0), 2),
+            'current' => round((float)($todayBalance['current_balance'] ?? 0) - (float)($yesterdayBalance['current_balance'] ?? 0), 2),
+            'transactions' => (int)($todayBalance['transactions_count'] ?? 0) - (int)($yesterdayBalance['transactions_count'] ?? 0),
+        ];
     }
 
     /**

@@ -11,6 +11,15 @@
                 <i class="bi bi-credit-card me-2"></i>
                 إدارة المدفوعات والرصيد اليومي
             </h4>
+            <div class="d-flex align-items-center ms-3" style="padding-bottom: 10px !important;">
+                <label class="form-label mb-0 me-2" for="paymentsAutoRefresh">
+                    <small class="text-muted arabic-text">تحديث تلقائي</small>
+                </label>
+                <div class="toggle-switch-wrapper">
+                    <input type="checkbox" class="toggle-switch" id="paymentsAutoRefresh"
+                           onchange="togglePaymentsAutoRefresh(this.checked)">
+                </div>
+            </div>
         </div>
         <p class="text-muted mb-0 arabic-text">تتبع وإدارة المدفوعات والرصيد اليومي</p>
         <div class="mt-2">
@@ -74,65 +83,84 @@
     </div>
 </div>
 
+<?php
+$paymentTrends = $paymentTrends ?? ['opening' => [], 'received' => [], 'expenses' => [], 'current' => [], 'transactions' => []];
+$paymentTrendDeltas = $paymentTrendDeltas ?? ['opening' => 0, 'received' => 0, 'expenses' => 0, 'current' => 0, 'transactions' => 0];
+?>
+<script type="application/json" id="secPaymentsTrends"><?= json_encode($paymentTrends, JSON_UNESCAPED_UNICODE) ?></script>
+<script type="application/json" id="secPaymentsStatsInitial"><?= json_encode([
+    'opening_balance' => (float)($dailyBalance['opening_balance'] ?? 0),
+    'total_received' => (float)($dailyBalance['total_received'] ?? 0),
+    'total_expenses' => (float)($dailyBalance['total_expenses'] ?? 0),
+    'current_balance' => (float)($dailyBalance['current_balance'] ?? 0),
+    'transactions_count' => (int)($dailyBalance['transactions_count'] ?? 0),
+], JSON_UNESCAPED_UNICODE) ?></script>
+<script type="application/json" id="secPaymentsTrendDeltas"><?= json_encode($paymentTrendDeltas, JSON_UNESCAPED_UNICODE) ?></script>
+
 <!-- Daily Balance Summary -->
-<div class="row mb-4 stats-cards-wrapper">
-    <div class="col-md-3 mb-4 px-2">
+<div class="row mb-4 stats-cards-wrapper sec-mini-stats sec-payments-stats">
+    <div class="col-xl col-lg-4 col-md-6 mb-4 px-2">
         <div class="stats-card-wrapper">
-            <div class="stats-card stats-card-success">
-                <div class="stats-card-content">
-                    <div class="stats-card-header">
-                        <h4 class="stats-card-title arabic-text">الرصيد الافتتاحي</h4>
-                        <h3 class="stats-card-value arabic-text" id="openingBalance"><?= number_format($dailyBalance['opening_balance'] ?? 0, 2) ?></h3>
-                    </div>
-                    <div class="stats-card-icon">
-                        <i class="bi bi-wallet2"></i>
-                    </div>
+            <div class="mini-stat-card mini-stat-success">
+                <div class="mini-stat-icon"><i class="bi bi-wallet2"></i></div>
+                <div class="mini-stat-content">
+                    <span class="mini-stat-value arabic-text" id="secPayStatOpening"><?= number_format((float)($dailyBalance['opening_balance'] ?? 0), 2) ?></span>
+                    <span class="mini-stat-label arabic-text">الرصيد الافتتاحي</span>
                 </div>
+                <div class="mini-stat-chart" id="chartPayOpening"></div>
+                <div class="mini-stat-trend trend-neutral" id="trendPayOpening"><span>--</span></div>
             </div>
         </div>
     </div>
-    <div class="col-md-3 mb-4 px-2">
+    <div class="col-xl col-lg-4 col-md-6 mb-4 px-2">
         <div class="stats-card-wrapper">
-            <div class="stats-card stats-card-primary">
-                <div class="stats-card-content">
-                    <div class="stats-card-header">
-                        <h4 class="stats-card-title arabic-text">إجمالي المستلم</h4>
-                        <h3 class="stats-card-value arabic-text" id="totalReceived"><?= number_format($dailyBalance['total_received'] ?? 0, 2) ?></h3>
-                    </div>
-                    <div class="stats-card-icon">
-                        <i class="bi bi-arrow-up-circle"></i>
-                    </div>
+            <div class="mini-stat-card mini-stat-primary">
+                <div class="mini-stat-icon"><i class="bi bi-arrow-up-circle"></i></div>
+                <div class="mini-stat-content">
+                    <span class="mini-stat-value arabic-text" id="secPayStatReceived"><?= number_format((float)($dailyBalance['total_received'] ?? 0), 2) ?></span>
+                    <span class="mini-stat-label arabic-text">إجمالي المستلم</span>
                 </div>
+                <div class="mini-stat-chart" id="chartPayReceived"></div>
+                <div class="mini-stat-trend trend-neutral" id="trendPayReceived"><span>--</span></div>
             </div>
         </div>
     </div>
-    <div class="col-md-3 mb-4 px-2">
+    <div class="col-xl col-lg-4 col-md-6 mb-4 px-2">
         <div class="stats-card-wrapper">
-            <div class="stats-card stats-card-danger">
-                <div class="stats-card-content">
-                    <div class="stats-card-header">
-                        <h4 class="stats-card-title arabic-text">إجمالي المصروفات</h4>
-                        <h3 class="stats-card-value arabic-text" id="totalExpenses"><?= number_format($dailyBalance['total_expenses'] ?? 0, 2) ?></h3>
-                    </div>
-                    <div class="stats-card-icon">
-                        <i class="bi bi-arrow-down-circle"></i>
-                    </div>
+            <div class="mini-stat-card mini-stat-danger">
+                <div class="mini-stat-icon"><i class="bi bi-arrow-down-circle"></i></div>
+                <div class="mini-stat-content">
+                    <span class="mini-stat-value arabic-text" id="secPayStatExpenses"><?= number_format((float)($dailyBalance['total_expenses'] ?? 0), 2) ?></span>
+                    <span class="mini-stat-label arabic-text">إجمالي المصروفات</span>
                 </div>
+                <div class="mini-stat-chart" id="chartPayExpenses"></div>
+                <div class="mini-stat-trend trend-neutral" id="trendPayExpenses"><span>--</span></div>
             </div>
         </div>
     </div>
-    <div class="col-md-3 mb-4 px-2">
+    <div class="col-xl col-lg-4 col-md-6 mb-4 px-2">
         <div class="stats-card-wrapper">
-            <div class="stats-card stats-card-info">
-                <div class="stats-card-content">
-                    <div class="stats-card-header">
-                        <h4 class="stats-card-title arabic-text">الرصيد الحالي</h4>
-                        <h3 class="stats-card-value arabic-text" id="currentBalance"><?= number_format($dailyBalance['current_balance'] ?? 0, 2) ?></h3>
-                    </div>
-                    <div class="stats-card-icon">
-                        <i class="bi bi-calculator"></i>
-                    </div>
+            <div class="mini-stat-card mini-stat-info">
+                <div class="mini-stat-icon"><i class="bi bi-calculator"></i></div>
+                <div class="mini-stat-content">
+                    <span class="mini-stat-value arabic-text" id="secPayStatCurrent"><?= number_format((float)($dailyBalance['current_balance'] ?? 0), 2) ?></span>
+                    <span class="mini-stat-label arabic-text">الرصيد الحالي</span>
                 </div>
+                <div class="mini-stat-chart" id="chartPayCurrent"></div>
+                <div class="mini-stat-trend trend-neutral" id="trendPayCurrent"><span>--</span></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl col-lg-4 col-md-6 mb-4 px-2">
+        <div class="stats-card-wrapper">
+            <div class="mini-stat-card mini-stat-warning">
+                <div class="mini-stat-icon"><i class="bi bi-receipt"></i></div>
+                <div class="mini-stat-content">
+                    <span class="mini-stat-value arabic-text" id="secPayStatTx"><?= (int)($dailyBalance['transactions_count'] ?? 0) ?></span>
+                    <span class="mini-stat-label arabic-text">معاملات اليوم</span>
+                </div>
+                <div class="mini-stat-chart" id="chartPayTx"></div>
+                <div class="mini-stat-trend trend-neutral" id="trendPayTx"><span>--</span></div>
             </div>
         </div>
     </div>
@@ -141,57 +169,49 @@
 <!-- Payment Types Summary -->
 <div class="row mb-4">
     <div class="col-md-12">
-        <div class="card">
+        <div class="card sec-pay-types-card">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="mb-0 arabic-text">
                     <i class="bi bi-pie-chart me-2"></i>
                     ملخص المدفوعات حسب النوع
                 </h5>
+                <small class="text-muted arabic-text">اليوم</small>
             </div>
             <div class="card-body">
-                <div class="row">
-                    <div class="col-md-3">
-                        <div class="d-flex align-items-center mb-3">
-                            <div class="payment-type-icon bg-primary me-3">
-                                <i class="bi bi-calendar-plus"></i>
-                            </div>
-                            <div>
-                                <h6 class="mb-0 arabic-text">حجز جديد</h6>
-                                <span class="text-success fw-bold" data-payment-type="new_booking"><span class="payment-type-amount"><?= $paymentTypes['new_booking'] ?? 0 ?></span> جنيه</span>
-                            </div>
+                <div class="sec-pay-types-grid">
+                    <div class="sec-pay-type-tile" data-payment-type="new_booking">
+                        <div class="sec-pay-type-icon sec-pay-type-primary"><i class="bi bi-calendar-plus"></i></div>
+                        <div class="sec-pay-type-body">
+                            <span class="sec-pay-type-label arabic-text">حجز جديد</span>
+                            <span class="sec-pay-type-value arabic-text"><span class="payment-type-amount"><?= number_format((float)($paymentTypes['new_booking'] ?? 0), 2) ?></span> <small>جنيه</small></span>
                         </div>
                     </div>
-                    <div class="col-md-3">
-                        <div class="d-flex align-items-center mb-3">
-                            <div class="payment-type-icon bg-info me-3">
-                                <i class="bi bi-arrow-clockwise"></i>
-                            </div>
-                            <div>
-                                <h6 class="mb-0 arabic-text">إعادة كشف</h6>
-                                <span class="text-success fw-bold" data-payment-type="followup"><span class="payment-type-amount"><?= $paymentTypes['followup'] ?? 0 ?></span> جنيه</span>
-                            </div>
+                    <div class="sec-pay-type-tile" data-payment-type="followup">
+                        <div class="sec-pay-type-icon sec-pay-type-info"><i class="bi bi-arrow-clockwise"></i></div>
+                        <div class="sec-pay-type-body">
+                            <span class="sec-pay-type-label arabic-text">إعادة كشف</span>
+                            <span class="sec-pay-type-value arabic-text"><span class="payment-type-amount"><?= number_format((float)($paymentTypes['followup'] ?? 0), 2) ?></span> <small>جنيه</small></span>
                         </div>
                     </div>
-                    <div class="col-md-3">
-                        <div class="d-flex align-items-center mb-3">
-                            <div class="payment-type-icon bg-warning me-3">
-                                <i class="bi bi-chat-dots"></i>
-                            </div>
-                            <div>
-                                <h6 class="mb-0 arabic-text">استشارة طبية</h6>
-                                <span class="text-success fw-bold" data-payment-type="consultation"><span class="payment-type-amount"><?= $paymentTypes['consultation'] ?? 0 ?></span> جنيه</span>
-                            </div>
+                    <div class="sec-pay-type-tile" data-payment-type="consultation">
+                        <div class="sec-pay-type-icon sec-pay-type-warning"><i class="bi bi-chat-dots"></i></div>
+                        <div class="sec-pay-type-body">
+                            <span class="sec-pay-type-label arabic-text">استشارة طبية</span>
+                            <span class="sec-pay-type-value arabic-text"><span class="payment-type-amount"><?= number_format((float)($paymentTypes['consultation'] ?? 0), 2) ?></span> <small>جنيه</small></span>
                         </div>
                     </div>
-                    <div class="col-md-3">
-                        <div class="d-flex align-items-center mb-3">
-                            <div class="payment-type-icon bg-success me-3">
-                                <i class="bi bi-activity"></i>
-                            </div>
-                            <div>
-                                <h6 class="mb-0 arabic-text">إجراء طبي</h6>
-                                <span class="text-success fw-bold" data-payment-type="procedure"><span class="payment-type-amount"><?= $paymentTypes['procedure'] ?? 0 ?></span> جنيه</span>
-                            </div>
+                    <div class="sec-pay-type-tile" data-payment-type="procedure">
+                        <div class="sec-pay-type-icon sec-pay-type-success"><i class="bi bi-activity"></i></div>
+                        <div class="sec-pay-type-body">
+                            <span class="sec-pay-type-label arabic-text">إجراء طبي</span>
+                            <span class="sec-pay-type-value arabic-text"><span class="payment-type-amount"><?= number_format((float)($paymentTypes['procedure'] ?? 0), 2) ?></span> <small>جنيه</small></span>
+                        </div>
+                    </div>
+                    <div class="sec-pay-type-tile" data-payment-type="other">
+                        <div class="sec-pay-type-icon sec-pay-type-muted"><i class="bi bi-three-dots"></i></div>
+                        <div class="sec-pay-type-body">
+                            <span class="sec-pay-type-label arabic-text">أخرى</span>
+                            <span class="sec-pay-type-value arabic-text"><span class="payment-type-amount"><?= number_format((float)($paymentTypes['other'] ?? 0), 2) ?></span> <small>جنيه</small></span>
                         </div>
                     </div>
                 </div>
@@ -823,6 +843,9 @@
     </div>
 </div>
 <?php endif; ?>
+
+<script src="/app/Views/secretary/assets/js/sec-mini-stats.js?v=<?= file_exists(__DIR__ . '/assets/js/sec-mini-stats.js') ? filemtime(__DIR__ . '/assets/js/sec-mini-stats.js') : time() ?>"></script>
+<script src="/app/Views/secretary/assets/js/sec-payments-page.js?v=<?= file_exists(__DIR__ . '/assets/js/sec-payments-page.js') ? filemtime(__DIR__ . '/assets/js/sec-payments-page.js') : time() ?>"></script>
 
 <script>
 // Payment management functions
@@ -1675,55 +1698,6 @@ function showNotification(message, type = 'info') {
     }, 5000);
 }
 
-// Update dashboard cards with fresh data
-function updateDashboardCards() {
-    fetch('/api/dashboard-summary', {
-        credentials: 'same-origin'
-    })
-        .then(response => response.json())
-        .then(data => {
-            if (data.ok) {
-                // Update daily balance cards
-                if (data.data.dailyBalance) {
-                    const openingBalanceEl = document.getElementById('openingBalance');
-                    const totalReceivedEl = document.getElementById('totalReceived');
-                    const totalExpensesEl = document.getElementById('totalExpenses');
-                    const currentBalanceEl = document.getElementById('currentBalance');
-                    
-                    if (openingBalanceEl) {
-                        openingBalanceEl.textContent = formatMoney(data.data.dailyBalance.opening_balance) + ' جنيه';
-                    }
-                    if (totalReceivedEl) {
-                        totalReceivedEl.textContent = formatMoney(data.data.dailyBalance.total_received) + ' جنيه';
-                    }
-                    if (totalExpensesEl) {
-                        totalExpensesEl.textContent = formatMoney(data.data.dailyBalance.total_expenses) + ' جنيه';
-                    }
-                    if (currentBalanceEl) {
-                        currentBalanceEl.textContent = formatMoney(data.data.dailyBalance.current_balance) + ' جنيه';
-                    }
-                }
-                
-                // Update payment-type cards. The API returns the same flat
-                // shape rendered by SecretaryController on initial load:
-                //   { new_booking: 150, followup: 100, consultation: 0, procedure: 0, other: 0 }
-                if (data.data.paymentTypes) {
-                    Object.keys(data.data.paymentTypes).forEach(type => {
-                        const card = document.querySelector(`[data-payment-type="${type}"]`);
-                        if (!card) return;
-                        const amountEl = card.querySelector('.payment-type-amount');
-                        if (amountEl) {
-                            amountEl.textContent = formatMoney(data.data.paymentTypes[type] || 0);
-                        }
-                    });
-                }
-            }
-        })
-        .catch(error => {
-            console.error('Error updating dashboard cards:', error);
-        });
-}
-
 function filterPaymentsByType(type) {
     const rows = document.querySelectorAll('#paymentsTableBody tr[data-type]');
     
@@ -1817,16 +1791,83 @@ function filterPaymentsBySearch(query) {
     font-size: 0.875rem;
 }
 
-.payment-type-icon {
-    width: 40px;
-    height: 40px;
-    border-radius: 8px;
+.sec-pay-types-card {
+    background: var(--glass-bg-strong, var(--card));
+    border: 1px solid var(--border);
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+}
+.sec-pay-types-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+}
+.sec-pay-type-tile {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--accent) 4%, var(--card));
+    border: 1px solid color-mix(in srgb, var(--accent) 12%, var(--border));
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.sec-pay-type-tile:hover {
+    transform: translateY(-2px);
+    border-color: color-mix(in srgb, var(--accent) 28%, var(--border));
+    box-shadow: 0 8px 24px color-mix(in srgb, var(--accent) 12%, transparent);
+}
+.sec-pay-type-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: white;
-    font-size: 1.2rem;
+    color: #fff;
+    font-size: 1.15rem;
+    flex-shrink: 0;
 }
+.sec-pay-type-primary { background: linear-gradient(135deg, var(--accent), var(--ds-accent-2, var(--accent))); }
+.sec-pay-type-info { background: linear-gradient(135deg, #0ea5e9, #0284c7); }
+.sec-pay-type-warning { background: linear-gradient(135deg, #f59e0b, #d97706); }
+.sec-pay-type-success { background: linear-gradient(135deg, #10b981, #059669); }
+.sec-pay-type-muted { background: linear-gradient(135deg, #64748b, #475569); }
+.sec-pay-type-body {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+.sec-pay-type-label {
+    font-size: 0.8rem;
+    color: var(--muted);
+}
+.sec-pay-type-value {
+    font-weight: 700;
+    font-size: 1.05rem;
+    color: var(--text);
+}
+.sec-pay-type-value small {
+    font-weight: 500;
+    font-size: 0.75rem;
+    color: var(--muted);
+}
+
+.sec-payments-stats .mini-stat-danger {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.08) 0%, rgba(239, 68, 68, 0.02) 100%);
+    border-color: rgba(239, 68, 68, 0.2);
+}
+.sec-payments-stats .mini-stat-danger .mini-stat-icon {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.35);
+}
+.sec-payments-stats .mini-stat-danger .mini-stat-value { color: #ef4444; }
+.sec-payments-stats .mini-stat-danger .sparkline-path { stroke: #ef4444; }
+.sec-payments-stats .mini-stat-danger .sparkline-area { fill: #ef4444; }
+.dark .sec-payments-stats .mini-stat-danger .mini-stat-value { color: #fb7185; }
+.dark .sec-payments-stats .mini-stat-danger .sparkline-path { stroke: #fb7185; }
+.dark .sec-payments-stats .mini-stat-danger .sparkline-area { fill: #fb7185; }
 
 .avatar-sm {
     width: 32px;
@@ -3274,49 +3315,4 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-// Hover effect with radial gradient - glowing effect following mouse
-document.addEventListener('DOMContentLoaded', function() {
-    const cards = document.querySelectorAll('.stats-card');
-    const wrapper = document.querySelector('.stats-cards-wrapper');
-
-    if (wrapper && cards.length > 0) {
-        wrapper.addEventListener('mousemove', function (event) {
-            cards.forEach((card) => {
-                const cardContent = card.querySelector('.stats-card-content');
-                if (!cardContent) return;
-                
-                const rect = cardContent.getBoundingClientRect();
-                const x = event.clientX - rect.left;
-                const y = event.clientY - rect.top;
-
-                // Get card type and corresponding color
-                let color = 'rgba(59, 248, 251, 0.3)';
-                if (card.classList.contains('stats-card-primary')) {
-                    color = 'rgba(14, 165, 233, 0.4)';
-                } else if (card.classList.contains('stats-card-success')) {
-                    color = 'rgba(16, 185, 129, 0.4)';
-                } else if (card.classList.contains('stats-card-danger')) {
-                    color = 'rgba(239, 68, 68, 0.4)';
-                } else if (card.classList.contains('stats-card-warning')) {
-                    color = 'rgba(245, 158, 11, 0.4)';
-                } else if (card.classList.contains('stats-card-info')) {
-                    color = 'rgba(187, 54, 204, 0.4)';
-                }
-
-                // Apply gradient to card-content, overlay on top of background-color
-                cardContent.style.background = `radial-gradient(960px circle at ${x}px ${y}px, ${color}, transparent 15%), var(--card)`;
-            });
-        });
-        
-        // Reset background when mouse leaves wrapper
-        wrapper.addEventListener('mouseleave', function() {
-            cards.forEach((card) => {
-                const cardContent = card.querySelector('.stats-card-content');
-                if (cardContent) {
-                    cardContent.style.background = '';
-                }
-            });
-        });
-    }
-});
 </script>

@@ -16,6 +16,22 @@ let highlightedAppointmentId = null;
 let currentTimeFilter = null;
 let calendarData = null;
 
+window.SEC_BOOKINGS_MINI_CARDS = [
+    { chartId: 'chartBkTotal', trendId: 'trendBkTotal', trendKey: 'total', statKey: 'total_appointments', valueId: 'totalBookings', staticToday: true },
+    { chartId: 'chartBkBooked', trendId: 'trendBkBooked', trendKey: 'booked', statKey: 'booked', valueId: 'pendingBookings' },
+    { chartId: 'chartBkCheckedIn', trendId: 'trendBkCheckedIn', trendKey: 'checked_in', statKey: 'checked_in', valueId: 'checkedInBookings' },
+    { chartId: 'chartBkCompleted', trendId: 'trendBkCompleted', trendKey: 'completed', statKey: 'completed', valueId: 'completedBookings' }
+];
+
+function initBookingsMiniStats() {
+    if (!window.secMiniStats) return;
+    window.secMiniStats.init(window.SEC_BOOKINGS_MINI_CARDS, {
+        trendsId: 'secBookingsTrends',
+        statsId: 'secBookingsStatsInitial',
+        deltasId: 'secBookingsTrendDeltas'
+    });
+}
+
 function initializeDateFromURL() {
     const urlParams = new URLSearchParams(window.location.search);
     const dateParam = urlParams.get('date');
@@ -37,6 +53,7 @@ function initializeDateFromURL() {
 // Initialize page
 document.addEventListener('DOMContentLoaded', function() {
     initializeDateFromURL();
+    initBookingsMiniStats();
     setupEventListeners();
     updateStatistics([]);
     initCustomSelects();
@@ -1389,23 +1406,42 @@ function selectPatient(patientId, patientName) {
 }
 
 function updateStatistics(appointments = []) {
-    // Update statistics based on current calendar data
-    if (appointments.length > 0) {
-        const totalBookings = appointments.length;
-        const completedBookings = appointments.filter(apt => apt.status === 'Completed').length;
-        const pendingBookings = appointments.filter(apt => apt.status === 'Booked').length;
-        const checkedInBookings = appointments.filter(apt => apt.status === 'CheckedIn').length;
-        
-        document.getElementById('totalBookings').textContent = totalBookings;
-        document.getElementById('completedBookings').textContent = completedBookings;
-        document.getElementById('pendingBookings').textContent = pendingBookings;
-        document.getElementById('checkedInBookings').textContent = checkedInBookings;
+    const totalBookings = appointments.length;
+    const completedBookings = appointments.filter(function (apt) { return apt.status === 'Completed'; }).length;
+    const pendingBookings = appointments.filter(function (apt) { return apt.status === 'Booked'; }).length;
+    const checkedInBookings = appointments.filter(function (apt) { return apt.status === 'CheckedIn'; }).length;
+
+    const stats = {
+        total_appointments: totalBookings,
+        booked: pendingBookings,
+        checked_in: checkedInBookings,
+        completed: completedBookings
+    };
+
+    if (window.secMiniStats && window.SEC_BOOKINGS_MINI_CARDS) {
+        window.secMiniStats.updateStatValues(window.SEC_BOOKINGS_MINI_CARDS, stats);
+        const trends = window.secMiniStats.readJsonScript('secBookingsTrends') || {};
+        const dates = window.secMiniStats.readJsonScript('secBookingsTrendDates') || [];
+        const y = currentDate.getFullYear();
+        const m = String(currentDate.getMonth() + 1).padStart(2, '0');
+        const d = String(currentDate.getDate()).padStart(2, '0');
+        const dateStr = y + '-' + m + '-' + d;
+        const today = new Date();
+        const todayStr = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
+        const deltas = window.secMiniStats.computeDeltasForDate(dates, trends, dateStr, stats, window.SEC_BOOKINGS_MINI_CARDS);
+        window.secMiniStats.refresh(window.SEC_BOOKINGS_MINI_CARDS, trends, stats, deltas, {
+            trendsId: 'secBookingsTrends',
+            statsId: 'secBookingsStatsInitial',
+            deltasId: 'secBookingsTrendDeltas',
+            neutralLabel: dateStr === todayStr ? 'اليوم' : 'ذلك اليوم',
+            syncLastPoint: false
+        });
     } else {
-        // Reset statistics if no appointments
-        document.getElementById('totalBookings').textContent = '0';
-        document.getElementById('completedBookings').textContent = '0';
-        document.getElementById('pendingBookings').textContent = '0';
-        document.getElementById('checkedInBookings').textContent = '0';
+        var el;
+        el = document.getElementById('totalBookings'); if (el) el.textContent = totalBookings;
+        el = document.getElementById('completedBookings'); if (el) el.textContent = completedBookings;
+        el = document.getElementById('pendingBookings'); if (el) el.textContent = pendingBookings;
+        el = document.getElementById('checkedInBookings'); if (el) el.textContent = checkedInBookings;
     }
 }
 
@@ -2808,48 +2844,3 @@ window.addEventListener('beforeunload', () => {
 });
 
 
-// Hover effect with radial gradient - glowing effect following mouse
-document.addEventListener('DOMContentLoaded', function() {
-    const cards = document.querySelectorAll('.stats-card');
-    const wrapper = document.querySelector('.stats-cards-wrapper');
-
-    if (wrapper && cards.length > 0) {
-        wrapper.addEventListener('mousemove', function (event) {
-            cards.forEach((card) => {
-                const cardContent = card.querySelector('.stats-card-content');
-                if (!cardContent) return;
-                
-                const rect = cardContent.getBoundingClientRect();
-                const x = event.clientX - rect.left;
-                const y = event.clientY - rect.top;
-                // Get card type and corresponding color
-                let color = 'rgba(59, 248, 251, 0.3)';
-                if (card.classList.contains('stats-card-primary')) {
-                    color = 'rgba(14, 165, 233, 0.4)';
-                } else if (card.classList.contains('stats-card-success')) {
-                    color = 'rgba(16, 185, 129, 0.4)';
-                } else if (card.classList.contains('stats-card-danger')) {
-                    color = 'rgba(239, 68, 68, 0.4)';
-                } else if (card.classList.contains('stats-card-warning')) {
-                    color = 'rgba(245, 158, 11, 0.4)';
-                } else if (card.classList.contains('stats-card-info')) {
-                    color = 'rgba(187, 54, 204, 0.4)';
-                }
-
-                // Apply gradient to card-content, overlay on top of background-color
-                // Use multiple backgrounds: gradient on top, solid color below
-                cardContent.style.background = `radial-gradient(960px circle at ${x}px ${y}px, ${color}, transparent 15%), var(--card)`;
-            });
-        });
-        
-        // Reset background when mouse leaves wrapper
-        wrapper.addEventListener('mouseleave', function() {
-            cards.forEach((card) => {
-                const cardContent = card.querySelector('.stats-card-content');
-                if (cardContent) {
-                    cardContent.style.background = '';
-                }
-            });
-        });
-    }
-});
