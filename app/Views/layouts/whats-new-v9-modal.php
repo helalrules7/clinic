@@ -3229,7 +3229,7 @@
                   <li><i class="bi bi-check-circle-fill"></i><span>Medical History popover shared — calendar + patient profile</span></li>
                   <li><i class="bi bi-check-circle-fill"></i><span>Unified image viewer: glass zoom + mobile single-row footer</span></li>
                   <li><i class="bi bi-check-circle-fill"></i><span>Image modal stacks above mobile dock — dock hidden while viewing</span></li>
-                  <li><i class="bi bi-check-circle-fill"></i><span>Patient Actions: 2-column gradient button grid</span></li>
+                  <li><i class="bi bi-check-circle-fill"></i><span>Patient Actions: 5×2 gradient grid on desktop</span></li>
                   <li><i class="bi bi-check-circle-fill"></i><span>Calendar desktop: no tooltips on actions column</span></li>
                   <li><i class="bi bi-check-circle-fill"></i><span>AI chat widget: safe-area insets on mobile — header no longer clipped</span></li>
                 </ul>
