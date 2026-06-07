@@ -114,9 +114,8 @@
             } catch (_) {}
         }
 
-        if (key === 'back_to_top_display') {
-            var btn = document.getElementById('scrollToTop');
-            if (btn) btn.style.display = value ? '' : 'none';
+        if (key === 'back_to_top_display' && typeof window.secApplyBackToTopPreference === 'function') {
+            window.secApplyBackToTopPreference(!!value);
         }
 
         await putPreference({ [key]: value });

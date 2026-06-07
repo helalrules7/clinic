@@ -469,8 +469,12 @@
         <!-- Page Content -->
         <?= $content ?>
     </div>    
-    <!-- Scroll to Top Button -->
+    <!-- Scroll to Top Button (scroll-progress ring — parity with doctor layout) -->
     <button class="scroll-to-top" id="scrollToTop" aria-label="العودة للأعلى">
+        <svg class="stt-ring" viewBox="0 0 44 44" aria-hidden="true">
+            <circle class="stt-ring-track" cx="22" cy="22" r="19.5"></circle>
+            <circle class="stt-ring-bar" cx="22" cy="22" r="19.5"></circle>
+        </svg>
         <i class="bi bi-arrow-up"></i>
     </button>
 
@@ -767,27 +771,80 @@
             });
         }
         
-        // Scroll to Top Button
-        const scrollToTopBtn = document.getElementById('scrollToTop');
-        
-        if (scrollToTopBtn) {
-            // Show/hide button based on scroll position
-            window.addEventListener('scroll', () => {
-                if (window.pageYOffset > 300) {
-                    scrollToTopBtn.classList.add('show');
-                } else {
-                    scrollToTopBtn.classList.remove('show');
-                }
-            });
-            
-            // Scroll to top when button is clicked
-            scrollToTopBtn.addEventListener('click', () => {
-                window.scrollTo({
-                    top: 0,
-                    behavior: 'smooth'
+        // Scroll to Top — doctor parity: progress ring + rAF-throttled scroll tick
+        // + back_to_top_display from /api/secretary/settings
+        (function setupScrollToTop() {
+            const scrollToTopBtn = document.getElementById('scrollToTop');
+            if (!scrollToTopBtn) return;
+
+            const sttRingBar = scrollToTopBtn.querySelector('.stt-ring-bar');
+            const STT_RING_C = 122.52; // 2π·19.5
+            let scrollBound = false;
+
+            function onScrollTick() {
+                if (!scrollBound) return;
+                if (window._secSttScrollScheduled) return;
+                window._secSttScrollScheduled = true;
+                requestAnimationFrame(() => {
+                    window._secSttScrollScheduled = false;
+                    const y = window.pageYOffset;
+                    const el = document.documentElement;
+                    const max = (el.scrollHeight - el.clientHeight) || 1;
+                    const ringP = Math.min(1, Math.max(0, y / max));
+                    const wantShow = y > 300;
+                    scrollToTopBtn.classList.toggle('show', wantShow);
+                    if (sttRingBar) {
+                        sttRingBar.style.strokeDashoffset = (STT_RING_C * (1 - ringP)).toFixed(2);
+                    }
                 });
-            });
-        }
+            }
+
+            function bindScrollHandlers() {
+                if (scrollBound) return;
+                scrollBound = true;
+                window.addEventListener('scroll', onScrollTick, { passive: true });
+                onScrollTick();
+                scrollToTopBtn.addEventListener('click', () => {
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                });
+            }
+
+            function applyBackToTopPreference(enabled) {
+                if (!enabled) {
+                    if (scrollBound) {
+                        window.removeEventListener('scroll', onScrollTick);
+                        scrollBound = false;
+                    }
+                    scrollToTopBtn.classList.remove('show');
+                    scrollToTopBtn.style.display = 'none';
+                    return;
+                }
+                scrollToTopBtn.style.display = '';
+                bindScrollHandlers();
+            }
+
+            window.secApplyBackToTopPreference = applyBackToTopPreference;
+
+            (async function loadBackToTopPreference() {
+                try {
+                    const response = await fetch('/api/secretary/settings', {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest',
+                        },
+                    });
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.success && data.settings) {
+                            applyBackToTopPreference(data.settings.back_to_top_display !== false);
+                            return;
+                        }
+                    }
+                } catch (_) {}
+                applyBackToTopPreference(true);
+            })();
+        })();
 
         // Make modals draggable globally
         function initializeDraggableModals() {
