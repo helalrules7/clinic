@@ -2238,9 +2238,15 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     window.dqpDelete = function (id) {
         if (window.mkConfirmModal) {
-            window.mkConfirmModal({ title: 'Delete note', message: 'This quick note will be permanently removed.', confirmText: 'Delete', confirmClass: 'btn-danger' })
-                .then(function (ok) { if (ok) dqpPerformDelete(id); });
-        } else if (confirm('Delete this note?')) {
+            var _t = (window.V11I18n && window.V11I18n.t) ? window.V11I18n.t.bind(window.V11I18n) : function (k, fb) { return fb; };
+            window.mkConfirmModal({
+                title: _t('note.delete_title', 'Delete note'),
+                message: _t('note.delete_msg', 'This quick note will be permanently removed.'),
+                confirmText: _t('modal.delete', 'Delete'),
+                cancelText: _t('modal.cancel', 'Cancel'),
+                confirmClass: 'btn-danger'
+            }).then(function (ok) { if (ok) dqpPerformDelete(id); });
+        } else if (confirm((window.V11I18n && window.V11I18n.t('note.delete_msg', 'Delete this note?')) || 'Delete this note?')) {
             dqpPerformDelete(id);
         }
     };

@@ -30,6 +30,15 @@
 
     const tr = (k, fb, vars) => (window.V11I18n && window.V11I18n.t(k, fb, vars)) || fb;
 
+    function deleteListPermMsg(list) {
+        const name = (list && list.name) ? list.name : tr('todo.list_default', 'List');
+        return tr(
+            'todo.delete_list_perm_msg',
+            'Permanently delete "' + name + '" and all of its tasks? This cannot be undone.',
+            { name: name }
+        );
+    }
+
     // ---------------------------------------------------------------- helpers
     const JSON_HEADERS = {
         'X-Requested-With': 'XMLHttpRequest',
@@ -526,9 +535,9 @@
             window.mkConfirmModal({
                 title: tr('todo.delete_task', 'Delete task'),
                 message: tr('todo.delete_task_msg', 'Delete this task?'),
-                okText: tr('todo.delete', 'Delete'),
-                okVariant: 'danger',
-                cancelText: 'Cancel'
+                confirmText: tr('todo.delete', 'Delete'),
+                confirmClass: 'btn-danger',
+                cancelText: tr('modal.cancel', 'Cancel')
             }).then((ok) => { if (ok) doDelete(); });
         } else if (window.confirm(tr('todo.delete_task_msg', 'Delete this task?'))) {
             doDelete();
@@ -751,7 +760,7 @@
         const titleEl = document.getElementById('todoListModalTitle');
         const labelEl = listForm.querySelector('[data-list-submit-label]');
         if (titleEl) titleEl.textContent = isEdit ? tr('todo.edit_list_modal', 'Edit list') : tr('todo.new_list_modal', 'New list');
-        if (labelEl) labelEl.textContent = isEdit ? tr('todo.save_task', 'Save task') : tr('todo.create_list', 'Create list');
+        if (labelEl) labelEl.textContent = isEdit ? tr('todo.save_list', 'Save list') : tr('todo.create_list', 'Create list');
 
         listModal.hidden = false;
         requestAnimationFrame(() => listModal.classList.add('is-open'));
@@ -908,8 +917,7 @@
     }
 
     function deleteArchivedList(list, row) {
-        const msg = 'Permanently delete "' + (list.name || 'this list') +
-            '" and all of its tasks? This cannot be undone.';
+        const msg = deleteListPermMsg(list);
         const run = function () {
             api('/api/todo-lists/' + list.id, { method: 'DELETE', body: { force: true } }).then(() => {
                 if (row && row.parentNode) row.parentNode.removeChild(row);
@@ -922,8 +930,11 @@
         };
         if (typeof window.mkConfirmModal === 'function') {
             window.mkConfirmModal({
-                title: tr('todo.delete_list', 'Delete list'), message: msg,
-                okText: tr('todo.delete', 'Delete'), okVariant: 'danger', cancelText: tr('todo.cancel', 'Cancel')
+                title: tr('todo.delete_list', 'Delete list'),
+                message: msg,
+                confirmText: tr('todo.delete', 'Delete'),
+                confirmClass: 'btn-danger',
+                cancelText: tr('modal.cancel', 'Cancel')
             }).then((ok) => { if (ok) run(); });
         } else if (window.confirm(msg)) {
             run();
@@ -988,19 +999,22 @@
                     window.mkConfirmModal({
                         title: tr('todo.archive_list', 'Archive list'),
                         message: tr('todo.archive_list_msg', 'Archive this list?'),
-                        okText: tr('todo.archive_list', 'Archive'), okVariant: 'warning'
+                        confirmText: tr('todo.archive_btn', 'Archive'),
+                        confirmClass: 'btn-warning',
+                        cancelText: tr('modal.cancel', 'Cancel')
                     }).then((ok) => { if (ok) archiveList(list.id); });
                 } else if (window.confirm(tr('todo.archive_list_msg', 'Archive this list?'))) {
                     archiveList(list.id);
                 }
             } else if (act === 'delete') {
-                const msg = 'Permanently delete "' + (list.name || 'this list') +
-                    '" and all of its tasks? This cannot be undone.';
+                const msg = deleteListPermMsg(list);
                 if (typeof window.mkConfirmModal === 'function') {
                     window.mkConfirmModal({
-                        title: 'Delete list',
+                        title: tr('todo.delete_list', 'Delete list'),
                         message: msg,
-                        okText: 'Delete', okVariant: 'danger', cancelText: 'Cancel'
+                        confirmText: tr('todo.delete', 'Delete'),
+                        confirmClass: 'btn-danger',
+                        cancelText: tr('modal.cancel', 'Cancel')
                     }).then((ok) => { if (ok) deleteList(list.id); });
                 } else if (window.confirm(msg)) {
                     deleteList(list.id);

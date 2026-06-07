@@ -180,14 +180,27 @@
         });
     }
 
+    function v11t(key, en) {
+        return (window.V11I18n && window.V11I18n.t(key, en)) || en;
+    }
+
+    function resolveConfirmClass(opts, withCancel) {
+        if (opts.confirmClass) return opts.confirmClass;
+        var variant = opts.confirmVariant || opts.okVariant;
+        if (variant) {
+            return variant.indexOf('btn-') === 0 ? variant : 'btn-' + variant;
+        }
+        return withCancel ? 'btn-danger' : 'btn-primary';
+    }
+
     function buildDialog(opts, withCancel) {
         opts = opts || {};
-        var title = opts.title != null ? opts.title : (withCancel ? 'Please confirm' : 'Notice');
-        var message = opts.message != null ? opts.message : (withCancel ? 'Are you sure?' : '');
+        var title = opts.title != null ? opts.title : (withCancel ? v11t('modal.confirm_title', 'Please confirm') : v11t('modal.notice', 'Notice'));
+        var message = opts.message != null ? opts.message : (withCancel ? v11t('modal.confirm_msg', 'Are you sure?') : '');
         var icon = opts.icon || (withCancel ? 'bi-exclamation-triangle' : 'bi-info-circle');
-        var confirmText = opts.confirmText || (withCancel ? 'Confirm' : (opts.okText || 'OK'));
-        var cancelText = opts.cancelText || 'Cancel';
-        var confirmClass = opts.confirmClass || (withCancel ? 'btn-danger' : 'btn-primary');
+        var confirmText = opts.confirmText || opts.okText || (withCancel ? v11t('modal.confirm', 'Confirm') : v11t('modal.ok', 'OK'));
+        var cancelText = opts.cancelText || v11t('modal.cancel', 'Cancel');
+        var confirmClass = resolveConfirmClass(opts, withCancel);
         var body = opts.html ? message : esc(message);
 
         var wrap = document.createElement('div');
@@ -197,7 +210,7 @@
                 '<div class="modal-content">' +
                   '<div class="modal-header">' +
                     '<h5 class="modal-title"><i class="bi ' + icon + ' me-2"></i>' + esc(title) + '</h5>' +
-                    '<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>' +
+                    '<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="' + esc(v11t('modal.close', 'Close')) + '"></button>' +
                   '</div>' +
                   '<div class="modal-body">' + body + '</div>' +
                   '<div class="modal-footer">' +

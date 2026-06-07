@@ -1467,15 +1467,17 @@ if ($status === 'completed') {
         if (!btn) return;
         const cid = btn.getAttribute('data-cid');
         if (!cid) return;
+        const _t = (k, fb) => (window.V11I18n && window.V11I18n.t(k, fb)) || fb;
         const ok = typeof window.mkConfirmModal === 'function'
             ? await window.mkConfirmModal({
-                title: 'Delete note?',
-                message: 'This board note will be removed. This action cannot be undone.',
-                confirmText: 'Delete',
+                title: _t('patient.delete_note_title', 'Delete note?'),
+                message: _t('patient.delete_note_msg', 'This board note will be removed. This action cannot be undone.'),
+                confirmText: _t('modal.delete', 'Delete'),
+                cancelText: _t('modal.cancel', 'Cancel'),
                 confirmClass: 'btn-danger',
                 icon: 'bi-trash',
             })
-            : window.confirm('Delete this note?');
+            : window.confirm(_t('patient.delete_note_msg', 'Delete this note?'));
         if (!ok) return;
         btn.disabled = true;
         try {

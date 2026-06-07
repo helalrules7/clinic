@@ -1,5 +1,5 @@
 /**
- * Patient Board — two-level (overview → detail), Trello-inspired. English UI.
+ * Patient Board — two-level (overview → detail), Trello-inspired.
  *
  *   Overview : grid of board cards, each a workflow stage with a patient
  *              count. Create / edit / delete boards.
@@ -31,6 +31,8 @@
     // #patientGrid and can leave the detail view blank. Initialise only once.
     if (window.__boardInited) return;
     window.__boardInited = true;
+
+    const tr = (k, fb, vars) => (window.V11I18n && window.V11I18n.t(k, fb, vars)) || fb;
 
     const CFG  = window.BOARD_CONFIG || {};
     const CSRF = CFG.csrfToken || '';
@@ -992,13 +994,14 @@
             if (del) del.addEventListener('click', async () => {
                 const ok = typeof window.mkConfirmModal === 'function'
                     ? await window.mkConfirmModal({
-                        title: 'Delete note?',
-                        message: 'This board note will be removed. This action cannot be undone.',
-                        confirmText: 'Delete',
+                        title: tr('board.delete_note_title', 'Delete note?'),
+                        message: tr('board.delete_note_msg', 'This board note will be removed. This action cannot be undone.'),
+                        confirmText: tr('modal.delete', 'Delete'),
+                        cancelText: tr('modal.cancel', 'Cancel'),
                         confirmClass: 'btn-danger',
                         icon: 'bi-trash',
                     })
-                    : window.confirm('Delete this note?');
+                    : window.confirm(tr('board.delete_note_msg', 'Delete this note?'));
                 if (ok) deleteNote(r.id, listEl, c);
             });
             listEl.appendChild(item);

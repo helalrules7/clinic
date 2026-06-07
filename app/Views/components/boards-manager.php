@@ -182,12 +182,16 @@
         finally { SAVE.disabled=false; }
     }
 
+    function _v11t(k, fb) {
+        return (window.V11I18n && window.V11I18n.t(k, fb)) || fb;
+    }
     async function confirmDelete(message){
         if (typeof window.showConfirmModal === 'function') {
             return await window.showConfirmModal({
-                title: 'Delete board',
+                title: _v11t('boardmgr.delete_title', 'Delete board'),
                 message: message,
-                confirmText: 'Delete',
+                confirmText: _v11t('modal.delete', 'Delete'),
+                cancelText: _v11t('modal.cancel', 'Cancel'),
                 confirmClass: 'btn-danger',
                 icon: 'bi-trash'
             });
@@ -196,7 +200,7 @@
     }
     function notify(message){
         if (typeof window.showAlertModal === 'function') {
-            window.showAlertModal({ title: 'Error', message: message, icon: 'bi-exclamation-octagon' });
+            window.showAlertModal({ title: _v11t('boardmgr.error_title', 'Error'), message: message, icon: 'bi-exclamation-octagon' });
         } else {
             window.alert(message);
         }

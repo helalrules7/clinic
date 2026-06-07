@@ -23,6 +23,10 @@
 (function () {
     'use strict';
 
+    var tr = function (k, fb, vars) {
+        return (window.V11I18n && window.V11I18n.t(k, fb, vars)) || fb;
+    };
+
     if (window.quickNote && window.quickNote.__inited) return;
 
     // ---------------------------------------------------------------- DOM refs
@@ -535,14 +539,13 @@
     function deleteNote(key) {
         var rec = findByKey(key);
         if (!rec) return;
-        var title = (rec.title || firstLine(rec.body, 60)) || 'this note';
+        var title = (rec.title || firstLine(rec.body, 60)) || tr('quicknote.untitled', 'Untitled note');
         return confirmDialog({
-            title: 'Delete note?',
-            message: 'Permanently delete <strong>' + esc(title) + '</strong>? This cannot be undone.',
-            html: true,
+            title: tr('quicknote.delete_title', 'Delete note?'),
+            message: tr('quicknote.delete_msg', 'Permanently delete "' + title + '"? This cannot be undone.', { title: title }),
             icon: 'bi-trash',
-            confirmText: 'Delete',
-            cancelText: 'Cancel',
+            confirmText: tr('modal.delete', 'Delete'),
+            cancelText: tr('modal.cancel', 'Cancel'),
             confirmClass: 'btn-danger'
         }).then(function (ok) {
             if (!ok) return;

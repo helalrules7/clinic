@@ -394,7 +394,8 @@
                 title: t('notes.delete_note', 'Delete note'),
                 message: t('notes.delete_msg', 'Delete this note permanently?'),
                 confirmText: t('notes.delete', 'Delete'),
-                confirmVariant: 'danger'
+                confirmClass: 'btn-danger',
+                cancelText: t('modal.cancel', 'Cancel')
             }).then(function (ok) { if (ok) run(); });
         } else if (confirm(t('notes.delete_msg', 'Delete this note?'))) {
             run();

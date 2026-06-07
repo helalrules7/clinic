@@ -9,6 +9,15 @@
         'error.title': 'خطأ',
         'error.generic': 'حدث خطأ ما.',
 
+        'modal.confirm_title': 'يرجى التأكيد',
+        'modal.confirm_msg': 'هل أنت متأكد؟',
+        'modal.cancel': 'إلغاء',
+        'modal.confirm': 'تأكيد',
+        'modal.ok': 'حسناً',
+        'modal.close': 'إغلاق',
+        'modal.notice': 'تنبيه',
+        'modal.delete': 'حذف',
+
         'todo.open_drawer': 'فتح درج المهام',
         'todo.new_list': 'قائمة جديدة',
         'todo.list_default': 'قائمة',
@@ -18,8 +27,11 @@
         'todo.progress.almost': 'أوشكت على الانتهاء!',
         'todo.progress.all_done': 'أنجزت كل شيء!',
         'todo.progress.sub': '{done} من {total} مكتملة',
+        'todo.delete': 'حذف',
         'todo.delete_task': 'حذف المهمة',
         'todo.delete_task_msg': 'هل تريد حذف هذه المهمة؟',
+        'todo.delete_list_perm_msg': 'حذف القائمة «{name}» وجميع مهامها نهائياً؟ لا يمكن التراجع عن هذا الإجراء.',
+        'todo.archive_btn': 'أرشفة',
         'todo.new_task': 'مهمة جديدة',
         'todo.edit_task': 'تعديل مهمة',
         'todo.new_list_modal': 'قائمة جديدة',
@@ -39,6 +51,7 @@
         'todo.due.tomorrow': 'غداً',
         'todo.archived_count': '{n} مهمة',
         'todo.create_list': 'إنشاء قائمة',
+        'todo.save_list': 'حفظ القائمة',
         'todo.cancel': 'إلغاء',
 
         'notes.open_drawer': 'فتح الملاحظات',
@@ -52,6 +65,26 @@
         'notes.delete_note': 'حذف الملاحظة',
         'notes.delete': 'حذف',
         'notes.delete_msg': 'حذف هذه الملاحظة نهائياً؟',
+        'notes.cancel': 'إلغاء',
+
+        'quicknote.delete_title': 'حذف الملاحظة؟',
+        'quicknote.delete_msg': 'حذف «{title}» نهائياً؟ لا يمكن التراجع عن هذا الإجراء.',
+        'quicknote.untitled': 'ملاحظة بدون عنوان',
+        'note.delete_title': 'حذف الملاحظة',
+        'note.delete_msg': 'ستُحذف هذه الملاحظة السريعة نهائياً.',
+
+        'board.delete_note_title': 'حذف الملاحظة؟',
+        'board.delete_note_msg': 'ستُزال ملاحظة اللوحة. لا يمكن التراجع عن هذا الإجراء.',
+
+        'template.delete_title': 'حذف القالب؟',
+        'template.delete_msg': 'سيُزال «{title}» نهائياً.',
+        'template.untitled': 'بدون عنوان',
+
+        'boardmgr.delete_title': 'حذف اللوحة',
+        'boardmgr.error_title': 'خطأ',
+
+        'patient.delete_note_title': 'حذف الملاحظة؟',
+        'patient.delete_note_msg': 'ستُزال ملاحظة اللوحة. لا يمكن التراجع عن هذا الإجراء.',
         'notes.new_note': 'ملاحظة جديدة',
         'notes.edit_note': 'تعديل ملاحظة',
         'notes.time.just_now': 'الآن',

@@ -655,15 +655,18 @@
             // Delete
             delBtn.addEventListener('click', async (e) => {
                 e.stopPropagation();
+                const tplTitle = t.title || ((window.V11I18n && window.V11I18n.t('template.untitled', 'Untitled')) || 'Untitled');
+                const tr = (k, fb, vars) => (window.V11I18n && window.V11I18n.t(k, fb, vars)) || fb;
                 const ok = (typeof window.mkConfirmModal === 'function')
                     ? await window.mkConfirmModal({
-                        title: 'Delete template?',
-                        message: `“${t.title || 'Untitled'}” will be removed permanently.`,
-                        confirmText: 'Delete',
+                        title: tr('template.delete_title', 'Delete template?'),
+                        message: tr('template.delete_msg', '"' + tplTitle + '" will be removed permanently.', { title: tplTitle }),
+                        confirmText: tr('modal.delete', 'Delete'),
+                        cancelText: tr('modal.cancel', 'Cancel'),
                         confirmClass: 'btn-danger',
                         icon: 'bi-trash'
                     })
-                    : window.confirm('Delete this template?');
+                    : window.confirm(tr('template.delete_msg', 'Delete this template?', { title: tplTitle }));
                 if (!ok) return;
                 row.classList.add('is-leaving');
                 // 2026-06-07: a 'tmp-' id was never persisted server-side (optimistic
