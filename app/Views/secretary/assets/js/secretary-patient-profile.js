@@ -116,9 +116,13 @@
                 ? '<div class="sec-files-grid">' + list.map(function (f) {
                     var url = '/api/secretary/patient-files/view/' + f.id;
                     var isImg = /image/.test(f.file_type || '');
+                    var thumb = '<div class="sec-file-thumb-wrap' + (isImg ? ' is-img' : '') + '">' +
+                        (isImg ? '<img src="' + url + '" loading="lazy" alt="' + esc(f.original_filename) + '">'
+                               : '<i class="bi ' + fileIcon(f.file_type) + '"></i>') + '</div>';
+                    var inner = thumb + '<span class="sec-file-name" title="' + esc(f.original_filename) + '">' + esc(f.original_filename) + '</span>';
                     var link = isImg
-                        ? '<a href="#" class="sec-file-link sec-img-open" data-url="' + url + '" data-name="' + esc(f.original_filename) + '"><i class="bi ' + fileIcon(f.file_type) + '"></i><span class="sec-file-name">' + esc(f.original_filename) + '</span></a>'
-                        : '<a href="' + url + '" target="_blank" class="sec-file-link"><i class="bi ' + fileIcon(f.file_type) + '"></i><span class="sec-file-name">' + esc(f.original_filename) + '</span></a>';
+                        ? '<a href="#" class="sec-file-link sec-img-open" data-url="' + url + '" data-name="' + esc(f.original_filename) + '">' + inner + '</a>'
+                        : '<a href="' + url + '" target="_blank" class="sec-file-link">' + inner + '</a>';
                     return '<div class="sec-file-card">' + link +
                         '<span class="sec-file-cat">' + esc(CAT[f.category] || f.category || '') + '</span>' +
                         '<button class="sec-file-del" data-id="' + f.id + '" title="حذف"><i class="bi bi-trash"></i></button>' +
