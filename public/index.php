@@ -133,6 +133,10 @@ try {
     $router->post('/api/secretary/patient-marker/{id}', 'SecretaryPatientsController@setMarker');
     $router->post('/api/secretary/patients/{id}/update', 'SecretaryPatientsController@updatePatientBasics');
     $router->get('/api/secretary/patient-org/{id}', 'SecretaryPatientsController@patientOrg');
+    $router->post('/api/secretary/patient-files/{id}', 'SecretaryPatientsController@uploadFile');
+    $router->get('/api/secretary/patient-files/view/{fileId}', 'SecretaryPatientsController@viewFile');
+    $router->get('/api/secretary/patient-files/{id}', 'SecretaryPatientsController@listFiles');
+    $router->delete('/api/secretary/patient-files/{fileId}', 'SecretaryPatientsController@deleteFile');
     $router->get('/secretary/patients/new', 'SecretaryController@newPatient');
     $router->post('/secretary/patients', 'SecretaryController@createPatient');
     $router->get('/secretary/patients/{id}', 'SecretaryController@viewPatient');

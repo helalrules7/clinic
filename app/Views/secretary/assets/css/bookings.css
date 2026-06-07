@@ -1044,6 +1044,13 @@ input[readonly] {
     box-shadow: 0 4px 12px var(--shadow);
 }
 
+/* Booking calendar tooltip — RTL: label (يمين) : value (يسار) */
+.tooltip-inner:has(.appointment-tooltip) {
+    direction: rtl;
+    text-align: right;
+    font-family: 'Cairo', sans-serif;
+}
+
 /* Dark Mode Tooltips */
 .dark .tooltip-inner {
     background-color: var(--card);
@@ -1053,7 +1060,9 @@ input[readonly] {
 }
 
 .appointment-tooltip {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    direction: rtl;
+    text-align: right;
+    font-family: 'Cairo', sans-serif;
 }
 
 .appointment-tooltip .tooltip-header {
@@ -1061,31 +1070,60 @@ input[readonly] {
     padding-bottom: 8px;
     margin-bottom: 10px;
     font-size: 0.95rem;
+    text-align: right;
+}
+
+.dark .appointment-tooltip .tooltip-header {
+    border-bottom-color: var(--border);
 }
 
 .appointment-tooltip .tooltip-body {
-    line-height: 1.5;
+    line-height: 1.55;
 }
 
 .appointment-tooltip .tooltip-row {
     display: flex;
+    flex-direction: row;
     justify-content: flex-start;
-    margin-bottom: 6px;
     align-items: flex-start;
+    gap: 0.35rem;
+    margin-bottom: 6px;
+    direction: rtl;
 }
 
 .appointment-tooltip .tooltip-label {
     font-weight: 600;
     color: #bdc3c7;
-    min-width: 80px;
-    margin-right: 8px;
+    flex-shrink: 0;
+    margin: 0;
+    text-align: start;
+    white-space: nowrap;
+}
+
+.dark .appointment-tooltip .tooltip-label {
+    color: var(--muted);
 }
 
 .appointment-tooltip .tooltip-value {
     color: #ffffff;
-    text-align: left;
-    flex: 1;
+    flex: 0 1 auto;
+    min-width: 0;
     word-break: break-word;
+}
+
+.appointment-tooltip .tooltip-value-rtl {
+    text-align: start;
+}
+
+.appointment-tooltip .tooltip-value-ltr {
+    text-align: left;
+    direction: ltr;
+    margin-inline-start: auto;
+    flex: 1 1 auto;
+}
+
+.dark .appointment-tooltip .tooltip-value {
+    color: var(--text);
 }
 
 .appointment-tooltip .tooltip-footer {
@@ -1095,9 +1133,17 @@ input[readonly] {
     text-align: center;
 }
 
+.dark .appointment-tooltip .tooltip-footer {
+    border-top-color: var(--border);
+}
+
 .appointment-tooltip .tooltip-footer small {
     color: #95a5a6;
     font-style: italic;
+}
+
+.dark .appointment-tooltip .tooltip-footer small {
+    color: var(--muted);
 }
 
 /* Dark Mode Buttons */

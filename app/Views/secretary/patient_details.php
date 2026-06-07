@@ -269,6 +269,14 @@
                 <span class="badge bg-success"><?= count($payments) ?> دفعة</span>
             </div>
             <div class="card-body">
+                <?php $__totalPaid = 0; foreach ($payments as $__p) { $__totalPaid += (float)($__p['amount'] ?? 0); } ?>
+                <div class="sec-fin-summary mb-3">
+                    <div class="sec-fin-item"><span class="sec-fin-label arabic-text">إجمالي المدفوع</span><span class="sec-fin-value text-success"><?= number_format($__totalPaid, 2) ?> ج.م</span></div>
+                    <div class="sec-fin-item"><span class="sec-fin-label arabic-text">عدد الدفعات</span><span class="sec-fin-value"><?= count($payments) ?></span></div>
+                    <?php if (!empty($payments)): ?>
+                    <div class="sec-fin-item"><span class="sec-fin-label arabic-text">آخر دفعة</span><span class="sec-fin-value"><?= number_format((float)($payments[0]['amount'] ?? 0), 2) ?> ج.م</span></div>
+                    <?php endif; ?>
+                </div>
                 <?php if (empty($payments)): ?>
                     <div class="text-center py-4">
                         <i class="bi bi-credit-card text-muted" style="font-size: 3rem;"></i>
@@ -323,6 +331,29 @@
             </div>
         </div>
     </div>
+</div>
+
+<!-- v11: Administrative documents (secretary scope: audience='administrative') -->
+<div class="row mb-4">
+  <div class="col-12">
+    <div class="card shadow dashboard-card">
+      <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between flex-wrap gap-2">
+        <h6 class="m-0 font-weight-bold text-primary arabic-text"><i class="bi bi-folder2-open me-2"></i>المستندات الإدارية</h6>
+        <div class="d-flex gap-2 align-items-center">
+          <select class="form-select form-select-sm" id="secFileCategory" style="width:auto">
+            <option value="id">هوية</option>
+            <option value="insurance">تأمين</option>
+            <option value="receipt">إيصال</option>
+            <option value="other">أخرى</option>
+          </select>
+          <label class="btn btn-sm btn-primary mb-0"><i class="bi bi-upload me-1"></i>رفع مستند<input type="file" id="secFileInput" hidden accept="image/*,.pdf,.doc,.docx,.txt"></label>
+        </div>
+      </div>
+      <div class="card-body" id="secFilesBody" data-patient="<?= (int)$patient['id'] ?>">
+        <div class="text-muted arabic-text">جارٍ التحميل…</div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <style>
@@ -445,6 +476,7 @@
     </div>
   </div>
 </div>
+<script src="/app/Views/secretary/assets/js/secretary-patient-profile.js?v=<?= file_exists(__DIR__ . '/assets/js/secretary-patient-profile.js') ? filemtime(__DIR__ . '/assets/js/secretary-patient-profile.js') : time() ?>"></script>
 <script>
 (function () {
     var pid = <?= (int)$patient['id'] ?>;

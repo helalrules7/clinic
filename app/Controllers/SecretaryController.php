@@ -128,6 +128,12 @@ class SecretaryController
         $bookingTrends = $this->syncTrendsWithTodayStats($this->getDashboardTrends(9), $bookingStats);
         $bookingTrendDeltas = $this->getDashboardTrendDeltas($bookingStats, $yesterdayStats);
         $bookingTrendDates = $this->getTrendDateRange(9)['dates'];
+
+        $patientId = $_GET['patient_id'] ?? null;
+        $preselectedPatient = null;
+        if ($patientId) {
+            $preselectedPatient = $this->getPatientInfoForBooking($patientId);
+        }
         
         $content = $this->view->render('secretary/bookings', [
             'doctors' => $doctors,
@@ -136,6 +142,8 @@ class SecretaryController
             'bookingTrends' => $bookingTrends,
             'bookingTrendDeltas' => $bookingTrendDeltas,
             'bookingTrendDates' => $bookingTrendDates,
+            'preselectedPatient' => $preselectedPatient,
+            'preselectedPatientId' => $patientId,
         ]);
         
         echo $this->view->render('layouts/secretary_main', [
@@ -1310,6 +1318,27 @@ class SecretaryController
         ");
         $stmt->execute([$id]);
         return $stmt->fetch();
+    }
+
+    /**
+     * Patient summary for booking pre-selection (mirrors DoctorController::getPatientInfo).
+     */
+    private function getPatientInfoForBooking($patientId)
+    {
+        $stmt = $this->pdo->prepare("
+            SELECT id, first_name, last_name, phone, dob, gender,
+                   YEAR(CURDATE()) - YEAR(dob) as age
+            FROM patients
+            WHERE id = ?
+        ");
+        $stmt->execute([$patientId]);
+        $patient = $stmt->fetch();
+
+        if ($patient) {
+            $patient['full_name'] = trim($patient['first_name'] . ' ' . $patient['last_name']);
+        }
+
+        return $patient;
     }
 
     private function getPatientTimeline($patientId)

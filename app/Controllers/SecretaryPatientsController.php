@@ -457,6 +457,94 @@ class SecretaryPatientsController
     }
 
     // ========================================================================
+    //  ADMINISTRATIVE FILES  (patient_files, audience='administrative')
+    //  Secretary uploads operational docs (ID / insurance / receipt) — it never
+    //  sees clinical attachments (audience NULL/clinical).
+    // ========================================================================
+    private function filesDir(): string
+    {
+        $dir = __DIR__ . '/../../uploads/patients/';
+        if (!is_dir($dir)) @mkdir($dir, 0755, true);
+        return $dir;
+    }
+
+    public function listFiles($id)
+    {
+        if (!$this->needClinic()) return;
+        try {
+            $s = $this->pdo->prepare("
+                SELECT id, original_filename, file_path, file_type, file_size, category, created_at
+                FROM patient_files WHERE patient_id = ? AND audience = 'administrative'
+                ORDER BY created_at DESC
+            ");
+            $s->execute([(int)$id]);
+            return $this->json(['ok' => true, 'files' => $s->fetchAll(\PDO::FETCH_ASSOC)]);
+        } catch (\Exception $e) {
+            return $this->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    public function uploadFile($id)
+    {
+        if (!$this->needClinic()) return;
+        try {
+            $pid = (int)$id;
+            if (!isset($_FILES['file']) || $_FILES['file']['error'] !== UPLOAD_ERR_OK) return $this->json(['error' => 'لم يتم رفع ملف'], 400);
+            $file = $_FILES['file'];
+            $allowed = ['image/jpeg', 'image/png', 'image/gif', 'application/pdf', 'application/msword',
+                        'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain'];
+            if (!in_array($file['type'], $allowed, true)) return $this->json(['error' => 'نوع الملف غير مسموح'], 400);
+            if ($file['size'] > 5 * 1024 * 1024) return $this->json(['error' => 'الحجم أكبر من 5 ميجابايت'], 400);
+            $cat = (isset($_POST['category']) && preg_match('/^[a-z_]{1,40}$/', $_POST['category'])) ? $_POST['category'] : 'other';
+            $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
+            $fname = 'secadmin_' . $pid . '_' . time() . '_' . uniqid() . ($ext ? '.' . preg_replace('/[^a-zA-Z0-9]/', '', $ext) : '');
+            if (!move_uploaded_file($file['tmp_name'], $this->filesDir() . $fname)) return $this->json(['error' => 'تعذّر حفظ الملف'], 500);
+            $s = $this->pdo->prepare("
+                INSERT INTO patient_files (patient_id, original_filename, file_path, file_type, file_size, description, uploaded_by, audience, category, created_at)
+                VALUES (?, ?, ?, ?, ?, '', ?, 'administrative', ?, NOW())
+            ");
+            $s->execute([$pid, $file['name'], 'uploads/patients/' . $fname, $file['type'], $file['size'], $this->auth->user()['id'], $cat]);
+            return $this->json(['ok' => true, 'file_id' => (int)$this->pdo->lastInsertId()]);
+        } catch (\Exception $e) {
+            return $this->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    public function viewFile($fileId)
+    {
+        if (!$this->needClinic()) { http_response_code(403); echo 'Forbidden'; return; }
+        $s = $this->pdo->prepare("SELECT original_filename, file_path, file_type FROM patient_files WHERE id = ? AND audience = 'administrative'");
+        $s->execute([(int)$fileId]);
+        $f = $s->fetch(\PDO::FETCH_ASSOC);
+        if (!$f) { http_response_code(404); echo 'Not found'; return; }
+        $path = realpath(__DIR__ . '/../../' . $f['file_path']);
+        $base = realpath(__DIR__ . '/../../uploads/patients/');
+        if (!$path || !$base || strpos($path, $base) !== 0 || !is_file($path)) { http_response_code(404); echo 'Missing'; return; }
+        header('Content-Type: ' . ($f['file_type'] ?: 'application/octet-stream'));
+        header('Content-Disposition: inline; filename="' . basename($f['original_filename']) . '"');
+        header('Content-Length: ' . filesize($path));
+        readfile($path);
+    }
+
+    public function deleteFile($fileId)
+    {
+        if (!$this->needClinic()) return;
+        try {
+            $s = $this->pdo->prepare("SELECT file_path FROM patient_files WHERE id = ? AND audience = 'administrative'");
+            $s->execute([(int)$fileId]);
+            $fp = $s->fetchColumn();
+            if ($fp === false) return $this->json(['error' => 'غير موجود'], 404);
+            $path = realpath(__DIR__ . '/../../' . $fp);
+            $base = realpath(__DIR__ . '/../../uploads/patients/');
+            if ($path && $base && strpos($path, $base) === 0 && is_file($path)) @unlink($path);
+            $this->pdo->prepare("DELETE FROM patient_files WHERE id = ? AND audience = 'administrative'")->execute([(int)$fileId]);
+            return $this->json(['ok' => true]);
+        } catch (\Exception $e) {
+            return $this->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    // ========================================================================
     //  LIST  (server-side, global patients + clinic organization overlay)
     // ========================================================================
     public function list()

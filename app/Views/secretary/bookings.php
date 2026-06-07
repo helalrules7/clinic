@@ -946,6 +946,7 @@ window.BOOKINGS_CONFIG = {
     serverDateTime: '<?= $serverDateTime ?>',
     serverTimestamp: <?= $serverTimestamp ?>,
     settings: <?= json_encode($settings ?? [], JSON_UNESCAPED_UNICODE) ?>,
+    preselectedPatient: <?= json_encode($preselectedPatient ?? null, JSON_UNESCAPED_UNICODE) ?>,
     routes: {
         calendar: '/secretary/bookings',
         bookingDetail: '/secretary/bookings',

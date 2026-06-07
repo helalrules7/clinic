@@ -9,6 +9,25 @@ const ROUTES = CFG.routes || {
     patientProfile: '/secretary/patients'
 };
 
+function normalizePreselectedPatient(p) {
+    if (!p) return null;
+    const firstName = p.first_name || '';
+    const lastName = p.last_name || '';
+    const fullName = (p.full_name || `${firstName} ${lastName}`).trim();
+    return {
+        id: p.id,
+        full_name: fullName,
+        phone: p.phone || '',
+        age: p.age != null ? p.age : null,
+        first_name: firstName,
+        last_name: lastName
+    };
+}
+
+let preselectedPatient = CFG.preselectedPatient
+    ? normalizePreselectedPatient(CFG.preselectedPatient)
+    : null;
+
 let currentDate = new Date();
 let selectedDoctorId = null;
 let refreshInterval;
@@ -364,19 +383,19 @@ function renderAppointmentSlot(appointment) {
     const timeShort = formatTime(appointment.start_time.substring(0, 5));
 
     const tooltipContent = `
-        <div class="appointment-tooltip" style="font-family:'Cairo',sans-serif;">
+        <div class="appointment-tooltip">
             <div class="tooltip-header"><strong class="arabic-text">تفاصيل الحجز</strong></div>
             <div class="tooltip-body">
-                <div class="tooltip-row"><span class="tooltip-label arabic-text">المريض:</span><span class="tooltip-value">${appointment.patient_name}</span></div>
-                <div class="tooltip-row"><span class="tooltip-label arabic-text">الطبيب:</span><span class="tooltip-value">${appointment.doctor_display_name || '—'}</span></div>
-                <div class="tooltip-row"><span class="tooltip-label arabic-text">العيادة:</span><span class="tooltip-value">${(appointment.clinic_name_ar || appointment.clinic_name_en) ? renderClinicChip(appointment) : '—'}</span></div>
-                <div class="tooltip-row"><span class="tooltip-label arabic-text">الهاتف:</span><span class="tooltip-value">${appointment.phone || '—'}</span></div>
-                <div class="tooltip-row"><span class="tooltip-label arabic-text">نوع الزيارة:</span><span class="tooltip-value">${getVisitTypeInArabic(appointment.visit_type)}</span></div>
-                <div class="tooltip-row"><span class="tooltip-label arabic-text">الوقت:</span><span class="tooltip-value">${formatTime(appointment.start_time)} - ${formatTime(appointment.end_time)}</span></div>
-                <div class="tooltip-row"><span class="tooltip-label arabic-text">الحالة:</span><span class="tooltip-value">${statusText}</span></div>
-                <div class="tooltip-row"><span class="tooltip-label arabic-text">المدفوع:</span><span class="tooltip-value">${totalPaid} جنيه</span></div>
-                <div class="tooltip-row"><span class="tooltip-label arabic-text">المتبقي:</span><span class="tooltip-value">${remainingAmount} جنيه</span></div>
-                ${appointment.notes ? `<div class="tooltip-row"><span class="tooltip-label arabic-text">ملاحظات:</span><span class="tooltip-value">${appointment.notes}</span></div>` : ''}
+                <div class="tooltip-row"><span class="tooltip-label arabic-text">المريض:</span>${tooltipValueHtml(appointment.patient_name)}</div>
+                <div class="tooltip-row"><span class="tooltip-label arabic-text">الطبيب:</span>${tooltipValueHtml(appointment.doctor_display_name || '—')}</div>
+                <div class="tooltip-row"><span class="tooltip-label arabic-text">العيادة:</span>${tooltipValueHtml((appointment.clinic_name_ar || appointment.clinic_name_en) ? renderClinicChip(appointment) : '—')}</div>
+                <div class="tooltip-row"><span class="tooltip-label arabic-text">الهاتف:</span>${tooltipValueHtml(appointment.phone || '—')}</div>
+                <div class="tooltip-row"><span class="tooltip-label arabic-text">نوع الزيارة:</span>${tooltipValueHtml(getVisitTypeInArabic(appointment.visit_type))}</div>
+                <div class="tooltip-row"><span class="tooltip-label arabic-text">الوقت:</span>${tooltipValueHtml(`${formatTime(appointment.start_time)} - ${formatTime(appointment.end_time)}`)}</div>
+                <div class="tooltip-row"><span class="tooltip-label arabic-text">الحالة:</span>${tooltipValueHtml(statusText)}</div>
+                <div class="tooltip-row"><span class="tooltip-label arabic-text">المدفوع:</span>${tooltipValueHtml(`${totalPaid} جنيه`)}</div>
+                <div class="tooltip-row"><span class="tooltip-label arabic-text">المتبقي:</span>${tooltipValueHtml(`${remainingAmount} جنيه`)}</div>
+                ${appointment.notes ? `<div class="tooltip-row"><span class="tooltip-label arabic-text">ملاحظات:</span>${tooltipValueHtml(appointment.notes)}</div>` : ''}
             </div>
             <div class="tooltip-footer"><small class="arabic-text">اضغط لعرض تفاصيل الحجز</small></div>
         </div>`
@@ -498,6 +517,98 @@ function generateTimeSlots() {
     return slots;
 }
 
+function isMostlyLatinText(text) {
+    const plain = String(text).replace(/<[^>]+>/g, '').trim();
+    if (!plain) return false;
+    const latin = (plain.match(/[A-Za-z]/g) || []).length;
+    const arabic = (plain.match(/[\u0600-\u06FF]/g) || []).length;
+    return latin > 0 && latin >= arabic;
+}
+
+function tooltipValueHtml(value) {
+    const cls = isMostlyLatinText(value)
+        ? 'tooltip-value tooltip-value-ltr'
+        : 'tooltip-value tooltip-value-rtl';
+    return `<span class="${cls}">${value}</span>`;
+}
+
+function buildPreselectedPatientInfoHtml(patient) {
+    const fullName = patient.full_name || `مريض رقم ${patient.id}`;
+    const phone = patient.phone || '—';
+    const age = patient.age != null ? patient.age : 'غير محدد';
+    const hasDetails = Boolean(patient.full_name && patient.phone);
+    const subText = hasDetails
+        ? `الهاتف: ${phone} • العمر: ${age}`
+        : 'تم تحديد المريض مسبقاً';
+
+    return `
+        <div class="selected-patient-info alert alert-info">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <strong>المريض المحدد:</strong> ${fullName}<br>
+                    <small>${subText}</small>
+                </div>
+                <button type="button" class="btn btn-sm btn-outline-primary" onclick="clearPreselectedPatient()">
+                    تغيير المريض
+                </button>
+            </div>
+        </div>
+    `;
+}
+
+function applyPreselectedPatientUI(patient) {
+    if (!patient || !patient.id) return;
+    const normalized = normalizePreselectedPatient(patient);
+    preselectedPatient = normalized;
+
+    document.getElementById('selectedPatientId').value = normalized.id;
+    document.getElementById('patientSearch').value = normalized.full_name || `مريض رقم ${normalized.id}`;
+    document.getElementById('patientSearchResults').innerHTML = buildPreselectedPatientInfoHtml(normalized);
+    document.getElementById('preselectedLabel').style.display = 'inline';
+
+    const patientSearchField = document.getElementById('patientSearch');
+    patientSearchField.readOnly = true;
+    patientSearchField.style.backgroundColor = 'var(--bg)';
+    patientSearchField.style.cursor = 'not-allowed';
+    document.getElementById('newPatientBtn').style.display = 'none';
+}
+
+function clearPreselectedPatientUI() {
+    preselectedPatient = null;
+    document.getElementById('selectedPatientId').value = '';
+    document.getElementById('patientSearch').value = '';
+    document.getElementById('patientSearchResults').innerHTML = '';
+
+    const patientSearchField = document.getElementById('patientSearch');
+    patientSearchField.readOnly = false;
+    patientSearchField.style.backgroundColor = '';
+    patientSearchField.style.cursor = '';
+    document.getElementById('newPatientBtn').style.display = 'block';
+    document.getElementById('preselectedLabel').style.display = 'none';
+}
+
+function fetchPreselectedPatient(patientId) {
+    return fetch(`/api/patients/${patientId}`, { credentials: 'same-origin' })
+        .then(response => response.json())
+        .then(data => {
+            if (data.ok && data.patient) {
+                return normalizePreselectedPatient(data.patient);
+            }
+            throw new Error('Patient not found');
+        });
+}
+
+function ensurePreselectedPatient(patientId) {
+    if (!patientId) return Promise.resolve(null);
+    if (preselectedPatient && String(preselectedPatient.id) === String(patientId) && preselectedPatient.full_name) {
+        return Promise.resolve(preselectedPatient);
+    }
+    return fetchPreselectedPatient(patientId).then(patient => {
+        preselectedPatient = patient;
+        return patient;
+    });
+}
+
 function clearCalendar() {
     const container = document.getElementById('bookingsCalendarContainer');
     container.innerHTML = `
@@ -521,9 +632,8 @@ function openAddBookingModal(preselectedTime = null) {
     const dateToUse = currentDate.toISOString().split('T')[0];
     document.getElementById('bookingDate').value = dateToUse;
     
-    // Check if patient is preselected from URL
     const urlParams = new URLSearchParams(window.location.search);
-    const patientId = urlParams.get('patient_id');
+    const patientId = urlParams.get('patient_id') || (preselectedPatient ? preselectedPatient.id : null);
     
     // Clear form
     document.getElementById('addBookingForm').reset();
@@ -534,44 +644,22 @@ function openAddBookingModal(preselectedTime = null) {
         document.getElementById('bookingTime').value = preselectedTime;
     }
     
-    // If patient is preselected, restore the patient selection
     if (patientId) {
-        document.getElementById('selectedPatientId').value = patientId;
-        document.getElementById('patientSearch').value = `مريض رقم ${patientId}`;
-        document.getElementById('patientSearchResults').innerHTML = `
-            <div class="selected-patient-info alert alert-info">
-                <div class="d-flex justify-content-between align-items-start">
-                    <div>
-                        <strong>المريض المحدد:</strong> مريض رقم ${patientId}<br>
-                        <small>تم تحديد المريض مسبقاً</small>
-                    </div>
-                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="clearPreselectedPatient()">
-                        تغيير المريض
-                    </button>
-                </div>
-            </div>
-        `;
-        document.getElementById('preselectedLabel').style.display = 'inline';
-        
-        // Make patient search field readonly
-        const patientSearchField = document.getElementById('patientSearch');
-        patientSearchField.readOnly = true;
-        patientSearchField.style.backgroundColor = 'var(--bg)';
-        patientSearchField.style.cursor = 'not-allowed';
-        
-        // Hide new patient button
-        document.getElementById('newPatientBtn').style.display = 'none';
+        if (preselectedPatient && String(preselectedPatient.id) === String(patientId) && preselectedPatient.full_name) {
+            applyPreselectedPatientUI(preselectedPatient);
+        } else {
+            applyPreselectedPatientUI({ id: patientId });
+            ensurePreselectedPatient(patientId)
+                .then(patient => applyPreselectedPatientUI(patient))
+                .catch(() => applyPreselectedPatientUI({ id: patientId }));
+        }
     } else {
-        document.getElementById('selectedPatientId').value = '';
-        document.getElementById('patientSearchResults').innerHTML = '';
-        document.getElementById('preselectedLabel').style.display = 'none';
-        
-        // Enable patient search
-        const patientSearchField = document.getElementById('patientSearch');
-        patientSearchField.readOnly = false;
-        patientSearchField.style.backgroundColor = '';
-        patientSearchField.style.cursor = '';
-        document.getElementById('newPatientBtn').style.display = 'block';
+        clearPreselectedPatientUI();
+    }
+
+    if (patientId) {
+        document.getElementById('visitType').value = 'New';
+        updateVisitCost();
     }
     
     // Load available time slots
@@ -2104,110 +2192,34 @@ document.addEventListener('DOMContentLoaded', function() {
     // own clinic, disabled when only one option is available). No JS populate
     // is needed any more — the modal opens with the dropdown ready.
 
-    // Check for openModal query parameter and open the corresponding modal
     const urlParams = new URLSearchParams(window.location.search);
     const openModal = urlParams.get('openModal');
-    
-    if (openModal === 'addBooking') {
-        // Open add booking modal
-        setTimeout(() => {
-            const addBookingModal = document.getElementById('addBookingModal');
-            if (addBookingModal) {
-                const modal = new bootstrap.Modal(addBookingModal);
-                modal.show();
-            }
-        }, 100);
-    }
-    
-    // Check if patient_id is in URL and pre-select patient
     const patientId = urlParams.get('patient_id');
-    if (patientId) {
-        // Set patient ID immediately
-        document.getElementById('selectedPatientId').value = patientId;
-        
-        // Try to fetch patient details, but don't wait for it
-        fetch(`/api/patients/${patientId}`, {
-            credentials: 'same-origin'
-        })
-            .then(response => response.json())
-            .then(data => {
-                if (data.ok && data.patient) {
-                    const patient = data.patient;
-                    const fullName = `${patient.first_name} ${patient.last_name}`;
-                    
-                    // Update patient search field with real data
-                    document.getElementById('patientSearch').value = fullName;
-                    
-                    // Show patient info with real data
-                    document.getElementById('patientSearchResults').innerHTML = `
-                        <div class="selected-patient-info alert alert-info">
-                            <div class="d-flex justify-content-between align-items-start">
-                                <div>
-                                    <strong>المريض المحدد:</strong> ${fullName}<br>
-                                    <small>الهاتف: ${patient.phone} • العمر: ${patient.age || 'غير محدد'}</small>
-                                </div>
-                                <button type="button" class="btn btn-sm btn-outline-primary" onclick="clearPreselectedPatient()">
-                                    تغيير المريض
-                                </button>
-                            </div>
-                        </div>
-                    `;
-                }
-            })
-            .catch(error => {
-                console.error('Error fetching patient:', error);
-                // Show patient info with limited data
-                document.getElementById('patientSearch').value = `مريض رقم ${patientId}`;
-                document.getElementById('patientSearchResults').innerHTML = `
-                    <div class="selected-patient-info alert alert-info">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <div>
-                                <strong>المريض المحدد:</strong> مريض رقم ${patientId}<br>
-                                <small>تم تحديد المريض مسبقاً</small>
-                            </div>
-                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="clearPreselectedPatient()">
-                                تغيير المريض
-                            </button>
-                        </div>
-                    </div>
-                `;
-            });
-        
-        // Show preselected label and set up UI
-        document.getElementById('preselectedLabel').style.display = 'inline';
-        
-        // Make patient search field readonly
-        const patientSearchField = document.getElementById('patientSearch');
-        patientSearchField.readOnly = true;
-        patientSearchField.style.backgroundColor = 'var(--bg)';
-        patientSearchField.style.cursor = 'not-allowed';
-        
-        // Hide new patient button
-        document.getElementById('newPatientBtn').style.display = 'none';
-        
-        // Set visit type to "New" automatically
-        document.getElementById('visitType').value = 'New';
-        updateVisitCost();
+
+    const applyPatientPreselection = () => {
+        if (preselectedPatient) {
+            applyPreselectedPatientUI(preselectedPatient);
+        } else if (patientId) {
+            applyPreselectedPatientUI({ id: patientId });
+            ensurePreselectedPatient(patientId)
+                .then(p => applyPreselectedPatientUI(p))
+                .catch(() => applyPreselectedPatientUI({ id: patientId }));
+        }
+        if (patientId) {
+            document.getElementById('visitType').value = 'New';
+            updateVisitCost();
+        }
+    };
+
+    applyPatientPreselection();
+
+    if (openModal === 'addBooking') {
+        setTimeout(() => openAddBookingModal(), 100);
     }
 });
 
-// Clear preselected patient function
 function clearPreselectedPatient() {
-    // Clear form fields
-    document.getElementById('selectedPatientId').value = '';
-    document.getElementById('patientSearch').value = '';
-    document.getElementById('patientSearchResults').innerHTML = '';
-    
-    // Enable patient search
-    const patientSearchField = document.getElementById('patientSearch');
-    const newPatientBtn = document.getElementById('newPatientBtn');
-    const preselectedLabel = document.getElementById('preselectedLabel');
-    
-    patientSearchField.readOnly = false;
-    patientSearchField.style.backgroundColor = '';
-    patientSearchField.style.cursor = '';
-    newPatientBtn.style.display = 'block';
-    preselectedLabel.style.display = 'none';
+    clearPreselectedPatientUI();
 }
 
 
