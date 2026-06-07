@@ -665,6 +665,8 @@ window.CALENDAR_CONFIG = {
 </script>
 <script src="/app/Views/doctor/assets/js/medical-history-popover.js?v=<?= file_exists(__DIR__ . '/assets/js/medical-history-popover.js') ? filemtime(__DIR__ . '/assets/js/medical-history-popover.js') : time() ?>"></script>
 <script src="/app/Views/doctor/assets/js/calendar.js?v=<?= file_exists(__DIR__ . '/assets/js/calendar.js') ? filemtime(__DIR__ . '/assets/js/calendar.js') : time() ?>"></script>
+<!-- Smart action: book nearest slot by phone (needs CALENDAR_CONFIG + booking APIs above) -->
+<script src="/app/Views/doctor/assets/js/book-by-phone.js?v=<?= file_exists(__DIR__ . '/assets/js/book-by-phone.js') ? filemtime(__DIR__ . '/assets/js/book-by-phone.js') : time() ?>"></script>
 <!-- The clinic dropdowns are now rendered server-side in this view's modal
      markup, so they're ready before Bootstrap shows the modal. No JS populate
      call is needed — initCustomSelects (in calendar.js) wires them up on page

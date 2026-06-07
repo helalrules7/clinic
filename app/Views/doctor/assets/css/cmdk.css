@@ -156,6 +156,45 @@ body.cmdk-lock {
     background: rgba(255, 255, 255, 0.08);
 }
 
+/* Help (?) button — sits just before the close button in the header */
+.cmdk__help-btn {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--glass-border, rgba(226, 232, 240, 0.7));
+    background: transparent;
+    color: var(--muted);
+    width: 30px;
+    height: 30px;
+    margin-inline-end: 6px;
+    border-radius: var(--r-md, 12px);
+    cursor: pointer;
+    transition: background 150ms ease, color 150ms ease, border-color 150ms ease;
+}
+.cmdk__help-btn:hover {
+    color: var(--text);
+    background: var(--ds-primary-soft, rgba(79, 70, 229, 0.10));
+    border-color: var(--accent);
+}
+
+/* Smart-actions cheat sheet (rendered into the results area) */
+.cmdk__help-intro {
+    padding: 8px 16px 10px;
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: var(--muted);
+}
+.cmdk__help-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 9px 16px;
+}
+.cmdk__help-item + .cmdk__help-item {
+    border-top: 1px solid var(--glass-border, rgba(226, 232, 240, 0.5));
+}
+
 /* -------- Tab strip -------- */
 .cmdk__tabs {
     display: flex;

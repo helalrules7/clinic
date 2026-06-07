@@ -1059,6 +1059,7 @@
     .wn-cmdk-tag-pt { background: rgba(99,102,241,.18); color: #a5b4fc; border: 1px solid rgba(165,180,252,.3); }
     .wn-cmdk-tag-ac { background: rgba(16,185,129,.15); color: #6ee7b7; border: 1px solid rgba(110,231,183,.3); }
     .wn-cmdk-tag-pg { background: rgba(56,189,248,.15); color: #60a5fa; border: 1px solid rgba(96,165,250,.3); }
+    .wn-cmdk-tag-sm { background: rgba(245,158,11,.18); color: #fcd34d; border: 1px solid rgba(252,211,77,.4); }
     
     .wn-cmdk-r1 { animation: wn-cmdk-row1 4.5s ease-in-out infinite; }
     .wn-cmdk-r2 { animation: wn-cmdk-row2 4.5s ease-in-out infinite; }
@@ -1082,9 +1083,9 @@
     
     @keyframes wn-cmdk-type {
       0%, 20%   { content: ""; }
-      28%       { content: "a"; }
-      34%       { content: "ah"; }
-      40%, 90%  { content: "ahm"; }
+      28%       { content: "010"; }
+      34%       { content: "01001"; }
+      40%, 90%  { content: "0100123"; }
       95%, 100% { content: ""; }
     }
     
@@ -2706,26 +2707,26 @@
                     </div>
                     <ul class="wn-cmdk-list">
                       <li class="wn-cmdk-row wn-cmdk-r1">
-                        <i class="bi bi-person-circle wn-cmdk-rico" aria-hidden="true"></i>
-                        <span class="wn-cmdk-rtxt"><b>Ahm</b>ed Maher</span>
-                        <span class="wn-cmdk-rtag wn-cmdk-tag-pt">Patient</span>
+                        <i class="bi bi-calendar-plus wn-cmdk-rico" aria-hidden="true"></i>
+                        <span class="wn-cmdk-rtxt">Book nearest slot · <b>0100 123…</b></span>
+                        <span class="wn-cmdk-rtag wn-cmdk-tag-sm">Smart</span>
                       </li>
                       <li class="wn-cmdk-row wn-cmdk-r2">
-                        <i class="bi bi-check2-square wn-cmdk-rico" aria-hidden="true"></i>
-                        <span class="wn-cmdk-rtxt">Add to-do</span>
-                        <span class="wn-cmdk-rtag wn-cmdk-tag-ac">Action</span>
+                        <i class="bi bi-person-circle wn-cmdk-rico" aria-hidden="true"></i>
+                        <span class="wn-cmdk-rtxt">Ahmed Maher</span>
+                        <span class="wn-cmdk-rtag wn-cmdk-tag-pt">Patient</span>
                       </li>
                       <li class="wn-cmdk-row wn-cmdk-r3">
                         <i class="bi bi-calendar2-week wn-cmdk-rico" aria-hidden="true"></i>
-                        <span class="wn-cmdk-rtxt">Appointments</span>
-                        <span class="wn-cmdk-rtag wn-cmdk-tag-pg">Page</span>
+                        <span class="wn-cmdk-rtxt">New booking</span>
+                        <span class="wn-cmdk-rtag wn-cmdk-tag-ac">Action</span>
                       </li>
                     </ul>
                   </div>
                 </div>
               </div>
-              <h3>Cmd+K, anywhere</h3>
-              <p>Hit <strong>Cmd+K</strong> from any screen to fuzzy-search patients, pages, actions and to-dos. Type a few letters, then Enter — you're there.</p>
+              <h3>Cmd+K — now with smart actions</h3>
+              <p>Hit <strong>Cmd+K</strong> from any screen to search patients, pages and actions — and run them <strong>from anywhere</strong>: New patient and New booking open the right modal cross-page. Type a <strong>phone number</strong> to <strong>book the nearest free slot</strong>, or jump to Today, Daily closure, Reports &amp; Payments. Tap <strong>?</strong> for the smart-actions guide — the quick-action dock now shares the same commands.</p>
             </div>
 
             <!-- v11.0.0 — wn-kbd (Every shortcut at your fingertips) -->

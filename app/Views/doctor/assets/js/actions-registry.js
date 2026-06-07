@@ -48,6 +48,13 @@
             palette: true, dock: 1, category: 'create'
         },
         {
+            id: 'new-booking', label: 'New booking', sub: 'Open the add-appointment modal',
+            icon: 'calendar-plus', dockIcon: 'bi-calendar-plus',
+            keys: ['new', 'booking', 'appointment', 'book', 'schedule', 'visit'],
+            opener: 'openAddAppointmentModal', page: '/doctor/calendar',
+            palette: true, dock: false, category: 'create'
+        },
+        {
             id: 'new-note', label: 'New quick note', sub: 'Open the quick-note modal',
             icon: 'sticky-note', dockIcon: 'bi-pencil-square',
             keys: ['new', 'note', 'quick'],
@@ -116,6 +123,48 @@
             keys: ['keyboard', 'shortcuts', 'help', 'keys'],
             opener: 'openKeyboardHelp',
             palette: true, dock: false, category: 'toggle'
+        },
+
+        // ---- Smart / compound -------------------------------------------
+        {
+            // Dynamic: surfaced by the palette when a phone number is typed, and
+            // run with the number as payload. Lives on the calendar page (owns the
+            // booking APIs + doctor/clinic context). Always shows a confirm step.
+            id: 'book-by-phone', label: 'Book nearest slot by phone',
+            sub: 'Find the soonest free appointment for a phone number',
+            icon: 'calendar-plus',
+            keys: ['book', 'phone', 'nearest', 'slot', 'appointment', 'quick'],
+            opener: 'openBookByPhone', page: '/doctor/calendar',
+            palette: false, dock: false, category: 'smart', smart: true,
+            usage: 'Type a phone number in the palette, then pick “Book nearest slot”. It finds the patient (or creates one), books the soonest free slot, and asks you to confirm.'
+        },
+        {
+            id: 'go-to-today', label: 'Go to today', sub: 'Open the calendar on today',
+            icon: 'calendar', keys: ['today', 'now', 'calendar', 'go'],
+            page: '/doctor/calendar',
+            palette: true, dock: false, category: 'smart', smart: true,
+            usage: 'Jump straight to today’s calendar.'
+        },
+        {
+            id: 'daily-closure', label: 'Daily closure', sub: 'Open the daily-closure page',
+            icon: 'page', keys: ['daily', 'closure', 'close', 'cash', 'end of day'],
+            page: '/doctor/daily-closure',
+            palette: true, dock: false, category: 'smart', smart: true,
+            usage: 'Open today’s cash/visit closure.'
+        },
+        {
+            id: 'reports', label: 'Reports', sub: 'Open reports & statistics',
+            icon: 'page', keys: ['reports', 'stats', 'statistics', 'analytics', 'revenue'],
+            page: '/doctor/reports',
+            palette: true, dock: false, category: 'smart', smart: true,
+            usage: 'Open the reports & statistics dashboard.'
+        },
+        {
+            id: 'payments', label: 'Payments', sub: 'Open payments & invoices',
+            icon: 'page', keys: ['payments', 'invoices', 'unpaid', 'money', 'billing'],
+            page: '/doctor/payments',
+            palette: true, dock: false, category: 'smart', smart: true,
+            usage: 'Open payments & outstanding invoices.'
         }
     ];
 
@@ -146,6 +195,10 @@
         return ACTIONS
             .filter(function (a) { return a.dock !== false && a.dock != null; })
             .sort(function (x, y) { return x.dock - y.dock; });
+    }
+
+    function smartActions() {
+        return ACTIONS.filter(function (a) { return a.smart === true; });
     }
 
     // ----- Pending payload handoff -----------------------------------------
@@ -245,7 +298,8 @@
         byId: byId,
         run: run,
         paletteActions: paletteActions,
-        dockActions: dockActions
+        dockActions: dockActions,
+        smartActions: smartActions
     };
 
     if (document.readyState === 'loading') {

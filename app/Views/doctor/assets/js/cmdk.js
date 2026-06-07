@@ -10,6 +10,7 @@
     const backdrop  = document.getElementById('cmdkBackdrop');
     const input     = document.getElementById('cmdkInput');
     const closeBtn  = document.getElementById('cmdkClose');
+    const helpBtn   = document.getElementById('cmdkHelp');
     const tabsBox   = document.getElementById('cmdkTabs');
     const tabs      = tabsBox ? Array.from(tabsBox.querySelectorAll('.cmdk__tab')) : [];
     const results   = document.getElementById('cmdkResults');
@@ -96,6 +97,8 @@
         'palette':      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r=".9" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".9" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".9" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".9" fill="currentColor"/><path d="M12 2a10 10 0 0 0 0 20 2.5 2.5 0 0 0 2.5-2.5c0-.66-.26-1.27-.69-1.71a2.5 2.5 0 0 1 1.77-4.29H18a4 4 0 0 0 4-4 10 10 0 0 0-10-8z"/></svg>',
         'keyboard':     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h0M10 10h0M14 10h0M18 10h0M6 14h12"/></svg>',
         'todo':         '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 12 8 17 21 4"/></svg>',
+        'calendar':     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>',
+        'calendar-plus':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="12" y1="14" x2="12" y2="18"/><line x1="10" y1="16" x2="14" y2="16"/></svg>',
         'arrow':        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>'
     };
 
@@ -191,6 +194,33 @@
         );
     }
 
+    // Smart-actions cheat sheet (the “?” button). Reads usage strings straight
+    // from the shared ActionRegistry so it can never go stale.
+    function renderSmartHelp() {
+        const acts = (window.ActionRegistry && typeof window.ActionRegistry.smartActions === 'function')
+            ? window.ActionRegistry.smartActions() : [];
+        let items = acts.map(function (a) {
+            return '<div class="cmdk__help-item">' +
+                '<span class="cmdk__row-icon cmdk__row-icon--action" aria-hidden="true">' + iconFor(a.icon || 'arrow') + '</span>' +
+                '<span class="cmdk__row-body">' +
+                    '<span class="cmdk__row-label">' + escapeHTML(a.label) + '</span>' +
+                    '<span class="cmdk__row-sub">' + escapeHTML(a.usage || a.sub || '') + '</span>' +
+                '</span></div>';
+        }).join('');
+        if (!items) {
+            items = '<div class="cmdk__help-item"><span class="cmdk__row-body"><span class="cmdk__row-sub">No smart actions available.</span></span></div>';
+        }
+        results.innerHTML =
+            '<section class="cmdk__section cmdk__help">' +
+                '<div class="cmdk__section-head">Smart actions</div>' +
+                '<div class="cmdk__help-intro">Tip: type a phone number to book the nearest free slot, or type a name to find a patient.</div>' +
+                items +
+            '</section>';
+        flatRows = [];
+        activeIdx = -1;
+        try { input.focus({ preventScroll: true }); } catch (e) { /* noop */ }
+    }
+
     function normalizeResponse(data, q) {
         // Defensive: support several response shapes from the backend.
         // The roaya SearchController returns:
@@ -239,25 +269,54 @@
             out.actions = out.actions.slice(0, 7);
         }
 
+        // Smart: when the query is a phone number, surface "Book nearest slot"
+        // as the top action, carrying the digits as a payload for ActionRegistry.
+        const phone = detectPhone(q);
+        if (phone && (activeScope === 'all' || activeScope === 'actions')) {
+            out.actions.unshift({
+                kind: 'action',
+                id: 'action:book-by-phone',
+                label: 'Book nearest slot for ' + phone,
+                sub: 'Find the soonest free appointment',
+                icon: 'calendar-plus',
+                payload: phone
+            });
+        }
+
         return out;
+    }
+
+    // A phone-ish query: only phone characters, 8–15 digits once stripped.
+    function detectPhone(q) {
+        if (!q) return null;
+        const raw = String(q).trim();
+        if (!/^[+()\-\s\d]+$/.test(raw)) return null;
+        const digits = raw.replace(/\D/g, '');
+        if (digits.length < 8 || digits.length > 15) return null;
+        return digits;
     }
 
     function buildRow(kind, item, query) {
         const label = item.label || item.name || item.title || '';
         const sub   = item.sub || item.sublabel || item.subtitle || item.url || '';
         const url   = item.url || item.href || item.link || '';
-        const id    = item.id || item.action || '';
+        let   id    = item.id || item.action || '';
+        // Action rows from the server carry id="act-foo" but link="action:foo";
+        // the registry resolves the "action:" form, so prefer the link.
+        if (kind === 'action' && url.indexOf('action:') === 0) id = url;
         const iconName = item.icon || iconForKind(kind);
 
         const dataKind = escapeHTML(kind);
         const dataUrl  = escapeHTML(url);
         const dataId   = escapeHTML(id);
+        const dataPayload = (item.payload != null && item.payload !== '')
+            ? ' data-payload="' + escapeHTML(item.payload) + '"' : '';
 
         return (
             '<div class="cmdk__row" role="option" aria-selected="false" tabindex="-1"' +
                 ' data-kind="' + dataKind + '"' +
                 ' data-url="' + dataUrl + '"' +
-                ' data-id="' + dataId + '">' +
+                ' data-id="' + dataId + '"' + dataPayload + '>' +
                 '<span class="cmdk__row-icon cmdk__row-icon--' + dataKind + '" aria-hidden="true">' + iconFor(iconName) + '</span>' +
                 '<span class="cmdk__row-body">' +
                     '<span class="cmdk__row-label">' + highlightMatch(label, query) + '</span>' +
@@ -337,8 +396,16 @@
         const kind = row.getAttribute('data-kind');
         const url  = row.getAttribute('data-url');
         const id   = row.getAttribute('data-id');
+        const payload = row.getAttribute('data-payload');
 
         if (kind === 'action') {
+            // Payload-carrying actions (e.g. book-by-phone) go straight to the
+            // registry so the number reaches the opener / cross-page handoff.
+            if (payload && window.ActionRegistry && window.ActionRegistry.byId(id)) {
+                close();
+                window.ActionRegistry.run(id, payload);
+                return;
+            }
             triggerAction(id, url);
             return;
         }
@@ -570,6 +637,9 @@
 
     // Close button
     if (closeBtn) closeBtn.addEventListener('click', function () { close(); });
+
+    // Help (?) button — show the smart-actions cheat sheet.
+    if (helpBtn) helpBtn.addEventListener('click', function () { renderSmartHelp(); });
 
     // Row click / hover
     results.addEventListener('click', function (ev) {

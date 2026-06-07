@@ -159,11 +159,17 @@ class SearchController
 
     private function searchActions(string $q, int $limit): array
     {
+        // Keep in sync with assets/js/actions-registry.js (palette-visible actions).
         $actions = [
             ['id' => 'act-new-patient',    'label' => 'New Patient',            'icon' => 'person-plus',      'link' => 'action:new-patient'],
+            ['id' => 'act-new-booking',    'label' => 'New Booking',            'icon' => 'calendar-plus',    'link' => 'action:new-booking'],
             ['id' => 'act-new-todo',       'label' => 'New To-Do',              'icon' => 'check2-square',    'link' => 'action:new-todo'],
             ['id' => 'act-new-alert',      'label' => 'New Alert',              'icon' => 'bell-fill',        'link' => 'action:new-alert'],
             ['id' => 'act-new-note',       'label' => 'New Note',               'icon' => 'sticky',           'link' => 'action:new-note'],
+            ['id' => 'act-go-today',       'label' => 'Go to Today',            'icon' => 'calendar',         'link' => 'action:go-to-today'],
+            ['id' => 'act-daily-closure',  'label' => 'Daily Closure',          'icon' => 'journal-check',    'link' => 'action:daily-closure'],
+            ['id' => 'act-reports',        'label' => 'Reports',                'icon' => 'bar-chart',        'link' => 'action:reports'],
+            ['id' => 'act-payments',       'label' => 'Payments',               'icon' => 'cash-coin',        'link' => 'action:payments'],
             ['id' => 'act-focus-mode',     'label' => 'Toggle Focus Mode',      'icon' => 'eye',              'link' => 'action:focus-mode'],
             ['id' => 'act-theme-picker',   'label' => 'Open Theme Picker',      'icon' => 'palette',          'link' => 'action:theme-picker'],
             ['id' => 'act-keyboard-help',  'label' => 'Open Keyboard Shortcuts','icon' => 'keyboard',         'link' => 'action:keyboard-help'],
