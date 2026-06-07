@@ -252,10 +252,9 @@
                                 <div class="input-group patient-search-group">
                                     <input type="text" class="form-control patient-search-input" id="patientSearch" 
                                            placeholder="البحث عن المريض بالاسم أو رقم الهاتف..." required>
-                                    <button type="button" class="btn patient-add-btn" id="newPatientBtn"
+                                    <button type="button" class="patient-add-btn" id="newPatientBtn"
                                             title="إضافة مريض جديد" aria-label="إضافة مريض جديد">
-                                        <i class="bi bi-person-plus-fill" aria-hidden="true"></i>
-                                        <span class="patient-add-btn-label arabic-text">جديد</span>
+                                        <i class="bi bi-person-plus" aria-hidden="true"></i>
                                     </button>
                                 </div>
                                 <input type="hidden" id="selectedPatientId" name="patient_id">
