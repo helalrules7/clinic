@@ -1350,6 +1350,15 @@ kbd[lang="ar"] {
     box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
 }
 
-h1, h2, h3, h4, h5, h6 {
-color: var(--text) !important;
+h2, h3, h4, h5, h6 {
+    color: var(--text) !important;
+}
+
+/* page-title h1 in layout; ds-hero h1 stays white via design-system.css */
+.page-title h1 {
+    color: var(--text) !important;
+}
+
+.ds-hero h1 {
+    color: #fff !important;
 }

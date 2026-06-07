@@ -14,8 +14,10 @@
 
 <?php
 $trends = $trends ?? ['total' => [], 'booked' => [], 'checked_in' => [], 'completed' => [], 'missed' => []];
+$trendDeltas = $trendDeltas ?? ['total' => 0, 'booked' => 0, 'checked_in' => 0, 'completed' => 0, 'missed' => 0];
 ?>
 <script type="application/json" id="secDashboardTrends"><?= json_encode($trends, JSON_UNESCAPED_UNICODE) ?></script>
+<script type="application/json" id="secDashboardTrendDeltas"><?= json_encode($trendDeltas, JSON_UNESCAPED_UNICODE) ?></script>
 
 <div class="row stats-cards-wrapper sec-dashboard-stats">
     <div class="col-xl col-lg-4 col-md-6 mb-4 px-2">
@@ -322,7 +324,7 @@ $secTipToday = $secDailyTips[$secTipIndex];
     /**
      * Update statistics cards
      */
-    function updateStatsCards(stats, trends) {
+    function updateStatsCards(stats, trends, trendDeltas) {
         var fields = [
             ['secStatTotal', 'total_appointments'],
             ['secStatBooked', 'booked'],
@@ -335,7 +337,7 @@ $secTipToday = $secDailyTips[$secTipIndex];
             if (el) el.textContent = stats[pair[1]] || 0;
         });
         if (typeof window.secRefreshDashboardCharts === 'function') {
-            window.secRefreshDashboardCharts(trends);
+            window.secRefreshDashboardCharts(trends, stats, trendDeltas);
         }
     }
 
@@ -438,7 +440,7 @@ $secTipToday = $secDailyTips[$secTipIndex];
             if (result.ok && result.data) {
                 // Update stats cards
                 if (result.data.stats) {
-                    updateStatsCards(result.data.stats, result.data.trends);
+                    updateStatsCards(result.data.stats, result.data.trends, result.data.trendDeltas);
                 }
 
                 if (window.secDashboardWidgets && typeof window.secDashboardWidgets.refresh === 'function') {

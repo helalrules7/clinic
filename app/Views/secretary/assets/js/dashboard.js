@@ -25,35 +25,53 @@ function secGenerateSparklineSVG(data) {
         '</svg>';
 }
 
-function secFormatTrendBadge(series, invert) {
-    if (!series || series.length < 2) {
-        return { cls: 'trend-neutral', icon: 'bi-calendar-day', text: 'اليوم' };
+var SEC_STATS_TREND_MAP = {
+    total: 'total_appointments',
+    booked: 'booked',
+    checked_in: 'checked_in',
+    completed: 'completed',
+    missed: 'missed'
+};
+
+function secFormatTrendBadge(series, invert, todayValue, deltaOverride) {
+    var diff;
+    var hasDelta = deltaOverride !== undefined && deltaOverride !== null && !isNaN(Number(deltaOverride));
+    if (hasDelta) {
+        diff = Number(deltaOverride);
+    } else if (!series || series.length < 2) {
+        return { cls: 'trend-neutral', icon: 'bi-calendar-day', html: '<span class="arabic-text">اليوم</span>' };
+    } else {
+        var yesterday = Number(series[series.length - 2]) || 0;
+        var today = todayValue !== undefined && todayValue !== null
+            ? Number(todayValue) || 0
+            : Number(series[series.length - 1]) || 0;
+        diff = today - yesterday;
     }
-    var cur = series[series.length - 1];
-    var prev = series[series.length - 2];
-    var diff = cur - prev;
     if (diff === 0) {
-        return { cls: 'trend-neutral', icon: 'bi-dash-lg', text: 'مثل أمس' };
+        return { cls: 'trend-neutral', icon: 'bi-dash-lg', html: '<span class="arabic-text">مثل أمس</span>' };
     }
     var up = diff > 0;
     if (invert) up = !up;
+    var sign = diff > 0 ? '+' : '';
     return {
         cls: up ? 'trend-up' : 'trend-down',
         icon: up ? 'bi-graph-up-arrow' : 'bi-graph-down-arrow',
-        text: (diff > 0 ? '+' : '') + diff + ' عن أمس'
+        html: '<span dir="ltr" class="trend-diff-value">' + sign + diff + '</span> <span class="arabic-text">عن أمس</span>'
     };
 }
 
-function secApplyTrendBadge(elId, series, invert) {
+function secApplyTrendBadge(elId, series, invert, todayValue, deltaOverride) {
     var el = document.getElementById(elId);
     if (!el) return;
-    var b = secFormatTrendBadge(series, invert);
+    var b = secFormatTrendBadge(series, invert, todayValue, deltaOverride);
     el.className = 'mini-stat-trend ' + b.cls;
-    el.innerHTML = '<i class="bi ' + b.icon + '"></i><span class="arabic-text">' + b.text + '</span>';
+    el.innerHTML = '<i class="bi ' + b.icon + '"></i>' + b.html;
 }
 
-function secInitDashboardCharts(trends) {
+function secInitDashboardCharts(trends, stats, deltas) {
     trends = trends || {};
+    stats = stats || secReadStatsFromDom() || {};
+    deltas = deltas || secReadTrendDeltasFromDom() || {};
     var map = [
         { chart: 'chartSecTotal', key: 'total', trend: 'trendSecTotal', invert: false, staticToday: true },
         { chart: 'chartSecBooked', key: 'booked', trend: 'trendSecBooked', invert: false },
@@ -64,10 +82,16 @@ function secInitDashboardCharts(trends) {
     map.forEach(function (cfg) {
         var container = document.getElementById(cfg.chart);
         if (!container) return;
-        var series = trends[cfg.key] || [];
+        var series = (trends[cfg.key] || []).slice();
+        var statKey = SEC_STATS_TREND_MAP[cfg.key];
+        var todayVal = statKey && stats[statKey] !== undefined ? stats[statKey] : undefined;
+        if (todayVal !== undefined && series.length) {
+            series[series.length - 1] = Number(todayVal) || 0;
+        }
         container.innerHTML = secGenerateSparklineSVG(series);
         if (cfg.staticToday) return;
-        secApplyTrendBadge(cfg.trend, series, cfg.invert);
+        var deltaVal = deltas[cfg.key];
+        secApplyTrendBadge(cfg.trend, trends[cfg.key] || [], cfg.invert, todayVal, deltaVal);
     });
 }
 
@@ -77,18 +101,46 @@ function secReadTrendsFromDom() {
     try { return JSON.parse(el.textContent || '{}'); } catch (_) { return {}; }
 }
 
+function secReadStatsFromDom() {
+    var el = document.getElementById('secDashboardStatsInitial');
+    if (!el) return null;
+    try { return JSON.parse(el.textContent || '{}'); } catch (_) { return null; }
+}
+
+function secReadTrendDeltasFromDom() {
+    var el = document.getElementById('secDashboardTrendDeltas');
+    if (!el) return null;
+    try { return JSON.parse(el.textContent || '{}'); } catch (_) { return null; }
+}
+
 window.secInitDashboardCharts = secInitDashboardCharts;
-window.secRefreshDashboardCharts = function (trends) {
+window.secRefreshDashboardCharts = function (trends, stats, deltas) {
     if (trends) {
         var jsonEl = document.getElementById('secDashboardTrends');
         if (jsonEl) jsonEl.textContent = JSON.stringify(trends);
     }
-    secInitDashboardCharts(trends || secReadTrendsFromDom());
+    if (stats) {
+        var statsEl = document.getElementById('secDashboardStatsInitial');
+        if (statsEl) statsEl.textContent = JSON.stringify(stats);
+    }
+    if (deltas) {
+        var deltasEl = document.getElementById('secDashboardTrendDeltas');
+        if (deltasEl) deltasEl.textContent = JSON.stringify(deltas);
+    }
+    secInitDashboardCharts(
+        trends || secReadTrendsFromDom(),
+        stats || secReadStatsFromDom(),
+        deltas || secReadTrendDeltasFromDom()
+    );
 };
 
 document.addEventListener('DOMContentLoaded', function () {
     setTimeout(function () {
-        secInitDashboardCharts(secReadTrendsFromDom());
+        secInitDashboardCharts(
+            secReadTrendsFromDom(),
+            secReadStatsFromDom(),
+            secReadTrendDeltasFromDom()
+        );
     }, 80);
 });
 

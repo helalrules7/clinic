@@ -36,7 +36,9 @@ class SecretaryController
         // Get today's statistics
         $today = date('Y-m-d');
         $stats = $this->getTodayStats($today);
-        $trends = $this->getDashboardTrends(9);
+        $yesterdayStats = $this->getTodayStats(date('Y-m-d', strtotime('-1 day')));
+        $trends = $this->syncTrendsWithTodayStats($this->getDashboardTrends(9), $stats);
+        $trendDeltas = $this->getDashboardTrendDeltas($stats, $yesterdayStats);
         
         // Get today's appointments
         $todayAppointments = $this->getTodayAppointments($today);
@@ -48,6 +50,7 @@ class SecretaryController
         $content = $this->view->render('secretary/dashboard', [
             'stats' => $stats,
             'trends' => $trends,
+            'trendDeltas' => $trendDeltas,
             'todayAppointments' => $todayAppointments,
             'recentPayments' => $recentPayments,
             'revenue' => $revenue
@@ -82,6 +85,9 @@ class SecretaryController
             // Get recent payments
             $recentPayments = $this->getRecentPayments(5);
             $revenue = $this->getDailyBalance();
+            $yesterdayStats = $this->getTodayStats(date('Y-m-d', strtotime('-1 day')));
+            $trends = $this->syncTrendsWithTodayStats($this->getDashboardTrends(9), $stats);
+            $trendDeltas = $this->getDashboardTrendDeltas($stats, $yesterdayStats);
             
             return $this->jsonResponse([
                 'ok' => true,
@@ -93,7 +99,8 @@ class SecretaryController
                         'completed' => (int)($stats['completed'] ?? 0),
                         'missed' => (int)($stats['missed'] ?? 0)
                     ],
-                    'trends' => $this->getDashboardTrends(9),
+                    'trends' => $trends,
+                    'trendDeltas' => $trendDeltas,
                     'revenue' => $revenue,
                     'todayAppointments' => $todayAppointments,
                     'recentPayments' => $recentPayments
@@ -803,13 +810,13 @@ class SecretaryController
         $stmt->execute([$start, $end]);
         $byDate = [];
         foreach ($stmt->fetchAll(\PDO::FETCH_ASSOC) as $row) {
-            $byDate[$row['date']] = $row;
+            $byDate[date('Y-m-d', strtotime($row['date']))] = $row;
         }
 
         $keys = ['total', 'booked', 'checked_in', 'completed', 'missed'];
         $out = array_fill_keys($keys, []);
-        for ($i = $days - 1; $i >= 0; $i--) {
-            $d = date('Y-m-d', strtotime("-{$i} days"));
+        for ($offset = 0; $offset < $days; $offset++) {
+            $d = date('Y-m-d', strtotime($start . " +{$offset} days"));
             $row = $byDate[$d] ?? null;
             $out['total'][] = (int)($row['total'] ?? 0);
             $out['booked'][] = (int)($row['booked'] ?? 0);
@@ -818,6 +825,53 @@ class SecretaryController
             $out['missed'][] = (int)($row['missed'] ?? 0);
         }
         return $out;
+    }
+
+    /**
+     * Align the last sparkline point (today) with live dashboard stats.
+     */
+    private function syncTrendsWithTodayStats(array $trends, $stats): array
+    {
+        $map = [
+            'total' => 'total_appointments',
+            'booked' => 'booked',
+            'checked_in' => 'checked_in',
+            'completed' => 'completed',
+            'missed' => 'missed',
+        ];
+
+        foreach ($map as $trendKey => $statKey) {
+            if (empty($trends[$trendKey]) || !is_array($trends[$trendKey])) {
+                continue;
+            }
+            $idx = count($trends[$trendKey]) - 1;
+            $trends[$trendKey][$idx] = (int)($stats[$statKey] ?? $trends[$trendKey][$idx]);
+        }
+
+        return $trends;
+    }
+
+    /**
+     * Day-over-day deltas for trend badges (today − yesterday).
+     */
+    private function getDashboardTrendDeltas($todayStats, $yesterdayStats): array
+    {
+        $map = [
+            'total' => 'total_appointments',
+            'booked' => 'booked',
+            'checked_in' => 'checked_in',
+            'completed' => 'completed',
+            'missed' => 'missed',
+        ];
+
+        $deltas = [];
+        foreach ($map as $trendKey => $statKey) {
+            $today = (int)($todayStats[$statKey] ?? 0);
+            $yesterday = (int)($yesterdayStats[$statKey] ?? 0);
+            $deltas[$trendKey] = $today - $yesterday;
+        }
+
+        return $deltas;
     }
 
     private function getTodayAppointments($date)

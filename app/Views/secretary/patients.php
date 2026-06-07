@@ -216,7 +216,14 @@
 </div>
 
 <!-- Patients Table -->
-<div class="card">
+<!-- v11: view-mode toggle (table = existing server-rendered; cards/folders = API-driven) -->
+<div class="sec-view-toggle mb-3">
+    <button type="button" class="sec-view-btn active" data-view="table"><i class="bi bi-table me-1"></i>جدول</button>
+    <button type="button" class="sec-view-btn" data-view="cards"><i class="bi bi-grid-3x3-gap me-1"></i>كروت</button>
+    <button type="button" class="sec-view-btn" data-view="folders"><i class="bi bi-folder2-open me-1"></i>مجلدات</button>
+</div>
+
+<div class="card" id="secTableView">
     <div class="card-header">
         <div class="row align-items-center">
             <div class="col-md-6">
@@ -452,6 +459,11 @@
         </div>
     </div>
 </div>
+
+<!-- v11: API-driven Cards + Folders views (rendered by secretary-patients.js) -->
+<div id="secCardsView" class="sec-view-pane" style="display:none"></div>
+<div id="secFoldersView" class="sec-view-pane" style="display:none"></div>
+<script src="/app/Views/secretary/assets/js/secretary-patients.js?v=<?= file_exists(__DIR__ . '/assets/js/secretary-patients.js') ? filemtime(__DIR__ . '/assets/js/secretary-patients.js') : time() ?>"></script>
 
 <!-- Search Modal -->
 <div class="modal fade" id="searchModal" tabindex="-1">

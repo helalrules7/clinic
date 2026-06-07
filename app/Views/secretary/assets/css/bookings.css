@@ -1545,25 +1545,42 @@ input[readonly] {
 }
 
 /* Secretary bookings — glass card + doctor badge/actions (no gradient header) */
-.bookings-appointment-card {
+#bookingsCalendarContainer .appointment-card.bookings-appointment-card {
     width: 100%;
     padding: 0;
     border-radius: 14px;
     cursor: pointer;
-    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-    border: 1px solid var(--glass-border, var(--border));
-    background: var(--glass-bg-strong, var(--card));
+    transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease, background 0.22s ease;
+    border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--border)) !important;
+    background: color-mix(in srgb, var(--accent) 5%, var(--glass-bg-strong, var(--card))) !important;
     -webkit-backdrop-filter: blur(12px) saturate(150%);
     backdrop-filter: blur(12px) saturate(150%);
-    box-shadow: var(--glass-shadow, 0 2px 12px rgba(15, 23, 42, 0.06));
+    box-shadow: var(--glass-shadow-lg, 0 6px 20px rgba(15, 23, 42, 0.1));
     color: var(--text);
     overflow: hidden;
 }
 
-.bookings-appointment-card:hover {
+#bookingsCalendarContainer .appointment-card.bookings-appointment-card:hover {
     transform: translateY(-2px);
-    box-shadow: var(--glass-shadow-lg, 0 6px 20px rgba(15, 23, 42, 0.1));
-    border-color: color-mix(in srgb, var(--accent) 28%, var(--border));
+    background: color-mix(in srgb, var(--accent) 9%, var(--glass-bg-strong, var(--card))) !important;
+    border-color: color-mix(in srgb, var(--accent) 40%, var(--border)) !important;
+    box-shadow:
+        0 10px 32px rgba(var(--accent-rgb), 0.22),
+        0 0 0 1px color-mix(in srgb, var(--accent) 24%, transparent),
+        var(--glass-shadow-lg, 0 6px 20px rgba(15, 23, 42, 0.12));
+}
+
+.dark #bookingsCalendarContainer .appointment-card.bookings-appointment-card {
+    background: color-mix(in srgb, var(--accent) 8%, var(--glass-bg-strong, var(--card))) !important;
+    box-shadow: var(--glass-shadow-lg, 0 6px 20px rgba(0, 0, 0, 0.35));
+}
+
+.dark #bookingsCalendarContainer .appointment-card.bookings-appointment-card:hover {
+    background: color-mix(in srgb, var(--accent) 13%, var(--glass-bg-strong, var(--card))) !important;
+    box-shadow:
+        0 12px 36px rgba(var(--accent-rgb), 0.28),
+        0 0 0 1px color-mix(in srgb, var(--accent) 30%, transparent),
+        var(--glass-shadow-lg, 0 8px 24px rgba(0, 0, 0, 0.45));
 }
 
 /* Neutral glass header — strip calendar.css gradient; keep badge centre + action pills */
@@ -1577,20 +1594,29 @@ input[readonly] {
     margin: 0 !important;
     padding: 0.75rem 0.85rem !important;
     border-radius: 0 !important;
-    background: transparent !important;
-    border-bottom: 1px solid var(--border);
+    background: color-mix(in srgb, var(--accent) 5%, transparent) !important;
+    border-bottom: 1px solid color-mix(in srgb, var(--accent) 12%, var(--border));
+    transition: background 0.22s ease;
 }
 
 #bookingsCalendarContainer .bookings-appointment-card .appointment-header:hover {
-    background: color-mix(in srgb, var(--accent) 5%, transparent) !important;
+    background: color-mix(in srgb, var(--accent) 10%, transparent) !important;
 }
 
 #bookingsCalendarContainer .bookings-appointment-card .appointment-header.missed {
     background: color-mix(in srgb, #ef4444 8%, transparent) !important;
 }
 
+#bookingsCalendarContainer .bookings-appointment-card .appointment-header.missed:hover {
+    background: color-mix(in srgb, #ef4444 13%, transparent) !important;
+}
+
 #bookingsCalendarContainer .bookings-appointment-card .appointment-header.completed {
     background: color-mix(in srgb, var(--success, #10b981) 8%, transparent) !important;
+}
+
+#bookingsCalendarContainer .bookings-appointment-card .appointment-header.completed:hover {
+    background: color-mix(in srgb, var(--success, #10b981) 13%, transparent) !important;
 }
 
 #bookingsCalendarContainer .bookings-appointment-card .appointment-header .appointment-info {
@@ -1630,7 +1656,12 @@ input[readonly] {
     margin: 0;
     font-size: 0.8rem;
     color: var(--muted);
-    background: color-mix(in srgb, var(--accent) 3%, transparent);
+    background: color-mix(in srgb, var(--accent) 5%, transparent);
+    transition: background 0.22s ease;
+}
+
+#bookingsCalendarContainer .bookings-appointment-card:hover .appointment-notes {
+    background: color-mix(in srgb, var(--accent) 9%, transparent);
 }
 
 #bookingsCalendarContainer .bookings-appointment-card.booked {

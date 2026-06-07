@@ -297,11 +297,11 @@ body { font-family: var(--font-ui); }
     margin: 0 0 8px;
     position: relative;
     z-index: 1;
-    color: #ffffff;
+    color: #ffffff !important;
 }
 .dark .ds-hero h1,
 html[data-palette] .ds-hero h1 {
-    color: #ffffff;
+    color: #ffffff !important;
 }
 .ds-hero p { margin: 0; opacity: .94; font-size: 15px; max-width: 640px; position: relative; z-index: 1; }
 .ds-hero p strong { font-weight: 800; }
