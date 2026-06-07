@@ -8052,6 +8052,71 @@ class ApiController
                 // Continue if error
             }
 
+            $role = $user['role'] ?? '';
+            $isSecretary = ($role === 'secretary');
+            $secClinicId = $isSecretary ? (int) ($user['clinic_id'] ?? 0) : 0;
+
+            // Secretary global search: payments (scoped to clinic).
+            if ($isSecretary) {
+                try {
+                    $paySql = "
+                        SELECT p.id, p.amount, p.type, p.method, p.created_at,
+                               pt.first_name, pt.last_name, pt.phone
+                        FROM payments p
+                        LEFT JOIN patients pt ON p.patient_id = pt.id
+                        WHERE (CAST(p.id AS CHAR) LIKE ?
+                               OR pt.first_name LIKE ?
+                               OR pt.last_name LIKE ?
+                               OR pt.phone LIKE ?
+                               OR CONCAT(pt.first_name, ' ', pt.last_name) LIKE ?)
+                    ";
+                    $payParams = [$searchTerm, $searchTerm, $searchTerm, $searchTerm, $searchTerm];
+                    if ($secClinicId > 0) {
+                        $paySql .= " AND p.clinic_id = ?";
+                        $payParams[] = $secClinicId;
+                    }
+                    $paySql .= " ORDER BY p.created_at DESC LIMIT ?";
+                    $payParams[] = $limit;
+                    $payStmt = $this->pdo->prepare($paySql);
+                    $payStmt->execute($payParams);
+                    foreach ($payStmt->fetchAll(\PDO::FETCH_ASSOC) as $payment) {
+                        $patientName = trim(($payment['first_name'] ?? '') . ' ' . ($payment['last_name'] ?? ''));
+                        $results[] = [
+                            'id' => $payment['id'],
+                            'title' => 'Payment #' . $payment['id'] . ($patientName ? ' — ' . $patientName : ''),
+                            'subtitle' => number_format((float) ($payment['amount'] ?? 0), 2)
+                                . ($payment['method'] ? ' • ' . $payment['method'] : '')
+                                . ($payment['created_at'] ? ' • ' . date('Y-m-d', strtotime($payment['created_at'])) : ''),
+                            'type' => 'payment',
+                            'icon' => 'bi-cash-coin',
+                            'url' => '/secretary/payments/' . $payment['id'],
+                        ];
+                    }
+                } catch (\Exception $e) {
+                    // Continue if error
+                }
+
+                $allowedTypes = ['patient', 'appointment', 'payment'];
+                $results = array_values(array_filter($results, static function ($row) use ($allowedTypes) {
+                    return in_array($row['type'] ?? '', $allowedTypes, true);
+                }));
+                foreach ($results as &$row) {
+                    $id = $row['id'] ?? null;
+                    switch ($row['type'] ?? '') {
+                        case 'patient':
+                            $row['url'] = '/secretary/patients/' . $id;
+                            break;
+                        case 'appointment':
+                            $row['url'] = '/secretary/bookings/' . $id;
+                            break;
+                        case 'payment':
+                            $row['url'] = '/secretary/payments/' . $id;
+                            break;
+                    }
+                }
+                unset($row);
+            }
+
             return $this->jsonResponse([
                 'results' => $results,
                 'total' => count($results),

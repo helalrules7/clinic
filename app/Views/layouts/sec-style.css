@@ -490,6 +490,26 @@ body::before {
         .page-title small {
             color: var(--muted);
         }
+
+        /* RTL: عنوان الصفحة بجانب زر القائمة — وليس في المنتصف */
+        .top-bar > .page-title {
+            margin-left: auto;
+            margin-right: 1rem;
+            text-align: right;
+            min-width: 0;
+            flex: 1 1 auto;
+        }
+
+        /* مركز الإشعارات v11 — RTL: اللوحة من جهة البداية (يسار الشاشة) */
+        [dir="rtl"] .notif-panel {
+            right: auto;
+            left: 16px;
+        }
+
+        /* شبكة شرائح الهيدر — اتجاه RTL لمحاذاة البحث/الجرس من جهة البداية */
+        [dir="rtl"] .top-bar .top-bar-cluster {
+            direction: rtl;
+        }
         
         .top-bar-cluster {
             display: flex;

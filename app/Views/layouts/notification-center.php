@@ -5,26 +5,74 @@
  * Opened by #notificationsToggle bell button.
  * Body is populated by /assets/js/notification-center.js
  */
+$notifCenterContext = $notifCenterContext ?? 'doctor';
+$notifCenterLang = $notifCenterLang ?? 'en';
+$notifIsAr = ($notifCenterLang === 'ar');
+$notifT = $notifIsAr ? [
+    'title'       => 'الإشعارات',
+    'close'       => 'إغلاق الإشعارات',
+    'tab_view'    => 'عرض الإشعارات',
+    'tab_notif'   => 'الإشعارات',
+    'tab_activity'=> 'النشاط',
+    'dock'        => 'إجراءات سريعة',
+    'snooze_menu' => 'خيارات التأجيل',
+    'snooze_hdr'  => 'تأجيل حتى',
+    'snooze_1h'   => 'لمدة ساعة',
+    'snooze_4h'   => 'لمدة 4 ساعات',
+    'snooze_tmr'  => 'غداً 9:00 ص',
+    'snooze_week' => 'الأسبوع القادم',
+    'snooze_custom'=> 'مخصص…',
+    'snooze_apply'=> 'تطبيق',
+    'act_snooze'  => 'تأجيل',
+    'act_pin'     => 'تثبيت',
+    'act_read'    => 'تعليم كمقروء',
+    'act_delete'  => 'حذف',
+    'stack_tap'   => 'اضغط للتوسيع',
+    'stack_expand'=> 'توسيع المجموعة',
+] : [
+    'title'       => 'Notifications',
+    'close'       => 'Close notifications',
+    'tab_view'    => 'Notification view',
+    'tab_notif'   => 'Notifications',
+    'tab_activity'=> 'Activity',
+    'dock'        => 'Quick actions',
+    'snooze_menu' => 'Snooze options',
+    'snooze_hdr'  => 'Snooze until',
+    'snooze_1h'   => 'For 1 hour',
+    'snooze_4h'   => 'For 4 hours',
+    'snooze_tmr'  => 'Tomorrow 9:00 AM',
+    'snooze_week' => 'Next week',
+    'snooze_custom'=> 'Custom…',
+    'snooze_apply'=> 'Apply',
+    'act_snooze'  => 'Snooze',
+    'act_pin'     => 'Pin',
+    'act_read'    => 'Mark as read',
+    'act_delete'  => 'Delete',
+    'stack_tap'   => 'Tap to expand',
+    'stack_expand'=> 'Expand stack',
+];
 ?>
-<div class="notif-panel" id="notifPanel" role="dialog" aria-modal="false" aria-labelledby="notifPanelTitle" aria-hidden="true" hidden>
+<div class="notif-panel" id="notifPanel" role="dialog" aria-modal="false" aria-labelledby="notifPanelTitle" aria-hidden="true" hidden
+     data-notif-context="<?= htmlspecialchars($notifCenterContext, ENT_QUOTES, 'UTF-8') ?>"
+     data-notif-lang="<?= htmlspecialchars($notifCenterLang, ENT_QUOTES, 'UTF-8') ?>">
     <div class="notif-panel__inner">
         <!-- Header -->
         <header class="notif-header">
             <div class="notif-header__row">
-                <h2 class="notif-title" id="notifPanelTitle">Notifications</h2>
-                <button type="button" class="notif-close" id="notifCloseBtn" aria-label="Close notifications">
+                <h2 class="notif-title" id="notifPanelTitle"><?= $notifT['title'] ?></h2>
+                <button type="button" class="notif-close" id="notifCloseBtn" aria-label="<?= $notifT['close'] ?>">
                     <i class="bi bi-x-lg" aria-hidden="true"></i>
                 </button>
             </div>
-            <div class="notif-tabs" role="tablist" aria-label="Notification view">
+            <div class="notif-tabs" role="tablist" aria-label="<?= $notifT['tab_view'] ?>">
                 <button type="button" class="notif-tab is-active" data-tab="notifications" role="tab" aria-selected="true" id="notifTabNotifications">
                     <i class="bi bi-bell" aria-hidden="true"></i>
-                    <span>Notifications</span>
+                    <span><?= $notifT['tab_notif'] ?></span>
                     <span class="notif-tab__count" id="notifTabCount" hidden>0</span>
                 </button>
                 <button type="button" class="notif-tab" data-tab="activity" role="tab" aria-selected="false" id="notifTabActivity">
                     <i class="bi bi-activity" aria-hidden="true"></i>
-                    <span>Activity</span>
+                    <span><?= $notifT['tab_activity'] ?></span>
                 </button>
                 <span class="notif-tabs__indicator" aria-hidden="true"></span>
             </div>
@@ -41,7 +89,7 @@
         </div>
 
         <!-- Footer Dock -->
-        <footer class="notif-dock" aria-label="Quick actions">
+        <footer class="notif-dock" aria-label="<?= $notifT['dock'] ?>">
             <button type="button" class="qa-btn" data-action="new-patient" aria-label="New patient" title="New patient">
                 <i class="bi bi-person-plus" aria-hidden="true"></i>
             </button>
@@ -65,39 +113,39 @@
 
     <!-- Snooze popover template (cloned by JS) -->
     <template id="notifSnoozeTemplate">
-        <div class="notif-snooze" role="menu" aria-label="Snooze options">
+        <div class="notif-snooze" role="menu" aria-label="<?= $notifT['snooze_menu'] ?>">
             <div class="notif-snooze__header">
                 <i class="bi bi-moon-stars" aria-hidden="true"></i>
-                <span>Snooze until</span>
+                <span><?= $notifT['snooze_hdr'] ?></span>
             </div>
             <button type="button" class="notif-snooze__opt" role="menuitem" data-snooze="1h">
                 <i class="bi bi-clock" aria-hidden="true"></i>
-                <span class="notif-snooze__label">For 1 hour</span>
+                <span class="notif-snooze__label"><?= $notifT['snooze_1h'] ?></span>
                 <span class="notif-snooze__hint" data-hint="1h"></span>
             </button>
             <button type="button" class="notif-snooze__opt" role="menuitem" data-snooze="4h">
                 <i class="bi bi-clock-history" aria-hidden="true"></i>
-                <span class="notif-snooze__label">For 4 hours</span>
+                <span class="notif-snooze__label"><?= $notifT['snooze_4h'] ?></span>
                 <span class="notif-snooze__hint" data-hint="4h"></span>
             </button>
             <button type="button" class="notif-snooze__opt" role="menuitem" data-snooze="tomorrow">
                 <i class="bi bi-sunrise" aria-hidden="true"></i>
-                <span class="notif-snooze__label">Tomorrow 9:00 AM</span>
+                <span class="notif-snooze__label"><?= $notifT['snooze_tmr'] ?></span>
                 <span class="notif-snooze__hint" data-hint="tomorrow"></span>
             </button>
             <button type="button" class="notif-snooze__opt" role="menuitem" data-snooze="week">
                 <i class="bi bi-calendar-week" aria-hidden="true"></i>
-                <span class="notif-snooze__label">Next week</span>
+                <span class="notif-snooze__label"><?= $notifT['snooze_week'] ?></span>
                 <span class="notif-snooze__hint" data-hint="week"></span>
             </button>
             <div class="notif-snooze__divider" aria-hidden="true"></div>
             <button type="button" class="notif-snooze__opt notif-snooze__opt--custom" role="menuitem" data-snooze="custom">
                 <i class="bi bi-calendar-plus" aria-hidden="true"></i>
-                <span class="notif-snooze__label">Custom…</span>
+                <span class="notif-snooze__label"><?= $notifT['snooze_custom'] ?></span>
             </button>
             <div class="notif-snooze__custom" hidden>
-                <input type="datetime-local" class="notif-snooze__input" aria-label="Custom snooze time">
-                <button type="button" class="notif-snooze__apply">Apply</button>
+                <input type="datetime-local" class="notif-snooze__input" aria-label="<?= $notifT['snooze_custom'] ?>">
+                <button type="button" class="notif-snooze__apply"><?= $notifT['snooze_apply'] ?></button>
             </div>
         </div>
     </template>
@@ -115,16 +163,16 @@
                 <div class="notif-row__meta" data-meta hidden></div>
             </div>
             <div class="notif-row__actions" role="group" aria-label="Notification actions">
-                <button type="button" class="notif-act" data-act="snooze" aria-label="Snooze" title="Snooze">
+                <button type="button" class="notif-act" data-act="snooze" aria-label="<?= $notifT['act_snooze'] ?>" title="<?= $notifT['act_snooze'] ?>">
                     <i class="bi bi-moon-stars" aria-hidden="true"></i>
                 </button>
-                <button type="button" class="notif-act" data-act="pin" aria-label="Pin" title="Pin">
+                <button type="button" class="notif-act" data-act="pin" aria-label="<?= $notifT['act_pin'] ?>" title="<?= $notifT['act_pin'] ?>">
                     <i class="bi bi-pin-angle" aria-hidden="true"></i>
                 </button>
-                <button type="button" class="notif-act" data-act="read" aria-label="Mark as read" title="Mark as read">
+                <button type="button" class="notif-act" data-act="read" aria-label="<?= $notifT['act_read'] ?>" title="<?= $notifT['act_read'] ?>">
                     <i class="bi bi-check2" aria-hidden="true"></i>
                 </button>
-                <button type="button" class="notif-act notif-act--danger" data-act="delete" aria-label="Delete" title="Delete">
+                <button type="button" class="notif-act notif-act--danger" data-act="delete" aria-label="<?= $notifT['act_delete'] ?>" title="<?= $notifT['act_delete'] ?>">
                     <i class="bi bi-trash" aria-hidden="true"></i>
                 </button>
             </div>
@@ -144,10 +192,10 @@
                 </div>
                 <p class="notif-row__body">
                     <span class="notif-stack__count" data-count></span>
-                    <span class="notif-stack__hint">Tap to expand</span>
+                    <span class="notif-stack__hint"><?= $notifT['stack_tap'] ?></span>
                 </p>
             </div>
-            <button type="button" class="notif-row__expand" aria-label="Expand stack">
+            <button type="button" class="notif-row__expand" aria-label="<?= $notifT['stack_expand'] ?>">
                 <i class="bi bi-chevron-down" aria-hidden="true"></i>
             </button>
         </article>

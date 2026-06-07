@@ -185,6 +185,28 @@
         return null;
     }
 
+    function isSecretaryLayout() {
+        return document.documentElement.getAttribute('data-layout') === 'secretary';
+    }
+
+    function mapPageForLayout(page) {
+        if (!page || !isSecretaryLayout()) return page;
+        var map = {
+            '/doctor/patients': '/secretary/patients',
+            '/doctor/calendar': '/secretary/bookings',
+            '/doctor/payments': '/secretary/payments'
+        };
+        var keys = Object.keys(map);
+        for (var i = 0; i < keys.length; i++) {
+            var from = keys[i];
+            var to = map[from];
+            if (page === from || page.indexOf(from + '/') === 0 || page.indexOf(from + '?') === 0) {
+                return page.replace(from, to);
+            }
+        }
+        return page;
+    }
+
     function all() { return ACTIONS.slice(); }
 
     function paletteActions() {
@@ -240,7 +262,7 @@
 
         // Handoff / navigation.
         if (a.page) {
-            var url = a.page;
+            var url = mapPageForLayout(a.page);
             if (a.opener) {
                 // We need the target page to auto-open the modal on arrival.
                 if (payload != null) stashPayload(a.id, payload);

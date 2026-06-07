@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="ar" dir="rtl" data-layout="secretary">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -360,6 +360,41 @@
             
             <div class="top-bar-cluster">
             <div class="top-actions">
+                <!-- بحث عالمي — مرضى · حجوزات · مدفوعات (روابط /secretary/…) -->
+                <div class="global-search-wrapper">
+                    <button type="button" class="global-search-toggle d-xl-none" id="globalSearchToggle" title="بحث" aria-label="بحث">
+                        <i class="bi bi-search"></i>
+                    </button>
+                    <div class="global-search-container" id="globalSearchContainer">
+                        <div class="global-search-backdrop" id="globalSearchBackdrop"></div>
+                        <div class="global-search-input-wrapper">
+                            <div class="global-search-input-field-wrapper">
+                                <i class="bi bi-search global-search-icon"></i>
+                                <input type="text"
+                                       class="form-control global-search-input"
+                                       id="globalSearchInput"
+                                       placeholder="بحث: مرضى، حجوزات، مدفوعات…"
+                                       autocomplete="off"
+                                       dir="rtl">
+                                <button class="btn btn-link global-search-clear d-none" id="globalSearchClear" type="button" aria-label="مسح البحث">
+                                    <i class="bi bi-x"></i>
+                                </button>
+                            </div>
+                            <div class="global-search-hint" id="globalSearchHint">
+                                <i class="bi bi-lightbulb"></i>
+                                <span>نصيحة: استخدم &amp; لتضييق النتائج باسم المريض أو رقم الهوية، أو # للتاريخ.
+                                    <br>أمثلة: «أحمد &amp; محمد»، «أحمد &amp; 123»، «حجز # 2026-06-07»</span>
+                            </div>
+                            <div class="global-search-results" id="globalSearchResults"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="button" class="notifications-toggle" id="notificationsToggle" title="الإشعارات" aria-label="الإشعارات">
+                    <i class="bi bi-bell"></i>
+                    <span class="notifications-badge" id="notificationsBadge" style="display: none;">0</span>
+                </button>
+
                 <?php 
                 // Check if admin is in View As mode using session directly
                 if (isset($_SESSION['view_as_mode']) && $_SESSION['view_as_mode'] === true): 
@@ -387,7 +422,7 @@
 
             <div class="top-actions-theme">
                 <!-- Sun/Moon Theme Toggle Switch -->
-                <label class="switch" title="تبديل المظهر">
+                <label class="switch" for="themeToggleInput" title="تبديل المظهر">
                     <input type="checkbox" id="themeToggleInput">
                     <span class="slider round">
                         <span class="sun-moon">
@@ -1141,7 +1176,11 @@
     <?php include __DIR__ . '/whats-new-v9-modal.php'; ?>
 
     <!-- v11.0.0 feature surfaces -->
-    <?php include __DIR__ . '/notification-center.php'; ?>
+    <?php
+        $notifCenterContext = 'secretary';
+        $notifCenterLang = 'ar';
+        include __DIR__ . '/notification-center.php';
+    ?>
     <?php include __DIR__ . '/todo-drawer.php'; ?>
     <?php include __DIR__ . '/cmdk-palette.php'; ?>
     <?php include __DIR__ . '/patient-hover-card.php'; ?>
@@ -1150,6 +1189,10 @@
     <?php include __DIR__ . '/notes-drawer.php'; ?>
 
     <!-- v11.0.0 feature JS bundle -->
+    <script>
+        window.__GLOBAL_SEARCH_CONFIG__ = { mode: 'secretary' };
+    </script>
+    <script defer src="/app/Views/layouts/global-search.js?v=<?= file_exists(__DIR__ . '/global-search.js') ? filemtime(__DIR__ . '/global-search.js') : time() ?>"></script>
     <script defer src="/app/Views/doctor/assets/js/patient-color.js?v=<?= file_exists(__DIR__ . '/../doctor/assets/js/patient-color.js') ? filemtime(__DIR__ . '/../doctor/assets/js/patient-color.js') : time() ?>"></script>
     <!-- Shared action registry — single source of truth for palette + dock (load before both) -->
     <script defer src="/app/Views/doctor/assets/js/actions-registry.js?v=<?= file_exists(__DIR__ . '/../doctor/assets/js/actions-registry.js') ? filemtime(__DIR__ . '/../doctor/assets/js/actions-registry.js') : time() ?>"></script>

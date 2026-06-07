@@ -14,6 +14,9 @@
     var panel = document.getElementById('notifPanel');
     if (!panel) return; // view not included on this page
 
+    var panelLang = panel.getAttribute('data-notif-lang') || 'en';
+    var isAr = panelLang === 'ar';
+
     var body = panel.querySelector('#notifBody');
     var closeBtn = panel.querySelector('#notifCloseBtn');
     var tabsEl = panel.querySelector('.notif-tabs');
@@ -79,6 +82,16 @@
         var d = new Date(iso);
         if (isNaN(d.getTime())) return '';
         var diff = Math.max(0, (Date.now() - d.getTime()) / 1000);
+        if (isAr) {
+            if (diff < 45) return 'الآن';
+            if (diff < 90) return 'منذ دقيقة';
+            if (diff < 3600) return 'منذ ' + Math.round(diff / 60) + ' د';
+            if (diff < 5400) return 'منذ ساعة';
+            if (diff < 86400) return 'منذ ' + Math.round(diff / 3600) + ' س';
+            if (diff < 172800) return 'أمس';
+            if (diff < 604800) return 'منذ ' + Math.round(diff / 86400) + ' ي';
+            return d.toLocaleDateString('ar-EG');
+        }
         if (diff < 45) return 'just now';
         if (diff < 90) return '1m ago';
         if (diff < 3600) return Math.round(diff / 60) + 'm ago';
@@ -142,11 +155,11 @@
     }
 
     var BUCKET_LABELS = {
-        today: 'Today',
-        yesterday: 'Yesterday',
-        week: 'This week',
-        older: 'Older',
-        pinned: 'Pinned'
+        today: isAr ? 'اليوم' : 'Today',
+        yesterday: isAr ? 'أمس' : 'Yesterday',
+        week: isAr ? 'هذا الأسبوع' : 'This week',
+        older: isAr ? 'أقدم' : 'Older',
+        pinned: isAr ? 'مثبّت' : 'Pinned'
     };
 
     // --- Open / close -------------------------------------------------------
@@ -474,7 +487,7 @@
             data.buckets.today.length + data.buckets.yesterday.length +
             data.buckets.week.length + data.buckets.older.length;
         if (totalItems === 0) {
-            renderEmpty('You are all caught up.', 'bi-check2-circle');
+            renderEmpty(isAr ? 'لا توجد إشعارات جديدة.' : 'You are all caught up.', 'bi-check2-circle');
             return;
         }
         body.innerHTML = '';
@@ -549,7 +562,7 @@
     function renderActivity() {
         var items = state.activity || [];
         if (!items.length) {
-            renderEmpty('No recent activity.', 'bi-activity');
+            renderEmpty(isAr ? 'لا يوجد نشاط حديث.' : 'No recent activity.', 'bi-activity');
             return;
         }
         body.innerHTML = '';
@@ -663,7 +676,7 @@
                 if (state.notifications) {
                     removeFromGrouped(state.notifications, id);
                     updateBadge();
-                    if (isStateEmpty()) renderEmpty('You are all caught up.', 'bi-check2-circle');
+                    if (isStateEmpty()) renderEmpty(isAr ? 'لا توجد إشعارات جديدة.' : 'You are all caught up.', 'bi-check2-circle');
                 }
             };
             if (REDUCED_MOTION) removeNode();
@@ -888,7 +901,8 @@
                 else window.location.href = '/doctor/notes';
                 break;
             case 'calendar':
-                window.location.href = '/doctor/calendar';
+                window.location.href = isAr && document.documentElement.getAttribute('data-layout') === 'secretary'
+                    ? '/secretary/bookings' : '/doctor/calendar';
                 break;
             case 'boards':
                 window.location.href = '/doctor/board';

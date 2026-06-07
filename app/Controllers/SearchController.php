@@ -34,6 +34,9 @@ class SearchController
         }
 
         $userId = (int) $user['id'];
+        $role   = $user['role'] ?? '';
+        $isSecretary = ($role === 'secretary');
+        $patientBase = $isSecretary ? '/secretary/patients/' : '/doctor/patients/';
         $q      = isset($_GET['q']) ? trim((string) $_GET['q']) : '';
         $scope  = isset($_GET['scope']) ? strtolower(trim((string) $_GET['scope'])) : 'all';
 
@@ -62,10 +65,10 @@ class SearchController
 
         try {
             if ($scope === 'patients' || $scope === 'all') {
-                $results['patients'] = $this->searchPatients($q, $limitPatients);
+                $results['patients'] = $this->searchPatients($q, $limitPatients, $patientBase);
             }
             if ($scope === 'pages' || $scope === 'all') {
-                $results['pages'] = $this->searchPages($q, $limitPages);
+                $results['pages'] = $this->searchPages($q, $limitPages, $isSecretary);
             }
             if ($scope === 'actions' || $scope === 'all') {
                 $results['actions'] = $this->searchActions($q, $limitActions);
@@ -90,7 +93,7 @@ class SearchController
     /* scope helpers                                                    */
     /* ---------------------------------------------------------------- */
 
-    private function searchPatients(string $q, int $limit): array
+    private function searchPatients(string $q, int $limit, string $basePath = '/doctor/patients/'): array
     {
         $like = '%' . $q . '%';
         $sql  = "SELECT id, first_name, last_name, phone
@@ -114,15 +117,24 @@ class SearchController
                 'label'    => $name !== '' ? $name : ('#' . $id),
                 'sublabel' => $r['phone'] ?? '',
                 'icon'     => 'person',
-                'link'     => '/doctor/patients/' . $id,
+                'link'     => rtrim($basePath, '/') . '/' . $id,
                 'type'     => 'patient',
             ];
         }
         return $out;
     }
 
-    private function searchPages(string $q, int $limit): array
+    private function searchPages(string $q, int $limit, bool $isSecretary = false): array
     {
+        if ($isSecretary) {
+            $pages = [
+                ['id' => 'page-dashboard', 'label' => 'لوحة التحكم',       'icon' => 'speedometer2', 'link' => '/secretary/dashboard'],
+                ['id' => 'page-bookings',  'label' => 'الحجوزات',          'icon' => 'calendar3',    'link' => '/secretary/bookings'],
+                ['id' => 'page-payments',  'label' => 'المدفوعات',         'icon' => 'cash-coin',    'link' => '/secretary/payments'],
+                ['id' => 'page-patients',  'label' => 'المرضى',            'icon' => 'people',       'link' => '/secretary/patients'],
+                ['id' => 'page-profile',   'label' => 'الملف الشخصي',      'icon' => 'person-gear',  'link' => '/secretary/profile'],
+            ];
+        } else {
         $pages = [
             ['id' => 'page-dashboard',     'label' => 'Dashboard',          'icon' => 'speedometer2',   'link' => '/doctor/dashboard'],
             ['id' => 'page-calendar',      'label' => 'Calendar',           'icon' => 'calendar3',      'link' => '/doctor/calendar'],
@@ -137,6 +149,7 @@ class SearchController
             ['id' => 'page-edit-consult',  'label' => 'Edit Consultation',  'icon' => 'pencil-square',  'link' => null],
             ['id' => 'page-notepad',       'label' => 'Notepad',            'icon' => 'sticky',         'link' => 'action:quick-note'],
         ];
+        }
 
         $needle = mb_strtolower($q);
         $out    = [];
