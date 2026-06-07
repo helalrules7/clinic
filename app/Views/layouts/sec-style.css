@@ -2435,6 +2435,33 @@ body {
             transform: translateY(-1px);
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
         }
+
+        /* Alert toast close (bookings success/error) — black in light, white in dark */
+        .alert-toast-glass .alert-toast-close-btn,
+        #toastContainer .alert-toast-glass .btn-close {
+            filter: none !important;
+            opacity: 0.85 !important;
+            transition: opacity 0.2s ease, filter 0.2s ease;
+            background-color: transparent !important;
+        }
+
+        .alert-toast-glass .alert-toast-close-btn:hover,
+        #toastContainer .alert-toast-glass .btn-close:hover {
+            opacity: 1 !important;
+        }
+
+        .dark .alert-toast-glass .alert-toast-close-btn,
+        .dark #toastContainer .alert-toast-glass .btn-close {
+            filter: invert(1) brightness(2) !important;
+            opacity: 0.9 !important;
+            background-color: transparent !important;
+        }
+
+        .dark .alert-toast-glass .alert-toast-close-btn:hover,
+        .dark #toastContainer .alert-toast-glass .btn-close:hover {
+            opacity: 1 !important;
+            filter: invert(1) brightness(2.5) !important;
+        }
         
         /* Snooze button - Dark/Light mode responsive */
         .snooze-btn {
