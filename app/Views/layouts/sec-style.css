@@ -4587,6 +4587,56 @@ body > .global-search-container.expanded {
 .sec-pa-btn--invoice { background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); }
 .sec-pa-btn--edit    { background: linear-gradient(135deg, #64748b 0%, #475569 100%); }
 
+/* compact gradient icon action buttons — dashboard appts, tables, calendar pills */
+html[data-layout="secretary"] .sec-icon-action-btn,
+html[data-layout="secretary"] .appt-actions .btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 2rem;
+    height: 2rem;
+    padding: 0 !important;
+    border: none !important;
+    border-radius: 10px !important;
+    color: #fff !important;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.12);
+    transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+}
+html[data-layout="secretary"] .sec-icon-action-btn i,
+html[data-layout="secretary"] .appt-actions .btn i {
+    color: #fff !important;
+    font-size: 1rem;
+}
+html[data-layout="secretary"] .sec-icon-action-btn:hover,
+html[data-layout="secretary"] .appt-actions .btn:hover {
+    transform: translateY(-1px);
+    color: #fff !important;
+    filter: brightness(0.88);
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.18);
+}
+html[data-layout="secretary"] .sec-icon-action-btn:active,
+html[data-layout="secretary"] .appt-actions .btn:active { transform: translateY(0); }
+html[data-layout="secretary"] .appt-actions .btn-outline-primary,
+html[data-layout="secretary"] .sec-icon-action-btn--primary {
+    background: linear-gradient(135deg, var(--accent) 0%, var(--ds-accent-2, #4f46e5) 100%) !important;
+}
+html[data-layout="secretary"] .appt-actions .btn-outline-info,
+html[data-layout="secretary"] .sec-icon-action-btn--info {
+    background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%) !important;
+}
+html[data-layout="secretary"] .appt-actions .btn-outline-success,
+html[data-layout="secretary"] .sec-icon-action-btn--success {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+}
+html[data-layout="secretary"] .sec-icon-action-btn--danger {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+}
+
+/* inline marker + tags injected into the server-rendered table rows */
+.sec-table-org { display: inline-flex; align-items: center; gap: 0.25rem; margin-inline-start: 0.4rem; vertical-align: middle; }
+.sec-table-org .sec-marker-dot { width: 12px; height: 12px; }
+.sec-table-org .sec-tag-chip { font-size: 0.65rem; padding: 0.05rem 0.4rem; }
+
 /* admin image viewer modal (zoom/reset/download) */
 .sec-img-modal-backdrop {
     position: fixed; inset: 0; z-index: 1000030;

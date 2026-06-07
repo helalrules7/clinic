@@ -759,7 +759,10 @@ function searchPatients(query) {
     // Create new request
     currentSearchRequest = new AbortController();
     
-    fetch(`/api/patients/search?q=${encodeURIComponent(query.trim())}`, {
+    const searchUrl = (window.DigitNormalizer && window.DigitNormalizer.patientSearchUrl)
+        ? window.DigitNormalizer.patientSearchUrl(query.trim())
+        : `/api/patients/search?q=${encodeURIComponent(query.trim())}`;
+    fetch(searchUrl, {
         signal: currentSearchRequest.signal
     })
     .then(response => response.json())
@@ -767,7 +770,9 @@ function searchPatients(query) {
         searchLoading.style.display = 'none';
         
         if (data.ok && data.data && data.data.length > 0) {
-            displaySearchResults(data.data, query.trim());
+            const normTerm = (window.DigitNormalizer && window.DigitNormalizer.normalizeSearchQuery)
+                ? window.DigitNormalizer.normalizeSearchQuery(query.trim()) : query.trim();
+            displaySearchResults(data.data, normTerm);
         } else {
             noResults.style.display = 'block';
         }

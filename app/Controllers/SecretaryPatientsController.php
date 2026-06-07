@@ -404,7 +404,7 @@ class SecretaryPatientsController
         if (!$this->auth->check()) return $this->json(['error' => 'Unauthorized'], 401);
         try {
             $id = (int)$id;
-            $d = $this->body();
+            $d = \App\Lib\DigitNormalizer::normalizePatientNumericFields($this->body());
             $sets = []; $params = [];
             foreach (['first_name', 'last_name', 'phone', 'alt_phone', 'national_id', 'address', 'emergency_contact', 'emergency_phone'] as $f) {
                 if (!array_key_exists($f, $d)) continue;
@@ -451,6 +451,34 @@ class SecretaryPatientsController
             $all = $this->pdo->prepare("SELECT id, name, color, icon FROM patient_tags WHERE clinic_id = ? ORDER BY name ASC");
             $all->execute([$this->clinicId]);
             return $this->json(['ok' => true, 'marker' => $marker, 'tags' => $tags, 'all_tags' => $all->fetchAll(\PDO::FETCH_ASSOC)]);
+        } catch (\Exception $e) {
+            return $this->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    /** Bulk marker+tags for a set of patient ids (used to decorate the table view). */
+    public function patientOrgBulk()
+    {
+        if (!$this->needClinic()) return;
+        try {
+            $ids = array_values(array_filter(array_map('intval', explode(',', (string)($_GET['ids'] ?? '')))));
+            if (!$ids) return $this->json(['ok' => true, 'markers' => (object)[], 'tags' => (object)[]]);
+            $ids = array_slice($ids, 0, 200);
+            $in = implode(',', array_fill(0, count($ids), '?'));
+            $mk = $this->pdo->prepare("SELECT patient_id, color_code FROM patient_clinic_color_markers WHERE clinic_id = ? AND patient_id IN ($in)");
+            $mk->execute(array_merge([$this->clinicId], $ids));
+            $markers = [];
+            foreach ($mk->fetchAll(\PDO::FETCH_ASSOC) as $r) $markers[(string)$r['patient_id']] = $r['color_code'];
+            $tg = $this->pdo->prepare("
+                SELECT ta.patient_id, t.name, t.color
+                FROM patient_tag_assignments ta
+                JOIN patient_tags t ON t.id = ta.tag_id AND t.clinic_id = ?
+                WHERE ta.patient_id IN ($in)
+            ");
+            $tg->execute(array_merge([$this->clinicId], $ids));
+            $tags = [];
+            foreach ($tg->fetchAll(\PDO::FETCH_ASSOC) as $r) $tags[(string)$r['patient_id']][] = ['name' => $r['name'], 'color' => $r['color']];
+            return $this->json(['ok' => true, 'markers' => (object)$markers, 'tags' => (object)$tags]);
         } catch (\Exception $e) {
             return $this->json(['error' => $e->getMessage()], 500);
         }

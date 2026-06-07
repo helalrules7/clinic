@@ -141,7 +141,9 @@
         abortCtrl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
 
         const params = new URLSearchParams();
-        params.set('q', q || '');
+        const normQ = (window.DigitNormalizer && window.DigitNormalizer.normalizeSearchQuery)
+            ? window.DigitNormalizer.normalizeSearchQuery(q || '') : (q || '');
+        params.set('q', normQ);
         if (scope && scope !== 'all') params.set('scope', scope);
 
         return fetch('/api/search/palette?' + params.toString(), {

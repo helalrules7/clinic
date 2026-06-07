@@ -6,8 +6,7 @@
 // RESETS the timer / opt-out / session-shown for every browser so the
 // new wizard surfaces fresh after the v11 deploy.
 //
-// Slide track: 24 slides covering every v11 feature with pure-CSS animated
-// mockups. ALL v10 slides removed in this release.
+// Doctor layout only — secretary uses whats-new-secretary-modal.php.
 ?>
 <style>
     /* ---- theme tokens (mockup stages follow html.dark / light) ---------- */
@@ -2397,6 +2396,32 @@
         .wn-fld-card, .wn-fld-shield { animation: none; opacity: 1; transform: none; }
         .wn-fld-row.is-active::after { animation: none; opacity: .7; }
     }
+
+    /* v11.0.3 — Smart digit search */
+    .wn-digit-stage {
+        display: flex; align-items: center; justify-content: center; gap: 14px;
+        padding: 20px 16px; height: auto; min-height: 168px;
+    }
+    .wn-digit-box {
+        flex: 1; max-width: 130px; padding: 10px 8px; border-radius: 10px;
+        background: var(--wn-bg-card); border: 1px solid var(--wn-border);
+        font-family: 'Cairo', ui-monospace, monospace; font-size: .82rem; font-weight: 700;
+        color: var(--wn-text); text-align: center; line-height: 1.5;
+    }
+    .wn-digit-box small { display: block; font-size: .55rem; font-weight: 600; color: var(--wn-muted); margin-bottom: 4px; }
+    .wn-digit-eq {
+        width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
+        background: rgba(99,102,241,.2); color: #a5b4fc; font-weight: 800; font-size: .9rem;
+        display: flex; align-items: center; justify-content: center;
+        animation: wn-digit-pulse 3s ease-in-out infinite;
+    }
+    .wn-digit-match {
+        margin-top: 8px; font-size: .58rem; font-weight: 700; color: #22c55e;
+        animation: wn-digit-found 3s ease-in-out infinite;
+    }
+    @keyframes wn-digit-pulse { 0%,100%{transform:scale(1);} 50%{transform:scale(1.08);} }
+    @keyframes wn-digit-found { 0%,30%,100%{opacity:0;} 40%,75%{opacity:1;} }
+
 </style>
 
 
@@ -2406,7 +2431,7 @@
       <div class="modal-header">
         <h5 class="modal-title">
           <i class="bi bi-stars me-2"></i>What's New
-          <span class="version-pill">v11.0.0</span>
+          <span class="version-pill">v11.0.3</span>
         </h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
@@ -3281,10 +3306,32 @@
               <p>The Folders view got a security &amp; UX overhaul: a curated, theme-aware gradient palette, a safer <strong>&ldquo;Add to folder&rdquo;</strong> that never strips a patient from their other folders, transactional quick-sort, and clearer delete warnings.</p>
             </div>
 
+            <!-- v11.0.3 — Smart Unicode digit search -->
+            <div class="wn-slide">
+              <span class="wn-kicker">Search</span>
+              <div class="wn-stage wn-digit-stage" aria-hidden="true">
+                <div class="wn-digit-box">
+                  <small>Arabic keyboard</small>
+                  ٠١٠٠٣٠٤٤
+                </div>
+                <div class="wn-digit-eq">=</div>
+                <div class="wn-digit-box">
+                  <small>Stored / ASCII</small>
+                  01003044
+                  <div class="wn-digit-match"><i class="bi bi-check-circle-fill"></i> Patient found</div>
+                </div>
+              </div>
+              <h3>Smart digit search — everywhere</h3>
+              <p>Type phone numbers or national IDs in <strong>Arabic-Indic</strong> or <strong>ASCII</strong> digits —
+              global search, <strong>⌘K</strong>, patient autocomplete, and booking modals all understand both.
+              <code>٠١٠٠</code> matches <code>0100</code>.</p>
+            </div>
+
             <div class="wn-slide wn-slide-fixes">
               <span class="wn-kicker">Fixes</span>
               <div class="wn-stage wn-fixes-stage">
                 <ul class="wn-fix-list">
+                  <li><i class="bi bi-check-circle-fill"></i><span>Unicode digit search: Arabic-Indic + ASCII equivalent in every autocomplete</span></li>
                   <li><i class="bi bi-check-circle-fill"></i><span>Mobile header: two-row cluster + dashboard subtitle removed</span></li>
                   <li><i class="bi bi-check-circle-fill"></i><span>Header chips unified — theme-aware glass on every control</span></li>
                   <li><i class="bi bi-check-circle-fill"></i><span>Patients page search/bell aligned — no .btn style leak</span></li>
@@ -3364,7 +3411,7 @@
     //   • "Don't show again" opts out permanently.
     // Bumping VERSION (e.g. v9_0_0 → v9_1_0) RESETS first-seen / opt-out /
     // session-shown for every browser, so the wizard resurfaces fresh.
-    const VERSION       = 'v11_0_1';
+    const VERSION       = 'v11_0_3';
     const OPT_OUT_KEY   = 'whatsNew_' + VERSION + '_optOut';     // permanent
     const FIRST_SEEN_KEY= 'whatsNew_' + VERSION + '_firstSeen';  // ms epoch
     const SESSION_KEY   = 'whatsNew_' + VERSION + '_shownSession';

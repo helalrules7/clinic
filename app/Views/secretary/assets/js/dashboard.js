@@ -489,103 +489,6 @@ function renderWeatherIcon(iconType) {
     };
     return icons[iconType] || icons['sun'];
 }
-// Calculate pollen index based on weather conditions
-function calculatePollenIndex(weatherData) {
-    // Factors affecting pollen: temperature, humidity, wind, rain
-    let pollenScore = 50; // Base score
-
-    const temp = weatherData.temperature || 20;
-    const humidity = weatherData.humidity || 50;
-    const windSpeed = weatherData.windSpeed || 10;
-    const isRaining = weatherData.condition?.toLowerCase().includes('rain');
-
-    // Temperature factor (15-25°C is peak pollen)
-    if (temp >= 15 && temp <= 25) {
-        pollenScore += 20;
-    } else if (temp > 25 && temp <= 30) {
-        pollenScore += 10;
-    } else if (temp < 10 || temp > 35) {
-        pollenScore -= 20;
-    }
-
-    // Humidity factor (low humidity = more airborne pollen)
-    if (humidity < 40) {
-        pollenScore += 15;
-    } else if (humidity > 70) {
-        pollenScore -= 15;
-    }
-
-    // Wind factor (moderate wind spreads pollen)
-    if (windSpeed >= 10 && windSpeed <= 25) {
-        pollenScore += 15;
-    } else if (windSpeed > 30) {
-        pollenScore -= 10;
-    }
-
-    // Rain washes away pollen
-    if (isRaining) {
-        pollenScore -= 30;
-    }
-
-    return Math.max(0, Math.min(100, pollenScore));
-}
-
-// Calculate dry eye risk based on weather conditions
-function calculateDryEyeRisk(weatherData) {
-    let riskScore = 30; // Base score
-
-    const temp = weatherData.temperature || 20;
-    const humidity = weatherData.humidity || 50;
-    const windSpeed = weatherData.windSpeed || 10;
-    const uvIndex = weatherData.uvIndex || 5;
-
-    // Low humidity increases dry eye risk significantly
-    if (humidity < 30) {
-        riskScore += 35;
-    } else if (humidity < 45) {
-        riskScore += 20;
-    } else if (humidity > 60) {
-        riskScore -= 15;
-    }
-
-    // High temperature with low humidity
-    if (temp > 30 && humidity < 50) {
-        riskScore += 15;
-    }
-
-    // Wind increases evaporation
-    if (windSpeed > 20) {
-        riskScore += 20;
-    } else if (windSpeed > 10) {
-        riskScore += 10;
-    }
-
-    // High UV exposure
-    if (uvIndex > 7) {
-        riskScore += 15;
-    } else if (uvIndex > 5) {
-        riskScore += 8;
-    }
-
-    return Math.max(0, Math.min(100, riskScore));
-}
-
-// Get level class based on score
-function getLevelClass(score) {
-    if (score <= 25) return 'low';
-    if (score <= 50) return 'moderate';
-    if (score <= 75) return 'high';
-    return 'very-high';
-}
-
-// Get level text based on score
-function getLevelText(score) {
-    if (score <= 25) return 'Low';
-    if (score <= 50) return 'Moderate';
-    if (score <= 75) return 'High';
-    return 'Very High';
-}
-
 // Update weather card UI (glass weather-widget + legacy card)
 function updateWeatherCard(weatherData) {
     const widget = document.getElementById('weatherWidget');
@@ -594,10 +497,6 @@ function updateWeatherCard(weatherData) {
     const descElement = document.getElementById('weatherDesc');
     const dateElement = document.getElementById('weatherDate');
     const locationElement = document.getElementById('weatherLocation');
-    const pollenValue = document.getElementById('pollenIndexValue');
-    const pollenBar = document.getElementById('pollenIndexFill');
-    const dryEyeValue = document.getElementById('dryEyeIndexValue');
-    const dryEyeBar = document.getElementById('dryEyeIndexFill');
 
     if (!iconContainer) {
         return;
@@ -630,36 +529,6 @@ function updateWeatherCard(weatherData) {
 
     if (locationElement) {
         locationElement.innerHTML = `<i class="bi bi-geo-alt-fill"></i> <span>${weatherData.location || 'كفر الشيخ'}</span>`;
-    }
-
-    // Calculate and update health indices
-    const pollenIndex = calculatePollenIndex(weatherData);
-    const dryEyeRisk = calculateDryEyeRisk(weatherData);
-
-    // Update Pollen Index
-    if (pollenValue) {
-        pollenValue.textContent = `${Math.round(pollenIndex)}%`;
-    }
-    if (pollenBar) {
-        const levelClass = getLevelClass(pollenIndex);
-        pollenBar.style.width = `${pollenIndex}%`;
-        // Remove all level classes first
-        pollenBar.classList.remove('index-low', 'index-moderate', 'index-high', 'index-very-high');
-        // Add the appropriate level class
-        pollenBar.classList.add(`index-${levelClass}`);
-    }
-
-    // Update Dry Eye Risk
-    if (dryEyeValue) {
-        dryEyeValue.textContent = `${Math.round(dryEyeRisk)}%`;
-    }
-    if (dryEyeBar) {
-        const levelClass = getLevelClass(dryEyeRisk);
-        dryEyeBar.style.width = `${dryEyeRisk}%`;
-        // Remove all level classes first
-        dryEyeBar.classList.remove('index-low', 'index-moderate', 'index-high', 'index-very-high');
-        // Add the appropriate level class
-        dryEyeBar.classList.add(`index-${levelClass}`);
     }
 }
 
@@ -895,11 +764,6 @@ function renderWeatherForecast(forecast) {
         const dayName = date.toLocaleDateString('ar-EG', { weekday: 'short' });
         const dayNumber = date.getDate();
         const month = date.toLocaleDateString('ar-EG', { month: 'short' });
-
-        const pollenIndex = calculatePollenIndex(day);
-        const dryEyeRisk = calculateDryEyeRisk(day);
-        const pollenLevel = getLevelClass(pollenIndex);
-        const dryEyeLevel = getLevelClass(dryEyeRisk);
 
         html += `
             <div class="weather-forecast-day">

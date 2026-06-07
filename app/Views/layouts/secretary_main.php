@@ -1258,7 +1258,7 @@
         })();
     </script>
 
-    <?php include __DIR__ . '/whats-new-v9-modal.php'; ?>
+    <?php include __DIR__ . '/whats-new-secretary-modal.php'; ?>
 
     <!-- v11.0.0 feature surfaces -->
     <?php
@@ -1291,6 +1291,7 @@
             settings: '/secretary/settings'
         };
     </script>
+    <script src="/app/Views/layouts/digit-normalizer.js?v=<?= file_exists(__DIR__ . '/digit-normalizer.js') ? filemtime(__DIR__ . '/digit-normalizer.js') : time() ?>"></script>
     <script defer src="/app/Views/layouts/v11-i18n.js?v=<?= file_exists(__DIR__ . '/v11-i18n.js') ? filemtime(__DIR__ . '/v11-i18n.js') : time() ?>"></script>
     <script defer src="/app/Views/layouts/global-search.js?v=<?= file_exists(__DIR__ . '/global-search.js') ? filemtime(__DIR__ . '/global-search.js') : time() ?>"></script>
     <script defer src="/app/Views/doctor/assets/js/patient-color.js?v=<?= file_exists(__DIR__ . '/../doctor/assets/js/patient-color.js') ? filemtime(__DIR__ . '/../doctor/assets/js/patient-color.js') : time() ?>"></script>

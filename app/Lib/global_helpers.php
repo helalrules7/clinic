@@ -14,6 +14,9 @@
  * (subdirectory vs. virtual host vs. /clinic/public) stays single-source.
  */
 
+// Digit normalizer — loaded early for search / phone validation across controllers.
+require_once __DIR__ . '/DigitNormalizer.php';
+
 if (!function_exists('base_url')) {
     /**
      * Build a URL relative to the application root.

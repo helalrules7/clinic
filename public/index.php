@@ -134,6 +134,7 @@ try {
     $router->delete('/api/secretary/patient-tags/{id}', 'SecretaryPatientsController@deleteTag');
     $router->post('/api/secretary/patient-marker/{id}', 'SecretaryPatientsController@setMarker');
     $router->post('/api/secretary/patients/{id}/update', 'SecretaryPatientsController@updatePatientBasics');
+    $router->get('/api/secretary/patient-org-bulk', 'SecretaryPatientsController@patientOrgBulk');
     $router->get('/api/secretary/patient-org/{id}', 'SecretaryPatientsController@patientOrg');
     $router->post('/api/secretary/patient-files/{id}', 'SecretaryPatientsController@uploadFile');
     $router->get('/api/secretary/patient-files/view/{fileId}', 'SecretaryPatientsController@viewFile');

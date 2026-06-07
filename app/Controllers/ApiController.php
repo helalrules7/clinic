@@ -7,6 +7,7 @@ use App\Lib\Validator;
 use App\Config\Database;
 use App\Config\Constants;
 use App\Lib\Helpers;
+use App\Lib\DigitNormalizer;
 use App\Models\AlertModel;
 use App\Services\IOLCalculatorService;
 use App\Services\IOPTrendAnalyzerService;
@@ -843,7 +844,7 @@ class ApiController
                 return $this->jsonResponse(['error' => 'Unauthorized'], 401);
             }
 
-            $query = $_GET['q'] ?? '';
+            $query = DigitNormalizer::normalizeSearchQuery($_GET['q'] ?? '');
             if (strlen($query) < 2) {
                 return $this->jsonResponse(['error' => 'Search query must be at least 2 characters'], 400);
             }
@@ -1249,7 +1250,7 @@ class ApiController
                 'emergency_phone' => 'max:20'
             ];
 
-            $data = $_POST;
+            $data = DigitNormalizer::normalizePatientNumericFields($_POST);
 
             // Secretaries are clinic-scoped: ignore any client-sent clinic_id and pin to their own.
             $currentUser = $this->auth->user();
@@ -2881,6 +2882,9 @@ class ApiController
             return $this->searchPatientsByPhone($query);
         } else {
             // Use regular search for names and other fields
+            $phoneExpr = DigitNormalizer::sqlDigitsExpr('p.phone');
+            $altExpr   = DigitNormalizer::sqlDigitsExpr('p.alt_phone');
+            $nidExpr   = DigitNormalizer::sqlDigitsExpr('p.national_id');
             $stmt = $this->pdo->prepare("
                 SELECT p.id, p.first_name, p.last_name, p.phone, p.alt_phone, p.dob, p.gender, p.national_id,
                        CONCAT(p.first_name, ' ', p.last_name) as full_name,
@@ -2888,8 +2892,8 @@ class ApiController
                        MAX(a.date) as last_visit
                 FROM patients p
                 LEFT JOIN appointments a ON p.id = a.patient_id AND a.status NOT IN ('Cancelled', 'NoShow')
-                WHERE p.first_name LIKE ? OR p.last_name LIKE ? OR p.phone LIKE ? 
-                   OR p.alt_phone LIKE ? OR p.national_id LIKE ?
+                WHERE p.first_name LIKE ? OR p.last_name LIKE ? OR {$phoneExpr} LIKE ?
+                   OR {$altExpr} LIKE ? OR {$nidExpr} LIKE ?
                 GROUP BY p.id
                 ORDER BY p.last_name, p.first_name
                 LIMIT 20
@@ -2910,13 +2914,7 @@ class ApiController
      */
     private function isPhoneNumberSearch($query)
     {
-        // Remove common phone prefixes and check if it's mostly digits
-        $cleanQuery = preg_replace('/^(\+20|0)/', '', $query);
-        $cleanQuery = preg_replace('/[^0-9]/', '', $cleanQuery);
-
-        // If it's 9-11 digits, it's likely a phone number
-        // Also check if it starts with 1 (Egyptian mobile numbers)
-        return strlen($cleanQuery) >= 9 && strlen($cleanQuery) <= 11 && substr($cleanQuery, 0, 1) === '1';
+        return DigitNormalizer::isPhoneNumberSearch($query);
     }
 
     /**
@@ -2960,10 +2958,7 @@ class ApiController
      */
     private function normalizePhoneNumber($phone)
     {
-        // Remove +20, 0, spaces, dashes, etc.
-        $phone = preg_replace('/^(\+20|0)/', '', $phone);
-        $phone = preg_replace('/[^0-9]/', '', $phone);
-        return $phone;
+        return DigitNormalizer::normalizePhone($phone);
     }
 
     /**
@@ -2976,30 +2971,7 @@ class ApiController
      */
     private function generatePhoneSearchPatterns($cleanQuery)
     {
-        $patterns = [];
-
-        // Add the clean query as is
-        $patterns[] = "%{$cleanQuery}%";
-
-        // Add with +20 prefix
-        $patterns[] = "%+20{$cleanQuery}%";
-
-        // Add with 0 prefix
-        $patterns[] = "%0{$cleanQuery}%";
-
-        // Add with 20 prefix (without +)
-        $patterns[] = "%20{$cleanQuery}%";
-
-        // If query starts with 1, also search for it without the 1
-        // This allows searching with '01' to find '+201234567890'
-        if (substr($cleanQuery, 0, 1) === '1' && strlen($cleanQuery) > 9) {
-            $patterns[] = "%" . substr($cleanQuery, 1) . "%";
-            $patterns[] = "%+20" . substr($cleanQuery, 1) . "%";
-            $patterns[] = "%0" . substr($cleanQuery, 1) . "%";
-            $patterns[] = "%20" . substr($cleanQuery, 1) . "%";
-        }
-
-        return $patterns;
+        return DigitNormalizer::generatePhoneSearchPatterns($cleanQuery);
     }
 
     /**
@@ -3012,14 +2984,16 @@ class ApiController
     private function buildPhoneSearchWhereClause($searchPatterns)
     {
         $conditions = [];
+        $phoneExpr = DigitNormalizer::sqlDigitsExpr('p.phone');
+        $altExpr   = DigitNormalizer::sqlDigitsExpr('p.alt_phone');
+        $nidExpr   = DigitNormalizer::sqlDigitsExpr('p.national_id');
 
-        foreach ($searchPatterns as $index => $pattern) {
-            $conditions[] = "p.phone LIKE ? OR p.alt_phone LIKE ?";
+        foreach ($searchPatterns as $pattern) {
+            $conditions[] = "({$phoneExpr} LIKE ? OR {$altExpr} LIKE ?)";
         }
 
         // Also search in names and national ID for comprehensive results
-        // This ensures we don't miss patients if phone search fails
-        $conditions[] = "p.first_name LIKE ? OR p.last_name LIKE ? OR p.national_id LIKE ?";
+        $conditions[] = "p.first_name LIKE ? OR p.last_name LIKE ? OR {$nidExpr} LIKE ?";
 
         return implode(' OR ', $conditions);
     }
@@ -7606,7 +7580,7 @@ class ApiController
                 return $this->jsonResponse(['error' => 'Unauthorized'], 401);
             }
 
-            $query = trim($_GET['q'] ?? '');
+            $query = DigitNormalizer::normalizeSearchQuery($_GET['q'] ?? '');
             $limit = min((int) ($_GET['limit'] ?? 10), 20); // Max 20 results per category
 
             if (strlen($query) < 2) {
@@ -7647,9 +7621,10 @@ class ApiController
             $refineByPatientName = null;
 
             if ($refinement) {
-                if (is_numeric($refinement)) {
-                    $refineByPatientId = (int) $refinement;
-                    $refineByAppointmentId = (int) $refinement;
+                $refinement = DigitNormalizer::normalizeSearchQuery($refinement);
+                if (DigitNormalizer::isNumericString($refinement)) {
+                    $refineByPatientId = (int) DigitNormalizer::digitsOnly($refinement);
+                    $refineByAppointmentId = $refineByPatientId;
                 } else {
                     $refineByPatientName = '%' . $refinement . '%';
                 }
@@ -7682,10 +7657,12 @@ class ApiController
 
             // 1. Search Patients
             try {
+                $phoneExpr = DigitNormalizer::sqlDigitsExpr('phone');
                 $stmt = $this->pdo->prepare("
                     SELECT id, first_name, last_name, phone, dob, gender, 'patient' as type
                     FROM patients 
-                    WHERE first_name LIKE ? OR last_name LIKE ? OR phone LIKE ?
+                    WHERE first_name LIKE ? OR last_name LIKE ? OR {$phoneExpr} LIKE ?
+                       OR " . DigitNormalizer::sqlDigitsExpr('national_id') . " LIKE ?
                     ORDER BY 
                         CASE 
                             WHEN first_name LIKE ? THEN 1
@@ -7696,7 +7673,7 @@ class ApiController
                     LIMIT ?
                 ");
                 $exactMatch = '%' . $query . '%';
-                $stmt->execute([$searchTerm, $searchTerm, $searchTerm, $exactMatch, $exactMatch, $limit]);
+                $stmt->execute([$searchTerm, $searchTerm, $searchTerm, $searchTerm, $exactMatch, $exactMatch, $limit]);
                 $patients = $stmt->fetchAll();
                 foreach ($patients as $patient) {
                     $results[] = [

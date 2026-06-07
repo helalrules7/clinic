@@ -3,6 +3,7 @@ namespace App\Controllers;
 
 use App\Config\Database;
 use App\Lib\Auth;
+use App\Lib\DigitNormalizer;
 
 class SearchController
 {
@@ -37,7 +38,7 @@ class SearchController
         $role   = $user['role'] ?? '';
         $isSecretary = ($role === 'secretary');
         $patientBase = $isSecretary ? '/secretary/patients/' : '/doctor/patients/';
-        $q      = isset($_GET['q']) ? trim((string) $_GET['q']) : '';
+        $q      = DigitNormalizer::normalizeSearchQuery(isset($_GET['q']) ? (string) $_GET['q'] : '');
         $scope  = isset($_GET['scope']) ? strtolower(trim((string) $_GET['scope'])) : 'all';
 
         $allowedScopes = ['patients', 'pages', 'actions', 'todos', 'all'];
@@ -95,17 +96,67 @@ class SearchController
 
     private function searchPatients(string $q, int $limit, string $basePath = '/doctor/patients/'): array
     {
-        $like = '%' . $q . '%';
-        $sql  = "SELECT id, first_name, last_name, phone
+        if (DigitNormalizer::isPhoneNumberSearch($q)) {
+            return $this->searchPatientsByPhone($q, $limit, $basePath);
+        }
+
+        $like      = '%' . $q . '%';
+        $phoneExpr = DigitNormalizer::sqlDigitsExpr('phone');
+        $nidExpr   = DigitNormalizer::sqlDigitsExpr('national_id');
+        $sql       = "SELECT id, first_name, last_name, phone
                  FROM patients
                  WHERE (first_name LIKE ?
                         OR last_name LIKE ?
                         OR CONCAT(first_name, ' ', last_name) LIKE ?
-                        OR phone LIKE ?)
+                        OR {$phoneExpr} LIKE ?
+                        OR {$nidExpr} LIKE ?)
                  LIMIT " . (int) $limit;
 
         $stmt = $this->pdo->prepare($sql);
-        $stmt->execute([$like, $like, $like, $like]);
+        $stmt->execute([$like, $like, $like, $like, $like]);
+        $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC) ?: [];
+
+        $out = [];
+        foreach ($rows as $r) {
+            $id   = (int) $r['id'];
+            $name = trim(($r['first_name'] ?? '') . ' ' . ($r['last_name'] ?? ''));
+            $out[] = [
+                'id'       => $id,
+                'label'    => $name !== '' ? $name : ('#' . $id),
+                'sublabel' => $r['phone'] ?? '',
+                'icon'     => 'person',
+                'link'     => rtrim($basePath, '/') . '/' . $id,
+                'type'     => 'patient',
+            ];
+        }
+        return $out;
+    }
+
+    private function searchPatientsByPhone(string $q, int $limit, string $basePath): array
+    {
+        $clean    = DigitNormalizer::normalizePhone($q);
+        $patterns = DigitNormalizer::generatePhoneSearchPatterns($clean);
+        $phoneExpr = DigitNormalizer::sqlDigitsExpr('phone');
+        $altExpr   = DigitNormalizer::sqlDigitsExpr('alt_phone');
+
+        $conditions = [];
+        $params     = [];
+        foreach ($patterns as $pattern) {
+            $conditions[] = "({$phoneExpr} LIKE ? OR {$altExpr} LIKE ?)";
+            $params[] = $pattern;
+            $params[] = $pattern;
+        }
+        $like = '%' . $q . '%';
+        $conditions[] = '(first_name LIKE ? OR last_name LIKE ?)';
+        $params[] = $like;
+        $params[] = $like;
+
+        $sql = 'SELECT id, first_name, last_name, phone FROM patients WHERE '
+            . implode(' OR ', $conditions)
+            . ' LIMIT ' . (int) $limit;
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC) ?: [];
 
         $out = [];

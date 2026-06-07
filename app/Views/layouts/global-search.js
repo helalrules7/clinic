@@ -288,7 +288,9 @@
             return false;
         }
         
-        const trimmed = query.trim();
+        const trimmed = (window.DigitNormalizer && window.DigitNormalizer.normalizeSearchQuery)
+            ? window.DigitNormalizer.normalizeSearchQuery(query)
+            : query.trim();
         
         // Must have at least 6 characters (e.g., "17/12/25")
         if (trimmed.length < 6) {
@@ -386,7 +388,9 @@
         }
         
         // Check if query is a date - if so, search only appointments
-        const trimmedQuery = query.trim();
+        const trimmedQuery = (window.DigitNormalizer && window.DigitNormalizer.normalizeSearchQuery)
+            ? window.DigitNormalizer.normalizeSearchQuery(query)
+            : query.trim();
         let searchUrl;
         const isDate = isDateQuery(trimmedQuery);
         

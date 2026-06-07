@@ -1,6 +1,52 @@
 <link href="/app/Views/secretary/assets/css/dashboard.css?v=<?= file_exists(__DIR__ . '/assets/css/dashboard.css') ? filemtime(__DIR__ . '/assets/css/dashboard.css') : time() ?>" rel="stylesheet">
 <link href="/app/Views/doctor/assets/css/dashboard.css?v=<?= file_exists(__DIR__ . '/assets/css/dashboard.css') ? filemtime(__DIR__ . '/assets/css/dashboard.css') : time() ?>" rel="stylesheet">
 
+<?php
+    $secWhatsNewLaunchTs   = strtotime('2026-06-06 12:00:00');
+    $secWhatsNewLaunchDays = 7;
+    $secWhatsNewVisibleUntil = $secWhatsNewLaunchTs + ($secWhatsNewLaunchDays * 24 * 3600);
+    $secWhatsNewVersion = 'v11_0_3';
+?>
+<?php if (time() < $secWhatsNewVisibleUntil): ?>
+<div class="whatsnew-notice mb-4 arabic-text" id="secWhatsNewNotice"
+     dir="rtl" lang="ar"
+     data-version="<?= htmlspecialchars($secWhatsNewVersion) ?>">
+    <span class="whatsnew-notice-glow" aria-hidden="true"></span>
+    <span class="whatsnew-notice-pill">
+        <i class="bi bi-stars" aria-hidden="true"></i>
+        <span>v11.0.3</span>
+    </span>
+    <span class="whatsnew-notice-text">
+        <strong>تحسينات واجهة السكرتارية</strong>
+        إحصائيات حية، مواعيد اليوم بترقيم AJAX، ملخص المريض عند التمرير، وتقويم حجوزات أوضح.
+    </span>
+    <button type="button" class="whatsnew-notice-cta"
+            data-bs-toggle="modal" data-bs-target="#secWhatsNewModal">
+        استكشف الجديد <i class="bi bi-arrow-left ms-1" aria-hidden="true"></i>
+    </button>
+    <button type="button" class="whatsnew-notice-close" id="secWhatsNewNoticeClose"
+            aria-label="إخفاء إشعار التحديث">
+        <i class="bi bi-x-lg"></i>
+    </button>
+</div>
+<script>
+(function () {
+    var el = document.getElementById('secWhatsNewNotice');
+    if (!el) return;
+    var ver = el.getAttribute('data-version');
+    var dismissKey = 'whatsNew_' + ver + '_noticeDismissed';
+    try {
+        if (localStorage.getItem(dismissKey) === '1') { el.style.display = 'none'; return; }
+    } catch (_) {}
+    var btn = document.getElementById('secWhatsNewNoticeClose');
+    if (btn) btn.addEventListener('click', function () {
+        el.style.display = 'none';
+        try { localStorage.setItem(dismissKey, '1'); } catch (_) {}
+    });
+})();
+</script>
+<?php endif; ?>
+
 <!-- بطاقة الترحيب / النظرة العامة (B1) -->
 <?php $h = (int) date('H'); $heroGreet = $h < 12 ? 'صباح الخير' : 'مساء الخير'; ?>
 <div class="ds-hero mb-4">
@@ -125,24 +171,6 @@ $trendDeltas = $trendDeltas ?? ['total' => 0, 'booked' => 0, 'checked_in' => 0, 
                             <div class="weather-icon-container" id="weatherIconContainer">
                                 <div class="weather-icon-loading">
                                     <div class="spinner-border spinner-border-sm text-light" role="status"></div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="health-indices">
-                            <div class="health-index pollen-index">
-                                <div class="index-icon"><i class="bi bi-flower1"></i></div>
-                                <div class="index-info">
-                                    <span class="index-label arabic-text">مؤشر حبوب اللقاح</span>
-                                    <div class="index-bar"><div class="index-fill" id="pollenIndexFill" style="width:0%"></div></div>
-                                    <span class="index-value" id="pollenIndexValue">--</span>
-                                </div>
-                            </div>
-                            <div class="health-index dry-eye-index">
-                                <div class="index-icon"><i class="bi bi-eye"></i></div>
-                                <div class="index-info">
-                                    <span class="index-label arabic-text">جفاف العين</span>
-                                    <div class="index-bar"><div class="index-fill" id="dryEyeIndexFill" style="width:0%"></div></div>
-                                    <span class="index-value" id="dryEyeIndexValue">--</span>
                                 </div>
                             </div>
                         </div>

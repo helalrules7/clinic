@@ -1137,6 +1137,7 @@
     </script>
     <!-- Shared weather visuals/logic — must load before main.js + dashboard.js use it -->
     <script src="/app/Views/layouts/weather-fx.js?v=<?= filemtime(__DIR__ . '/weather-fx.js') ?>"></script>
+    <script src="/app/Views/layouts/digit-normalizer.js?v=<?= file_exists(__DIR__ . '/digit-normalizer.js') ? filemtime(__DIR__ . '/digit-normalizer.js') : time() ?>"></script>
     <script src="/app/Views/layouts/main.js?v=<?= filemtime(__DIR__ . '/main.js') ?>"></script>
     <script src="/app/Views/layouts/clinics-loader.js?v=<?= filemtime(__DIR__ . '/clinics-loader.js') ?>"></script>
     

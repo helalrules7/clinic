@@ -82,6 +82,40 @@ class Validator
                     $this->errors[$field][] = "The {$field} confirmation does not match.";
                 }
                 break;
+
+            case 'phone':
+                if (!empty($value) && !Helpers::validatePhone($value)) {
+                    $this->errors[$field][] = "The {$field} field must be a valid phone number.";
+                }
+                break;
+
+            case 'integer':
+                if (!empty($value) && !DigitNormalizer::isNumericString((string) $value)) {
+                    $this->errors[$field][] = "The {$field} field must be an integer.";
+                }
+                break;
+
+            case 'date':
+                if (!empty($value) && !strtotime(DigitNormalizer::toAsciiDigits((string) $value))) {
+                    $this->errors[$field][] = "The {$field} field must be a valid date.";
+                }
+                break;
+
+            case 'min_value':
+                if (!empty($value) && is_numeric(DigitNormalizer::digitsOnly((string) $value))) {
+                    if ((int) DigitNormalizer::digitsOnly((string) $value) < (int) $ruleValue) {
+                        $this->errors[$field][] = "The {$field} field must be at least {$ruleValue}.";
+                    }
+                }
+                break;
+
+            case 'max_value':
+                if (!empty($value) && is_numeric(DigitNormalizer::digitsOnly((string) $value))) {
+                    if ((int) DigitNormalizer::digitsOnly((string) $value) > (int) $ruleValue) {
+                        $this->errors[$field][] = "The {$field} field must not exceed {$ruleValue}.";
+                    }
+                }
+                break;
         }
     }
 

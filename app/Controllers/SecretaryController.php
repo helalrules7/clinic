@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Lib\Auth;
 use App\Lib\View;
+use App\Lib\DigitNormalizer;
 use App\Config\Database;
 use App\Config\Constants;
 
@@ -739,7 +740,7 @@ class SecretaryController
                 'gender' => 'in:Male,Female,Other'
             ];
             
-            $data = $_POST;
+            $data = DigitNormalizer::normalizePatientNumericFields($_POST);
             if (!$this->view->validator->validate($data, $rules)) {
                 throw new \Exception('Validation failed');
             }
@@ -1195,6 +1196,7 @@ class SecretaryController
     {
         $limit = \App\Config\Constants::ITEMS_PER_PAGE;
         $offset = ($page - 1) * $limit;
+        $search = DigitNormalizer::normalizeSearchQuery($search);
 
         $whereConditions = [];
         $params = [];
@@ -1432,13 +1434,7 @@ class SecretaryController
      */
     private function isPhoneNumberSearch($query)
     {
-        // Remove common phone prefixes and check if it's mostly digits
-        $cleanQuery = preg_replace('/^(\+20|0)/', '', $query);
-        $cleanQuery = preg_replace('/[^0-9]/', '', $cleanQuery);
-        
-        // If it's 9-11 digits, it's likely a phone number
-        // Also check if it starts with 1 (Egyptian mobile numbers)
-        return strlen($cleanQuery) >= 9 && strlen($cleanQuery) <= 11 && substr($cleanQuery, 0, 1) === '1';
+        return DigitNormalizer::isPhoneNumberSearch($query);
     }
 
     /**
@@ -1501,10 +1497,7 @@ class SecretaryController
      */
     private function normalizePhoneNumber($phone)
     {
-        // Remove +20, 0, spaces, dashes, etc.
-        $phone = preg_replace('/^(\+20|0)/', '', $phone);
-        $phone = preg_replace('/[^0-9]/', '', $phone);
-        return $phone;
+        return DigitNormalizer::normalizePhone($phone);
     }
 
     /**
@@ -1517,30 +1510,7 @@ class SecretaryController
      */
     private function generatePhoneSearchPatterns($cleanQuery)
     {
-        $patterns = [];
-        
-        // Add the clean query as is
-        $patterns[] = "%{$cleanQuery}%";
-        
-        // Add with +20 prefix
-        $patterns[] = "%+20{$cleanQuery}%";
-        
-        // Add with 0 prefix
-        $patterns[] = "%0{$cleanQuery}%";
-        
-        // Add with 20 prefix (without +)
-        $patterns[] = "%20{$cleanQuery}%";
-        
-        // If query starts with 1, also search for it without the 1
-        // This allows searching with '01' to find '+201234567890'
-        if (substr($cleanQuery, 0, 1) === '1' && strlen($cleanQuery) > 9) {
-            $patterns[] = "%" . substr($cleanQuery, 1) . "%";
-            $patterns[] = "%+20" . substr($cleanQuery, 1) . "%";
-            $patterns[] = "%0" . substr($cleanQuery, 1) . "%";
-            $patterns[] = "%20" . substr($cleanQuery, 1) . "%";
-        }
-        
-        return $patterns;
+        return DigitNormalizer::generatePhoneSearchPatterns($cleanQuery);
     }
 
     private function getInvoiceItems($invoiceId)

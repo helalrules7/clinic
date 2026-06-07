@@ -130,17 +130,57 @@
         });
     }
 
-    // Read the page's existing filter inputs into query params.
+    // Read the page's existing filter card inputs into query params, mapping the
+    // band-style age/last-visit dropdowns to the API's min/max + date params.
+    function val(id) { var el = document.getElementById(id); return el ? (el.value || '') : ''; }
     function filterParams() {
         var p = new URLSearchParams();
-        var q = (document.getElementById('quickSearch') || {}).value || (document.getElementById('searchInput') || {}).value || '';
+        var q = val('search') || val('quickSearch');
         if (q.trim()) p.set('search', q.trim());
-        var gender = (document.getElementById('genderFilter') || {}).value || '';
-        if (gender) p.set('gender', gender);
-        // active color filters
+        var gender = val('gender'); // #gender (filter select; the add-patient modal one comes later in DOM)
+        if (gender === 'Male' || gender === 'Female') p.set('gender', gender);
+
+        var AGE = { '0-18': [0, 18], '19-30': [19, 30], '31-50': [31, 50], '51-65': [51, 65], '65+': [65, null] };
+        var ab = AGE[val('age_range')];
+        if (ab) { p.set('age_min', ab[0]); if (ab[1] != null) p.set('age_max', ab[1]); }
+
+        var lv = val('last_visit');
+        if (lv === 'never') { p.set('last_visit', 'never'); }
+        else if (lv) {
+            var days = { today: 0, week: 7, month: 30, '3months': 90, '6months': 180, year: 365 }[lv];
+            if (days != null) { var d = new Date(); d.setDate(d.getDate() - days); p.set('last_visit_from', d.toISOString().slice(0, 10)); }
+        }
+        // active color filters (cards/folders toolbars)
         cardsView.querySelectorAll('.sec-color-filter.active').forEach(function (b) { p.append('color', b.dataset.color); });
         foldersView.querySelectorAll('.sec-color-filter.active').forEach(function (b) { p.append('color', b.dataset.color); });
         return p;
+    }
+
+    // Decorate the server-rendered TABLE rows with this clinic's marker + tags.
+    function decorateTable() {
+        if (!tableView) return;
+        var names = tableView.querySelectorAll('.patient-hover-name[data-patient-id]');
+        if (!names.length) return;
+        var ids = [];
+        names.forEach(function (n) { ids.push(n.getAttribute('data-patient-id')); });
+        api('/api/secretary/patient-org-bulk?ids=' + ids.join(',')).then(function (res) {
+            if (!res || !res.ok) return;
+            var markers = res.markers || {}, tags = res.tags || {};
+            names.forEach(function (n) {
+                var pid = n.getAttribute('data-patient-id');
+                var prev = n.parentNode.querySelector('.sec-table-org'); if (prev) prev.remove();
+                var marker = markers[pid] ? '<span class="sec-marker-dot" style="position:static;border:none;background:' + esc(markers[pid]) + '"></span>' : '';
+                var tg = (tags[pid] || []).map(function (t) {
+                    return '<span class="sec-tag-chip" style="background:' + esc(t.color) + '22;color:' + esc(t.color) + ';border-color:' + esc(t.color) + '55">' + esc(t.name) + '</span>';
+                }).join('');
+                if (marker || tg) {
+                    var span = document.createElement('span');
+                    span.className = 'sec-table-org';
+                    span.innerHTML = marker + tg;
+                    n.parentNode.insertBefore(span, n.nextSibling);
+                }
+            });
+        });
     }
 
     // ====================================================================
@@ -157,6 +197,7 @@
         });
         if (v === 'cards') loadCards();
         if (v === 'folders') { state.folder = null; loadFolders(); }
+        if (v === 'table') decorateTable();
     }
 
     // ====================================================================
@@ -426,15 +467,20 @@
         updateBulkBar();
     });
 
-    // re-run current view when the page's filters change
-    ['quickSearch', 'searchInput', 'genderFilter'].forEach(function (id) {
+    // re-run cards/folders when the page's filter inputs change (table keeps its own logic).
+    ['search', 'quickSearch'].forEach(function (id) {
         var el = document.getElementById(id);
         if (el) el.addEventListener('input', function () { if (state.view !== 'table') refreshCurrent(); });
     });
+    ['gender', 'age_range', 'last_visit'].forEach(function (id) {
+        var el = document.getElementById(id);
+        if (el) el.addEventListener('change', function () { if (state.view !== 'table') refreshCurrent(); });
+    });
 
     // init
-    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function () { setView(state.view); });
-    else setView(state.view);
+    function boot() { setView(state.view); decorateTable(); }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+    else boot();
 
     window.secPatients = { setView: setView, reload: refreshCurrent };
 })();

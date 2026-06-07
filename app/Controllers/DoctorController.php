@@ -1859,16 +1859,17 @@ class DoctorController
                 WHERE id = ?
             ");
             
+            $patientFields = \App\Lib\DigitNormalizer::normalizePatientNumericFields($_POST);
             $result = $stmt->execute([
-                $_POST['first_name'],
-                $_POST['last_name'],
-                $_POST['phone'],
-                $_POST['alt_phone'] ?? null,
-                $_POST['address'] ?? null,
-                $_POST['national_id'] ?? null,
-                $_POST['dob'] ?? null,
-                $_POST['emergency_contact'] ?? null,
-                $_POST['emergency_phone'] ?? null,
+                $patientFields['first_name'],
+                $patientFields['last_name'],
+                $patientFields['phone'],
+                $patientFields['alt_phone'] ?? null,
+                $patientFields['address'] ?? null,
+                $patientFields['national_id'] ?? null,
+                $patientFields['dob'] ?? null,
+                $patientFields['emergency_contact'] ?? null,
+                $patientFields['emergency_phone'] ?? null,
                 $id
             ]);
             

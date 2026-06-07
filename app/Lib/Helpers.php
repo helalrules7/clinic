@@ -321,6 +321,7 @@ class Helpers
      */
     public static function validatePhone($phone)
     {
+        $phone = DigitNormalizer::toAsciiDigits(trim((string) $phone));
         return preg_match('/^(\+20|0)?1[0-9]{9}$/', $phone);
     }
 
@@ -329,6 +330,7 @@ class Helpers
      */
     public static function validateNationalId($id)
     {
+        $id = DigitNormalizer::digitsOnly((string) $id);
         return preg_match('/^[0-9]{14}$/', $id);
     }
 
