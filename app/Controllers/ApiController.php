@@ -16654,7 +16654,7 @@ class ApiController
             $user = $this->auth->user();
             $doctorId = $this->getDoctorId($user['id']);
 
-            // Get global tags (doctor_id IS NULL) and doctor-specific tags
+            // Public (global) + current doctor's private tags
             $stmt = $this->pdo->prepare("
                 SELECT id, name, color, icon, doctor_id, sort_order, created_at, updated_at
                 FROM patient_tags
@@ -16704,18 +16704,12 @@ class ApiController
                 return $this->jsonResponse(['error' => 'Invalid color code. Must be a valid hex color'], 400);
             }
 
-            // Determine final doctor_id:
-            // - If doctor_id is explicitly set to null in request, it's a global tag
-            // - If doctor_id is not provided, use current doctor's ID (private tag)
-            // - If doctor_id is provided with a value, use that value
+            // Public (doctor_id null) or private (current doctor) — default private
             if (isset($data['doctor_id']) && $data['doctor_id'] === null) {
-                // Explicitly set to null - global tag
                 $finalDoctorId = null;
             } else if ($tagDoctorId !== null) {
-                // Provided with a value - use it
                 $finalDoctorId = $tagDoctorId;
             } else {
-                // Not provided - use current doctor's ID (private tag)
                 $finalDoctorId = $doctorId;
             }
 

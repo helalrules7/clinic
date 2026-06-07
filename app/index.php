@@ -374,6 +374,9 @@ try {
     $router->delete('/api/patient-color-markers/{patient_id}', 'ApiController@deletePatientColorMarker');
 
     // Patient tags routes
+    $router->get('/api/tags/analytics', 'TagController@getTagsAnalytics');
+    $router->get('/api/patient-tags/{id}/usage-events', 'TagController@getPatientTagUsageEvents');
+    $router->get('/api/appointment-tags/{id}/usage-events', 'TagController@getAppointmentTagUsageEvents');
     $router->get('/api/patient-tags/reports', 'TagController@getPatientTagReports');
     $router->get('/api/patient-tags/{id}/patients', 'TagController@getPatientsByTag');
     $router->get('/api/patient-tags', 'ApiController@getPatientTags');

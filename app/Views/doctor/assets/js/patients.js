@@ -8186,7 +8186,7 @@ async function showTagManagementModal(patientId) {
                                 </div>
                                 <select class="form-select form-select-sm" id="inlineNewTagScope" style="width:auto">
                                     <option value="private">Private</option>
-                                    <option value="global">Global</option>
+                                    <option value="public">Public</option>
                                 </select>
                                 <button type="button" class="btn btn-primary btn-sm" id="inlineCreateTagBtn">Create</button>
                             </div>
@@ -8269,13 +8269,13 @@ async function showTagManagementModal(patientId) {
         inlineBtn.onclick = async () => {
             const name = modal.querySelector('#inlineNewTagName')?.value?.trim();
             const color = modal.querySelector('#inlineNewTagColor')?.value || '#6366f1';
-            const scope = modal.querySelector('#inlineNewTagScope')?.value || 'private';
             if (!name) {
                 showNotification('Tag name required', 'error');
                 return;
             }
+            const scope = modal.querySelector('#inlineNewTagScope')?.value || 'private';
             const payload = { name, color, icon: 'bi-tag' };
-            if (scope === 'global') payload.doctor_id = null;
+            if (scope === 'public') payload.doctor_id = null;
             try {
                 const res = await fetch('/api/patient-tags', {
                     method: 'POST',

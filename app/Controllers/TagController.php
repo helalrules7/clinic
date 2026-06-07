@@ -528,7 +528,354 @@ class TagController
         }
     }
 
+    /* ── Tag analytics ─────────────────────────────────────────── */
+
+    /** GET /api/tags/analytics?type=all|patient|appointment&q=&from=&to= */
+    public function getTagsAnalytics(): void
+    {
+        try {
+            if (!$this->auth->check()) {
+                $this->json(['error' => 'Unauthorized'], 401);
+                return;
+            }
+
+            $doctorId = $this->getDoctorId($this->auth->user()['id']);
+            $type = strtolower(trim($_GET['type'] ?? 'all'));
+            if (!in_array($type, ['all', 'patient', 'appointment'], true)) {
+                $type = 'all';
+            }
+            $scope = strtolower(trim($_GET['scope'] ?? 'all'));
+            if (!in_array($scope, ['all', 'public', 'private'], true)) {
+                $scope = 'all';
+            }
+            $q = trim($_GET['q'] ?? '');
+            $from = trim($_GET['from'] ?? '');
+            $to = trim($_GET['to'] ?? '');
+
+            $tags = [];
+            $summary = [
+                'total_tags' => 0,
+                'total_usages' => 0,
+                'patient_assignments' => 0,
+                'appointment_assignments' => 0,
+                'drug_links' => 0,
+            ];
+
+            if ($type === 'all' || $type === 'patient') {
+                $dateClausePta = $this->dateRangeClause('pta.assigned_at', $from, $to);
+                $dateClauseDtl = $this->dateRangeClause('dtl.created_at', $from, $to);
+                [$scopeWhere, $scopeParams] = $this->tagScopeWhere('pt', $doctorId, $scope);
+                $params = $scopeParams;
+                $nameClause = '';
+                if ($q !== '') {
+                    $nameClause = ' AND pt.name LIKE ?';
+                    $params[] = '%' . $q . '%';
+                }
+
+                $sql = "
+                    SELECT pt.id, pt.name, pt.color, pt.icon, pt.doctor_id, pt.sort_order, pt.created_at,
+                           COUNT(DISTINCT CASE WHEN pta.patient_id IS NOT NULL {$dateClausePta['case']} THEN pta.patient_id END) AS patient_count,
+                           COUNT(DISTINCT CASE WHEN dtl.id IS NOT NULL {$dateClauseDtl['case']} THEN dtl.id END) AS drug_link_count,
+                           MIN(CASE WHEN pta.assigned_at IS NOT NULL {$dateClausePta['case']} THEN pta.assigned_at END) AS first_patient_use,
+                           MAX(CASE WHEN pta.assigned_at IS NOT NULL {$dateClausePta['case']} THEN pta.assigned_at END) AS last_patient_use,
+                           MIN(CASE WHEN dtl.created_at IS NOT NULL {$dateClauseDtl['case']} THEN dtl.created_at END) AS first_drug_link,
+                           MAX(CASE WHEN dtl.created_at IS NOT NULL {$dateClauseDtl['case']} THEN dtl.created_at END) AS last_drug_link
+                    FROM patient_tags pt
+                    LEFT JOIN patient_tag_assignments pta ON pta.tag_id = pt.id
+                    LEFT JOIN drug_patient_tag_links dtl ON dtl.patient_tag_id = pt.id
+                        AND (dtl.doctor_id IS NULL OR dtl.doctor_id = ?)
+                    WHERE {$scopeWhere} {$nameClause}
+                    GROUP BY pt.id
+                    ORDER BY pt.sort_order ASC, pt.name ASC
+                ";
+                $stmt = $this->pdo->prepare($sql);
+                $stmt->execute(array_merge([$doctorId], $params));
+                foreach ($stmt->fetchAll(\PDO::FETCH_ASSOC) as $row) {
+                    $patientCount = (int)$row['patient_count'];
+                    $drugCount = (int)$row['drug_link_count'];
+                    $usageCount = $patientCount + $drugCount;
+                    $firstUsed = $this->earliestDate([$row['first_patient_use'], $row['first_drug_link'], $row['created_at']]);
+                    $lastUsed = $this->latestDate([$row['last_patient_use'], $row['last_drug_link']]);
+
+                    $tags[] = [
+                        'tag_type' => 'patient',
+                        'id' => (int)$row['id'],
+                        'name' => $row['name'],
+                        'color' => $row['color'],
+                        'icon' => $row['icon'],
+                        'doctor_id' => $row['doctor_id'],
+                        'created_at' => $row['created_at'],
+                        'usage_count' => $usageCount,
+                        'patient_count' => $patientCount,
+                        'drug_link_count' => $drugCount,
+                        'appointment_count' => 0,
+                        'first_used_at' => $firstUsed,
+                        'last_used_at' => $lastUsed,
+                    ];
+                    $summary['patient_assignments'] += $patientCount;
+                    $summary['drug_links'] += $drugCount;
+                    $summary['total_usages'] += $usageCount;
+                }
+            }
+
+            if ($type === 'all' || $type === 'appointment') {
+                $dateClauseAta = $this->dateRangeClause('ata.assigned_at', $from, $to);
+                [$scopeWhere, $scopeParams] = $this->tagScopeWhere('at', $doctorId, $scope);
+                $params = $scopeParams;
+                $nameClause = '';
+                if ($q !== '') {
+                    $nameClause = ' AND at.name LIKE ?';
+                    $params[] = '%' . $q . '%';
+                }
+
+                $sql = "
+                    SELECT at.id, at.name, at.color, at.icon, at.doctor_id, at.sort_order, at.created_at,
+                           COUNT(DISTINCT CASE WHEN ata.appointment_id IS NOT NULL {$dateClauseAta['case']} THEN ata.appointment_id END) AS appointment_count,
+                           MIN(CASE WHEN ata.assigned_at IS NOT NULL {$dateClauseAta['case']} THEN ata.assigned_at END) AS first_appointment_use,
+                           MAX(CASE WHEN ata.assigned_at IS NOT NULL {$dateClauseAta['case']} THEN ata.assigned_at END) AS last_appointment_use
+                    FROM appointment_tags at
+                    LEFT JOIN appointment_tag_assignments ata ON ata.tag_id = at.id
+                    WHERE {$scopeWhere} {$nameClause}
+                    GROUP BY at.id
+                    ORDER BY at.sort_order ASC, at.name ASC
+                ";
+                $stmt = $this->pdo->prepare($sql);
+                $stmt->execute($params);
+                foreach ($stmt->fetchAll(\PDO::FETCH_ASSOC) as $row) {
+                    $apptCount = (int)$row['appointment_count'];
+                    $tags[] = [
+                        'tag_type' => 'appointment',
+                        'id' => (int)$row['id'],
+                        'name' => $row['name'],
+                        'color' => $row['color'],
+                        'icon' => $row['icon'],
+                        'doctor_id' => $row['doctor_id'],
+                        'created_at' => $row['created_at'],
+                        'usage_count' => $apptCount,
+                        'patient_count' => 0,
+                        'drug_link_count' => 0,
+                        'appointment_count' => $apptCount,
+                        'first_used_at' => $this->earliestDate([$row['first_appointment_use'], $row['created_at']]),
+                        'last_used_at' => $row['last_appointment_use'],
+                    ];
+                    $summary['appointment_assignments'] += $apptCount;
+                    $summary['total_usages'] += $apptCount;
+                }
+            }
+
+            usort($tags, function ($a, $b) {
+                $cmp = ($b['usage_count'] ?? 0) <=> ($a['usage_count'] ?? 0);
+                return $cmp !== 0 ? $cmp : strcasecmp($a['name'], $b['name']);
+            });
+
+            $summary['total_tags'] = count($tags);
+
+            $this->json(['ok' => true, 'summary' => $summary, 'tags' => $tags]);
+        } catch (\Exception $e) {
+            $this->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    /** GET /api/patient-tags/{id}/usage-events?context=all|patient|drug&from=&to= */
+    public function getPatientTagUsageEvents($id): void
+    {
+        try {
+            if (!$this->auth->check()) {
+                $this->json(['error' => 'Unauthorized'], 401);
+                return;
+            }
+            $doctorId = $this->getDoctorId($this->auth->user()['id']);
+            $tagId = (int)$id;
+            $context = strtolower(trim($_GET['context'] ?? 'all'));
+            $from = trim($_GET['from'] ?? '');
+            $to = trim($_GET['to'] ?? '');
+            $events = [];
+
+            $tagStmt = $this->pdo->prepare('
+                SELECT id, name, color, icon, doctor_id, created_at FROM patient_tags
+                WHERE id = ? AND (doctor_id IS NULL OR doctor_id = ?)
+            ');
+            $tagStmt->execute([$tagId, $doctorId]);
+            $tag = $tagStmt->fetch(\PDO::FETCH_ASSOC);
+            if (!$tag) {
+                $this->json(['error' => 'Tag not found'], 404);
+                return;
+            }
+
+            if ($context === 'all' || $context === 'patient') {
+                $where = 'pta.tag_id = ?';
+                $params = [$tagId];
+                if ($from !== '') {
+                    $where .= ' AND pta.assigned_at >= ?';
+                    $params[] = $from . ' 00:00:00';
+                }
+                if ($to !== '') {
+                    $where .= ' AND pta.assigned_at <= ?';
+                    $params[] = $to . ' 23:59:59';
+                }
+                $stmt = $this->pdo->prepare("
+                    SELECT 'patient' AS context, pta.assigned_at AS occurred_at,
+                           p.id AS entity_id,
+                           CONCAT(p.first_name, ' ', p.last_name) AS entity_label
+                    FROM patient_tag_assignments pta
+                    INNER JOIN patients p ON p.id = pta.patient_id
+                    WHERE {$where}
+                    ORDER BY pta.assigned_at DESC
+                ");
+                $stmt->execute($params);
+                foreach ($stmt->fetchAll(\PDO::FETCH_ASSOC) as $row) {
+                    $events[] = [
+                        'context' => 'patient',
+                        'context_label' => 'Patient record',
+                        'entity_id' => (int)$row['entity_id'],
+                        'entity_label' => $row['entity_label'],
+                        'url' => '/doctor/patients/' . (int)$row['entity_id'],
+                        'occurred_at' => $row['occurred_at'],
+                    ];
+                }
+            }
+
+            if ($context === 'all' || $context === 'drug') {
+                $where = 'dtl.patient_tag_id = ? AND (dtl.doctor_id IS NULL OR dtl.doctor_id = ?)';
+                $params = [$tagId, $doctorId];
+                if ($from !== '') {
+                    $where .= ' AND dtl.created_at >= ?';
+                    $params[] = $from . ' 00:00:00';
+                }
+                if ($to !== '') {
+                    $where .= ' AND dtl.created_at <= ?';
+                    $params[] = $to . ' 23:59:59';
+                }
+                $stmt = $this->pdo->prepare("
+                    SELECT 'drug' AS context, dtl.created_at AS occurred_at,
+                           dtl.drug_name AS entity_label, dtl.id AS entity_id
+                    FROM drug_patient_tag_links dtl
+                    WHERE {$where}
+                    ORDER BY dtl.created_at DESC
+                ");
+                $stmt->execute($params);
+                foreach ($stmt->fetchAll(\PDO::FETCH_ASSOC) as $row) {
+                    $events[] = [
+                        'context' => 'drug',
+                        'context_label' => 'Drug prescription link',
+                        'entity_id' => (int)$row['entity_id'],
+                        'entity_label' => $row['entity_label'],
+                        'url' => '/doctor/drugs?search=' . rawurlencode($row['entity_label']),
+                        'occurred_at' => $row['occurred_at'],
+                    ];
+                }
+            }
+
+            usort($events, fn($a, $b) => strcmp($b['occurred_at'] ?? '', $a['occurred_at'] ?? ''));
+
+            $this->json(['ok' => true, 'tag' => $tag, 'events' => $events]);
+        } catch (\Exception $e) {
+            $this->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    /** GET /api/appointment-tags/{id}/usage-events?from=&to= */
+    public function getAppointmentTagUsageEvents($id): void
+    {
+        try {
+            if (!$this->auth->check()) {
+                $this->json(['error' => 'Unauthorized'], 401);
+                return;
+            }
+            $doctorId = $this->getDoctorId($this->auth->user()['id']);
+            $tagId = (int)$id;
+            $from = trim($_GET['from'] ?? '');
+            $to = trim($_GET['to'] ?? '');
+
+            $tagStmt = $this->pdo->prepare('
+                SELECT id, name, color, icon, doctor_id, created_at FROM appointment_tags
+                WHERE id = ? AND (doctor_id IS NULL OR doctor_id = ?)
+            ');
+            $tagStmt->execute([$tagId, $doctorId]);
+            $tag = $tagStmt->fetch(\PDO::FETCH_ASSOC);
+            if (!$tag) {
+                $this->json(['error' => 'Tag not found'], 404);
+                return;
+            }
+
+            $where = 'ata.tag_id = ?';
+            $params = [$tagId];
+            if ($from !== '') {
+                $where .= ' AND ata.assigned_at >= ?';
+                $params[] = $from . ' 00:00:00';
+            }
+            if ($to !== '') {
+                $where .= ' AND ata.assigned_at <= ?';
+                $params[] = $to . ' 23:59:59';
+            }
+
+            $stmt = $this->pdo->prepare("
+                SELECT ata.assigned_at AS occurred_at, a.id AS appointment_id, a.date, a.start_time,
+                       p.id AS patient_id,
+                       CONCAT(p.first_name, ' ', p.last_name) AS patient_name
+                FROM appointment_tag_assignments ata
+                INNER JOIN appointments a ON a.id = ata.appointment_id
+                INNER JOIN patients p ON p.id = a.patient_id
+                WHERE {$where}
+                ORDER BY ata.assigned_at DESC
+            ");
+            $stmt->execute($params);
+            $events = [];
+            foreach ($stmt->fetchAll(\PDO::FETCH_ASSOC) as $row) {
+                $events[] = [
+                    'context' => 'appointment',
+                    'context_label' => 'Appointment record',
+                    'entity_id' => (int)$row['appointment_id'],
+                    'entity_label' => 'Appointment #' . $row['appointment_id'] . ' — ' . $row['patient_name'],
+                    'patient_id' => (int)$row['patient_id'],
+                    'patient_name' => $row['patient_name'],
+                    'appointment_date' => $row['date'],
+                    'appointment_time' => $row['start_time'],
+                    'url' => '/doctor/appointments/' . (int)$row['appointment_id'],
+                    'occurred_at' => $row['occurred_at'],
+                ];
+            }
+
+            $this->json(['ok' => true, 'tag' => $tag, 'events' => $events]);
+        } catch (\Exception $e) {
+            $this->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
     /* ── Helpers ───────────────────────────────────────────────── */
+
+    private function dateRangeClause(string $column, string $from, string $to): array
+    {
+        $parts = [];
+        if ($from !== '') {
+            $parts[] = "AND {$column} >= '{$from} 00:00:00'";
+        }
+        if ($to !== '') {
+            $parts[] = "AND {$column} <= '{$to} 23:59:59'";
+        }
+        $case = $parts ? ' ' . implode(' ', $parts) : '';
+        return ['case' => $case];
+    }
+
+    private function earliestDate(array $dates): ?string
+    {
+        $valid = array_filter($dates, fn($d) => !empty($d));
+        if (!$valid) {
+            return null;
+        }
+        sort($valid);
+        return $valid[0];
+    }
+
+    private function latestDate(array $dates): ?string
+    {
+        $valid = array_filter($dates, fn($d) => !empty($d));
+        if (!$valid) {
+            return null;
+        }
+        rsort($valid);
+        return $valid[0];
+    }
 
     private function getDoctorId($userId): ?int
     {
@@ -547,6 +894,19 @@ class TagController
             return (int)$data['doctor_id'];
         }
         return $doctorId;
+    }
+
+    /** scope: all | public | private */
+    private function tagScopeWhere(string $alias, ?int $doctorId, string $scope): array
+    {
+        $scope = strtolower($scope);
+        if ($scope === 'public') {
+            return ["{$alias}.doctor_id IS NULL", []];
+        }
+        if ($scope === 'private') {
+            return ["{$alias}.doctor_id = ?", [$doctorId]];
+        }
+        return ["({$alias}.doctor_id IS NULL OR {$alias}.doctor_id = ?)", [$doctorId]];
     }
 
     private function canManageTag($tagDoctorId, ?int $currentDoctorId): bool
