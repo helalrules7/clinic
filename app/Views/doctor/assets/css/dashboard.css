@@ -6028,7 +6028,9 @@ canvas {
 }
 .dash-mini-card {
     position: relative;
-    overflow: hidden;
+    overflow: hidden; /* fallback */
+    overflow: clip;
+    isolation: isolate;
     padding: 16px 18px;
     border-radius: var(--r-xl, 18px);
     background:
@@ -6045,18 +6047,35 @@ canvas {
     animation: dashMiniIn .45s cubic-bezier(.22,.61,.36,1) both;
     --dash-accent: #6366f1;
 }
-/* colour glow blob (top-right) — same language as the clinical tiles */
+/* colour glow blob (top-right) — clipped inside rounded card */
 .dash-mini-card::before {
-    content: ""; position: absolute; inset-block-start: -38%; inset-inline-end: -18%;
-    width: 150px; height: 150px; border-radius: 50%;
+    content: "";
+    position: absolute;
+    z-index: 0;
+    inset-block-start: -28%;
+    inset-inline-end: -12%;
+    width: 130px;
+    height: 130px;
+    border-radius: 50%;
     background: radial-gradient(circle, var(--dash-accent) 0%, transparent 70%);
-    opacity: .20; filter: blur(6px); pointer-events: none;
+    opacity: .20;
+    filter: blur(6px);
+    pointer-events: none;
     transition: opacity .25s ease, transform .25s ease;
 }
-/* bottom accent bar */
+/* bottom accent bar — match card radius so it does not bleed past corners */
 .dash-mini-card::after {
-    content: ""; position: absolute; inset-inline: 0; inset-block-end: 0; height: 3px;
-    background: linear-gradient(90deg, var(--dash-accent), transparent); opacity: .9;
+    content: "";
+    position: absolute;
+    z-index: 0;
+    inset-inline: 0;
+    inset-block-end: 0;
+    height: 3px;
+    background: linear-gradient(to inline-end, var(--dash-accent), transparent);
+    opacity: .85;
+    border-end-start-radius: var(--r-xl, 18px);
+    border-end-end-radius: var(--r-xl, 18px);
+    pointer-events: none;
 }
 .dash-mini-card > * { position: relative; z-index: 1; }
 .dash-mini-card:hover {
@@ -6065,10 +6084,14 @@ canvas {
     border-color: color-mix(in srgb, var(--dash-accent) 40%, var(--glass-border));
 }
 .dash-mini-card:hover::before { opacity: .38; transform: scale(1.12); }
-#dashStatusCard   { --dash-accent: #6366F1; animation-delay: .02s; }
-#dashBoardCard    { --dash-accent: #8B5CF6; animation-delay: .08s; }
-#dashRevenueCard  { --dash-accent: #14B8A6; animation-delay: .14s; }
-#dashQuickCard    { --dash-accent: #F59E0B; animation-delay: .20s; }
+#dashStatusCard,
+#secDashStatusCard   { --dash-accent: #6366F1; animation-delay: .02s; }
+#dashBoardCard,
+#secDashBoardCard    { --dash-accent: #8B5CF6; animation-delay: .08s; }
+#dashRevenueCard,
+#secDashRevenueCard  { --dash-accent: #14B8A6; animation-delay: .14s; }
+#dashQuickCard,
+#secDashQuickCard    { --dash-accent: #F59E0B; animation-delay: .20s; }
 .dash-mini-clickable { cursor: pointer; }
 @keyframes dashMiniIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
 .dash-mini-head {

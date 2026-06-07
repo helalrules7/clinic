@@ -1,5 +1,5 @@
 /**
- * Secretary dashboard — P1/P2 widgets (donut, revenue, quick actions, rich appts, news).
+ * Secretary dashboard — P1/P2 widgets (donut, revenue, quick actions, rich appts, tip of the day).
  */
 (function () {
     'use strict';
@@ -176,59 +176,33 @@
         }
     }
 
-    function loadOphthalmologyNews() {
-        var ticker = document.getElementById('secNewsTicker');
-        if (!ticker) return;
-        var LS_A = 'roaya.ophthNews.v1.articles';
-        var LS_K = 'roaya.ophthNews.v1.cacheKey';
-        var cached = null;
-        var cachedKey = null;
+    function loadDailyTips() {
         try {
-            var raw = localStorage.getItem(LS_A);
-            if (raw) cached = JSON.parse(raw);
-            cachedKey = localStorage.getItem(LS_K);
-        } catch (_) {}
-
-        if (cached && cached.length) {
-            renderNewsTicker(cached);
-        } else {
-            ticker.innerHTML = '<span class="arabic-text">جاري تحميل الأخبار...</span>';
+            var el = document.getElementById('secDailyTipsData');
+            if (!el) return [];
+            var tips = JSON.parse(el.textContent || '[]');
+            return Array.isArray(tips) ? tips : [];
+        } catch (_) {
+            return [];
         }
-
-        fetch('/api/ophthalmology-news', { credentials: 'same-origin' })
-            .then(function (r) { return r.ok ? r.json() : null; })
-            .then(function (data) {
-                if (!data || !data.success || !data.articles || !data.articles.length) {
-                    if (!cached || !cached.length) {
-                        ticker.innerHTML = '<span class="arabic-text">لا توجد أخبار حالياً</span>';
-                    }
-                    return;
-                }
-                if (data.cache_key && cachedKey && data.cache_key === cachedKey) return;
-                renderNewsTicker(data.articles);
-                try {
-                    localStorage.setItem(LS_A, JSON.stringify(data.articles));
-                    if (data.cache_key) localStorage.setItem(LS_K, data.cache_key);
-                } catch (_) {}
-            })
-            .catch(function () {
-                if (!cached || !cached.length) {
-                    ticker.innerHTML = '<span class="arabic-text">تعذّر تحميل الأخبار</span>';
-                }
-            });
     }
 
-    function renderNewsTicker(articles) {
-        var ticker = document.getElementById('secNewsTicker');
-        if (!ticker) return;
-        ticker.innerHTML = '';
-        articles.forEach(function (a) {
-            var span = document.createElement('span');
-            var title = esc(a.title || '');
-            var link = a.url ? '<a href="' + esc(a.url) + '" target="_blank" rel="noopener">' + title + '</a>' : title;
-            span.innerHTML = link + (a.source ? ' <small>— ' + esc(a.source) + '</small>' : '');
-            ticker.appendChild(span);
-        });
+    function tipIndexForToday(len) {
+        var start = new Date(new Date().getFullYear(), 0, 0);
+        var day = Math.floor((Date.now() - start.getTime()) / 86400000);
+        return len > 0 ? day % len : 0;
+    }
+
+    function renderTipOfDay() {
+        var tips = loadDailyTips();
+        var el = document.getElementById('secTipText');
+        if (!el || !tips.length) return;
+        var tip = tips[tipIndexForToday(tips.length)];
+        if (el.textContent.trim() !== tip) {
+            el.textContent = tip;
+        }
+        var banner = document.getElementById('secTipOfDay');
+        if (banner) banner.classList.add('sec-tip-banner--ready');
     }
 
     function refreshWidgets(data) {
@@ -246,7 +220,7 @@
     };
 
     document.addEventListener('DOMContentLoaded', function () {
-        loadOphthalmologyNews();
+        renderTipOfDay();
 
         var stats = null;
         var appts = null;

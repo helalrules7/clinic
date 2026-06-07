@@ -14995,7 +14995,7 @@ class ApiController
                        COUNT(DISTINCT pfp.patient_id) as patient_count
                 FROM patient_folders pf
                 LEFT JOIN patient_folder_patients pfp ON pf.id = pfp.folder_id
-                WHERE (pf.doctor_id IS NULL OR pf.doctor_id = ?)
+                WHERE (pf.doctor_id = ? OR (pf.doctor_id IS NULL AND pf.clinic_id IS NULL))
                 AND pf.parent_id IS NULL
                 GROUP BY pf.id
                 ORDER BY pf.created_at DESC
@@ -16365,7 +16365,7 @@ class ApiController
                 FROM patient_folders pf
                 LEFT JOIN patient_folder_patients pfp ON pf.id = pfp.folder_id
                 WHERE pf.parent_id = ? AND pf.parent_type = 'custom'
-                AND (pf.doctor_id IS NULL OR pf.doctor_id = ? OR ? IS NULL)
+                AND ((pf.doctor_id IS NULL AND pf.clinic_id IS NULL) OR pf.doctor_id = ? OR ? IS NULL)
                 GROUP BY pf.id
                 ORDER BY pf.name
             ");
@@ -16764,7 +16764,7 @@ class ApiController
             $stmt = $this->pdo->prepare("
                 SELECT id, name, color, icon, doctor_id, sort_order, created_at, updated_at
                 FROM patient_tags
-                WHERE doctor_id IS NULL OR doctor_id = ?
+                WHERE (doctor_id IS NULL AND clinic_id IS NULL) OR doctor_id = ?
                 ORDER BY sort_order ASC, name ASC
             ");
             $stmt->execute([$doctorId]);
