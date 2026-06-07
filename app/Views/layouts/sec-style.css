@@ -4538,3 +4538,17 @@ body > .global-search-container.expanded {
 .sec-fin-item { display: flex; flex-direction: column; }
 .sec-fin-label { font-size: 0.75rem; color: var(--muted); }
 .sec-fin-value { font-size: 1.15rem; font-weight: 700; color: var(--text); }
+
+/* admin documents grid */
+.sec-files-grid { display: grid; gap: 0.6rem; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+.sec-file-card { position: relative; border: 1px solid var(--border); border-radius: var(--r-md, 12px); padding: 0.7rem; background: var(--card); display: flex; flex-direction: column; gap: 0.3rem; }
+.sec-file-link { display: flex; align-items: center; gap: 0.4rem; color: var(--text); text-decoration: none; overflow: hidden; }
+.sec-file-link i { font-size: 1.4rem; color: var(--accent); flex-shrink: 0; }
+.sec-file-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 0.85rem; }
+.sec-file-cat { font-size: 0.7rem; color: var(--muted); }
+.sec-file-del {
+    position: absolute; top: 4px; inset-inline-start: 4px; width: 24px; height: 24px;
+    border: none; border-radius: 50%; background: rgba(239, 68, 68, 0.12); color: #ef4444;
+    cursor: pointer; opacity: 0; transition: opacity 0.15s ease;
+}
+.sec-file-card:hover .sec-file-del { opacity: 1; }

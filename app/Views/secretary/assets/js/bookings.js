@@ -77,6 +77,7 @@ document.addEventListener('DOMContentLoaded', function() {
     updateStatistics([]);
     initCustomSelects();
     setupBookingsActionsTooltipGuard();
+    setupBookingsTooltipLifecycle();
 
     const autoRefreshEnabled = getAutoRefreshState();
     const toggleSwitch = document.getElementById('bookingsAutoRefresh');
@@ -279,7 +280,28 @@ function loadCalendar() {
         });
 }
 
+function purgeOrphanedBookingsTooltipNodes() {
+    document.querySelectorAll('body > .tooltip').forEach((node) => node.remove());
+}
+
+function disposeAllBookingsTooltips() {
+    document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach((element) => {
+        const tip = bootstrap.Tooltip.getInstance(element);
+        if (tip) tip.dispose();
+    });
+    purgeOrphanedBookingsTooltipNodes();
+}
+
+function hideAllBookingsTooltips() {
+    document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach((element) => {
+        const tip = bootstrap.Tooltip.getInstance(element);
+        if (tip) tip.hide();
+    });
+    purgeOrphanedBookingsTooltipNodes();
+}
+
 function renderCalendar(data) {
+    disposeAllBookingsTooltips();
     const container = document.getElementById('bookingsCalendarContainer');
     const timeSlots = generateTimeSlots();
     const dateStr = data.date || currentDate.toISOString().split('T')[0];
@@ -882,6 +904,11 @@ async function handleAddBooking(e) {
     .then(response => response.json())
     .then(data => {
         if (data.ok) {
+            if (document.activeElement && typeof document.activeElement.blur === 'function') {
+                document.activeElement.blur();
+            }
+            disposeAllBookingsTooltips();
+
             // Close modal
             bootstrap.Modal.getInstance(document.getElementById('addBookingModal')).hide();
             
@@ -2322,11 +2349,11 @@ function shouldInitBookingsTooltip(el) {
 
 function hideBookingsTooltipsInActions() {
     if (!isBookingsDesktopViewport()) return;
-    document.querySelectorAll('.tooltip.show').forEach((node) => node.remove());
     document.querySelectorAll(".appointment-info[data-bs-toggle='tooltip']").forEach((info) => {
         const tip = bootstrap.Tooltip.getInstance(info);
         if (tip) tip.hide();
     });
+    purgeOrphanedBookingsTooltipNodes();
 }
 
 function setupBookingsActionsTooltipGuard() {
@@ -2337,20 +2364,36 @@ function setupBookingsActionsTooltipGuard() {
     }, true);
 }
 
-function initializeTooltips() {
-    document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach((element) => {
-        const tooltip = bootstrap.Tooltip.getInstance(element);
-        if (tooltip) tooltip.dispose();
+function setupBookingsTooltipLifecycle() {
+    const addBookingModal = document.getElementById('addBookingModal');
+    if (addBookingModal) {
+        addBookingModal.addEventListener('show.bs.modal', disposeAllBookingsTooltips);
+        addBookingModal.addEventListener('hidden.bs.modal', disposeAllBookingsTooltips);
+    }
+
+    ['editBookingModal', 'deleteBookingModal', 'confirmAttendanceModal', 'addPatientModal'].forEach((id) => {
+        const modal = document.getElementById(id);
+        if (modal) {
+            modal.addEventListener('hidden.bs.modal', disposeAllBookingsTooltips);
+        }
     });
+
+    document.addEventListener('scroll', hideAllBookingsTooltips, true);
+    window.addEventListener('resize', hideAllBookingsTooltips);
+}
+
+function initializeTooltips() {
+    disposeAllBookingsTooltips();
 
     const tooltipTriggerList = [].slice
         .call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
         .filter(shouldInitBookingsTooltip);
 
     tooltipTriggerList.forEach((tooltipTriggerEl) => {
+        const isAppointmentInfo = tooltipTriggerEl.classList.contains('appointment-info');
         new bootstrap.Tooltip(tooltipTriggerEl, {
             html: true,
-            trigger: 'hover focus',
+            trigger: isAppointmentInfo ? 'hover' : 'hover focus',
             delay: { show: 300, hide: 100 },
             container: 'body',
             popperConfig: function (defaultConfig) {

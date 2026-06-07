@@ -90,5 +90,60 @@
         if (!e.target.closest('.sec-popover')) closePop();
     });
 
+    // ----- administrative files -------------------------------------------
+    var filesBody = document.getElementById('secFilesBody');
+    var fileInput = document.getElementById('secFileInput');
+    var CAT = { id: 'هوية', insurance: 'تأمين', receipt: 'إيصال', other: 'أخرى' };
+    function fileIcon(t) { t = t || ''; if (/pdf/.test(t)) return 'bi-file-earmark-pdf'; if (/image/.test(t)) return 'bi-file-earmark-image'; if (/word|document/.test(t)) return 'bi-file-earmark-word'; return 'bi-file-earmark-text'; }
+    function pConfirm(msg) {
+        return new Promise(function (resolve) {
+            var w = document.createElement('div'); w.className = 'modal fade'; w.setAttribute('dir', 'rtl');
+            w.innerHTML = '<div class="modal-dialog modal-dialog-centered"><div class="modal-content">' +
+                '<div class="modal-body arabic-text">' + esc(msg) + '</div><div class="modal-footer">' +
+                '<button class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button><button class="btn btn-danger pc-ok">حذف</button></div></div></div>';
+            document.body.appendChild(w);
+            var bs = (window.bootstrap && bootstrap.Modal) ? new bootstrap.Modal(w) : null, done = false;
+            w.addEventListener('hidden.bs.modal', function () { if (!done) resolve(false); w.remove(); });
+            w.querySelector('.pc-ok').addEventListener('click', function () { done = true; if (bs) bs.hide(); else { w.remove(); } resolve(true); });
+            if (bs) bs.show(); else { w.style.display = 'block'; }
+        });
+    }
+    function loadFiles() {
+        if (!filesBody) return;
+        api('/api/secretary/patient-files/' + pid).then(function (res) {
+            var list = (res && res.files) || [];
+            filesBody.innerHTML = list.length
+                ? '<div class="sec-files-grid">' + list.map(function (f) {
+                    return '<div class="sec-file-card">' +
+                        '<a href="/api/secretary/patient-files/view/' + f.id + '" target="_blank" class="sec-file-link">' +
+                          '<i class="bi ' + fileIcon(f.file_type) + '"></i><span class="sec-file-name">' + esc(f.original_filename) + '</span></a>' +
+                        '<span class="sec-file-cat">' + esc(CAT[f.category] || f.category || '') + '</span>' +
+                        '<button class="sec-file-del" data-id="' + f.id + '" title="حذف"><i class="bi bi-trash"></i></button>' +
+                      '</div>';
+                }).join('') + '</div>'
+                : '<div class="text-muted arabic-text">لا توجد مستندات إدارية بعد</div>';
+        });
+    }
+    if (fileInput) {
+        fileInput.addEventListener('change', function () {
+            var f = fileInput.files[0]; if (!f) return;
+            var cat = (document.getElementById('secFileCategory') || {}).value || 'other';
+            var fd = new FormData(); fd.append('file', f); fd.append('category', cat);
+            filesBody.innerHTML = '<div class="text-muted arabic-text"><span class="spinner-border spinner-border-sm me-1"></span>جارٍ الرفع…</div>';
+            fetch('/api/secretary/patient-files/' + pid, { method: 'POST', body: fd, headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                .then(function (r) { return r.json(); }).then(function (res) {
+                    if (!(res && res.ok) && window.showNotification) window.showNotification((res && res.error) || 'تعذّر الرفع', 'danger');
+                    fileInput.value = ''; loadFiles();
+                }).catch(function () { fileInput.value = ''; loadFiles(); });
+        });
+    }
+    document.addEventListener('click', function (e) {
+        var d = e.target.closest('.sec-file-del'); if (!d) return;
+        pConfirm('حذف هذا المستند الإداري؟').then(function (ok) {
+            if (ok) api('/api/secretary/patient-files/' + d.dataset.id, { method: 'DELETE' }).then(loadFiles);
+        });
+    });
+
     load();
+    loadFiles();
 })();
