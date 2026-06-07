@@ -35,10 +35,10 @@
         }
         
         body {
-            background: var(--bg);
+            /* Aurora backdrop lives in design-system.css — no local background here. */
             color: var(--text);
             font-family: 'Cairo', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            transition: background-color 0.3s ease, color 0.3s ease;
+            transition: color 0.3s ease;
         }
 
         /* ============================================
@@ -74,14 +74,14 @@
             padding-top: 0rem !important;
         }
         
-        /* Prevent flash of wrong theme - default to dark */
+        /* Prevent flash of wrong theme before pre-paint script runs */
         html:not(.theme-loaded) {
-            background: #0b1220;
+            background: #070B14;
             color: #f8fafc;
         }
-        
+
         html:not(.theme-loaded) body {
-            background: #0b1220;
+            background: #070B14;
             color: #f8fafc;
         }
         
