@@ -1,0 +1,136 @@
+/**
+ * Secretary profile — extends doctor profile.css with RTL + theme tokens.
+ * Loaded after /doctor/assets/css/profile.css on secretary/profile.php.
+ */
+
+[dir="rtl"] .profile-hero-content {
+    text-align: right;
+}
+
+[dir="rtl"] .profile-hero .profile-email i {
+    margin-left: 0.25rem;
+    margin-right: 0;
+}
+
+[dir="rtl"] .card-header .btn {
+    margin-right: auto;
+    margin-left: 0;
+}
+
+/* Secretary uses html.dark — mirror [data-theme="dark"] rules from doctor profile */
+.dark .modal-content,
+html.dark .modal-content {
+    background: var(--card) !important;
+    border: 1px solid rgba(51, 65, 85, 0.3) !important;
+    color: var(--text) !important;
+}
+
+.dark .modal-header,
+html.dark .modal-header {
+    border-bottom-color: rgba(51, 65, 85, 0.3) !important;
+}
+
+.dark .modal-header .btn-close,
+html.dark .modal-header .btn-close {
+    filter: invert(1) brightness(2);
+    opacity: 0.9;
+}
+
+.dark .modal-footer,
+html.dark .modal-footer {
+    border-top-color: rgba(51, 65, 85, 0.3) !important;
+}
+
+.dark .form-control,
+html.dark .form-control {
+    background: var(--bg);
+    border-color: var(--border);
+    color: var(--text);
+}
+
+.dark .form-control:focus,
+html.dark .form-control:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 0.2rem color-mix(in srgb, var(--accent) 25%, transparent);
+}
+
+/* Accent-driven hero (responds to palette + dark mode via CSS variables) */
+.sec-profile-page .profile-hero-banner {
+    background:
+        radial-gradient(120% 160% at 100% -20%, color-mix(in srgb, var(--accent) 45%, transparent) 0%, transparent 55%),
+        radial-gradient(120% 160% at 0% 120%, color-mix(in srgb, var(--accent) 35%, #8b5cf6) 0%, transparent 55%),
+        linear-gradient(125deg, color-mix(in srgb, var(--accent) 85%, #000) 0%, var(--accent) 55%, color-mix(in srgb, var(--accent) 70%, #06b6d4) 120%);
+}
+
+.sec-profile-page .profile-avatar-ring,
+.sec-profile-page .profile-image-preview-wrapper {
+    background: linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent) 55%, #10b981));
+    box-shadow: 0 14px 32px color-mix(in srgb, var(--accent) 35%, transparent);
+}
+
+.sec-profile-page .profile-image-placeholder-large,
+.sec-profile-page .profile-image-placeholder {
+    background: linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent) 50%, #10b981));
+}
+
+.sec-profile-page .profile-chip--role {
+    color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 12%, transparent);
+    border-color: color-mix(in srgb, var(--accent) 28%, transparent);
+}
+
+.sec-profile-page .card-header-title i {
+    color: var(--accent);
+}
+
+.sec-profile-page .btn-primary,
+.sec-profile-page #changePasswordForm .btn-primary {
+    background: linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent) 65%, #8b5cf6));
+    border: 0;
+    font-weight: 700;
+    box-shadow: 0 8px 20px color-mix(in srgb, var(--accent) 30%, transparent);
+}
+
+.sec-profile-page .btn-primary:hover {
+    filter: brightness(1.06);
+    color: #fff;
+}
+
+.sec-profile-page .btn-outline-primary {
+    color: var(--accent);
+    border-color: var(--accent);
+}
+
+.sec-profile-page .btn-outline-primary:hover {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+}
+
+.sec-profile-page .alert-info {
+    background: color-mix(in srgb, var(--accent) 8%, transparent);
+    color: var(--accent);
+    border-right: 4px solid var(--accent);
+    border-left: none;
+}
+
+[dir="rtl"] .sec-profile-page .alert-info {
+    border-right: none;
+    border-left: 4px solid var(--accent);
+}
+
+.sec-profile-page #changePasswordForm .form-control:focus,
+.sec-profile-page #editProfileModal .form-control:focus,
+.sec-profile-page #editProfileModal .form-select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 0.2rem color-mix(in srgb, var(--accent) 22%, transparent);
+}
+
+.sec-profile-page .password-strength-fill.bg-success { background-color: #10b981 !important; }
+.sec-profile-page .password-strength-fill.bg-info { background-color: var(--accent) !important; }
+
+@media (max-width: 575.98px) {
+    [dir="rtl"] .profile-hero-content {
+        text-align: center;
+    }
+}

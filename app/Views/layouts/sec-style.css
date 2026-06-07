@@ -3936,3 +3936,247 @@ body.sidebar-mini .sidebar .user-avatar {
         width: calc(100% + 2rem);
     }
 }
+
+/* ============================================================================
+   Global Search — BASE styles (RTL).
+   Ported from the doctor layout's style.css `.global-search-*` block, which the
+   secretary lacked entirely (sec-style.css had ZERO global-search rules), so the
+   panel rendered unstyled: the input / hint / results laid out in a ROW and
+   overlapped. The shared global-search-panel.css (loaded AFTER this file) styles
+   only the `.expanded` panel chrome and sets `display:flex` WITHOUT a direction —
+   the vertical stack comes from `.global-search-input-wrapper{flex-direction:column}`
+   here. Directional properties are mirrored for RTL (icon on the RIGHT, clear on
+   the LEFT, paddings/margins flipped). Everything else matches the doctor 1:1.
+   ============================================================================ */
+.global-search-wrapper {
+    position: relative;
+    margin-left: 1rem; /* RTL: was margin-right on the doctor (LTR) */
+}
+.global-search-toggle {
+    display: none; /* desktop: the inline input is shown; toggle is mobile-only (header-chips.css) */
+}
+.global-search-container {
+    position: relative;
+    width: 300px;
+    transition: opacity 0.35s ease-out, transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), visibility 0s linear 0s;
+}
+
+/* THE FIX: stack input-field → hint → results vertically. */
+.global-search-input-wrapper {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    transform-style: preserve-3d;
+    transform-origin: center center;
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.global-search-container:not(.expanded):not(.collapsing) .global-search-input-wrapper {
+    opacity: 1;
+    transform: scale(1) rotateX(0deg) translateY(0);
+}
+
+.global-search-input-field-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+/* RTL: search icon sits on the RIGHT of the field (doctor LTR: left). */
+.global-search-icon {
+    position: absolute;
+    right: 12px;
+    color: var(--muted);
+    pointer-events: none;
+    z-index: 1;
+    transition: all 0.3s ease;
+}
+.global-search-container.expanded .global-search-icon {
+    right: 1.25rem;
+    font-size: 1.25rem;
+    color: var(--accent);
+}
+
+/* RTL: icon-side (right) padding larger; clear-side (left) padding smaller. */
+.global-search-input {
+    width: 100%;
+    padding: 0.5rem 2.75rem 0.5rem 2.5rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--card);
+    color: var(--text);
+    font-size: 0.9rem;
+    transition: all 0.3s ease, opacity 0.3s ease;
+}
+.global-search-container.expanded .global-search-input {
+    padding: 1rem 3.5rem 1rem 3rem;
+    border: 1px solid var(--border);
+    background: var(--card);
+    font-size: 1.2rem;
+    border-radius: 12px;
+    width: 100%;
+}
+.global-search-input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
+    background: var(--card);
+}
+.global-search-input::placeholder { color: var(--muted); }
+
+/* Scroll-faded search box in the top-bar (matches doctor). */
+.top-bar.scrolled .global-search-container:not(.expanded) .global-search-input { opacity: 0.6; }
+.top-bar.scrolled .global-search-container:not(.expanded) .global-search-input:focus,
+.top-bar.scrolled .global-search-container:not(.expanded) .global-search-input:hover { opacity: 1; }
+.top-bar.scrolled .global-search-container:not(.expanded) .global-search-icon { opacity: 0.6; transition: opacity 0.3s ease; }
+.top-bar.scrolled .global-search-container:not(.expanded) .global-search-input:focus ~ .global-search-icon,
+.top-bar.scrolled .global-search-container:not(.expanded) .global-search-input:hover ~ .global-search-icon,
+.top-bar.scrolled .global-search-container:not(.expanded):hover .global-search-icon { opacity: 1; }
+.global-search-container:not(.expanded) .global-search-input:focus { opacity: 1 !important; }
+.global-search-container:not(.expanded):focus-within .global-search-icon { opacity: 1 !important; }
+
+/* RTL: clear (×) on the LEFT of the field (doctor LTR: right). */
+.global-search-clear {
+    position: absolute;
+    left: 8px;
+    padding: 0.25rem;
+    color: var(--muted);
+    border: none;
+    background: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+    transition: all 0.3s ease;
+}
+.global-search-container.expanded .global-search-clear { left: 1.25rem; font-size: 1.1rem; }
+.global-search-clear:hover { color: var(--text); }
+
+/* Hint (the «نصيحة …» tips line) — hidden until expanded. */
+.global-search-hint {
+    display: none;
+    margin-top: 0.75rem;
+    padding: 0.625rem 1rem;
+    font-size: 0.85rem;
+    color: var(--muted);
+    text-align: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    background: rgba(14, 165, 233, 0.05);
+    border-radius: 8px;
+    border: 1px solid rgba(14, 165, 233, 0.1);
+}
+.global-search-hint i { margin-left: 0.5rem; color: var(--accent); font-size: 0.9rem; } /* RTL: was margin-right */
+.global-search-container.expanded .global-search-hint { display: block; opacity: 0.9; }
+.dark .global-search-hint { background: rgba(56, 189, 248, 0.08); border-color: rgba(56, 189, 248, 0.15); }
+.dark .global-search-hint i { color: var(--accent); }
+
+/* Results dropdown (symmetric — full-width under the field). */
+.global-search-results {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    right: 0;
+    max-height: 400px;
+    overflow-y: auto;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+    display: none;
+}
+.global-search-results.show { display: block; }
+.global-search-results.empty { padding: 1rem; text-align: center; color: var(--muted); }
+.global-search-results-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 2rem;
+    text-align: center;
+    min-height: 200px;
+}
+.global-search-empty-icon {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+    background: rgba(14, 165, 233, 0.1);
+    color: var(--accent);
+    font-size: 2.5rem;
+}
+.global-search-empty-title { font-weight: 600; color: var(--text); margin-bottom: 0.25rem; }
+.global-search-empty-subtitle { font-size: 0.85rem; color: var(--muted); }
+.dark .global-search-empty-subtitle { color: var(--muted); }
+
+/* Result rows (RTL: icon on the right with margin-left; type badge margin-right). */
+.global-search-result-item {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-radius: 12px;
+    margin-bottom: 0.5rem;
+    border: 1px solid transparent;
+    border-bottom: 1px solid var(--border);
+}
+.global-search-container.expanded .global-search-result-item { padding: 0.75rem 1rem; margin-bottom: 0.25rem; }
+.global-search-result-item:last-child { border-bottom: none; margin-bottom: 0; }
+.global-search-result-item:hover,
+.global-search-result-item.selected {
+    background: rgba(14, 165, 233, 0.1);
+    border-color: var(--accent);
+    transform: scale(0.99);
+}
+.dark .global-search-result-item:hover,
+.dark .global-search-result-item.selected { background: rgba(56, 189, 248, 0.15); }
+.global-search-result-item.active { background: var(--accent); color: white; border-color: var(--accent); }
+.global-search-result-icon {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 0.75rem; /* RTL: was margin-right on the doctor (LTR) */
+    border-radius: 6px;
+    background: var(--bg);
+    color: var(--accent);
+    flex-shrink: 0;
+}
+.global-search-result-item.active .global-search-result-icon { background: rgba(255, 255, 255, 0.2); color: white; }
+.global-search-result-content { flex: 1; min-width: 0; }
+.global-search-result-title {
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 0.25rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.global-search-result-item.active .global-search-result-title { color: white; }
+.global-search-result-subtitle {
+    font-size: 0.8rem;
+    color: var(--muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.global-search-result-item.active .global-search-result-subtitle { color: rgba(255, 255, 255, 0.9); }
+.global-search-result-type {
+    font-size: 0.7rem;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    background: var(--bg);
+    color: var(--muted);
+    margin-right: 0.5rem; /* RTL: was margin-left on the doctor (LTR) */
+    text-transform: uppercase;
+    font-weight: 600;
+}
+.global-search-result-item.active .global-search-result-type { background: rgba(255, 255, 255, 0.2); color: white; }

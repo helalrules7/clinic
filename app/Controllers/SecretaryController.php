@@ -2544,14 +2544,19 @@ class SecretaryController
     public function profile()
     {
         $user = $this->auth->user();
-        
+
+        $stmt = $this->pdo->prepare('SELECT * FROM users WHERE id = ?');
+        $stmt->execute([(int) $user['id']]);
+        $freshUser = $stmt->fetch(\PDO::FETCH_ASSOC) ?: $user;
+
         echo $this->view->render('layouts/secretary_main', [
-            'title' => 'Profile - Secretary',
+            'title' => 'الملف الشخصي - السكرتارية',
             'page' => 'profile',
-            'user' => $user,
+            'pageTitle' => 'الملف الشخصي',
+            'user' => $freshUser,
             'content' => $this->view->render('secretary/profile', [
-                'user' => $user
-            ])
+                'user' => $freshUser,
+            ]),
         ]);
     }
 
@@ -2579,62 +2584,115 @@ class SecretaryController
             $email = trim($_POST['email'] ?? '');
             $phone = trim($_POST['phone'] ?? '');
             $secretaryName = trim($_POST['secretary_name'] ?? '');
-            $department = trim($_POST['department'] ?? '');
+            $department = trim($_POST['department'] ?? 'Administration');
+            $profileImage = $this->handleProfileImageUpload($userId);
 
-            // Validation
             if (empty($name)) {
-                throw new \Exception('Name is required');
+                throw new \Exception('الاسم الكامل مطلوب');
             }
 
             if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                throw new \Exception('Valid email is required');
+                throw new \Exception('يرجى إدخال بريد إلكتروني صالح');
             }
 
-            // Check if email is already taken by another user
-            $stmt = $this->pdo->prepare("SELECT id FROM users WHERE email = ? AND id != ?");
+            $stmt = $this->pdo->prepare('SELECT id FROM users WHERE email = ? AND id != ?');
             $stmt->execute([$email, $userId]);
             if ($stmt->fetch()) {
-                throw new \Exception('Email is already taken');
+                throw new \Exception('البريد الإلكتروني مستخدم من قبل مستخدم آخر');
             }
 
-            // Update user profile
-            $sql = "UPDATE users SET 
-                    name = ?, 
-                    email = ?, 
-                    phone = ?, 
-                    secretary_name = ?, 
-                    department = ?,
-                    updated_at = NOW()
-                    WHERE id = ?";
-            
-            $stmt = $this->pdo->prepare($sql);
-            $success = $stmt->execute([
-                $name, 
-                $email, 
-                $phone, 
-                $secretaryName, 
-                $department,
-                $userId
-            ]);
+            $this->pdo->beginTransaction();
 
-            if ($success) {
-                // Update session data
-                $_SESSION['user']['name'] = $name;
-                $_SESSION['user']['email'] = $email;
-                $_SESSION['user']['phone'] = $phone;
-                $_SESSION['user']['secretary_name'] = $secretaryName;
-                $_SESSION['user']['department'] = $department;
-
-                header('Location: /secretary/profile?updated=1&success=' . urlencode('Profile updated successfully'));
-                exit;
+            if ($profileImage) {
+                $stmt = $this->pdo->prepare('
+                    UPDATE users SET name = ?, email = ?, phone = ?, secretary_name = ?, department = ?,
+                        profile_image = ?, updated_at = NOW()
+                    WHERE id = ?
+                ');
+                $stmt->execute([$name, $email, $phone, $secretaryName, $department, $profileImage, $userId]);
             } else {
-                throw new \Exception('Failed to update profile');
+                $stmt = $this->pdo->prepare('
+                    UPDATE users SET name = ?, email = ?, phone = ?, secretary_name = ?, department = ?,
+                        updated_at = NOW()
+                    WHERE id = ?
+                ');
+                $stmt->execute([$name, $email, $phone, $secretaryName, $department, $userId]);
             }
+
+            $this->pdo->commit();
+
+            $_SESSION['user']['name'] = $name;
+            $_SESSION['user']['email'] = $email;
+            $_SESSION['user']['phone'] = $phone;
+            $_SESSION['user']['secretary_name'] = $secretaryName;
+            $_SESSION['user']['department'] = $department;
+            if ($profileImage) {
+                $_SESSION['user']['profile_image'] = $profileImage;
+            }
+
+            header('Location: /secretary/profile?updated=1&success=' . urlencode('تم تحديث الملف الشخصي بنجاح'));
+            exit;
 
         } catch (\Exception $e) {
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
             header('Location: /secretary/profile?error=' . urlencode($e->getMessage()));
             exit;
         }
+    }
+
+    /**
+     * Handle profile image upload (shared pattern with DoctorController).
+     *
+     * @return string|null Public path e.g. /uploads/users/user_1_123.jpg
+     */
+    private function handleProfileImageUpload(int $userId): ?string
+    {
+        if (!isset($_FILES['profile_image']) || $_FILES['profile_image']['error'] !== UPLOAD_ERR_OK) {
+            return null;
+        }
+
+        $uploadDir = __DIR__ . '/../../public/uploads/users/';
+        if (!is_dir($uploadDir)) {
+            @mkdir($uploadDir, 0777, true);
+        }
+        if (!is_writable($uploadDir)) {
+            @chmod($uploadDir, 0777);
+        }
+
+        $allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+        $maxSize = 5 * 1024 * 1024;
+        $file = $_FILES['profile_image'];
+
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        $mimeType = finfo_file($finfo, $file['tmp_name']);
+        finfo_close($finfo);
+
+        if (!in_array($mimeType, $allowedTypes, true)) {
+            throw new \Exception('نوع الملف غير مدعوم. المسموح: JPEG, PNG, GIF, WebP');
+        }
+
+        if ($file['size'] > $maxSize) {
+            throw new \Exception('حجم الملف يتجاوز 5 ميجابايت');
+        }
+
+        $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
+        $filename = 'user_' . $userId . '_' . time() . '.' . $extension;
+        $uploadPath = $uploadDir . $filename;
+
+        $stmt = $this->pdo->prepare('SELECT profile_image FROM users WHERE id = ?');
+        $stmt->execute([$userId]);
+        $oldImage = $stmt->fetchColumn();
+        if ($oldImage && file_exists(__DIR__ . '/../../public' . $oldImage)) {
+            @unlink(__DIR__ . '/../../public' . $oldImage);
+        }
+
+        if (!move_uploaded_file($file['tmp_name'], $uploadPath)) {
+            throw new \Exception('فشل رفع الصورة. تحقق من صلاحيات الخادم.');
+        }
+
+        return '/uploads/users/' . $filename;
     }
 
     /**

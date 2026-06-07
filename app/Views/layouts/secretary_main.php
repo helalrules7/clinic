@@ -235,8 +235,18 @@
         
         <div class="user-info">
             <div class="d-flex align-items-center">
-                <div class="user-avatar">
-                    <?= strtoupper(substr(($this->getCurrentUser()['name'] ?? 'س'), 0, 1)) ?>
+                <div class="user-avatar" id="sidebarUserAvatar">
+                    <?php
+                    $currentUser = $this->getCurrentUser();
+                    if (!empty($currentUser['profile_image'])):
+                        $sidebarImg = strpos($currentUser['profile_image'], '/public/') === 0
+                            ? $currentUser['profile_image']
+                            : '/public' . $currentUser['profile_image'];
+                    ?>
+                        <img src="<?= htmlspecialchars($sidebarImg) ?>" class="user-avatar-img" alt="الصورة الشخصية">
+                    <?php else: ?>
+                        <?= strtoupper(mb_substr($currentUser['name'] ?? 'س', 0, 1, 'UTF-8')) ?>
+                    <?php endif; ?>
                 </div>
                 <div class="user-details">
                     <h6><?= htmlspecialchars(($this->getCurrentUser()['name'] ?? 'المستخدم')) ?></h6>
