@@ -1683,6 +1683,22 @@ input[readonly] {
     color: #ffffff !important;
 }
 
+/* Action button icons — always white on solid pills */
+#bookingsCalendarContainer .bookings-appointment-card .appointment-actions .view-patient-btn i,
+#bookingsCalendarContainer .bookings-appointment-card .appointment-actions .edit-appointment-btn i,
+#bookingsCalendarContainer .bookings-appointment-card .appointment-actions .delete-appointment-btn i,
+#bookingsCalendarContainer .bookings-appointment-card .appointment-actions .confirm-attendance-btn i,
+#bookingsCalendarContainer .bookings-appointment-card .appointment-actions .view-patient-btn:hover i,
+#bookingsCalendarContainer .bookings-appointment-card .appointment-actions .edit-appointment-btn:hover i,
+#bookingsCalendarContainer .bookings-appointment-card .appointment-actions .delete-appointment-btn:hover i,
+#bookingsCalendarContainer .bookings-appointment-card .appointment-actions .confirm-attendance-btn:hover i,
+.dark #bookingsCalendarContainer .bookings-appointment-card .appointment-actions .view-patient-btn i,
+.dark #bookingsCalendarContainer .bookings-appointment-card .appointment-actions .edit-appointment-btn i,
+.dark #bookingsCalendarContainer .bookings-appointment-card .appointment-actions .delete-appointment-btn i,
+.dark #bookingsCalendarContainer .bookings-appointment-card .appointment-actions .confirm-attendance-btn i {
+    color: #ffffff !important;
+}
+
 /* Booking Card Responsive Layout */
 .booking-card-content-wrapper {
     display: flex;
