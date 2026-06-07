@@ -255,25 +255,14 @@ class SecretaryController
             $startTime = $input['start_time'];
             $endTime = $this->calculateEndTime($startTime);
 
-            // Check if patient already has an active appointment for today
-            $today = date('Y-m-d');
-            if ($input['date'] === $today) {
-                $checkStmt = $this->pdo->prepare("
-                    SELECT COUNT(*) as count
-                    FROM appointments 
-                    WHERE patient_id = ? 
-                    AND date = CURDATE()
-                    AND status NOT IN ('Completed', 'Cancelled')
-                ");
-                $checkStmt->execute([$input['patient_id']]);
-                $checkResult = $checkStmt->fetch(\PDO::FETCH_ASSOC);
-                
-                if ($checkResult['count'] > 0) {
-                    return $this->jsonResponse([
-                        'error' => 'المريض لديه موعد محجوز اليوم بالفعل',
-                        'message' => 'هذا المريض لديه موعد محجوز اليوم بالفعل. يرجى إكمال أو إلغاء الموعد الموجود أولاً.'
-                    ], 400);
-                }
+            // Same-day booking guard (shared with the doctor flow via Helpers): block a
+            // second same-day appointment for this patient unless the earlier one is
+            // closed (Completed / Cancelled / Closed). NoShow/Rescheduled still block.
+            if (\App\Lib\Helpers::patientHasActiveSameDayAppointment($input['patient_id'], $input['date'])) {
+                return $this->jsonResponse([
+                    'error' => 'المريض لديه موعد مفتوح اليوم بالفعل',
+                    'message' => 'هذا المريض لديه موعد مفتوح اليوم بالفعل. يجب إكمال الموعد الحالي أو إلغاؤه أو إغلاقه قبل حجز موعد آخر في نفس اليوم.'
+                ], 400);
             }
 
             // Check if time slot is available
@@ -297,6 +286,27 @@ class SecretaryController
             ];
 
             $appointmentId = $this->createAppointmentRecord($appointmentData);
+
+            // Immediate doctor bell notification (picked up by notification-center polling).
+            try {
+                $patientStmt = $this->pdo->prepare("SELECT first_name, last_name FROM patients WHERE id = ?");
+                $patientStmt->execute([(int)$input['patient_id']]);
+                $patient = $patientStmt->fetch(\PDO::FETCH_ASSOC);
+                if ($patient) {
+                    $patientName = trim($patient['first_name'] . ' ' . $patient['last_name']);
+                    \App\Controllers\NotificationController::notifyDoctorAppointmentBookedBySecretary(
+                        $currentUser,
+                        (int)$input['doctor_id'],
+                        (int)$appointmentId,
+                        (int)$input['patient_id'],
+                        $patientName,
+                        $input['date'],
+                        $startTime
+                    );
+                }
+            } catch (\Exception $e) {
+                // Continue even if notification creation fails
+            }
 
             // Create payment record if payment amount is provided
             if (!empty($input['payment_amount']) && $input['payment_amount'] > 0) {
@@ -1632,8 +1642,23 @@ class SecretaryController
             $currentUser = $this->auth->user();
             $clinicFilter = '';
             $params = [$date];
+            $hasBookedBy = false;
+            try {
+                $col = $this->pdo->query("SHOW COLUMNS FROM appointments LIKE 'booked_by'");
+                $hasBookedBy = (bool)$col->fetch(\PDO::FETCH_ASSOC);
+            } catch (\Throwable $e) {
+                $hasBookedBy = false;
+            }
+
+            $clinicIdExpr = $hasBookedBy
+                ? 'COALESCE(a.clinic_id, bu.clinic_id)'
+                : 'a.clinic_id';
+            $bookerJoin = $hasBookedBy
+                ? 'LEFT JOIN users bu ON bu.id = a.booked_by'
+                : '';
+
             if (($currentUser['role'] ?? null) === 'secretary' && !empty($currentUser['clinic_id'])) {
-                $clinicFilter = ' AND a.clinic_id = ? ';
+                $clinicFilter = " AND {$clinicIdExpr} = ? ";
                 $params[] = (int)$currentUser['clinic_id'];
             }
 
@@ -1644,12 +1669,14 @@ class SecretaryController
                        p.dob,
                        d.display_name as doctor_display_name,
                        d.id as doctor_id,
+                       {$clinicIdExpr} AS resolved_clinic_id,
                        c.name_ar as clinic_name_ar, c.name_en as clinic_name_en, c.code as clinic_code,
                        COALESCE(SUM(pay.amount), 0) as total_paid
                 FROM appointments a
                 JOIN patients p ON a.patient_id = p.id
                 JOIN doctors d ON a.doctor_id = d.id
-                LEFT JOIN clinics c ON a.clinic_id = c.id
+                {$bookerJoin}
+                LEFT JOIN clinics c ON c.id = {$clinicIdExpr}
                 LEFT JOIN payments pay ON a.id = pay.appointment_id
                 WHERE a.date = ? {$clinicFilter}
                 GROUP BY a.id
@@ -1657,9 +1684,26 @@ class SecretaryController
             ");
             $stmt->execute($params);
             $appointments = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+            foreach ($appointments as &$row) {
+                if (array_key_exists('resolved_clinic_id', $row)) {
+                    $row['clinic_id'] = $row['resolved_clinic_id'];
+                    unset($row['resolved_clinic_id']);
+                }
+            }
+            unset($row);
             
             // Add visit cost based on visit type
             foreach ($appointments as &$appointment) {
+                if (!empty($appointment['start_time'])) {
+                    $appointment['start_time'] = substr((string)$appointment['start_time'], 0, 5);
+                }
+                if (!empty($appointment['end_time'])) {
+                    $appointment['end_time'] = substr((string)$appointment['end_time'], 0, 5);
+                }
+                if (isset($appointment['clinic_id'])) {
+                    $appointment['clinic_id'] = (int)$appointment['clinic_id'];
+                }
                 switch ($appointment['visit_type']) {
                     case 'New':
                         $appointment['visit_cost'] = $settings['new_visit_cost'] ?? 150;
@@ -1938,10 +1982,55 @@ class SecretaryController
                 $userId
             ]);
 
-            return $this->pdo->lastInsertId();
+            $paymentId = (int)$this->pdo->lastInsertId();
+
+            try {
+                $actor = $this->auth->user();
+                if (($actor['role'] ?? null) === 'secretary' && $paymentId > 0) {
+                    $this->notifyDoctorPaymentFromSecretary($actor, $paymentId, array_merge($data, [
+                        'clinic_id' => $clinicId,
+                    ]));
+                }
+            } catch (\Exception $e) {
+                // Continue even if notification creation fails
+            }
+
+            return $paymentId;
         } catch (Exception $e) {
             throw $e;
         }
+    }
+
+    /**
+     * Bell notification for the assigned doctor when a secretary records a payment.
+     */
+    private function notifyDoctorPaymentFromSecretary(array $secretaryUser, int $paymentId, array $data)
+    {
+        $patientStmt = $this->pdo->prepare("SELECT first_name, last_name FROM patients WHERE id = ?");
+        $patientStmt->execute([(int)$data['patient_id']]);
+        $patient = $patientStmt->fetch(\PDO::FETCH_ASSOC);
+        if (!$patient) {
+            return;
+        }
+
+        $patientName = trim($patient['first_name'] . ' ' . $patient['last_name']);
+        $appointmentDoctorId = null;
+        if (!empty($data['appointment_id'])) {
+            $stmt = $this->pdo->prepare("SELECT doctor_id FROM appointments WHERE id = ?");
+            $stmt->execute([(int)$data['appointment_id']]);
+            $appointmentDoctorId = $stmt->fetchColumn() ?: null;
+        }
+
+        \App\Controllers\NotificationController::notifyDoctorsPaymentReceivedBySecretary(
+            $secretaryUser,
+            $paymentId,
+            (int)$data['patient_id'],
+            $patientName,
+            $data['amount'],
+            $data['method'] ?? 'Cash',
+            $appointmentDoctorId ? (int)$appointmentDoctorId : null,
+            isset($data['clinic_id']) ? (int)$data['clinic_id'] : null
+        );
     }
 
     /* True when the clinic's financial day for $date is already closed
@@ -2136,6 +2225,16 @@ class SecretaryController
                 return $this->jsonResponse([
                     'error' => 'اليوم المطلوب النقل إليه (' . $newDate . ') مقفول مالياً.'
                 ], 422);
+            }
+
+            // Same-day guard: an edit landing the (possibly changed) patient on TODAY must
+            // not create a second open same-day appointment. Self-exclude this row ($id);
+            // the helper is a no-op for non-today dates.
+            if (\App\Lib\Helpers::patientHasActiveSameDayAppointment($input['patient_id'], $newDate, $id)) {
+                return $this->jsonResponse([
+                    'error' => 'المريض لديه موعد مفتوح اليوم بالفعل',
+                    'message' => 'هذا المريض لديه موعد مفتوح آخر اليوم. يجب إكماله أو إلغاؤه أو إغلاقه قبل نقل هذا الحجز إلى نفس اليوم.'
+                ], 400);
             }
 
             // Get visit cost

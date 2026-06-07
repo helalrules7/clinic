@@ -199,6 +199,22 @@
         line-height: 1.4;
         white-space: nowrap;
     }
+
+    .appointment-clinic-badge {
+        position: absolute;
+        top: 4px;
+        inset-inline-end: 4px;
+        z-index: 3;
+        max-width: calc(100% - 8px);
+        pointer-events: none;
+    }
+
+    .appointment-clinic-badge .clinic-tag {
+        font-size: 0.72rem;
+        padding: 2px 10px;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+        background: color-mix(in srgb, var(--clinic-color, #6c757d) 22%, var(--card, #fff));
+    }
     .clinic-tag i {
         font-size: 0.95rem;
     }
@@ -1840,6 +1856,62 @@
     }
     
     /* Filter Buttons Styles */
+    /* ============================================
+       Clinic filter buttons — name from DB, accent from clinic code
+       ============================================ */
+    .filter-clinic-row {
+        padding-top: 0.15rem;
+    }
+
+    .filter-clinic-btn {
+        --clinic-tone: var(--clinic-color, var(--accent, #6c757d));
+        --clinic-grad-top: color-mix(in srgb, var(--clinic-tone) 88%, #fff);
+        --clinic-grad-bottom: color-mix(in srgb, var(--clinic-tone) 72%, #1a1a2e);
+        border: 1px solid color-mix(in srgb, var(--clinic-tone) 55%, transparent) !important;
+        border-radius: 10px !important;
+        color: #fff !important;
+        background: linear-gradient(155deg, var(--clinic-grad-top), var(--clinic-grad-bottom)) !important;
+        font-weight: 500;
+        padding: 0.375rem 0.75rem !important;
+        transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease !important;
+    }
+
+    .filter-clinic-btn i {
+        color: #fff !important;
+    }
+
+    .filter-clinic-btn--all {
+        --clinic-color: #6c757d;
+        --clinic-grad-top: #7b8794;
+        --clinic-grad-bottom: #4b5563;
+    }
+
+    .filter-clinic-btn:hover {
+        --clinic-grad-top: color-mix(in srgb, var(--clinic-tone) 78%, #000);
+        --clinic-grad-bottom: color-mix(in srgb, var(--clinic-tone) 58%, #000);
+        border-color: color-mix(in srgb, var(--clinic-tone) 70%, transparent) !important;
+        color: #fff !important;
+        transform: translateY(-1px);
+        box-shadow: 0 3px 8px color-mix(in srgb, var(--clinic-tone) 28%, transparent);
+    }
+
+    .filter-clinic-btn:hover i {
+        color: #fff !important;
+    }
+
+    .filter-clinic-btn.active {
+        --clinic-grad-top: var(--clinic-tone);
+        --clinic-grad-bottom: color-mix(in srgb, var(--clinic-tone) 62%, #000);
+        border-color: color-mix(in srgb, var(--clinic-tone) 80%, #000) !important;
+        color: #fff !important;
+        font-weight: 600;
+        box-shadow: 0 3px 12px color-mix(in srgb, var(--clinic-tone) 38%, transparent);
+    }
+
+    .filter-clinic-btn.active i {
+        color: #fff !important;
+    }
+
     /* ============================================
        Filter Time Buttons - Enhanced with proper borders
        ============================================ */

@@ -228,8 +228,60 @@ class Helpers
         
         $stmt = $db->prepare($sql);
         $stmt->execute($params);
-        
+
         return $stmt->fetchColumn() == 0;
+    }
+
+    /**
+     * Same-patient / same-day booking guard.
+     *
+     * Business rule (doctor + secretary): a patient may not have a SECOND
+     * appointment booked for the SAME DAY while an earlier same-day appointment
+     * is still "open" — i.e. its status has not been closed to one of
+     * Completed / Cancelled / Closed. NoShow and Rescheduled still count as
+     * open (they do NOT release the slot), per product decision.
+     *
+     * Scope (per product decision): enforced for the CURRENT day only — a
+     * future-dated booking is never blocked. "Today" is taken from PHP
+     * (`date('Y-m-d')`), the SAME clock the rest of the booking flow uses for
+     * its past-date check, so the guard stays consistent with that validation
+     * (rather than mixing in MySQL CURDATE(), which can sit on a different
+     * calendar day if the PHP and DB containers are clock-skewed). The row
+     * filter uses the literal supplied `date`, which is timezone-stable.
+     *
+     * @param int      $patientId
+     * @param string   $date                 the date being booked (Y-m-d)
+     * @param int|null $excludeAppointmentId  appointment to ignore (the row being
+     *                                         rescheduled/edited — so it can't trip
+     *                                         the guard against itself)
+     * @return bool true when an open same-day appointment already exists → block
+     */
+    public static function patientHasActiveSameDayAppointment($patientId, $date, $excludeAppointmentId = null)
+    {
+        // Today-only: never block a future-dated booking.
+        if ($date !== date('Y-m-d')) {
+            return false;
+        }
+
+        $db = \App\Config\Database::getInstance()->getConnection();
+
+        $sql = "
+            SELECT COUNT(*) FROM appointments
+            WHERE patient_id = ?
+              AND date = ?
+              AND status NOT IN ('Completed', 'Cancelled', 'Closed')
+        ";
+        $params = [(int)$patientId, $date];
+
+        if ($excludeAppointmentId) {
+            $sql .= " AND id <> ?";
+            $params[] = (int)$excludeAppointmentId;
+        }
+
+        $stmt = $db->prepare($sql);
+        $stmt->execute($params);
+
+        return ((int)$stmt->fetchColumn()) > 0;
     }
 
     /**

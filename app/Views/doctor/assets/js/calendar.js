@@ -20,6 +20,7 @@ let refreshInterval;
 let preselectedPatient = window.CALENDAR_CONFIG.preselectedPatient;
 let highlightedAppointmentId = null; // Store appointment ID from URL to highlight
 let currentTimeFilter = null; // Current time filter: '2pm-6pm', '6pm-1045pm', 'available', 'unavailable', or null
+let currentClinicFilter = null; // Numeric clinic id, or null = all clinics
 let calendarData = null; // Store calendar data for filtering
 
 // Function to initialize date from URL parameter
@@ -114,7 +115,10 @@ function setupCalendarActionsTooltipGuard() {
   document.addEventListener(
     "mouseenter",
     function (e) {
-      if (e.target.closest(".appointment-actions")) {
+      // mouseenter target can be a Text node (no .closest) when hovering label text.
+      const el = e.target instanceof Element ? e.target : e.target && e.target.parentElement;
+      if (!el || typeof el.closest !== "function") return;
+      if (el.closest(".appointment-actions")) {
         hideCalendarTooltipsInActions();
       }
     },
@@ -203,6 +207,14 @@ function setupEventListeners() {
     btn.addEventListener("click", function () {
       const filter = this.getAttribute("data-filter");
       applyTimeFilter(filter);
+    });
+  });
+
+  // Clinic filter buttons (server-rendered from clinics table)
+  document.querySelectorAll(".filter-clinic-btn").forEach((btn) => {
+    btn.addEventListener("click", function () {
+      const clinicId = this.getAttribute("data-clinic-id");
+      applyClinicFilter(clinicId);
     });
   });
 
@@ -298,6 +310,30 @@ function updateFilterButtonStates() {
   });
 }
 
+function updateClinicFilterButtonStates() {
+  document.querySelectorAll(".filter-clinic-btn").forEach((btn) => {
+    const id = btn.getAttribute("data-clinic-id") || "";
+    const active = currentClinicFilter
+      ? String(btn.getAttribute("data-clinic-id")) === String(currentClinicFilter)
+      : id === "";
+    btn.classList.toggle("active", active);
+  });
+}
+
+function applyClinicFilter(clinicId) {
+  currentClinicFilter = clinicId && String(clinicId).trim() !== ""
+    ? String(clinicId)
+    : null;
+  updateClinicFilterButtonStates();
+  if (calendarData) {
+    renderCalendar(calendarData);
+    updateDateDisplay();
+    setTimeout(() => {
+      initializeTooltips();
+    }, 100);
+  }
+}
+
 function loadCalendar() {
   const dateStr = currentDate.toISOString().split("T")[0];
   const doctorId = window.CALENDAR_CONFIG.doctorId;
@@ -374,9 +410,7 @@ function renderCalendar(data) {
         return; // Skip this time slot if it doesn't match the filter
       }
 
-      const appointment = data.appointments.find(
-        (apt) => apt.start_time === time
-      );
+      const appointment = findVisibleAppointmentAtSlot(data, time);
       const isAvailable = data.available_slots.includes(time);
       const unavailableSlot = data.unavailable_slots
         ? data.unavailable_slots.find((slot) => slot.time === time)
@@ -450,10 +484,16 @@ function getClinicVisual(code) {
 }
 
 function renderClinicChip(appointment, { withName = true } = {}) {
-  const name = appointment.clinic_name_ar || appointment.clinic_name_en;
-  if (!name) return "";
-  const v = getClinicVisual(appointment.clinic_code);
-  return `<span class="clinic-tag" style="--clinic-color:${v.color}" dir="rtl"><i class="bi ${v.icon}"></i>${withName ? ` ${name}` : ""}</span>`;
+  const meta = resolveClinicMeta(appointment);
+  if (!meta.name && meta.id == null) return "";
+  const v = getClinicVisual(meta.code);
+  return `<span class="clinic-tag" style="--clinic-color:${v.color}" dir="rtl"><i class="bi ${v.icon}"></i>${withName ? ` ${meta.name}` : ""}</span>`;
+}
+
+function renderClinicBadge(appointment) {
+  const chip = renderClinicChip(appointment);
+  if (!chip) return "";
+  return `<div class="appointment-clinic-badge" aria-label="Clinic">${chip}</div>`;
 }
 
 function renderAppointmentSlot(appointment) {
@@ -492,6 +532,8 @@ function renderAppointmentSlot(appointment) {
   const isHighlighted =
     highlightedAppointmentId && appointment.id === highlightedAppointmentId;
   const highlightClass = isHighlighted ? "highlighted-appointment" : "";
+  const clinicMeta = resolveClinicMeta(appointment);
+  const clinicIdAttr = getAppointmentClinicId(appointment);
 
   // Create detailed tooltip content (any doctor can see appointment details)
   const tooltipContent = `
@@ -515,7 +557,7 @@ function renderAppointmentSlot(appointment) {
                 <div class="tooltip-row">
                     <span class="tooltip-label">Clinic:</span>
                     <span class="tooltip-value">${
-                      (appointment.clinic_name_ar || appointment.clinic_name_en)
+                      clinicMeta.name
                         ? renderClinicChip(appointment)
                         : "N/A"
                     }</span>
@@ -573,7 +615,8 @@ function renderAppointmentSlot(appointment) {
 
   return `
         <div class="appointment-card ${appointment.status.toLowerCase()} ${highlightClass}"
-             data-appointment-id="${appointment.id}">
+             data-appointment-id="${appointment.id}"
+             ${clinicIdAttr ? `data-clinic-id="${clinicIdAttr}"` : ""}>
             <div class="appointment-header ${isMissed ? "missed" : ""} ${
     isCompleted ? "completed" : ""
   }">
@@ -592,7 +635,7 @@ function renderAppointmentSlot(appointment) {
                       appointment.doctor_display_name || "N/A"
                     }</div>
                     ${
-                      (appointment.clinic_name_ar || appointment.clinic_name_en)
+                      clinicMeta.name || clinicIdAttr
                         ? `<div class="info-line"><span class="label">Clinic:</span> ${renderClinicChip(appointment)}</div>`
                         : ""
                     }
@@ -802,13 +845,88 @@ function timeInRange(time, startTime, endTime) {
   return timeMins >= startMins && timeMins <= endMins;
 }
 
+function normalizeStartTime(t) {
+  if (t == null || t === "") return "";
+  return String(t).substring(0, 5);
+}
+
+function findAppointmentsAtSlot(data, slotTime) {
+  if (!data || !Array.isArray(data.appointments)) return [];
+  const key = normalizeStartTime(slotTime);
+  return data.appointments.filter(
+    (apt) => normalizeStartTime(apt.start_time) === key
+  );
+}
+
+function getAppointmentClinicId(apt) {
+  if (!apt) return null;
+  if (apt.clinic_id != null && apt.clinic_id !== "") {
+    return String(apt.clinic_id);
+  }
+  const meta = resolveClinicMeta(apt);
+  return meta.id != null ? String(meta.id) : null;
+}
+
+function appointmentMatchesClinicFilter(apt) {
+  if (!currentClinicFilter) return true;
+  const cid = getAppointmentClinicId(apt);
+  return cid !== null && cid === String(currentClinicFilter);
+}
+
+function findVisibleAppointmentAtSlot(data, slotTime) {
+  const matches = findAppointmentsAtSlot(data, slotTime).filter(
+    appointmentMatchesClinicFilter
+  );
+  return matches[0] || null;
+}
+
+function findAppointmentAtSlot(data, slotTime) {
+  const matches = findAppointmentsAtSlot(data, slotTime);
+  return matches[0] || null;
+}
+
+function getClinicsCatalog() {
+  return (window.CALENDAR_CONFIG && Array.isArray(window.CALENDAR_CONFIG.clinics))
+    ? window.CALENDAR_CONFIG.clinics
+    : (Array.isArray(window.CLINICS_BOOTSTRAP) ? window.CLINICS_BOOTSTRAP : []);
+}
+
+function resolveClinicMeta(appointment) {
+  if (!appointment) return { id: null, code: null, name: "" };
+  let id = appointment.clinic_id != null ? appointment.clinic_id : null;
+  let code = appointment.clinic_code || null;
+  let nameAr = appointment.clinic_name_ar || "";
+  let nameEn = appointment.clinic_name_en || "";
+  if ((!nameAr && !nameEn) && id != null) {
+    const hit = getClinicsCatalog().find((c) => String(c.id) === String(id));
+    if (hit) {
+      code = code || hit.code;
+      nameAr = nameAr || hit.name_ar || "";
+      nameEn = nameEn || hit.name_en || "";
+    }
+  }
+  const name = nameEn || nameAr || (code ? String(code).toUpperCase() : "");
+  return { id, code, nameAr, nameEn, name };
+}
+
+function passesClinicFilter(time, data) {
+  if (!currentClinicFilter) return true;
+  const appointments = findAppointmentsAtSlot(data, time);
+  if (!appointments.length) return true;
+  return appointments.some(appointmentMatchesClinicFilter);
+}
+
 function shouldDisplayTimeSlot(time, data) {
-  // If no filter is active, show all slots
+  if (!passesClinicFilter(time, data)) {
+    return false;
+  }
+
+  // If no time filter is active, show all slots that passed clinic filter
   if (!currentTimeFilter || currentTimeFilter === "none") {
     return true;
   }
 
-  const appointment = data.appointments.find((apt) => apt.start_time === time);
+  const appointment = findVisibleAppointmentAtSlot(data, time);
   const isAvailable = data.available_slots.includes(time);
 
   // Filter by time range
@@ -2766,13 +2884,15 @@ function initializeDraggableModals() {
     document.addEventListener("mouseup", dragEnd);
 
     function dragStart(e) {
+      const el = e.target instanceof Element ? e.target : e.target && e.target.parentElement;
+      if (!el) return;
       // Don't drag if clicking on buttons or inputs
       if (
-        e.target.tagName === "BUTTON" ||
-        e.target.tagName === "INPUT" ||
-        e.target.closest("button") ||
-        e.target.closest("input") ||
-        e.target.closest(".btn-close")
+        el.tagName === "BUTTON" ||
+        el.tagName === "INPUT" ||
+        el.closest("button") ||
+        el.closest("input") ||
+        el.closest(".btn-close")
       ) {
         return;
       }

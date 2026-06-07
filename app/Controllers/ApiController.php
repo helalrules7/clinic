@@ -424,25 +424,14 @@ class ApiController
                 return $this->jsonResponse(['error' => 'Invalid or inactive clinic'], 400);
             }
 
-            // Check if patient already has an active appointment for today
-            $today = date('Y-m-d');
-            if ($data['date'] === $today) {
-                $checkStmt = $this->pdo->prepare("
-                    SELECT COUNT(*) as count
-                    FROM appointments 
-                    WHERE patient_id = ? 
-                    AND date = CURDATE()
-                    AND status NOT IN ('Completed', 'Cancelled')
-                ");
-                $checkStmt->execute([$data['patient_id']]);
-                $checkResult = $checkStmt->fetch(\PDO::FETCH_ASSOC);
-
-                if ($checkResult['count'] > 0) {
-                    return $this->jsonResponse([
-                        'error' => 'Patient already has an appointment scheduled for today',
-                        'message' => 'This patient already has an appointment scheduled for today. Please complete or cancel the existing appointment first.'
-                    ], 400);
-                }
+            // Same-day booking guard: block a second same-day appointment for this
+            // patient unless the earlier one is closed (Completed/Cancelled/Closed).
+            // Centralized in Helpers so doctor + secretary + reschedule paths agree.
+            if (Helpers::patientHasActiveSameDayAppointment($data['patient_id'], $data['date'])) {
+                return $this->jsonResponse([
+                    'error' => 'Patient already has an appointment scheduled for today',
+                    'message' => 'This patient already has an open appointment today. Please complete, cancel, or close the existing appointment before booking another for the same day.'
+                ], 400);
             }
 
             // Check if time slot is available globally (any doctor can book any available slot)
@@ -463,20 +452,27 @@ class ApiController
                 // Create timeline event
                 $this->createTimelineEvent($data['patient_id'], $appointmentId, 'Booking', 'Appointment booked');
 
-                // Create notification (check user preference first)
+                // Create notification — secretary actions notify the assigned doctor.
                 try {
                     $user = $this->auth->user();
                     if ($user) {
-                        // Check if user has disabled notifications for appointments
-                        $dontCreateNotification = $this->shouldSkipNotification($user['id']);
+                        $patientStmt = $this->pdo->prepare("SELECT first_name, last_name FROM patients WHERE id = ?");
+                        $patientStmt->execute([$data['patient_id']]);
+                        $patient = $patientStmt->fetch(\PDO::FETCH_ASSOC);
 
-                        if (!$dontCreateNotification) {
-                            $patientStmt = $this->pdo->prepare("SELECT first_name, last_name FROM patients WHERE id = ?");
-                            $patientStmt->execute([$data['patient_id']]);
-                            $patient = $patientStmt->fetch(\PDO::FETCH_ASSOC);
-
-                            if ($patient) {
-                                $patientName = trim($patient['first_name'] . ' ' . $patient['last_name']);
+                        if ($patient) {
+                            $patientName = trim($patient['first_name'] . ' ' . $patient['last_name']);
+                            if (($user['role'] ?? null) === 'secretary') {
+                                \App\Controllers\NotificationController::notifyDoctorAppointmentBookedBySecretary(
+                                    $user,
+                                    (int)$data['doctor_id'],
+                                    (int)$appointmentId,
+                                    (int)$data['patient_id'],
+                                    $patientName,
+                                    $data['date'],
+                                    $data['start_time']
+                                );
+                            } elseif (!$this->shouldSkipNotification($user['id'])) {
                                 \App\Controllers\NotificationController::create(
                                     $user['id'],
                                     'appointment',
@@ -500,12 +496,15 @@ class ApiController
                     $dontCreateAlert = false;
 
                     if ($user) {
+                        $alertPrefUserId = ($user['role'] ?? null) === 'secretary'
+                            ? \App\Controllers\NotificationController::resolveUserIdForDoctorId((int)$data['doctor_id'])
+                            : (int)$user['id'];
                         $settingsStmt = $this->pdo->prepare("
                             SELECT setting_value 
                             FROM doctor_settings 
                             WHERE user_id = ? AND setting_key = 'dont_create_alert_for_appointments'
                         ");
-                        $settingsStmt->execute([$user['id']]);
+                        $settingsStmt->execute([$alertPrefUserId]);
                         $setting = $settingsStmt->fetch(\PDO::FETCH_ASSOC);
 
                         if ($setting && $setting['setting_value'] == '1') {
@@ -821,6 +820,14 @@ class ApiController
                     'Payment',
                     "Payment received: {$data['amount']} EGP"
                 );
+
+                if (($user['role'] ?? null) === 'secretary') {
+                    try {
+                        $this->notifyDoctorPaymentFromSecretary($user, (int)$paymentId, $data);
+                    } catch (\Exception $e) {
+                        // Continue even if notification creation fails
+                    }
+                }
 
                 return $this->jsonResponse([
                     'ok' => true,
@@ -1902,13 +1909,31 @@ class ApiController
         return $appointments;
     }
 
-    private function getAllAppointmentsForDate($date)
+    /**
+     * Calendar feed with clinic hydration. Tries booked_by → secretary clinic
+     * fallback when the column exists; otherwise falls back to a.clinic_id only.
+     */
+    private function fetchAppointmentsForDateWithClinicScope($date)
     {
-        // Set debug log file
+        $hasBookedBy = false;
+        try {
+            $col = $this->pdo->query("SHOW COLUMNS FROM appointments LIKE 'booked_by'");
+            $hasBookedBy = (bool)$col->fetch(\PDO::FETCH_ASSOC);
+        } catch (\Throwable $e) {
+            $hasBookedBy = false;
+        }
 
-        $stmt = $this->pdo->prepare("
+        $clinicIdExpr = $hasBookedBy
+            ? 'COALESCE(a.clinic_id, bu.clinic_id)'
+            : 'a.clinic_id';
+        $bookerJoin = $hasBookedBy
+            ? 'LEFT JOIN users bu ON bu.id = a.booked_by'
+            : '';
+
+        $sql = "
             SELECT a.*, p.first_name, p.last_name, p.phone, p.dob, p.gender,
                    CONCAT(p.first_name, ' ', p.last_name) as patient_name,
+                   {$clinicIdExpr} AS resolved_clinic_id,
                    c.name_en as clinic_name_en, c.name_ar as clinic_name_ar, c.code as clinic_code,
                    DATE_FORMAT(a.start_time, '%H:%i') as start_time_formatted,
                    DATE_FORMAT(a.end_time, '%H:%i') as end_time_formatted,
@@ -1917,12 +1942,30 @@ class ApiController
             JOIN patients p ON a.patient_id = p.id
             JOIN doctors d ON a.doctor_id = d.id
             JOIN users u ON d.user_id = u.id
-            LEFT JOIN clinics c ON a.clinic_id = c.id
+            {$bookerJoin}
+            LEFT JOIN clinics c ON c.id = {$clinicIdExpr}
             WHERE a.date = ? AND a.status NOT IN ('Cancelled', 'NoShow')
             ORDER BY a.start_time
-        ");
+        ";
+
+        $stmt = $this->pdo->prepare($sql);
         $stmt->execute([$date]);
-        $appointments = $stmt->fetchAll();
+        $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        foreach ($rows as &$row) {
+            if (array_key_exists('resolved_clinic_id', $row)) {
+                $row['clinic_id'] = $row['resolved_clinic_id'];
+                unset($row['resolved_clinic_id']);
+            }
+        }
+        unset($row);
+
+        return $rows;
+    }
+
+    private function getAllAppointmentsForDate($date)
+    {
+        $appointments = $this->fetchAppointmentsForDateWithClinicScope($date);
 
         // Check if rescheduled_from column exists
         $columnStmt = $this->pdo->query("SHOW COLUMNS FROM appointments LIKE 'rescheduled_from'");
@@ -1933,6 +1976,9 @@ class ApiController
             $appointment['start_time'] = $appointment['start_time_formatted'];
             $appointment['end_time'] = $appointment['end_time_formatted'];
             $appointment['doctor_display_name'] = $appointment['user_name'] ?? $appointment['doctor_name'];
+            if (isset($appointment['clinic_id']) && $appointment['clinic_id'] !== null) {
+                $appointment['clinic_id'] = (int)$appointment['clinic_id'];
+            }
 
             // Check if appointment has a follow-up
             $appointment['has_followup'] = false;
@@ -2563,6 +2609,16 @@ class ApiController
                 return $this->jsonResponse(['error' => 'Time slot is not available'], 400);
             }
 
+            // Same-day booking guard: rescheduling ONTO today must not create a
+            // second open same-day appointment for the patient. Self-exclude the
+            // row being moved ($id) so a legitimate same-day reschedule is allowed.
+            if (Helpers::patientHasActiveSameDayAppointment($appointment['patient_id'], $newDate, $id)) {
+                return $this->jsonResponse([
+                    'error' => 'Patient already has an appointment scheduled for today',
+                    'message' => 'This patient already has another open appointment today. Please complete, cancel, or close it before rescheduling onto the same day.'
+                ], 400);
+            }
+
             // 1. Create new appointment. clinic_id MUST be carried over —
             // omitting it made every rescheduled appointment land with a
             // NULL clinic, dropping it out of that clinic's books while the
@@ -2733,6 +2789,16 @@ class ApiController
             $endTime = $this->calculateEndTime($newTime);
             if (!$this->isTimeSlotAvailableGlobal($newDate, $newTime)) {
                 return $this->jsonResponse(['error' => 'Time slot is not available'], 400);
+            }
+
+            // Same-day booking guard (self-exclude the row being rescheduled): a
+            // follow-up rescheduled onto today must not create a second open
+            // same-day appointment for the patient.
+            if (Helpers::patientHasActiveSameDayAppointment($appointment['patient_id'], $newDate, $id)) {
+                return $this->jsonResponse([
+                    'error' => 'Patient already has an appointment scheduled for today',
+                    'message' => 'This patient already has another open appointment today. Please complete, cancel, or close it before rescheduling onto the same day.'
+                ], 400);
             }
 
             // Create new appointment with visit_type = 'FollowUp'
@@ -3387,6 +3453,17 @@ class ApiController
                     'error' => 'This booking is on a closed financial day. A reason is required to edit it.',
                     'requires_reason' => true
                 ], 422);
+            }
+
+            // Same-day guard: an edit that lands the (possibly changed) patient on TODAY
+            // must not leave them with two open same-day appointments. Self-exclude this
+            // row ($id); the helper is a no-op for non-today dates. Covers both a date
+            // move onto today and a patient swap onto a patient who is already booked today.
+            if (Helpers::patientHasActiveSameDayAppointment($data['patient_id'], $newDate, $id)) {
+                return $this->jsonResponse([
+                    'error' => 'Patient already has an appointment scheduled for today',
+                    'message' => 'This patient already has another open appointment today. Please complete, cancel, or close it before moving this booking onto the same day.'
+                ], 400);
             }
 
             $endTime = $this->calculateEndTime($data['start_time']);
@@ -10032,6 +10109,38 @@ class ApiController
         $stmt->execute([$userId]);
         $result = $stmt->fetch();
         return $result ? $result['id'] : null;
+    }
+
+    /**
+     * Bell notification for the assigned doctor when a secretary records a payment.
+     */
+    private function notifyDoctorPaymentFromSecretary(array $secretaryUser, int $paymentId, array $data)
+    {
+        $patientStmt = $this->pdo->prepare("SELECT first_name, last_name FROM patients WHERE id = ?");
+        $patientStmt->execute([(int)$data['patient_id']]);
+        $patient = $patientStmt->fetch(\PDO::FETCH_ASSOC);
+        if (!$patient) {
+            return;
+        }
+
+        $patientName = trim($patient['first_name'] . ' ' . $patient['last_name']);
+        $appointmentDoctorId = null;
+        if (!empty($data['appointment_id'])) {
+            $stmt = $this->pdo->prepare("SELECT doctor_id FROM appointments WHERE id = ?");
+            $stmt->execute([(int)$data['appointment_id']]);
+            $appointmentDoctorId = $stmt->fetchColumn() ?: null;
+        }
+
+        \App\Controllers\NotificationController::notifyDoctorsPaymentReceivedBySecretary(
+            $secretaryUser,
+            $paymentId,
+            (int)$data['patient_id'],
+            $patientName,
+            $data['amount'],
+            $data['method'] ?? 'Cash',
+            $appointmentDoctorId ? (int)$appointmentDoctorId : null,
+            isset($data['clinic_id']) ? (int)$data['clinic_id'] : null
+        );
     }
 
     /**

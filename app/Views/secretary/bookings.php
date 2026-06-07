@@ -941,12 +941,27 @@ $serverDateTime = date('Y-m-d H:i:s');
 $serverTimestamp = time();
 ?>
 <script>
+<?php
+    $__bookingsClinicsBoot = [];
+    foreach ($__calClinics as $__fc) {
+        $__fv = $__clinicVisuals[$__fc['code']] ?? ['icon' => 'bi-building', 'color' => '#6c757d'];
+        $__bookingsClinicsBoot[] = [
+            'id'      => (int)$__fc['id'],
+            'code'    => $__fc['code'],
+            'name_ar' => $__fc['name_ar'] ?? '',
+            'name_en' => $__fc['name_en'] ?? '',
+            'icon'    => $__fv['icon'],
+            'color'   => $__fv['color'],
+        ];
+    }
+?>
 window.BOOKINGS_CONFIG = {
     serverDate: '<?= $serverDate ?>',
     serverDateTime: '<?= $serverDateTime ?>',
     serverTimestamp: <?= $serverTimestamp ?>,
     settings: <?= json_encode($settings ?? [], JSON_UNESCAPED_UNICODE) ?>,
     preselectedPatient: <?= json_encode($preselectedPatient ?? null, JSON_UNESCAPED_UNICODE) ?>,
+    clinics: <?= json_encode($__bookingsClinicsBoot, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>,
     routes: {
         calendar: '/secretary/bookings',
         bookingDetail: '/secretary/bookings',

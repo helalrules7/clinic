@@ -335,8 +335,7 @@ function renderCalendar(data) {
         timeSlots.forEach(time => {
             if (!shouldDisplayTimeSlot(time, data)) return;
 
-            const timeWithSeconds = time + ':00';
-            const appointments = (data.appointments || []).filter(apt => apt.start_time === timeWithSeconds);
+            const appointments = findAppointmentsAtSlot(data, time);
             const isAvailable = (data.available_slots || []).includes(time);
             const unavailableSlot = data.unavailable_slots
                 ? data.unavailable_slots.find(slot => slot.time === time)
@@ -405,7 +404,8 @@ function renderAppointmentSlot(appointment) {
     const safeDoctor = escAttr(appointment.doctor_display_name);
     const safeNotes = escAttr(appointment.notes || '');
     const safeVisitAr = escAttr(getVisitTypeInArabic(appointment.visit_type));
-    const timeShort = formatTime(appointment.start_time.substring(0, 5));
+    const timeShort = formatTime(normalizeStartTime(appointment.start_time));
+    const clinicMeta = resolveClinicMeta(appointment);
 
     const tooltipContent = `
         <div class="appointment-tooltip">
@@ -413,7 +413,7 @@ function renderAppointmentSlot(appointment) {
             <div class="tooltip-body">
                 <div class="tooltip-row"><span class="tooltip-label arabic-text">المريض:</span>${tooltipValueHtml(appointment.patient_name)}</div>
                 <div class="tooltip-row"><span class="tooltip-label arabic-text">الطبيب:</span>${tooltipValueHtml(appointment.doctor_display_name || '—')}</div>
-                <div class="tooltip-row"><span class="tooltip-label arabic-text">العيادة:</span>${tooltipValueHtml((appointment.clinic_name_ar || appointment.clinic_name_en) ? renderClinicChip(appointment) : '—')}</div>
+                <div class="tooltip-row"><span class="tooltip-label arabic-text">العيادة:</span>${tooltipValueHtml(clinicMeta.name ? renderClinicChip(appointment) : '—')}</div>
                 <div class="tooltip-row"><span class="tooltip-label arabic-text">الهاتف:</span>${tooltipValueHtml(appointment.phone || '—')}</div>
                 <div class="tooltip-row"><span class="tooltip-label arabic-text">نوع الزيارة:</span>${tooltipValueHtml(getVisitTypeInArabic(appointment.visit_type))}</div>
                 <div class="tooltip-row"><span class="tooltip-label arabic-text">الوقت:</span>${tooltipValueHtml(`${formatTime(appointment.start_time)} - ${formatTime(appointment.end_time)}`)}</div>
@@ -434,7 +434,8 @@ function renderAppointmentSlot(appointment) {
 
     return `
         <div class="appointment-card bookings-appointment-card ${effectiveStatus} ${highlightClass}"
-             data-appointment-id="${appointment.id}">
+             data-appointment-id="${appointment.id}"
+             ${clinicMeta.id != null ? `data-clinic-id="${clinicMeta.id}"` : ''}>
             <div class="appointment-header ${isMissed ? 'missed' : ''} ${isCompleted ? 'completed' : ''}">
                 <div class="appointment-info"
                      data-bs-toggle="tooltip"
@@ -446,7 +447,7 @@ function renderAppointmentSlot(appointment) {
                         <span class="patient-hover-name" data-patient-id="${appointment.patient_id}">${appointment.patient_name}</span>
                     </div>
                     <div class="info-line arabic-text"><span class="label">الطبيب:</span> ${appointment.doctor_display_name || '—'}</div>
-                    ${(appointment.clinic_name_ar || appointment.clinic_name_en)
+                    ${clinicMeta.name
                         ? `<div class="info-line arabic-text"><span class="label">العيادة:</span> ${renderClinicChip(appointment)}</div>` : ''}
                     <div class="info-line arabic-text"><span class="label">النوع:</span> ${getVisitTypeInArabic(appointment.visit_type)}</div>
                     <div class="info-line arabic-text"><span class="label">الوقت:</span> ${formatTime(appointment.start_time)} - ${formatTime(appointment.end_time)}</div>
@@ -2263,6 +2264,43 @@ function escAttr(str) {
     return String(str || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
 }
 
+function normalizeStartTime(t) {
+    if (t == null || t === '') return '';
+    return String(t).substring(0, 5);
+}
+
+function findAppointmentsAtSlot(data, slotTime) {
+    if (!data || !Array.isArray(data.appointments)) return [];
+    const key = normalizeStartTime(slotTime);
+    return data.appointments.filter((apt) => normalizeStartTime(apt.start_time) === key);
+}
+
+function getClinicsCatalog() {
+    if (CFG.clinics && CFG.clinics.length) return CFG.clinics;
+    if (Array.isArray(window.CLINICS_BOOTSTRAP) && window.CLINICS_BOOTSTRAP.length) {
+        return window.CLINICS_BOOTSTRAP;
+    }
+    return [];
+}
+
+function resolveClinicMeta(appointment) {
+    if (!appointment) return { id: null, code: null, name: '' };
+    let id = appointment.clinic_id != null ? appointment.clinic_id : null;
+    let code = appointment.clinic_code || null;
+    let nameAr = appointment.clinic_name_ar || '';
+    let nameEn = appointment.clinic_name_en || '';
+    if ((!nameAr && !nameEn) && id != null) {
+        const hit = getClinicsCatalog().find((c) => String(c.id) === String(id));
+        if (hit) {
+            code = code || hit.code;
+            nameAr = nameAr || hit.name_ar || '';
+            nameEn = nameEn || hit.name_en || '';
+        }
+    }
+    const name = nameAr || nameEn || (code ? String(code).toUpperCase() : '');
+    return { id, code, nameAr, nameEn, name };
+}
+
 function getClinicVisual(code) {
     if (window.ClinicsLoader && typeof window.ClinicsLoader.getVisual === 'function') {
         return window.ClinicsLoader.getVisual(code);
@@ -2275,10 +2313,16 @@ function getClinicVisual(code) {
 }
 
 function renderClinicChip(appointment, { withName = true } = {}) {
-    const name = appointment.clinic_name_ar || appointment.clinic_name_en;
-    if (!name) return '';
-    const v = getClinicVisual(appointment.clinic_code);
-    return `<span class="clinic-tag" style="--clinic-color:${v.color}" dir="rtl"><i class="bi ${v.icon}"></i>${withName ? ` ${name}` : ''}</span>`;
+    const meta = resolveClinicMeta(appointment);
+    if (!meta.name && meta.id == null) return '';
+    const v = getClinicVisual(meta.code);
+    return `<span class="clinic-tag" style="--clinic-color:${v.color}" dir="rtl"><i class="bi ${v.icon}"></i>${withName ? ` ${meta.name}` : ''}</span>`;
+}
+
+function renderClinicBadge(appointment) {
+    const chip = renderClinicChip(appointment);
+    if (!chip) return '';
+    return `<div class="appointment-clinic-badge" aria-label="العيادة">${chip}</div>`;
 }
 
 function timeInRange(time, startTime, endTime) {
@@ -2292,8 +2336,7 @@ function timeInRange(time, startTime, endTime) {
 function shouldDisplayTimeSlot(time, data) {
     if (!currentTimeFilter || currentTimeFilter === 'none') return true;
 
-    const timeWithSeconds = time + ':00';
-    const appointment = (data.appointments || []).find((apt) => apt.start_time === timeWithSeconds);
+    const appointment = findAppointmentsAtSlot(data, time)[0] || null;
     const isAvailable = (data.available_slots || []).includes(time);
 
     if (currentTimeFilter === '2pm-6pm') return timeInRange(time, '14:00', '18:00');

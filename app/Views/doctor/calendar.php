@@ -111,6 +111,61 @@
     </div>
 </div>
 
+<?php if (!empty($__calClinics)): ?>
+<div class="row mb-3">
+    <div class="col-12">
+        <!-- Desktop clinic filters — names from clinics table; icon/color from code -->
+        <div class="d-none d-md-flex gap-2 flex-wrap align-items-center filter-clinic-row">
+            <span class="text-muted me-2"><i class="bi bi-building me-1"></i>Filter Clinics:</span>
+            <button type="button"
+                    class="btn btn-sm filter-clinic-btn filter-clinic-btn--all active"
+                    data-clinic-id=""
+                    id="filterClinicAll">
+                <i class="bi bi-grid-3x3-gap me-1"></i>
+                All Clinics
+            </button>
+            <?php foreach ($__calClinics as $__fc):
+                $__fv = $__clinicVisuals[$__fc['code']] ?? ['icon' => 'bi-building', 'color' => '#6c757d'];
+                $__fname = trim($__fc['name_en'] ?? '') !== '' ? $__fc['name_en'] : ($__fc['name_ar'] ?? $__fc['code']);
+            ?>
+            <button type="button"
+                    class="btn btn-sm filter-clinic-btn"
+                    data-clinic-id="<?= (int)$__fc['id'] ?>"
+                    data-clinic-code="<?= htmlspecialchars($__fc['code'], ENT_QUOTES, 'UTF-8') ?>"
+                    style="--clinic-color: <?= htmlspecialchars($__fv['color'], ENT_QUOTES, 'UTF-8') ?>"
+                    id="filterClinic<?= (int)$__fc['id'] ?>">
+                <i class="bi <?= htmlspecialchars($__fv['icon'], ENT_QUOTES, 'UTF-8') ?> me-1"></i>
+                <?= htmlspecialchars($__fname, ENT_QUOTES, 'UTF-8') ?>
+            </button>
+            <?php endforeach; ?>
+        </div>
+
+        <!-- Mobile clinic filters -->
+        <div class="d-md-none d-flex gap-2 flex-wrap align-items-center filter-clinic-row mt-2">
+            <span class="text-muted small w-100"><i class="bi bi-building me-1"></i>Clinics:</span>
+            <button type="button"
+                    class="btn btn-sm filter-clinic-btn filter-clinic-btn--all active"
+                    data-clinic-id="">
+                <i class="bi bi-grid-3x3-gap me-1"></i>
+                All
+            </button>
+            <?php foreach ($__calClinics as $__fc):
+                $__fv = $__clinicVisuals[$__fc['code']] ?? ['icon' => 'bi-building', 'color' => '#6c757d'];
+                $__fname = trim($__fc['name_en'] ?? '') !== '' ? $__fc['name_en'] : ($__fc['name_ar'] ?? $__fc['code']);
+            ?>
+            <button type="button"
+                    class="btn btn-sm filter-clinic-btn"
+                    data-clinic-id="<?= (int)$__fc['id'] ?>"
+                    style="--clinic-color: <?= htmlspecialchars($__fv['color'], ENT_QUOTES, 'UTF-8') ?>">
+                <i class="bi <?= htmlspecialchars($__fv['icon'], ENT_QUOTES, 'UTF-8') ?> me-1"></i>
+                <?= htmlspecialchars($__fname, ENT_QUOTES, 'UTF-8') ?>
+            </button>
+            <?php endforeach; ?>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
+
 <div class="row mb-4">
     <div class="col-12">
         <div class="card">
@@ -653,12 +708,27 @@ $serverDateTime = date('Y-m-d H:i:s');
 $serverTimestamp = time();
 ?>
 
+<?php
+    $__calClinicsBoot = [];
+    foreach ($__calClinics as $__fc) {
+        $__fv = $__clinicVisuals[$__fc['code']] ?? ['icon' => 'bi-building', 'color' => '#6c757d'];
+        $__calClinicsBoot[] = [
+            'id'      => (int)$__fc['id'],
+            'code'    => $__fc['code'],
+            'name_en' => $__fc['name_en'] ?? '',
+            'name_ar' => $__fc['name_ar'] ?? '',
+            'icon'    => $__fv['icon'],
+            'color'   => $__fv['color'],
+        ];
+    }
+?>
 window.CALENDAR_CONFIG = {
     serverDate: '<?= $serverDate ?>',
     serverDateTime: '<?= $serverDateTime ?>',
     serverTimestamp: <?= $serverTimestamp ?>,
     doctorId: <?= $doctorId ?>,
-    preselectedPatient: <?= $preselectedPatient ? json_encode($preselectedPatient) : 'null' ?>
+    preselectedPatient: <?= $preselectedPatient ? json_encode($preselectedPatient) : 'null' ?>,
+    clinics: <?= json_encode($__calClinicsBoot, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>
 };
 
 // Modals z-index is handled by main.js - no need for custom scripts here

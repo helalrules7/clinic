@@ -268,6 +268,139 @@ class NotificationController
     }
 
     /**
+     * Map doctors.id → users.id for bell notifications.
+     */
+    public static function resolveUserIdForDoctorId($doctorId)
+    {
+        $pdo = Database::getInstance()->getConnection();
+        try {
+            $stmt = $pdo->prepare('SELECT user_id FROM doctors WHERE id = ? LIMIT 1');
+            $stmt->execute([(int)$doctorId]);
+            $uid = $stmt->fetchColumn();
+            if ($uid) {
+                return (int)$uid;
+            }
+        } catch (\Throwable $e) {
+            // fall through
+        }
+        return (int)$doctorId;
+    }
+
+    /**
+     * @return int[]
+     */
+    public static function resolveDoctorUserIdsForClinic($clinicId)
+    {
+        if (!$clinicId) {
+            return [];
+        }
+        $pdo = Database::getInstance()->getConnection();
+        try {
+            $stmt = $pdo->prepare(
+                "SELECT id FROM users WHERE clinic_id = ? AND role = 'doctor'"
+            );
+            $stmt->execute([(int)$clinicId]);
+            return array_map('intval', $stmt->fetchAll(\PDO::FETCH_COLUMN));
+        } catch (\Throwable $e) {
+            return [];
+        }
+    }
+
+    public static function userSkipsNotification($userId, $settingKey)
+    {
+        $pdo = Database::getInstance()->getConnection();
+        try {
+            $stmt = $pdo->prepare(
+                'SELECT setting_value FROM doctor_settings WHERE user_id = ? AND setting_key = ? LIMIT 1'
+            );
+            $stmt->execute([(int)$userId, $settingKey]);
+            $row = $stmt->fetch(\PDO::FETCH_ASSOC);
+            return $row && (string)$row['setting_value'] === '1';
+        } catch (\Throwable $e) {
+            return false;
+        }
+    }
+
+    /**
+     * Secretary booked an appointment → immediate bell row for the assigned doctor.
+     * Picked up by notification-center.js background poll (30s) / panel poll (60s).
+     */
+    public static function notifyDoctorAppointmentBookedBySecretary(
+        array $secretaryUser,
+        $doctorId,
+        $appointmentId,
+        $patientId,
+        $patientName,
+        $date,
+        $startTime
+    ) {
+        $doctorUserId = self::resolveUserIdForDoctorId($doctorId);
+        if (self::userSkipsNotification($doctorUserId, 'dont_create_notification_for_appointments')) {
+            return null;
+        }
+
+        $secLabel = trim($secretaryUser['name'] ?? $secretaryUser['username'] ?? 'Secretary');
+        $timeLabel = substr((string)$startTime, 0, 5);
+
+        return self::create(
+            $doctorUserId,
+            'appointment',
+            'New Appointment (Secretary)',
+            "Secretary ({$secLabel}) booked {$patientName} on {$date} at {$timeLabel}",
+            'appointment',
+            (int)$appointmentId,
+            (int)$patientId
+        );
+    }
+
+    /**
+     * Secretary recorded a patient payment → immediate bell row for the doctor.
+     */
+    public static function notifyDoctorsPaymentReceivedBySecretary(
+        array $secretaryUser,
+        $paymentId,
+        $patientId,
+        $patientName,
+        $amount,
+        $method,
+        $appointmentDoctorId = null,
+        $clinicId = null
+    ) {
+        $recipientIds = [];
+        if ($appointmentDoctorId) {
+            $recipientIds[] = self::resolveUserIdForDoctorId($appointmentDoctorId);
+        } elseif ($clinicId) {
+            $recipientIds = self::resolveDoctorUserIdsForClinic($clinicId);
+        }
+        $recipientIds = array_values(array_unique(array_filter($recipientIds)));
+        if (!$recipientIds) {
+            return [];
+        }
+
+        $secLabel = trim($secretaryUser['name'] ?? $secretaryUser['username'] ?? 'Secretary');
+        $amt = number_format((float)$amount, 2);
+        $methodLabel = $method ? (string)$method : 'Cash';
+        $created = [];
+
+        foreach ($recipientIds as $doctorUserId) {
+            $nid = self::create(
+                $doctorUserId,
+                'payment',
+                'Payment Received (Secretary)',
+                "Secretary ({$secLabel}) recorded {$amt} EGP ({$methodLabel}) for {$patientName}",
+                'payment',
+                (int)$paymentId,
+                (int)$patientId
+            );
+            if ($nid) {
+                $created[] = (int)$nid;
+            }
+        }
+
+        return $created;
+    }
+
+    /**
      * Create notification for admin (system notification)
      */
     public function createSystemNotification()
