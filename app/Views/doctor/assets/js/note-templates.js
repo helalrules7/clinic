@@ -456,8 +456,12 @@
             <div class="note-tpl-list" role="list" aria-label="Note templates"></div>
             <div class="note-tpl-empty-state" hidden>
                 <i class="bi bi-stickies" aria-hidden="true"></i>
-                <div class="note-tpl-empty-state-title">No templates</div>
-                <div class="note-tpl-empty-state-text">Click “Add Template” to create your first one.</div>
+                <div class="note-tpl-empty-state-title">No templates yet</div>
+                <div class="note-tpl-empty-state-text">Create a starter set of common templates to get you going, or add your own.</div>
+                <div class="note-tpl-empty-state-actions" style="display:flex; gap:8px; justify-content:center; margin-top:14px; flex-wrap:wrap;">
+                    <button type="button" class="btn btn-sm btn-primary" data-action="seed"><i class="bi bi-magic me-1"></i>Seed defaults</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" data-action="add"><i class="bi bi-plus-lg me-1"></i>Add template</button>
+                </div>
             </div>
         `;
 
@@ -591,7 +595,10 @@
                 flashSaving();
                 saveTimer = setTimeout(() => {
                     api('PATCH', `/api/note-templates/${encodeURIComponent(t.id)}`, payload)
-                        .then((updated) => {
+                        .then((res) => {
+                            // Unwrap { success, data:{...} } so we merge the saved
+                            // server row, not the response envelope.
+                            const updated = (res && res.data) ? res.data : res;
                             lastSent = Object.assign({}, payload);
                             // Update in-memory copy
                             Object.assign(t, payload, updated || {});
@@ -659,6 +666,16 @@
                     : window.confirm('Delete this template?');
                 if (!ok) return;
                 row.classList.add('is-leaving');
+                // 2026-06-07: a 'tmp-' id was never persisted server-side (optimistic
+                // row that hasn't synced) — just drop it locally; hitting the API
+                // would 404. (With the create-unwrap fix above this is now rare.)
+                if (String(t.id).startsWith('tmp-')) {
+                    state.templates = (state.templates || []).filter(x => String(x.id) !== String(t.id));
+                    notifyListeners();
+                    render();
+                    toast('success', 'Template deleted', t.title || 'Untitled');
+                    return;
+                }
                 api('DELETE', `/api/note-templates/${encodeURIComponent(t.id)}`)
                     .then(() => {
                         state.templates = (state.templates || []).filter(x => String(x.id) !== String(t.id));
@@ -752,7 +769,11 @@
             };
             addBtn.disabled = true;
             api('POST', '/api/note-templates', payload)
-                .then((created) => {
+                .then((res) => {
+                    // 2026-06-07: the API wraps the new row in { success, data:{...} }.
+                    // Unwrap it so the row carries its REAL server id — otherwise we
+                    // kept a 'tmp-' id and every later edit/delete 404'd.
+                    const created = (res && res.data) ? res.data : res;
                     const item = created && created.id ? created : Object.assign({ id: 'tmp-' + Date.now() }, payload);
                     state.templates = (state.templates || []).concat([item]);
                     notifyListeners();
@@ -772,6 +793,24 @@
                 .finally(() => { addBtn.disabled = false; });
         });
 
+        // 2026-06-07: seed-defaults extracted into a reusable handler so it can
+        // be triggered from BOTH the seed banner AND the empty-state "Seed
+        // defaults" button (the empty state previously had no seed action).
+        function seedDefaults(btn) {
+            if (btn) btn.disabled = true;
+            api('POST', '/api/note-templates/seed-defaults')
+                .then(() => loadTemplates(true))
+                .then(() => {
+                    toast('success', 'Templates added', 'Default templates were added to your library.');
+                    seedBanner.hidden = true;
+                    render();
+                })
+                .catch((err) => {
+                    toast('error', 'Seed failed', err.message || 'Could not seed default templates.');
+                })
+                .finally(() => { if (btn) btn.disabled = false; });
+        }
+
         seedBanner.addEventListener('click', (e) => {
             const action = e.target.closest('[data-action]')?.getAttribute('data-action');
             if (!action) return;
@@ -783,19 +822,17 @@
                 return;
             }
             if (action === 'seed') {
-                const btn = e.target.closest('button');
-                if (btn) btn.disabled = true;
-                api('POST', '/api/note-templates/seed-defaults')
-                    .then(() => loadTemplates(true))
-                    .then(() => {
-                        toast('success', 'Templates added', 'Default templates were added to your library.');
-                        seedBanner.hidden = true;
-                        render();
-                    })
-                    .catch((err) => {
-                        toast('error', 'Seed failed', err.message || 'Could not seed default templates.');
-                    })
-                    .finally(() => { if (btn) btn.disabled = false; });
+                seedDefaults(e.target.closest('button'));
+            }
+        });
+
+        // Empty-state actions: Seed defaults + Add template.
+        emptyState.addEventListener('click', (e) => {
+            const action = e.target.closest('[data-action]')?.getAttribute('data-action');
+            if (action === 'seed') {
+                seedDefaults(e.target.closest('button'));
+            } else if (action === 'add') {
+                addBtn.click();
             }
         });
 

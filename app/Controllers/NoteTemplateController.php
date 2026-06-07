@@ -86,11 +86,13 @@ class NoteTemplateController
         }
 
         if (!$partial || array_key_exists('body', $in)) {
+            // 2026-06-07: body is OPTIONAL. The "Add template" button creates a
+            // blank DRAFT that the user fills in via auto-save (PATCH on blur),
+            // so an empty body must be accepted on BOTH create and update —
+            // otherwise the first save (with no body yet) 422s. Whitespace is
+            // preserved; only the length ceiling is enforced.
             $body = isset($in['body']) ? (string)$in['body'] : '';
-            // Don't trim aggressively — body may include intentional whitespace — but require non-empty after trim.
-            if (trim($body) === '') {
-                $errors['body'] = 'Body is required.';
-            } elseif (mb_strlen($body) > 50000) {
+            if (mb_strlen($body) > 50000) {
                 $errors['body'] = 'Body must be at most 50000 characters.';
             } else {
                 $data['body'] = $body;
