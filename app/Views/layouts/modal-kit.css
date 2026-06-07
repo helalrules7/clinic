@@ -94,6 +94,53 @@
 .modal.mk-dialog {
     z-index: 1090;
 }
+
+/* ---- Arabic / RTL modal header chrome --------------------------------
+   Close at visual LEFT; title + icon at RIGHT; comfortable icon gap.
+   Applies to all Bootstrap modals + mk-dialog confirms on secretary. */
+[dir="rtl"] .modal:not(#drawConsultationModal):not([class*="modal-fullscreen"]) .modal-header,
+html[lang="ar"] .modal:not(#drawConsultationModal):not([class*="modal-fullscreen"]) .modal-header {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+}
+
+[dir="rtl"] .modal:not(#drawConsultationModal) .modal-header .modal-title,
+html[lang="ar"] .modal:not(#drawConsultationModal) .modal-header .modal-title {
+    order: 1;
+    margin: 0 !important;
+    flex: 1 1 auto;
+    text-align: start;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+[dir="rtl"] .modal:not(#drawConsultationModal) .modal-header .btn-close,
+html[lang="ar"] .modal:not(#drawConsultationModal) .modal-header .btn-close {
+    order: 2;
+    margin: 0 !important;
+    flex-shrink: 0;
+    position: static !important;
+    inset: auto !important;
+    transform: none !important;
+}
+
+[dir="rtl"] .modal .modal-header .modal-title > .bi,
+html[lang="ar"] .modal .modal-header .modal-title > .bi,
+[dir="rtl"] .modal .modal-header .modal-title .bi:first-child,
+html[lang="ar"] .modal .modal-header .modal-title .bi:first-child {
+    margin-inline-end: 0 !important;
+    margin-inline-start: 0 !important;
+    flex-shrink: 0;
+}
+
+[dir="rtl"] .modal .modal-header .modal-title .me-2,
+html[lang="ar"] .modal .modal-header .modal-title .me-2 {
+    margin-inline-end: 0 !important;
+    margin-inline-start: 0 !important;
+}
 /* Bootstrap appends .modal-backdrop as a sibling AFTER the modal element,
    so any backdrop that follows an open mk-dialog is the one paired with it. */
 .mk-dialog ~ .modal-backdrop,

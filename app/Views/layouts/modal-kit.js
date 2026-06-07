@@ -209,7 +209,7 @@
               '<div class="modal-dialog modal-dialog-centered">' +
                 '<div class="modal-content">' +
                   '<div class="modal-header">' +
-                    '<h5 class="modal-title"><i class="bi ' + icon + ' me-2"></i>' + esc(title) + '</h5>' +
+                    '<h5 class="modal-title d-flex align-items-center gap-2"><i class="bi ' + icon + '" aria-hidden="true"></i><span>' + esc(title) + '</span></h5>' +
                     '<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="' + esc(v11t('modal.close', 'Close')) + '"></button>' +
                   '</div>' +
                   '<div class="modal-body">' + body + '</div>' +
