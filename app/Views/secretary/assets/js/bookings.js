@@ -135,6 +135,9 @@ function setupEventListeners() {
         }
     });
 
+    bindClinicIconSync('bookingClinic', 'bookingClinicIcon');
+    bindClinicIconSync('patientClinic', 'patientClinicIcon');
+
     document.querySelectorAll('.filter-time-btn').forEach((btn) => {
         btn.addEventListener('click', function () {
             applyTimeFilter(this.getAttribute('data-filter'));
@@ -2450,6 +2453,37 @@ function updateAppointmentProgressBar(container) {
     else if (progressType === 'during') progressFill.classList.add('glass-progress-green');
     else progressFill.classList.add('glass-progress-red');
     progressText.textContent = timeText;
+}
+
+const CLINIC_VISUALS = {
+    riyadh: { icon: 'bi-buildings-fill', color: '#0d6efd' },
+    kfs: { icon: 'bi-hospital-fill', color: '#10b981' }
+};
+
+function bindClinicIconSync(selectId, iconId) {
+    const sel = document.getElementById(selectId);
+    const iconEl = document.getElementById(iconId);
+    if (!sel || !iconEl) return;
+
+    const sync = () => {
+        const opt = sel.selectedOptions[0];
+        const code = opt?.dataset?.clinicCode || '';
+        const visual = (window.ClinicsLoader && typeof window.ClinicsLoader.getVisual === 'function')
+            ? window.ClinicsLoader.getVisual(code)
+            : (CLINIC_VISUALS[code] || { icon: 'bi-building', color: '#6c757d' });
+
+        const group = iconEl.closest('.clinic-input-group');
+        if (group) {
+            group.style.setProperty('--clinic-color', visual.color);
+        }
+        const iconI = iconEl.querySelector('i');
+        if (iconI) {
+            iconI.className = `bi ${visual.icon}`;
+        }
+    };
+
+    sel.addEventListener('change', sync);
+    sync();
 }
 
 function syncFieldMenuSelect(selectId) {

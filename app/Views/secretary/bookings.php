@@ -249,11 +249,13 @@
                                     المريض <span class="text-danger">*</span>
                                     <span id="preselectedLabel" class="badge bg-info ms-2" style="display: none;">محدد مسبقاً</span>
                                 </label>
-                                <div class="input-group">
-                                    <input type="text" class="form-control" id="patientSearch" 
+                                <div class="input-group patient-search-group">
+                                    <input type="text" class="form-control patient-search-input" id="patientSearch" 
                                            placeholder="البحث عن المريض بالاسم أو رقم الهاتف..." required>
-                                    <button type="button" class="btn btn-outline-primary" id="newPatientBtn">
-                                        <i class="bi bi-person-plus"></i>
+                                    <button type="button" class="btn patient-add-btn" id="newPatientBtn"
+                                            title="إضافة مريض جديد" aria-label="إضافة مريض جديد">
+                                        <i class="bi bi-person-plus-fill" aria-hidden="true"></i>
+                                        <span class="patient-add-btn-label arabic-text">جديد</span>
                                     </button>
                                 </div>
                                 <input type="hidden" id="selectedPatientId" name="patient_id">
@@ -298,9 +300,9 @@
 
                             <div class="mb-3">
                                 <label for="bookingClinic" class="form-label arabic-text">العيادة <span class="text-danger">*</span></label>
-                                <div class="input-group clinic-input-group">
-                                    <span class="input-group-text" id="bookingClinicIcon" style="color: <?= $__v0['color'] ?>; background: rgba(0,0,0,0.02); min-width: 44px; justify-content: center;">
-                                        <i class="bi <?= $__v0['icon'] ?> fs-5"></i>
+                                <div class="input-group clinic-input-group" style="--clinic-color: <?= $__v0['color'] ?>;">
+                                    <span class="input-group-text clinic-icon-chip" id="bookingClinicIcon" aria-hidden="true">
+                                        <i class="bi <?= $__v0['icon'] ?>"></i>
                                     </span>
                                     <select class="form-select arabic-text" id="bookingClinic" name="clinic_id" required
                                             <?php if (count($__calClinics) === 1): ?> aria-readonly="true" tabindex="-1" style="pointer-events:none;background-color:#f1f5f9;" <?php endif; ?>>
@@ -506,9 +508,9 @@
 
                             <div class="mb-3">
                                 <label for="patientClinic" class="form-label arabic-text">العيادة <span class="text-danger">*</span></label>
-                                <div class="input-group clinic-input-group">
-                                    <span class="input-group-text" id="patientClinicIcon" style="color: <?= $__v0['color'] ?>; background: rgba(0,0,0,0.02); min-width: 44px; justify-content: center;">
-                                        <i class="bi <?= $__v0['icon'] ?> fs-5"></i>
+                                <div class="input-group clinic-input-group" style="--clinic-color: <?= $__v0['color'] ?>;">
+                                    <span class="input-group-text clinic-icon-chip" id="patientClinicIcon" aria-hidden="true">
+                                        <i class="bi <?= $__v0['icon'] ?>"></i>
                                     </span>
                                     <select class="form-select arabic-text" id="patientClinic" name="clinic_id" required
                                             <?php if (count($__calClinics) === 1): ?> aria-readonly="true" tabindex="-1" style="pointer-events:none;background-color:#f1f5f9;" <?php endif; ?>>
