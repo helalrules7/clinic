@@ -1,24 +1,4 @@
 <?php
-    // Server-render clinic options for the Add Patient modal (eliminates the
-    // JS populate race — see doctor/calendar.php for the same approach).
-    try {
-        $__cal_pdo  = \App\Config\Database::getInstance()->getConnection();
-        $__cal_auth = new \App\Lib\Auth();
-        $__cal_user = $__cal_auth->user();
-        if (($__cal_user['role'] ?? null) === 'secretary' && !empty($__cal_user['clinic_id'])) {
-            $__s = $__cal_pdo->prepare("SELECT id, code, name_ar, name_en FROM clinics WHERE is_active = 1 AND id = ? ORDER BY sort_order, id");
-            $__s->execute([(int)$__cal_user['clinic_id']]);
-            $__calClinics = $__s->fetchAll(\PDO::FETCH_ASSOC);
-        } else {
-            $__calClinics = $__cal_pdo->query("SELECT id, code, name_ar, name_en FROM clinics WHERE is_active = 1 ORDER BY sort_order, id")->fetchAll(\PDO::FETCH_ASSOC);
-        }
-    } catch (\Throwable $__e) {
-        $__calClinics = [];
-    }
-    $__clinicVisuals = [
-        'riyadh' => ['icon' => 'bi-buildings-fill', 'color' => '#0d6efd'],
-        'kfs'    => ['icon' => 'bi-hospital-fill',  'color' => '#10b981'],
-    ];
 ?>
 <link href="/app/Views/doctor/assets/css/patients.css?v=<?= file_exists(__DIR__ . '/assets/css/patients.css') ? filemtime(__DIR__ . '/assets/css/patients.css') : time() ?>" rel="stylesheet">
 <link href="/app/Views/doctor/assets/css/dashboard.css?v=<?= file_exists(__DIR__ . '/assets/css/dashboard.css') ? filemtime(__DIR__ . '/assets/css/dashboard.css') : time() ?>" rel="stylesheet">
@@ -772,12 +752,20 @@
             <div class="col-md-6 text-end">
                 <div class="d-flex align-items-center justify-content-end gap-2 flex-wrap">
                     <!-- View Mode Toggle moved to unified filter bar -->
-                    <button type="button" 
-                            class="btn btn-success btn-sm" 
+                    <button type="button"
+                            class="btn btn-success btn-sm"
                             onclick="showCreateFolderModal()"
                             title="Create New Folder">
                         <i class="bi bi-folder-plus me-1"></i>
                         Create Folder
+                    </button>
+                    <!-- P17 (2026-06-07): multi-select folders at the root grid -->
+                    <button type="button"
+                            class="btn btn-outline-secondary btn-sm"
+                            onclick="toggleSelectionMode(); renderFoldersView(1, false);"
+                            title="Select folders">
+                        <i class="bi bi-check2-square me-1"></i>
+                        <span id="rootSelectionModeLabel">Select</span>
                     </button>
                     <!-- Card Size Toggle -->
                     <div class="btn-group btn-group-sm" role="group" id="cardSizeToggle" title="Card Size">
@@ -883,7 +871,7 @@
                     <i class="bi bi-folder-plus me-2"></i>
                     Create New Folder
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form id="createFolderForm">
                 <div class="modal-body">
@@ -920,7 +908,7 @@
                     <i class="bi bi-pencil me-2"></i>
                     Rename Folder
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form id="renameFolderForm">
                 <div class="modal-body">
@@ -958,7 +946,7 @@
                     <i class="bi bi-folder me-2"></i>
                     <span id="movePatientModalTitle">Move Patient to Folder</span>
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <div id="movePatientMessage" class="alert d-none" role="alert"></div>
@@ -991,7 +979,7 @@
                     <i class="bi bi-folder-plus me-2"></i>
                     Create Sub-folder
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form id="createSubFolderForm">
                 <div class="modal-body">
@@ -1036,7 +1024,7 @@
                     <i class="bi bi-palette me-2"></i>
                     Change Folder Icon & Color
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form id="changeFolderIconForm">
                 <div class="modal-body">
@@ -1061,16 +1049,10 @@
                         <input type="hidden" id="selectedGradient" name="gradient_color">
                     </div>
                     
-                    <!-- Custom Gradient (Optional) -->
-                    <div class="mb-3">
-                        <label class="form-label">Or Enter Custom Gradient (CSS)</label>
-                        <input type="text" 
-                               class="form-control" 
-                               id="customGradient" 
-                               placeholder="linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
-                               onchange="document.getElementById('selectedGradient').value = this.value;">
-                        <div class="form-text">Enter a valid CSS gradient string</div>
-                    </div>
+                    <!-- D5 (2026-06-07): free-text gradient input removed (it was the
+                         stored-XSS vector). Appearance is now preset-only. The hidden
+                         field is kept so existing JS references stay valid. -->
+                    <input type="hidden" id="customGradient">
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -1093,7 +1075,7 @@
                     <i class="bi bi-exclamation-triangle me-2"></i>
                     Confirm Action
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <p id="confirmModalMessage" style="margin: 0;">Are you sure?</p>
@@ -1118,7 +1100,7 @@
                     <i class="bi bi-info-circle me-2"></i>
                     Alert
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <p id="alertModalMessage" style="margin: 0;"></p>
@@ -1144,7 +1126,7 @@
                     <kbd>Esc</kbd>
                     <span>to close</span>
                 </div>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <!-- Search Input -->
@@ -1224,7 +1206,7 @@
                     <kbd>Esc</kbd>
                     <span>to close</span>
                 </div>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form id="addPatientForm">
                 <div class="modal-body">

@@ -26,6 +26,47 @@ function systemFolderRouteId(folder) {
 }
 
 /**
+ * D5 (2026-06-07): folder appearance is restricted to a curated, readable set
+ * of gradient presets. These validators mirror the server allow-list
+ * (ApiController::folderGradientPresets) and — critically — re-validate at
+ * RENDER time, so even legacy/free-text values already stored in the DB can
+ * never break out of the style/class attribute. Closes the gradient_color /
+ * icon stored-XSS (P2).
+ */
+const FOLDER_GRADIENT_PRESETS = [
+    'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)', // indigo → violet
+    'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)', // indigo → purple
+    'linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%)', // sky → blue
+    'linear-gradient(135deg, #0891b2 0%, #0e7490 100%)', // cyan
+    'linear-gradient(135deg, #10b981 0%, #059669 100%)', // emerald
+    'linear-gradient(135deg, #14b8a6 0%, #0d9488 100%)', // teal
+    'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', // amber
+    'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)', // orange
+    'linear-gradient(135deg, #f43f5e 0%, #be123c 100%)', // rose
+    'linear-gradient(135deg, #ec4899 0%, #be185d 100%)', // pink
+    'linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%)', // violet
+    'linear-gradient(135deg, #475569 0%, #1e293b 100%)', // slate
+    'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)'  // legacy default (kept valid)
+];
+const FOLDER_GRADIENT_DEFAULT = 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)';
+// Defensive grammar for any non-preset (legacy) value: gradient syntax with
+// only colours / percentages / angles — no quotes, <>, url(), or semicolons.
+const SAFE_GRADIENT_RE = /^(linear|radial)-gradient\([#a-zA-Z0-9 ,.%()-]+\)$/;
+
+function safeFolderGradient(value) {
+    const v = (value == null ? '' : String(value)).trim();
+    if (!v) return FOLDER_GRADIENT_DEFAULT;
+    if (FOLDER_GRADIENT_PRESETS.indexOf(v) !== -1) return v;
+    if (v.length <= 200 && SAFE_GRADIENT_RE.test(v)) return v; // safe legacy value
+    return FOLDER_GRADIENT_DEFAULT;
+}
+
+function safeFolderIcon(value) {
+    const v = (value == null ? '' : String(value)).trim();
+    return /^bi-[a-z0-9-]{1,40}$/.test(v) ? v : 'bi-folder';
+}
+
+/**
  * Render a small coloured badge with the clinic name — same SHAPE as the
  * "Last Visit" date badge but with a clinic-specific BACKGROUND colour
  * so the eye can tell Riyadh from KFS at a glance. No icon.
@@ -133,9 +174,17 @@ let paginationState = {
 };
 
 // Pagination state for folders view
+// P34 (2026-06-07): the stored value can be the literal 'all' — parseInt('all')
+// is NaN and used to silently revert to 36. Preserve 'all' on reload.
+function readFolderItemsPerPage() {
+    const raw = localStorage.getItem('folderItemsPerPage');
+    if (raw === 'all') return 'all';
+    const n = parseInt(raw, 10);
+    return (n && n > 0) ? n : 36;
+}
 let folderPaginationState = {
     currentPage: 1,
-    itemsPerPage: parseInt(localStorage.getItem('folderItemsPerPage')) || 36, // Default 36 per page
+    itemsPerPage: readFolderItemsPerPage(),
     totalItems: 0,
     filteredPatients: []
 };
@@ -292,7 +341,43 @@ class FolderTreeview {
         this.treeData = tree;
         return tree;
     }
-    
+
+    /**
+     * Req 1 (2026-06-07): surgically remove a folder node from the tree and
+     * decrement its parent's sub-folder counter, then re-render — so a deleted
+     * folder disappears from the sidebar IMMEDIATELY (and the parent count
+     * updates) without a full reload that would collapse the tree.
+     * Returns true if the node was found & removed.
+     */
+    removeFolderNode(folderId) {
+        if (!this.treeData) return false;
+        const target = String(folderId);
+        const removeFrom = (arr, parent) => {
+            if (!arr) return false;
+            for (let i = 0; i < arr.length; i++) {
+                if (String(arr[i].id) === target) {
+                    arr.splice(i, 1);
+                    if (parent) {
+                        parent.subFoldersCount = Math.max(0, (parent.subFoldersCount || 0) - 1);
+                    }
+                    return true;
+                }
+                if (arr[i].children && arr[i].children.length &&
+                    removeFrom(arr[i].children, arr[i])) {
+                    return true;
+                }
+            }
+            return false;
+        };
+        const found = removeFrom(this.treeData.system, null) ||
+                      removeFrom(this.treeData.custom, null);
+        if (found) {
+            try { if (this.subFoldersCache) delete this.subFoldersCache[folderId]; } catch (e) { /* */ }
+            this.scheduleRender();
+        }
+        return found;
+    }
+
     // Schedule a render (batches multiple render calls into one)
     scheduleRender() {
         if (this.renderPending) return;
@@ -972,6 +1057,55 @@ class FolderTreeview {
 // Global treeview instance
 let folderTreeview = null;
 
+/**
+ * D14 (2026-06-07): invalidate the sidebar tree's sub-folder cache after a
+ * mutation so a created/renamed/deleted/recoloured folder shows up instantly
+ * instead of after the 60s TTL. Pass a folderId to scope it, or nothing to
+ * clear all. Best-effort — safe when the tree isn't mounted.
+ */
+function invalidateFolderTreeCache(folderId = null) {
+    try {
+        if (folderTreeview && typeof folderTreeview.invalidateCache === 'function') {
+            folderTreeview.invalidateCache(folderId);
+        }
+    } catch (e) { /* best-effort */ }
+}
+
+/**
+ * Req 1 (2026-06-07): drop deleted folder ids from the in-memory folder arrays
+ * so the grid reflects the deletion immediately (without a full reload). The
+ * arrays are top-level `let`s, so reassignment here updates them globally.
+ */
+function removeFoldersFromLocalData(ids) {
+    const set = new Set((ids || []).map(String));
+    try {
+        if (Array.isArray(foldersData)) foldersData = foldersData.filter(f => !set.has(String(f.id)));
+        if (typeof customFoldersData !== 'undefined' && Array.isArray(customFoldersData)) {
+            customFoldersData = customFoldersData.filter(f => !set.has(String(f.id)));
+        }
+        if (typeof systemFoldersData !== 'undefined' && Array.isArray(systemFoldersData)) {
+            systemFoldersData = systemFoldersData.filter(f => !set.has(String(f.id)));
+        }
+    } catch (e) { /* */ }
+}
+
+/**
+ * P13-int (2026-06-07): double-submit guard for the folder modals. Disables the
+ * form's submit button while a request is in flight. `lockSubmit` returns the
+ * button (to re-enable), or `false` if a submit is already running.
+ */
+function lockSubmit(form) {
+    const btn = form ? form.querySelector('button[type="submit"]') : null;
+    if (!btn) return null;
+    if (btn.dataset.busy === '1') return false;
+    btn.dataset.busy = '1';
+    btn.disabled = true;
+    return btn;
+}
+function unlockSubmit(btn) {
+    if (btn && btn.nodeType === 1) { btn.disabled = false; btn.dataset.busy = '0'; }
+}
+
 // ============================================
 // Unified Filter Manager Class
 // ============================================
@@ -1475,6 +1609,18 @@ class UnifiedFilterManager {
         let patients;
         if (this.currentView === 'folders' && typeof currentFolderPatients !== 'undefined') {
             patients = [...(currentFolderPatients || [])];
+            // E (2026-06-07): compose the in-folder text search with the chips so
+            // they no longer overwrite each other (P10). The chip filters below
+            // then narrow this search-filtered set further (AND semantics).
+            if (typeof folderSearchTerm === 'string' && folderSearchTerm) {
+                const term = folderSearchTerm;
+                patients = patients.filter(p => {
+                    const name = `${p.first_name || ''} ${p.last_name || ''}`.toLowerCase();
+                    return name.includes(term) ||
+                        (p.phone || '').toLowerCase().includes(term) ||
+                        (p.national_id || '').toLowerCase().includes(term);
+                });
+            }
         } else {
             patients = [...(window.PATIENTS_CONFIG?.patients || paginationState.allPatients || [])];
         }
@@ -1995,28 +2141,45 @@ function initSidebarToggle() {
     const toggleBtn = document.getElementById('sidebarToggle');
     
     if (!sidebar || !toggleBtn) return;
-    
-    // Check saved state
-    const isCollapsed = localStorage.getItem('foldersSidebarCollapsed') === 'true';
-    if (isCollapsed) {
+
+    const setIcon = (collapsed) => {
+        const icon = toggleBtn.querySelector('i');
+        if (!icon) return;
+        icon.classList.toggle('bi-chevron-right', collapsed);
+        icon.classList.toggle('bi-chevron-left', !collapsed);
+    };
+
+    // P5 (2026-06-07): default the drawer to COLLAPSED on tablet/phone
+    // (<=992px) when the user has no saved preference, so it doesn't overlay
+    // the folder grid on first visit.
+    const saved = localStorage.getItem('foldersSidebarCollapsed');
+    const isMobile = window.matchMedia('(max-width: 992px)').matches;
+    const startCollapsed = saved === 'true' || (saved === null && isMobile);
+    if (startCollapsed) {
         sidebar.classList.add('collapsed');
-        toggleBtn.querySelector('i').classList.remove('bi-chevron-left');
-        toggleBtn.querySelector('i').classList.add('bi-chevron-right');
+        setIcon(true);
     }
-    
+
+    // P5: dismiss backdrop (only visible while the drawer is open on mobile —
+    // see the CSS sibling rule). Tap to close.
+    let backdrop = sidebar.parentElement &&
+        sidebar.parentElement.querySelector('.folders-sidebar-backdrop');
+    if (!backdrop && sidebar.parentElement) {
+        backdrop = document.createElement('div');
+        backdrop.className = 'folders-sidebar-backdrop';
+        sidebar.parentElement.appendChild(backdrop); // sibling AFTER the sidebar
+        backdrop.addEventListener('click', () => {
+            sidebar.classList.add('collapsed');
+            localStorage.setItem('foldersSidebarCollapsed', 'true');
+            setIcon(true);
+        });
+    }
+
     toggleBtn.addEventListener('click', () => {
         sidebar.classList.toggle('collapsed');
-        const isCollapsed = sidebar.classList.contains('collapsed');
-        localStorage.setItem('foldersSidebarCollapsed', isCollapsed.toString());
-        
-        const icon = toggleBtn.querySelector('i');
-        if (isCollapsed) {
-            icon.classList.remove('bi-chevron-left');
-            icon.classList.add('bi-chevron-right');
-        } else {
-            icon.classList.remove('bi-chevron-right');
-            icon.classList.add('bi-chevron-left');
-        }
+        const collapsed = sidebar.classList.contains('collapsed');
+        localStorage.setItem('foldersSidebarCollapsed', collapsed.toString());
+        setIcon(collapsed);
     });
 }
 
@@ -2181,7 +2344,9 @@ function openFolderDebounced(folderId) {
 
     folderOpenTimeout = setTimeout(() => {
         if (pendingFolderId === folderId) {
-            openFolder(folderId);
+            // P19: swallow the rejection — openFolder already renders its own
+            // error state; this just avoids an unhandled-promise warning.
+            Promise.resolve(openFolder(folderId)).catch(() => { /* handled in openFolder */ });
         }
     }, 50); // Reduced from 100ms
 }
@@ -2226,6 +2391,11 @@ function initializePagination() {
 
             // Set flag to prevent switchViewMode from interfering
             folderRestorationInProgress = true;
+            // P6 (2026-06-07): watchdog. If openFolder's promise never settles
+            // (e.g. its fetch is aborted and returns without resolving), the
+            // flag below would never clear and the Folders view would be gated
+            // off until a full reload. This guarantees it always clears.
+            setTimeout(() => { folderRestorationInProgress = false; }, 5000);
         }
 
         // Skip renderFoldersView when we have a folder to restore
@@ -3279,11 +3449,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('openModal') === 'addPatient') {
         setTimeout(() => {
-            const addPatientBtn = document.querySelector('[data-bs-target="#addPatientModal"]');
-            if (addPatientBtn) {
-                addPatientBtn.click();
+            if (typeof window.openNewPatientModal === 'function') {
+                window.openNewPatientModal();
+            } else {
+                const addPatientBtn = document.querySelector('[data-bs-target="#addPatientModal"]');
+                if (addPatientBtn) addPatientBtn.click();
             }
-            // Clean URL
             const newUrl = window.location.pathname + window.location.search.replace(/[?&]openModal=addPatient/, '').replace(/^&/, '?');
             window.history.replaceState({}, '', newUrl);
         }, 500);
@@ -4711,11 +4882,12 @@ function toggleSelectionMode() {
 function updateSelectionModeButton() {
     const label = document.getElementById('selectionModeLabel');
     if (label) {
-        if (selectionMode) {
-            label.innerHTML = '<i class="bi bi-x-lg me-1"></i>Cancel';
-        } else {
-            label.textContent = 'Select';
-        }
+        label.innerHTML = selectionMode ? '<i class="bi bi-x-lg me-1"></i>Cancel' : 'Select';
+    }
+    // P17: the root grid's own Select toggle.
+    const rootLabel = document.getElementById('rootSelectionModeLabel');
+    if (rootLabel) {
+        rootLabel.textContent = selectionMode ? 'Cancel' : 'Select';
     }
 }
 
@@ -4789,119 +4961,308 @@ function deselectAll() {
     updateSelectionUI();
 }
 
+// Cleanly exit selection mode (used by Cancel + folder navigation, req 5).
+function exitSelection() {
+    selectionMode = false;
+    selectedPatients = [];
+    selectedFolders = [];
+    if (window.bulkMovePatientIds) window.bulkMovePatientIds = [];
+    updateSelectionModeButton();
+    const bar = document.getElementById('bulkActionsBar');
+    if (bar) bar.remove();
+    // Re-render the current view without checkboxes.
+    if (currentFolderId) {
+        openFolder(currentFolderId);
+    } else if (currentViewMode === 'folders') {
+        renderFoldersView();
+    }
+}
+
 function updateSelectionUI() {
+    // 2026-06-07: the action bar is now a FIXED floating toolbar appended to
+    // <body> so it's visible whether you're at the folder root (selecting
+    // folders) OR inside an open folder (selecting patients) — the old bar was
+    // injected into #patientsFoldersContainer, which is display:none while a
+    // folder is open, so the buttons were invisible.
     const totalSelected = selectedPatients.length + selectedFolders.length;
-    
-    // Show/hide bulk actions bar
-    let bulkActionsBar = document.getElementById('bulkActionsBar');
-    if (totalSelected > 0) {
-        if (!bulkActionsBar) {
-            renderBulkActionsBar();
-        } else {
-            updateBulkActionsBar();
-        }
-    } else {
-        if (bulkActionsBar) {
-            bulkActionsBar.remove();
-        }
+    let bar = document.getElementById('bulkActionsBar');
+    if (totalSelected === 0) {
+        if (bar) bar.remove();
+        return;
     }
-    
-    // Update selection count in bulk actions bar
-    if (bulkActionsBar) {
-        const countEl = bulkActionsBar.querySelector('.selection-count');
-        if (countEl) {
-            countEl.textContent = `${totalSelected} selected`;
-        }
+    if (!bar) {
+        bar = document.createElement('div');
+        bar.id = 'bulkActionsBar';
+        bar.className = 'folder-bulk-bar';
+        bar.setAttribute('role', 'toolbar');
+        bar.setAttribute('aria-label', 'Bulk actions');
+        document.body.appendChild(bar);
     }
+    bar.innerHTML = renderBulkActionsBarHtml();
 }
 
-function renderBulkActionsBar() {
-    const container = document.getElementById('patientsFoldersContainer');
-    if (!container) return;
-    
-    // Remove existing bar if any
-    const existing = document.getElementById('bulkActionsBar');
-    if (existing) existing.remove();
-    
+function renderBulkActionsBarHtml() {
     const totalSelected = selectedPatients.length + selectedFolders.length;
-    
-    const bulkActionsHtml = `
-        <div id="bulkActionsBar" class="bulk-actions-bar mb-3 p-3" style="background: var(--bg-alt); border: 1px solid var(--border); border-radius: 8px;">
-            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
-                <div class="d-flex align-items-center gap-2">
-                    <span class="selection-count fw-bold" style="color: var(--accent);">${totalSelected} selected</span>
-                    ${selectedPatients.length > 0 ? `
-                        <button class="btn btn-sm btn-outline-primary" onclick="selectAllPatients()">
-                            <i class="bi bi-check-all me-1"></i>Select All Patients
-                        </button>
-                    ` : ''}
-                    ${selectedFolders.length > 0 ? `
-                        <button class="btn btn-sm btn-outline-primary" onclick="selectAllFolders()">
-                            <i class="bi bi-check-all me-1"></i>Select All Folders
-                        </button>
-                    ` : ''}
-                </div>
-                <div class="d-flex align-items-center gap-2">
-                    ${selectedPatients.length > 0 ? `
-                        <button class="btn btn-sm btn-primary" onclick="bulkMovePatients()">
-                            <i class="bi bi-folder me-1"></i>Move Selected (${selectedPatients.length})
-                        </button>
-                        <button class="btn btn-sm btn-danger" onclick="bulkRemovePatientsFromFolder()">
-                            <i class="bi bi-folder-minus me-1"></i>Remove (${selectedPatients.length})
-                        </button>
-                    ` : ''}
-                    ${selectedFolders.length > 0 ? `
-                        <button class="btn btn-sm btn-danger" onclick="bulkDeleteFolders()">
-                            <i class="bi bi-trash me-1"></i>Delete Folders (${selectedFolders.length})
-                        </button>
-                    ` : ''}
-                    <button class="btn btn-sm btn-secondary" onclick="deselectAll(); toggleSelectionMode();">
-                        <i class="bi bi-x-lg me-1"></i>Cancel
-                    </button>
-                </div>
-            </div>
-        </div>
-    `;
-    
-    // Insert at the beginning of container
-    container.insertAdjacentHTML('afterbegin', bulkActionsHtml);
+    const nP = selectedPatients.length;
+    const nF = selectedFolders.length;
+    // "Remove from folder" only makes sense for patients while a (non-system)
+    // folder is open as the source.
+    const inCustomFolder = currentFolderId && !currentFolderId.toString().startsWith('system_') && !currentFolderId.toString().startsWith('clinic_');
+
+    let actions = '';
+    if (nP > 0) {
+        actions += `
+            <button type="button" class="btn btn-sm btn-primary" onclick="bulkMovePatients()" title="Move to folder">
+                <i class="bi bi-folder-symlink me-1"></i>Move (${nP})
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-primary" onclick="bulkCopyPatients()" title="Copy to folder">
+                <i class="bi bi-folder-plus me-1"></i>Copy (${nP})
+            </button>`;
+        if (inCustomFolder) {
+            actions += `
+            <button type="button" class="btn btn-sm btn-outline-danger" onclick="bulkRemovePatientsFromFolder()" title="Remove from this folder">
+                <i class="bi bi-folder-minus me-1"></i>Remove (${nP})
+            </button>`;
+        }
+    }
+    if (nF > 0) {
+        actions += `
+            <button type="button" class="btn btn-sm btn-primary" onclick="bulkMoveFolders()" title="Move folders">
+                <i class="bi bi-folder-symlink me-1"></i>Move (${nF})
+            </button>
+            <button type="button" class="btn btn-sm btn-danger" onclick="bulkDeleteFolders()" title="Delete folders">
+                <i class="bi bi-trash me-1"></i>Delete (${nF})
+            </button>`;
+    }
+
+    return `
+        <span class="fbb-count"><i class="bi bi-check2-square me-1"></i>${totalSelected} selected</span>
+        <div class="fbb-actions">${actions}</div>
+        <button type="button" class="btn btn-sm btn-link fbb-cancel" onclick="exitSelection()" title="Cancel selection">
+            <i class="bi bi-x-lg me-1"></i>Cancel
+        </button>`;
 }
 
-function updateBulkActionsBar() {
-    const bulkActionsBar = document.getElementById('bulkActionsBar');
-    if (!bulkActionsBar) return;
-    
-    const totalSelected = selectedPatients.length + selectedFolders.length;
-    const countEl = bulkActionsBar.querySelector('.selection-count');
-    if (countEl) {
-        countEl.textContent = `${totalSelected} selected`;
-    }
-    
-    // Update button counts
-    const moveBtn = bulkActionsBar.querySelector('button[onclick="bulkMovePatients()"]');
-    if (moveBtn && selectedPatients.length > 0) {
-        moveBtn.innerHTML = `<i class="bi bi-folder me-1"></i>Move Selected (${selectedPatients.length})`;
-    }
-    
-    const removeBtn = bulkActionsBar.querySelector('button[onclick="bulkRemovePatientsFromFolder()"]');
-    if (removeBtn && selectedPatients.length > 0) {
-        removeBtn.innerHTML = `<i class="bi bi-folder-minus me-1"></i>Remove (${selectedPatients.length})`;
-    }
-    
-    const deleteBtn = bulkActionsBar.querySelector('button[onclick="bulkDeleteFolders()"]');
-    if (deleteBtn && selectedFolders.length > 0) {
-        deleteBtn.innerHTML = `<i class="bi bi-trash me-1"></i>Delete Folders (${selectedFolders.length})`;
-    }
-}
+// Back-compat shim (older call sites).
+function renderBulkActionsBar() { updateSelectionUI(); }
+function updateBulkActionsBar() { updateSelectionUI(); }
 
 function bulkMovePatients() {
     if (selectedPatients.length === 0) return;
-    
-    // Store selected patients for bulk move
-    window.bulkMovePatientIds = [...selectedPatients];
-    
-    // Use first patient to show modal (will move all selected)
-    showMovePatientModal(selectedPatients[0], true);
+    const ids = [...selectedPatients];
+    const source = currentFolderId || null;
+    openFolderDestinationPicker({
+        title: `Move ${ids.length} patient${ids.length === 1 ? '' : 's'} to…`,
+        confirmLabel: 'Move here',
+        onConfirm: (destId) => performMovePatients(ids, destId, 'move', source)
+    });
+}
+
+function bulkCopyPatients() {
+    if (selectedPatients.length === 0) return;
+    const ids = [...selectedPatients];
+    openFolderDestinationPicker({
+        title: `Copy ${ids.length} patient${ids.length === 1 ? '' : 's'} to…`,
+        confirmLabel: 'Copy here',
+        onConfirm: (destId) => performMovePatients(ids, destId, 'copy', null)
+    });
+}
+
+// True for a real (custom, numeric) folder id — not a virtual system/clinic one.
+function isCustomFolderId(id) {
+    const s = String(id);
+    return s !== '' && !s.startsWith('system_') && !s.startsWith('clinic_') && /^\d+$/.test(s);
+}
+
+/**
+ * Move (or copy) patients to a destination folder.
+ *   mode='move' → add to dest THEN remove from the source folder (if custom)
+ *   mode='copy' → add to dest only (patient stays everywhere else)
+ */
+async function performMovePatients(patientIds, destFolderId, mode, sourceFolderId) {
+    if (!patientIds || !patientIds.length || destFolderId == null || destFolderId === '') return;
+    const JH = { 'X-Requested-With': 'XMLHttpRequest', 'Content-Type': 'application/json' };
+    let done = 0, fail = 0;
+    for (const pid of patientIds) {
+        try {
+            const r = await fetch(`/api/patient-folders/${destFolderId}/patients`, {
+                method: 'POST', headers: JH, body: JSON.stringify({ patient_id: parseInt(pid) })
+            });
+            const d = await r.json();
+            if (!d.ok) { fail++; continue; }
+            if (mode === 'move' && isCustomFolderId(sourceFolderId) && String(sourceFolderId) !== String(destFolderId)) {
+                await fetch(`/api/patient-folders/${sourceFolderId}/patients/${pid}`, { method: 'DELETE', headers: JH });
+            }
+            done++;
+        } catch (e) { fail++; }
+    }
+    selectedPatients = [];
+    invalidateFolderTreeCache();
+    if (selectionMode) exitSelection();
+    else if (currentFolderId) openFolder(currentFolderId);
+    refreshPatientsData();
+    showNotification(`${done} patient(s) ${mode === 'move' ? 'moved' : 'copied'}${fail ? `, ${fail} failed` : ''}`, done ? 'success' : 'error');
+}
+
+/** Re-parent custom folders to a destination custom folder (or to root). */
+async function performMoveFolders(folderIds, destId, destType) {
+    if (!folderIds || !folderIds.length) return;
+    if (destType === 'system') { showNotification('Cannot move folders into a system folder', 'error'); return; }
+    const JH = { 'X-Requested-With': 'XMLHttpRequest', 'Content-Type': 'application/json' };
+    const toRoot = (destId === '' || destId == null);
+    let done = 0, fail = 0;
+    for (const fid of folderIds) {
+        if (String(fid) === String(destId)) { fail++; continue; } // can't move into itself
+        try {
+            const body = toRoot
+                ? { parent_id: null, parent_type: null }
+                : { parent_id: parseInt(destId), parent_type: 'custom' };
+            const r = await fetch(`/api/patient-folders/${fid}`, { method: 'PUT', headers: JH, body: JSON.stringify(body) });
+            const d = await r.json();
+            d.ok ? done++ : fail++;
+        } catch (e) { fail++; }
+    }
+    selectedFolders = [];
+    invalidateFolderTreeCache();
+    if (selectionMode) exitSelection();
+    loadFolders();
+    showNotification(`${done} folder(s) moved${fail ? `, ${fail} failed` : ''}`, done ? 'success' : 'error');
+}
+
+// =====================================================================
+// Reusable hierarchical folder destination picker (req 4).
+// Loads the folder tree FRESH each open (so newly created folders show up
+// immediately — req 3), renders an expandable hierarchy, and returns the
+// chosen destination via opts.onConfirm(destId, destType).
+// =====================================================================
+let _folderPickerSelection = null;
+
+async function openFolderDestinationPicker(opts) {
+    opts = opts || {};
+    const exclude = new Set((opts.exclude || []).map(String));
+    _folderPickerSelection = null;
+
+    let modalEl = document.getElementById('folderPickerModal');
+    if (!modalEl) {
+        modalEl = document.createElement('div');
+        modalEl.className = 'modal fade';
+        modalEl.id = 'folderPickerModal';
+        modalEl.tabIndex = -1;
+        modalEl.setAttribute('aria-hidden', 'true');
+        modalEl.innerHTML = `
+            <div class="modal-dialog modal-dialog-centered">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="folderPickerTitle"><i class="bi bi-folder me-2"></i>Choose folder</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                  <div id="folderPickerTree" class="folder-picker-tree"></div>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                  <button type="button" class="btn btn-primary" id="folderPickerConfirm" disabled>
+                    <i class="bi bi-check-lg me-1"></i><span>Confirm</span>
+                  </button>
+                </div>
+              </div>
+            </div>`;
+        document.body.appendChild(modalEl);
+    }
+    document.getElementById('folderPickerTitle').innerHTML =
+        `<i class="bi bi-folder me-2"></i>${escapeHtml(opts.title || 'Choose folder')}`;
+    const confirmBtn = document.getElementById('folderPickerConfirm');
+    confirmBtn.querySelector('span').textContent = opts.confirmLabel || 'Confirm';
+    confirmBtn.disabled = true;
+
+    const treeEl = document.getElementById('folderPickerTree');
+    treeEl.innerHTML = `<div class="text-center py-4 text-muted"><div class="spinner-border spinner-border-sm"></div> Loading folders…</div>`;
+
+    const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+    modal.show();
+
+    const flat = await loadAllFoldersForModal();
+    // Build a 2-level nested tree from the flat (level 0 parent / level 1 child) list.
+    const roots = [];
+    let lastRoot = null;
+    flat.forEach(f => {
+        if (f.level === 0) {
+            lastRoot = { ...f, children: [] };
+            if (!exclude.has(String(f.id))) roots.push(lastRoot);
+        } else if (lastRoot && !exclude.has(String(f.id))) {
+            lastRoot.children.push(f);
+        }
+    });
+
+    treeEl.innerHTML =
+        (opts.allowRoot ? `
+            <div class="fp-row fp-root" data-fp-id="" data-fp-type="root" role="button" tabindex="0">
+                <span class="fp-toggle"></span>
+                <i class="bi bi-house-door fp-ic"></i>
+                <span class="fp-name">Top level (no parent)</span>
+            </div>` : '') +
+        (roots.length
+            ? roots.map(renderFolderPickerNode).join('')
+            : `<div class="text-muted small py-3 text-center">No folders available.</div>`);
+
+    bindFolderPickerEvents(treeEl, confirmBtn, opts);
+}
+
+function renderFolderPickerNode(node) {
+    const hasChildren = node.children && node.children.length;
+    const icon = node.type === 'system' ? 'bi-folder-fill' : 'bi-folder';
+    let html = `
+        <div class="fp-row" data-fp-id="${escapeHtml(String(node.id))}" data-fp-type="${node.type}" role="button" tabindex="0">
+            <span class="fp-toggle">${hasChildren ? '<i class="bi bi-chevron-right"></i>' : ''}</span>
+            <i class="bi ${icon} fp-ic"></i>
+            <span class="fp-name">${escapeHtml(node.name)}</span>
+        </div>`;
+    if (hasChildren) {
+        html += `<div class="fp-children" hidden>` +
+            node.children.map(c => `
+                <div class="fp-row fp-child" data-fp-id="${escapeHtml(String(c.id))}" data-fp-type="${c.type}" role="button" tabindex="0">
+                    <span class="fp-indent"></span>
+                    <i class="bi bi-folder fp-ic"></i>
+                    <span class="fp-name">${escapeHtml(c.name)}</span>
+                </div>`).join('') +
+            `</div>`;
+    }
+    return html;
+}
+
+function bindFolderPickerEvents(treeEl, confirmBtn, opts) {
+    treeEl.querySelectorAll('.fp-toggle').forEach(t => {
+        if (!t.querySelector('i')) return; // no children → not a toggle
+        t.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const row = t.closest('.fp-row');
+            const children = row.nextElementSibling;
+            if (children && children.classList.contains('fp-children')) {
+                const wasOpen = !children.hidden;
+                children.hidden = wasOpen;
+                const ic = t.querySelector('i');
+                if (ic) ic.className = wasOpen ? 'bi bi-chevron-right' : 'bi bi-chevron-down';
+            }
+        });
+    });
+    const selectRow = (row) => {
+        treeEl.querySelectorAll('.fp-row.is-selected').forEach(r => r.classList.remove('is-selected'));
+        row.classList.add('is-selected');
+        _folderPickerSelection = { id: row.getAttribute('data-fp-id'), type: row.getAttribute('data-fp-type') };
+        confirmBtn.disabled = false;
+    };
+    treeEl.querySelectorAll('.fp-row').forEach(row => {
+        row.addEventListener('click', (e) => { if (!e.target.closest('.fp-toggle') || !e.target.closest('.fp-toggle').querySelector('i')) selectRow(row); });
+        row.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectRow(row); } });
+    });
+    // Property assignment replaces any prior handler (no listener pile-up on re-open).
+    confirmBtn.onclick = () => {
+        if (!_folderPickerSelection) return;
+        const sel = _folderPickerSelection;
+        const m = bootstrap.Modal.getInstance(document.getElementById('folderPickerModal'));
+        if (m) m.hide();
+        if (typeof opts.onConfirm === 'function') opts.onConfirm(sel.id, sel.type);
+    };
 }
 
 function bulkRemovePatientsFromFolder() {
@@ -4963,6 +5324,23 @@ function performBulkRemovePatients() {
     });
 }
 
+function bulkMoveFolders() {
+    if (selectedFolders.length === 0) return;
+    // Only custom (numeric) folders can be re-parented; system/clinic folders are virtual.
+    const movable = selectedFolders.filter(id => !String(id).startsWith('system_') && !String(id).startsWith('clinic_'));
+    if (movable.length === 0) {
+        showNotification('System folders cannot be moved', 'error');
+        return;
+    }
+    openFolderDestinationPicker({
+        title: `Move ${movable.length} folder${movable.length === 1 ? '' : 's'}`,
+        confirmLabel: 'Move here',
+        allowRoot: true,
+        exclude: movable.map(String),          // can't move a folder into itself
+        onConfirm: (destId, destType) => performMoveFolders(movable, destId, destType)
+    });
+}
+
 function bulkDeleteFolders() {
     if (selectedFolders.length === 0) return;
     
@@ -5000,16 +5378,22 @@ function performBulkDeleteFolders() {
     .then(response => response.json())
     .then(data => {
         if (data.ok) {
-            selectedFolders = [];
-            updateSelectionUI();
+            // Req 1: drop each deleted node from the sidebar tree + local data
+            // IMMEDIATELY (parent counters update), before the server refresh.
+            folderIdsToDelete.forEach(fid => {
+                if (folderTreeview) folderTreeview.removeFolderNode(fid);
+            });
+            removeFoldersFromLocalData(folderIdsToDelete);
+            invalidateFolderTreeCache();
 
-            // Reload folders via API - refresh entire view
+            selectedFolders = [];
+            if (selectionMode) exitSelection(); else updateSelectionUI();
+
+            // Reconcile the main content with the server.
             if (currentFolderId) {
-                // Inside a folder - refresh the full folder view (sub-folders + patients)
                 openFolder(currentFolderId);
             } else {
-                // At root folders view - reload all folders
-                loadFolders();
+                renderFoldersView();
             }
 
             showNotification(data.message || `${data.deleted_count || 0} folder(s) deleted successfully`, 'success');
@@ -5832,9 +6216,11 @@ function updateFolderPaginationInfo() {
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = Math.min(startIndex + itemsPerPage, filteredPatients.length);
     const info = document.getElementById('folderPaginationInfo');
-    
+
     if (!info) {
-        console.warn('[Pagination] folderPaginationInfo element not found in DOM');
+        // Expected: the unified filter manager calls this on every apply, but the
+        // folder pagination panel only exists once a folder is open in Folders
+        // view. Absent elsewhere — skip silently instead of spamming the console.
         return;
     }
     
@@ -5889,7 +6275,10 @@ function stopFoldersAutoRefresh() {
 
 // Update folder patient count locally
 function updateFolderPatientCount(folderId, increment = 1) {
-    const folder = foldersData.find(f => f.id === folderId);
+    // P18 (2026-06-07): callers pass the id as a STRING (e.g. from a data-attr),
+    // but foldersData ids are numbers — a strict === never matched, so the
+    // optimistic badge update silently no-op'd. Compare as strings.
+    const folder = foldersData.find(f => String(f.id) === String(folderId));
     if (folder) {
         folder.patient_count = Math.max(0, (folder.patient_count || 0) + increment);
         renderFoldersView();
@@ -5986,11 +6375,15 @@ function renderFoldersView(page = 1, clearState = true) {
         clearFolderNavigationState();
     }
 
-    // Clear selection mode
-    selectionMode = false;
-    selectedPatients = [];
-    selectedFolders = [];
-    updateSelectionUI();
+    // P17 (2026-06-07): only clear multi-select when NAVIGATING back to root
+    // (clearState). A plain re-render — e.g. toggling the root "Select" mode —
+    // must preserve selectionMode so the folder checkboxes actually render.
+    if (clearState) {
+        selectionMode = false;
+        selectedPatients = [];
+        selectedFolders = [];
+        updateSelectionUI();
+    }
 
     // Clear search
     const searchInput = document.getElementById('folderSearchInput');
@@ -6233,19 +6626,28 @@ function renderFolderCard(folder, isSystem) {
     // Get doctor initial
     const doctorInitial = folder.name ? folder.name.charAt(0).toUpperCase() : 'F';
     
-    // Escape gradient for use in style attribute - use single quotes to avoid issues
-    const safeGradient = gradientColor.replace(/'/g, "\\'");
-    
+    // D5: validate gradient + icon against the allow-list before injecting them
+    // into the style/class attributes (closes the stored-XSS).
+    const safeGradient = safeFolderGradient(gradientColor);
+    const safeIcon = safeFolderIcon(folderIcon);
+
     // Use smaller columns for custom folders
     const columnClass = isSystem ? 'col-md-4 col-lg-3' : 'col-md-3 col-lg-2 col-xl-2';
     
     return `
         <div class="${columnClass}">
-            <div class="card folder-card h-100 ${isSystem ? '' : 'custom-folder-card'}" 
-                 style="border: 1px solid var(--border); cursor: pointer; background: ${safeGradient} !important; background-color: transparent !important;" 
-                 onclick="openFolderDebounced('${folderId}')"
-                 data-gradient="${escapeHtml(gradientColor)}"
+            <div class="card folder-card h-100 ${isSystem ? '' : 'custom-folder-card'} ${(!isSystem && selectionMode) ? 'folder-card-selectable' : ''}"
+                 style="border: 1px solid var(--border); cursor: pointer; background: ${safeGradient} !important; background-color: transparent !important; position: relative;"
+                 onclick="${isSystem ? `openFolderDebounced('${folderId}')` : `if (selectionMode) { toggleFolderSelection('${folderId}'); } else { openFolderDebounced('${folderId}'); }`}"
+                 data-gradient="${escapeHtml(safeGradient)}"
                  data-folder-id="${folderId}">
+                ${(!isSystem && selectionMode) ? `
+                <div class="position-absolute top-0 start-0 m-2" style="z-index: 10;" onclick="event.stopPropagation();">
+                    <input type="checkbox" class="form-check-input folder-select-checkbox" data-folder-id="${folderId}"
+                           ${selectedFolders.includes(String(folderId)) ? 'checked' : ''}
+                           onchange="toggleFolderSelection('${folderId}')" onclick="event.stopPropagation();"
+                           style="width: 1.25rem; height: 1.25rem; cursor: pointer; background-color: white;">
+                </div>` : ''}
                 <div class="card-body d-flex flex-column">
                     <div class="d-flex align-items-start justify-content-between mb-3">
                         <div class="folder-icon-wrapper" style="width: 80px; height: 80px; position: relative;">
@@ -6258,7 +6660,7 @@ function renderFolderCard(folder, isSystem) {
                                 </div>
                             ` : `
                                 <div class="folder-icon-large" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: rgba(255, 255, 255, 0.25); border-radius: 50%; border: 3px solid rgba(255, 255, 255, 0.4); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);">
-                                    <i class="bi ${folderIcon}" style="font-size: ${isSystem ? '3rem' : '2rem'}; color: white; text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);"></i>
+                                    <i class="bi ${safeIcon}" style="font-size: ${isSystem ? '3rem' : '2rem'}; color: white; text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);"></i>
                                 </div>
                             `}
                         </div>
@@ -6273,7 +6675,7 @@ function renderFolderCard(folder, isSystem) {
                                 </button>
                                 <ul class="dropdown-menu">
                                     <li>
-                                        <a class="dropdown-item" href="#" onclick="event.stopPropagation(); showChangeFolderIconModal(${folder.id}, '${escapeHtml(folderIcon).replace(/'/g, "\\'")}', '${escapeHtml(gradientColor).replace(/'/g, "\\'")}');">
+                                        <a class="dropdown-item" href="#" onclick="event.stopPropagation(); showChangeFolderIconModal(${folder.id}, '${safeIcon}', '${safeGradient}');">
                                             <i class="bi bi-palette me-2"></i>
                                             Change Icon & Color
                                         </a>
@@ -6303,7 +6705,7 @@ function renderFolderCard(folder, isSystem) {
                                 </button>
                                 <ul class="dropdown-menu">
                                     <li>
-                                        <a class="dropdown-item" href="#" onclick="event.stopPropagation(); showChangeFolderIconModal('${folderId}', '${escapeHtml(folderIcon).replace(/'/g, "\\'")}', '${escapeHtml(gradientColor).replace(/'/g, "\\'")}');">
+                                        <a class="dropdown-item" href="#" onclick="event.stopPropagation(); showChangeFolderIconModal('${folderId}', '${safeIcon}', '${safeGradient}');">
                                             <i class="bi bi-palette me-2"></i>
                                             Change Icon & Color
                                         </a>
@@ -6354,7 +6756,20 @@ function openFolder(folderId) {
         }
         
         currentFolderAbortController = new AbortController();
-        
+
+        // Req 5 (2026-06-07): navigating to a DIFFERENT folder auto-cancels
+        // multi-select (re-rendering the SAME folder, e.g. to toggle checkboxes,
+        // is left untouched).
+        if (selectionMode && String(currentFolderId || '') !== String(folderId)) {
+            selectionMode = false;
+            selectedPatients = [];
+            selectedFolders = [];
+            if (window.bulkMovePatientIds) window.bulkMovePatientIds = [];
+            updateSelectionModeButton();
+            const _bar = document.getElementById('bulkActionsBar');
+            if (_bar) _bar.remove();
+        }
+
         currentFolderId = folderId;
 
         // Determine folder type and get folder info. System folders use
@@ -6362,6 +6777,9 @@ function openFolder(folderId) {
         // group) prefix; anything else is a custom folder.
         const _fidStr = folderId.toString();
         const isSystem = _fidStr.startsWith('system_') || _fidStr.startsWith('clinic_');
+        // P16 (2026-06-07): clinic_X folders are leaf groupings — quick-sort and
+        // create-sub-folder always error on them, so those actions are hidden.
+        const isClinic = _fidStr.startsWith('clinic_');
         currentFolderType = isSystem ? 'system' : 'custom';
 
         // Get folder name from appropriate data source
@@ -6395,6 +6813,7 @@ function openFolder(folderId) {
     // Create header actions (Create Sub-folder + Group by buttons for system folders)
     const headerActions = isSystem ? `
         <div class="d-flex align-items-center gap-2 folder-header-actions-row">
+            ${!isClinic ? `
             <button class="btn btn-sm create-subfolder-btn" onclick="showCreateSubFolderModal('${folderId}', '${currentFolderType}', '${escapeHtml(currentFolderName).replace(/'/g, "\\'")}')" title="Create Sub-folder">
                 <i class="bi bi-folder-plus me-1"></i>
                 <span class="btn-text-full">Create Sub-folder</span>
@@ -6410,6 +6829,7 @@ function openFolder(folderId) {
                 <span class="btn-text-full">Group by Visits</span>
                 <span class="btn-text-short d-none">By Visits</span>
             </button>
+            ` : ''}
             <button class="btn btn-sm folder-action-btn" onclick="toggleSelectionMode(); renderFolderViewWithSelection();" title="Multi-select">
                 <i class="bi bi-check-square me-1"></i>
                 <span id="selectionModeLabel">Select</span>
@@ -6711,20 +7131,24 @@ function openFolder(folderId) {
             
             // Render patients
             if (data.patients) {
-                folderPaginationState.filteredPatients = data.patients;
                 folderPaginationState.currentPage = 1;
-                renderFolderPatients(data.patients);
-                // Ensure pagination is rendered after DOM update
+                // E (2026-06-07): apply active chips AND any in-folder search on
+                // open — composed via the unified filter manager — instead of
+                // rendering the raw list, so opening a folder no longer silently
+                // drops the user's active filters (P4).
+                const _si = document.getElementById('folderSearchInput');
+                folderSearchTerm = _si && _si.value ? _si.value.toLowerCase().trim() : '';
+                if (unifiedFilterManager && currentViewMode === 'folders') {
+                    unifiedFilterManager.applyFilters();
+                } else {
+                    folderPaginationState.filteredPatients = data.patients;
+                    renderFolderPatients(data.patients);
+                }
+                // Ensure pagination is rendered after the (debounced) filter pass.
                 setTimeout(() => {
                     renderFolderPaginationNav();
                     updateFolderPaginationInfo();
-                }, 100);
-            }
-            
-            // Apply current search filter if any
-            const searchInput = document.getElementById('folderSearchInput');
-            if (searchInput && searchInput.value.trim()) {
-                filterFolderContent(searchInput.value.trim());
+                }, 120);
             }
 
             // Cache the data for performance
@@ -6749,23 +7173,55 @@ function openFolder(folderId) {
             // Resolve the Promise
             resolve(data);
         } else {
+            // P19 (2026-06-07): surface an error state instead of leaving the
+            // loading spinner spinning forever.
+            renderFolderLoadError();
             reject(new Error('Failed to load folder data'));
         }
     })
     .catch(error => {
         if (error.name === 'AbortError') {
+            // P6 (2026-06-07): a superseded request was aborted. SETTLE the
+            // promise (resolve null) so the restoration flag/watchdog and any
+            // awaiting caller never hang on a forever-pending promise.
+            resolve(null);
             return;
         }
         console.error('Error loading folder patients:', error);
+        renderFolderLoadError();
         reject(error);
     });
     }); // End of Promise
+}
+
+/**
+ * P19 (2026-06-07): render an inline error + retry in the folder content area
+ * when a folder fails to load, replacing the perpetual loading spinner.
+ */
+function renderFolderLoadError() {
+    const c = document.getElementById('folderPatientsContainer');
+    if (c) {
+        c.innerHTML = `
+            <div class="col-12 text-center py-5 text-muted">
+                <i class="bi bi-exclamation-triangle" style="font-size: 2rem;"></i>
+                <p class="mt-2 mb-2">Could not load this folder.</p>
+                <button type="button" class="btn btn-sm btn-outline-primary" onclick="if (currentFolderId) openFolder(currentFolderId);">
+                    <i class="bi bi-arrow-clockwise me-1"></i>Try again
+                </button>
+            </div>`;
+    }
+    try { showNotification('Could not load folder contents', 'error'); } catch (e) { /* */ }
 }
 
 // Setup folder search functionality
 let folderSearchTimeout = null;
 let currentFolderPatients = [];
 let currentFolderSubFolders = [];
+// E (2026-06-07): the active in-folder text search. Held here so the unified
+// filter manager can COMPOSE it with the chip filters (instead of the two
+// clobbering each other). deriveFolderView() = currentFolderPatients filtered
+// by BOTH this term AND the active chips.
+let folderSearchTerm = '';
 
 function setupFolderSearch() {
     const searchInput = document.getElementById('folderSearchInput');
@@ -6845,50 +7301,34 @@ function filterCardsContent(searchTerm) {
 // Cards quick search uses single input in card header (quickSearchCards) - see initializePagination()
 
 function filterFolderContent(searchTerm) {
-    if (!searchTerm) {
-        // Show all - restore original data
-        if (currentFolderPatients.length > 0) {
-            renderFolderPatients(currentFolderPatients);
-        }
-        if (currentFolderSubFolders.length > 0) {
-            const isSystem = currentFolderId && currentFolderId.toString().startsWith('system_');
-            const parentType = isSystem ? 'system' : 'custom';
-            renderSubFolders(currentFolderSubFolders, currentFolderId, parentType);
-        }
-        return;
-    }
-    
-    // Filter patients
-    const patientsContainer = document.getElementById('folderPatientsContainer');
-    if (patientsContainer) {
-        const filteredPatients = currentFolderPatients.filter(patient => {
-            const fullName = `${patient.first_name || ''} ${patient.last_name || ''}`.toLowerCase();
-            const phone = (patient.phone || '').toLowerCase();
-            const nationalId = (patient.national_id || '').toLowerCase();
-            
-            return fullName.includes(searchTerm) || 
-                   phone.includes(searchTerm) || 
-                   nationalId.includes(searchTerm);
-        });
-        
-        folderPaginationState.filteredPatients = filteredPatients;
+    // E (2026-06-07): record the term and let the unified filter manager compose
+    // it WITH the active chips (deriveFolderView), instead of each path
+    // overwriting the other. The patient grid is rendered by _doApplyFilters.
+    folderSearchTerm = (searchTerm || '').toLowerCase().trim();
+    if (unifiedFilterManager && currentViewMode === 'folders') {
+        unifiedFilterManager.applyFilters();
+    } else {
+        // Fallback (filter manager not ready): plain text search.
+        const base = folderSearchTerm
+            ? currentFolderPatients.filter(p => {
+                const name = `${p.first_name || ''} ${p.last_name || ''}`.toLowerCase();
+                return name.includes(folderSearchTerm) ||
+                    (p.phone || '').toLowerCase().includes(folderSearchTerm) ||
+                    (p.national_id || '').toLowerCase().includes(folderSearchTerm);
+            })
+            : currentFolderPatients;
+        folderPaginationState.filteredPatients = base;
         folderPaginationState.currentPage = 1;
-        renderFolderPatients(filteredPatients);
-        // Ensure pagination is rendered after DOM update
-        setTimeout(() => {
-            renderFolderPaginationNav();
-            updateFolderPaginationInfo();
-        }, 100);
+        renderFolderPatients(base);
+        setTimeout(() => { renderFolderPaginationNav(); updateFolderPaginationInfo(); }, 100);
     }
-    
-    // Filter subfolders
+
+    // Sub-folders filter by name (independent of the patient chips).
     const subFoldersContainer = document.getElementById('subFoldersContainer');
     if (subFoldersContainer) {
-        const filteredSubFolders = currentFolderSubFolders.filter(subFolder => {
-            const name = (subFolder.name || '').toLowerCase();
-            return name.includes(searchTerm);
-        });
-        
+        const filteredSubFolders = folderSearchTerm
+            ? currentFolderSubFolders.filter(sf => (sf.name || '').toLowerCase().includes(folderSearchTerm))
+            : currentFolderSubFolders;
         if (filteredSubFolders.length > 0) {
             const isSystem = currentFolderId && currentFolderId.toString().startsWith('system_');
             const parentType = isSystem ? 'system' : 'custom';
@@ -7030,8 +7470,8 @@ function renderSubFolders(subFolders, parentId, parentType) {
     `;
     
     subFolders.forEach(subFolder => {
-        const safeGradient = (subFolder.gradient_color || 'linear-gradient(135deg, #30cfd0 0%, #330867 100%)').replace(/'/g, "\\'");
-        const subFolderIcon = subFolder.icon || 'bi-folder';
+        const safeGradient = safeFolderGradient(subFolder.gradient_color);
+        const subFolderIcon = safeFolderIcon(subFolder.icon);
         
         // Store parent info in subfolder data for breadcrumb
         if (subFolder.parent_id) {
@@ -7065,7 +7505,7 @@ function renderSubFolders(subFolders, parentId, parentType) {
                             </button>
                             <ul class="dropdown-menu">
                                 <li>
-                                    <a class="dropdown-item" href="#" onclick="event.stopPropagation(); showChangeFolderIconModal(${subFolder.id}, '${escapeHtml(subFolderIcon).replace(/'/g, "\\'")}', '${escapeHtml(subFolder.gradient_color || '').replace(/'/g, "\\'")}');">
+                                    <a class="dropdown-item" href="#" onclick="event.stopPropagation(); showChangeFolderIconModal(${subFolder.id}, '${subFolderIcon}', '${safeGradient}');">
                                         <i class="bi bi-palette me-2"></i>
                                         Change Icon & Color
                                     </a>
@@ -7534,11 +7974,11 @@ function renderFolderPatients(patients) {
                                         data-bs-title="Move to folder">
                                     <i class="bi bi-folder"></i>
                                 </button>
-                                <button class="card-action-btn card-action-add" 
-                                        onclick="event.stopPropagation(); showAddToFolderModal(${patient.id})" 
-                                        data-bs-toggle="tooltip" 
-                                        data-bs-placement="top" 
-                                        data-bs-title="Add to folder"
+                                <button class="card-action-btn card-action-add"
+                                        onclick="event.stopPropagation(); showAddToFolderModal(${patient.id})"
+                                        data-bs-toggle="tooltip"
+                                        data-bs-placement="top"
+                                        data-bs-title="Copy to folder"
                                         style="background: var(--success, #28a745); color: white;">
                                     <i class="bi bi-folder-plus"></i>
                                 </button>
@@ -8542,15 +8982,22 @@ function showChangeFolderIconModal(folderId, currentIcon, currentGradient) {
     
     // Populate Gradient Presets
     const gradientGrid = document.getElementById('gradientSelectionGrid');
+    // D5 (2026-06-07): the picker offers exactly the server-side allow-list
+    // (ApiController::folderGradientPresets / FOLDER_GRADIENT_PRESETS). All are
+    // dark enough for white card text.
     const gradients = [
-        { name: 'Purple', value: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' },
-        { name: 'Pink', value: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)' },
-        { name: 'Blue', value: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)' },
-        { name: 'Green', value: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)' },
-        { name: 'Orange', value: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)' },
-        { name: 'Teal', value: 'linear-gradient(135deg, #30cfd0 0%, #330867 100%)' },
-        { name: 'Red', value: 'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)' },
-        { name: 'Dark', value: 'linear-gradient(135deg, #2c3e50 0%, #34495e 100%)' }
+        { name: 'Indigo',  value: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)' },
+        { name: 'Purple',  value: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)' },
+        { name: 'Sky',     value: 'linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%)' },
+        { name: 'Cyan',    value: 'linear-gradient(135deg, #0891b2 0%, #0e7490 100%)' },
+        { name: 'Emerald', value: 'linear-gradient(135deg, #10b981 0%, #059669 100%)' },
+        { name: 'Teal',    value: 'linear-gradient(135deg, #14b8a6 0%, #0d9488 100%)' },
+        { name: 'Amber',   value: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)' },
+        { name: 'Orange',  value: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)' },
+        { name: 'Rose',    value: 'linear-gradient(135deg, #f43f5e 0%, #be123c 100%)' },
+        { name: 'Pink',    value: 'linear-gradient(135deg, #ec4899 0%, #be185d 100%)' },
+        { name: 'Violet',  value: 'linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%)' },
+        { name: 'Slate',   value: 'linear-gradient(135deg, #475569 0%, #1e293b 100%)' }
     ];
     
     gradientGrid.innerHTML = '';
@@ -8623,7 +9070,10 @@ document.getElementById('createFolderForm')?.addEventListener('submit', function
         messageEl.classList.remove('d-none');
         return;
     }
-    
+
+    const _btn = lockSubmit(this);
+    if (_btn === false) return; // already submitting
+
     fetch('/api/patient-folders', {
         method: 'POST',
         headers: {
@@ -8637,6 +9087,7 @@ document.getElementById('createFolderForm')?.addEventListener('submit', function
         if (data.ok) {
             const modal = bootstrap.Modal.getInstance(document.getElementById('createFolderModal'));
             modal.hide();
+            invalidateFolderTreeCache();
             loadFolders();
         } else {
             messageEl.className = 'alert alert-danger';
@@ -8649,7 +9100,8 @@ document.getElementById('createFolderForm')?.addEventListener('submit', function
         messageEl.className = 'alert alert-danger';
         messageEl.textContent = 'An error occurred while creating the folder';
         messageEl.classList.remove('d-none');
-    });
+    })
+    .finally(() => unlockSubmit(_btn));
 });
 
 // Create sub-folder
@@ -8667,14 +9119,17 @@ document.getElementById('createSubFolderForm')?.addEventListener('submit', funct
         messageEl.classList.remove('d-none');
         return;
     }
-    
+
+    const _btn = lockSubmit(this);
+    if (_btn === false) return; // already submitting
+
     fetch('/api/patient-folders', {
         method: 'POST',
         headers: {
             'X-Requested-With': 'XMLHttpRequest',
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
             name,
             parent_id: parentId,
             parent_type: parentType
@@ -8686,6 +9141,7 @@ document.getElementById('createSubFolderForm')?.addEventListener('submit', funct
             const modal = bootstrap.Modal.getInstance(document.getElementById('createSubFolderModal'));
             modal.hide();
             showNotification('Sub-folder created successfully', 'success');
+            invalidateFolderTreeCache();
             // Reload sub-folders if we're in a folder view
             if (currentFolderId) {
                 loadSubFolders(currentFolderId, currentFolderType);
@@ -8703,7 +9159,8 @@ document.getElementById('createSubFolderForm')?.addEventListener('submit', funct
         messageEl.className = 'alert alert-danger';
         messageEl.textContent = 'An error occurred while creating the sub-folder';
         messageEl.classList.remove('d-none');
-    });
+    })
+    .finally(() => unlockSubmit(_btn));
 });
 
 // Show rename folder modal
@@ -8729,7 +9186,10 @@ document.getElementById('renameFolderForm')?.addEventListener('submit', function
         messageEl.classList.remove('d-none');
         return;
     }
-    
+
+    const _btn = lockSubmit(this);
+    if (_btn === false) return; // already submitting
+
     fetch(`/api/patient-folders/${folderId}`, {
         method: 'PUT',
         headers: {
@@ -8744,6 +9204,7 @@ document.getElementById('renameFolderForm')?.addEventListener('submit', function
             const modal = bootstrap.Modal.getInstance(document.getElementById('renameFolderModal'));
             modal.hide();
             showNotification('Folder renamed successfully', 'success');
+            invalidateFolderTreeCache();
             // If we're in a folder view, reload sub-folders
             if (currentFolderId) {
                 const isSystem = currentFolderId.toString().startsWith('system_');
@@ -8763,14 +9224,30 @@ document.getElementById('renameFolderForm')?.addEventListener('submit', function
         messageEl.className = 'alert alert-danger';
         messageEl.textContent = 'An error occurred while renaming the folder';
         messageEl.classList.remove('d-none');
-    });
+    })
+    .finally(() => unlockSubmit(_btn));
 });
 
 // Delete folder
 function deleteFolder(folderId) {
+    // D8 (2026-06-07): warn explicitly when the folder has sub-folders — deletion
+    // CASCADE-removes them and their patient links.
+    let subCount = 0;
+    try {
+        const f = (typeof foldersData !== 'undefined' && Array.isArray(foldersData))
+            ? foldersData.find(x => String(x.id) === String(folderId)) : null;
+        if (f) subCount = parseInt(f.sub_folders_count || f.subFoldersCount || 0, 10) || 0;
+    } catch (e) { /* best-effort */ }
+
+    let message = 'Are you sure you want to delete this folder? Patients will not be deleted, only removed from the folder.';
+    if (subCount > 0) {
+        message = `This folder contains ${subCount} sub-folder${subCount === 1 ? '' : 's'}. ` +
+            `Deleting it will also permanently delete ${subCount === 1 ? 'that sub-folder' : 'those sub-folders'} ` +
+            `and remove their patients from them. The patients themselves will not be deleted. Continue?`;
+    }
     showConfirmModal(
         'Delete Folder',
-        'Are you sure you want to delete this folder? Patients will not be deleted, only removed from the folder.',
+        message,
         function() {
             performDeleteFolder(folderId);
         },
@@ -8791,13 +9268,18 @@ function performDeleteFolder(folderId) {
     .then(data => {
         if (data.ok) {
             showNotification('Folder deleted successfully', 'success');
-            // If we're in a folder view, reload sub-folders
+            // Req 1: remove from the sidebar tree + local data immediately so it
+            // vanishes and the parent counter updates without waiting for a reload.
+            if (folderTreeview) folderTreeview.removeFolderNode(folderId);
+            removeFoldersFromLocalData([folderId]);
+            invalidateFolderTreeCache();
+            // Reconcile the main content with the server.
             if (currentFolderId) {
                 const isSystem = currentFolderId.toString().startsWith('system_');
                 const parentType = isSystem ? 'system' : 'custom';
                 loadSubFolders(currentFolderId, parentType);
             } else {
-                loadFolders();
+                renderFoldersView();
             }
         } else {
             showNotification(data.error || 'Failed to delete folder', 'error');
@@ -8887,41 +9369,16 @@ async function loadAllFoldersForModal() {
 }
 
 // Show move patient modal
-async function showMovePatientModal(patientId) {
-    const modal = new bootstrap.Modal(document.getElementById('movePatientModal'));
-    document.getElementById('movePatientId').value = patientId;
-    document.getElementById('movePatientMessage').classList.add('d-none');
-    
-    // Set modal title
-    const modalTitle = document.querySelector('#movePatientModal .modal-title');
-    if (modalTitle) {
-        modalTitle.innerHTML = '<i class="bi bi-folder me-2"></i>Move Patient to Folder';
-    }
-    
-    // Change button text
-    const buttonText = document.getElementById('movePatientButtonText');
-    if (buttonText) {
-        buttonText.textContent = 'Move Patient';
-    }
-    
-    // Populate folder select
-    const select = document.getElementById('movePatientFolderSelect');
-    select.innerHTML = '<option value="">-- Select Folder --</option>';
-    
-    // Load all folders including sub-folders
-    const allFolders = await loadAllFoldersForModal();
-    
-    allFolders.forEach(folder => {
-        const option = document.createElement('option');
-        option.value = folder.id;
-        const displayName = folder.level === 1 
-            ? `${folder.parentName} > ${folder.name}`
-            : folder.name;
-        option.textContent = displayName;
-        select.appendChild(option);
+// Single-patient MOVE — now uses the same hierarchical folder tree picker as
+// the bulk actions (2026-06-07). Move = add to the chosen folder THEN remove
+// from the current (source) custom folder.
+function showMovePatientModal(patientId) {
+    const source = currentFolderId || null;
+    openFolderDestinationPicker({
+        title: 'Move patient to…',
+        confirmLabel: 'Move here',
+        onConfirm: (destId) => performMovePatients([patientId], destId, 'move', source)
     });
-    
-    modal.show();
 }
 
 // Confirm move/add patient
@@ -9036,16 +9493,20 @@ document.getElementById('changeFolderIconForm')?.addEventListener('submit', func
     e.preventDefault();
     
     const folderId = document.getElementById('changeFolderIconId').value;
-    const icon = document.getElementById('selectedIcon').value;
-    const gradientColor = document.getElementById('selectedGradient').value || document.getElementById('customGradient').value;
+    const rawIcon = document.getElementById('selectedIcon').value;
+    const rawGradient = document.getElementById('selectedGradient').value;
     const messageEl = document.getElementById('changeFolderIconMessage');
-    
-    if (!icon || !gradientColor) {
+
+    if (!rawIcon || !rawGradient) {
         messageEl.className = 'alert alert-danger';
         messageEl.textContent = 'Please select an icon and gradient color';
         messageEl.classList.remove('d-none');
         return;
     }
+
+    // D5 (2026-06-07): only curated presets are accepted — validate before send.
+    const icon = safeFolderIcon(rawIcon);
+    const gradientColor = safeFolderGradient(rawGradient);
     
     // Check if it's a system folder (starts with 'system_')
     const isSystemFolder = folderId.toString().startsWith('system_');
@@ -9090,6 +9551,7 @@ document.getElementById('changeFolderIconForm')?.addEventListener('submit', func
                 const modal = bootstrap.Modal.getInstance(document.getElementById('changeFolderIconModal'));
                 modal.hide();
                 showNotification('Folder icon and color updated successfully', 'success');
+                invalidateFolderTreeCache();
                 // If we're in a folder view, reload sub-folders
                 if (currentFolderId) {
                     const isSystem = currentFolderId.toString().startsWith('system_');
@@ -9157,39 +9619,12 @@ function performRemovePatientFromFolder(patientId) {
 }
 
 // Show add to folder modal
-async function showAddToFolderModal(patientId) {
-    const modal = new bootstrap.Modal(document.getElementById('movePatientModal'));
-    document.getElementById('movePatientId').value = patientId;
-    document.getElementById('movePatientMessage').classList.add('d-none');
-    
-    // Change modal title
-    const modalTitle = document.querySelector('#movePatientModal .modal-title');
-    if (modalTitle) {
-        modalTitle.innerHTML = '<i class="bi bi-folder-plus me-2"></i>Add Patient to Folder';
-    }
-    
-    // Change button text
-    const buttonText = document.getElementById('movePatientButtonText');
-    if (buttonText) {
-        buttonText.textContent = 'Add to Folder';
-    }
-    
-    // Populate folder select
-    const select = document.getElementById('movePatientFolderSelect');
-    select.innerHTML = '<option value="">-- Select Folder --</option>';
-    
-    // Load all folders including sub-folders
-    const allFolders = await loadAllFoldersForModal();
-    
-    allFolders.forEach(folder => {
-        const option = document.createElement('option');
-        option.value = folder.id;
-        const displayName = folder.level === 1 
-            ? `${folder.parentName} > ${folder.name}`
-            : folder.name;
-        option.textContent = displayName;
-        select.appendChild(option);
+// Single-patient COPY / "Add to folder" — uses the same tree picker.
+// Copy = add to the chosen folder, keep the patient everywhere else.
+function showAddToFolderModal(patientId) {
+    openFolderDestinationPicker({
+        title: 'Copy patient to…',
+        confirmLabel: 'Copy here',
+        onConfirm: (destId) => performMovePatients([patientId], destId, 'copy', null)
     });
-    
-    modal.show();
 }

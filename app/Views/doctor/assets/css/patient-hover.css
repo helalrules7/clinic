@@ -15,7 +15,12 @@ h3.patient-name[data-patient-id] {
     cursor: pointer;
 }
 
-.patient-card {
+/* v11.0.1 (2026-06-07): scoped to `aside.patient-card` (the recycled
+   #patientCard hover popup) so these off-screen/positioning rules no longer
+   collide with the GRID patient cards, which are `div.card.patient-card`
+   (cards view + folder view). The class collision was parking every grid card
+   at top/left:-9999px → "empty" patients page. */
+aside.patient-card {
     /* Local tokens. The avatar custom props (--pt-bg, --pt-fg, --pt-color)
        are injected by patient-hover.js. */
     --pc-pad:        14px;
@@ -56,23 +61,23 @@ h3.patient-name[data-patient-id] {
     transition: opacity 120ms ease, transform 120ms ease;
     will-change: opacity, transform;
 }
-.patient-card[hidden] { display: none !important; }
-.patient-card[data-placement="left"]  { transform-origin: top right; }
+aside.patient-card[hidden] { display: none !important; }
+aside.patient-card[data-placement="left"]  { transform-origin: top right; }
 
-.patient-card.patient-card--show {
+aside.patient-card.patient-card--show {
     opacity: 1;
     transform: scale(1) translateY(0);
     transition: opacity 180ms ease, transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 /* Dark theme — token-driven, but bump the shadow a notch for contrast. */
-.dark .patient-card {
+.dark aside.patient-card {
     --pc-bg:     var(--glass-bg-strong, rgba(12, 17, 31, 0.88));
     --pc-shadow: 0 18px 60px rgba(0, 0, 0, 0.55);
 }
 
 /* Mobile centered dialog mode (long-press). */
-.patient-card.patient-card--centered {
+aside.patient-card.patient-card--centered {
     top: 50% !important;
     left: 50% !important;
     transform: translate(-50%, -50%) scale(0.96);
@@ -80,7 +85,7 @@ h3.patient-name[data-patient-id] {
     max-width: calc(100vw - 32px);
     width: min(340px, calc(100vw - 32px));
 }
-.patient-card.patient-card--centered.patient-card--show {
+aside.patient-card.patient-card--centered.patient-card--show {
     transform: translate(-50%, -50%) scale(1);
 }
 
@@ -362,7 +367,7 @@ h3.patient-name[data-patient-id] {
    anchored mode is effectively desktop-only.
    ===================================================================== */
 @media (max-width: 575.98px) {
-    .patient-card:not(.patient-card--centered) {
+    aside.patient-card:not(.patient-card--centered) {
         /* Force the centred dialog layout even if JS forgot the modifier.
            This keeps the card readable on small viewports. */
         position: fixed;
@@ -374,10 +379,10 @@ h3.patient-name[data-patient-id] {
         max-width: calc(100vw - 32px);
         width: min(340px, calc(100vw - 32px));
     }
-    .patient-card:not(.patient-card--centered).patient-card--show {
+    aside.patient-card:not(.patient-card--centered).patient-card--show {
         transform: translate(-50%, -50%) scale(1);
     }
-    .patient-card { font-size: 0.92rem; }
+    aside.patient-card { font-size: 0.92rem; }
     .patient-card .pc-cta {
         /* Larger tap target on mobile, always visible (no hover). */
         padding: 10px 12px;
@@ -389,5 +394,5 @@ h3.patient-name[data-patient-id] {
    Print: hide entirely.
    ===================================================================== */
 @media print {
-    .patient-card { display: none !important; }
+    aside.patient-card { display: none !important; }
 }

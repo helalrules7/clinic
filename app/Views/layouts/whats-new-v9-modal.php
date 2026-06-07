@@ -2347,6 +2347,55 @@
         .wn-slide-fixes h3 { font-size: 1rem; }
         .wn-slide-fixes p { font-size: .76rem; }
     }
+
+    /* ---------------------------------------------------------------- */
+    /* v11.0.1 — Patient Folders slide (animated mockup)                 */
+    /* ---------------------------------------------------------------- */
+    .wn-folders-stage { display: flex; gap: 12px; align-items: stretch; padding: 16px 18px; }
+    .wn-fld-side { width: 76px; flex-shrink: 0; display: flex; flex-direction: column; gap: 7px; }
+    .wn-fld-row {
+        height: 14px; border-radius: 5px; background: rgba(148,163,184,.30);
+        position: relative; overflow: hidden;
+    }
+    .wn-fld-row::before {
+        content: ''; position: absolute; left: 5px; top: 4px;
+        width: 6px; height: 6px; border-radius: 2px; background: rgba(255,255,255,.6);
+    }
+    .wn-fld-row.is-active { background: linear-gradient(135deg,#6366f1,#8b5cf6); }
+    .wn-fld-row.is-active::after {
+        content: ''; position: absolute; inset: 0; border-radius: 5px;
+        box-shadow: 0 0 0 2px rgba(99,102,241,.45);
+        animation: wn-fld-pulse 1.8s ease-in-out infinite;
+    }
+    @keyframes wn-fld-pulse { 0%,100% { opacity: .35; } 50% { opacity: 1; } }
+    .wn-fld-grid { flex: 1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; }
+    .wn-fld-card {
+        position: relative; height: 50px; border-radius: 10px;
+        display: flex; align-items: center; justify-content: center; color: #fff;
+        box-shadow: 0 5px 12px rgba(0,0,0,.20);
+        opacity: 0; transform: translateY(9px) scale(.95);
+        animation: wn-fld-pop .5s cubic-bezier(.22,1,.36,1) forwards;
+    }
+    .wn-fld-card i { font-size: 1.15rem; filter: drop-shadow(0 1px 2px rgba(0,0,0,.30)); }
+    .wn-fld-card:nth-child(1) { background: linear-gradient(135deg,#6366f1,#8b5cf6); animation-delay: .15s; }
+    .wn-fld-card:nth-child(2) { background: linear-gradient(135deg,#10b981,#059669); animation-delay: .28s; }
+    .wn-fld-card:nth-child(3) { background: linear-gradient(135deg,#f43f5e,#be123c); animation-delay: .41s; }
+    .wn-fld-card:nth-child(4) { background: linear-gradient(135deg,#0ea5e9,#2563eb); animation-delay: .54s; }
+    .wn-fld-card:nth-child(5) { background: linear-gradient(135deg,#f59e0b,#d97706); animation-delay: .67s; }
+    .wn-fld-card:nth-child(6) { background: linear-gradient(135deg,#14b8a6,#0d9488); animation-delay: .80s; }
+    @keyframes wn-fld-pop { to { opacity: 1; transform: none; } }
+    .wn-fld-shield {
+        position: absolute; top: -7px; right: -7px; width: 20px; height: 20px;
+        border-radius: 50%; background: #10b981; color: #fff;
+        display: flex; align-items: center; justify-content: center; font-size: .62rem;
+        box-shadow: 0 2px 7px rgba(0,0,0,.30);
+        transform: scale(0); animation: wn-fld-shieldpop .45s cubic-bezier(.22,1,.36,1) 1.05s forwards;
+    }
+    @keyframes wn-fld-shieldpop { to { transform: scale(1); } }
+    @media (prefers-reduced-motion: reduce) {
+        .wn-fld-card, .wn-fld-shield { animation: none; opacity: 1; transform: none; }
+        .wn-fld-row.is-active::after { animation: none; opacity: .7; }
+    }
 </style>
 
 
@@ -3209,6 +3258,28 @@
             </div>
 
             <!-- v11.0.0 — wn-fixes (Bug fixes & polish) -->
+            <div class="wn-slide">
+              <span class="wn-kicker">Reworked · Patients</span>
+              <div class="wn-stage wn-folders-stage">
+                <div class="wn-fld-side" aria-hidden="true">
+                  <div class="wn-fld-row"></div>
+                  <div class="wn-fld-row is-active"></div>
+                  <div class="wn-fld-row"></div>
+                  <div class="wn-fld-row"></div>
+                </div>
+                <div class="wn-fld-grid" aria-hidden="true">
+                  <div class="wn-fld-card"><i class="bi bi-folder-fill"></i><span class="wn-fld-shield"><i class="bi bi-shield-lock-fill"></i></span></div>
+                  <div class="wn-fld-card"><i class="bi bi-folder-fill"></i></div>
+                  <div class="wn-fld-card"><i class="bi bi-folder-fill"></i></div>
+                  <div class="wn-fld-card"><i class="bi bi-folder-fill"></i></div>
+                  <div class="wn-fld-card"><i class="bi bi-folder-fill"></i></div>
+                  <div class="wn-fld-card"><i class="bi bi-folder-fill"></i></div>
+                </div>
+              </div>
+              <h3>Patient Folders — hardened &amp; polished</h3>
+              <p>The Folders view got a security &amp; UX overhaul: a curated, theme-aware gradient palette, a safer <strong>&ldquo;Add to folder&rdquo;</strong> that never strips a patient from their other folders, transactional quick-sort, and clearer delete warnings.</p>
+            </div>
+
             <div class="wn-slide wn-slide-fixes">
               <span class="wn-kicker">Fixes</span>
               <div class="wn-stage wn-fixes-stage">
@@ -3248,6 +3319,12 @@
                   <li><i class="bi bi-check-circle-fill"></i><span>Calendar desktop: no tooltips on actions column</span></li>
                   <li><i class="bi bi-check-circle-fill"></i><span>AI chat widget: safe-area insets on mobile — header no longer clipped</span></li>
                   <li><i class="bi bi-check-circle-fill"></i><span>Tags v1: patient + appointment + session labels + drug→tag suggest</span></li>
+                  <li><i class="bi bi-check-circle-fill"></i><span>Patient Folders: free-text gradient removed — curated XSS-safe palette</span></li>
+                  <li><i class="bi bi-check-circle-fill"></i><span>Folders: “Move to folder” is now a non-destructive “Add to folder”</span></li>
+                  <li><i class="bi bi-check-circle-fill"></i><span>Folders: quick-sort runs in a transaction — no half-sorted state</span></li>
+                  <li><i class="bi bi-check-circle-fill"></i><span>Folders: delete now warns when sub-folders will also be removed</span></li>
+                  <li><i class="bi bi-check-circle-fill"></i><span>Folders: name/icon/gradient validated; server errors no longer leak details</span></li>
+                  <li><i class="bi bi-check-circle-fill"></i><span>Folders: sub-folder list parent-id bug fixed</span></li>
                 </ul>
               </div>
               <h3>35+ fixes under the hood</h3>
@@ -3286,7 +3363,7 @@
     //   • "Don't show again" opts out permanently.
     // Bumping VERSION (e.g. v9_0_0 → v9_1_0) RESETS first-seen / opt-out /
     // session-shown for every browser, so the wizard resurfaces fresh.
-    const VERSION       = 'v11_0_0';
+    const VERSION       = 'v11_0_1';
     const OPT_OUT_KEY   = 'whatsNew_' + VERSION + '_optOut';     // permanent
     const FIRST_SEEN_KEY= 'whatsNew_' + VERSION + '_firstSeen';  // ms epoch
     const SESSION_KEY   = 'whatsNew_' + VERSION + '_shownSession';

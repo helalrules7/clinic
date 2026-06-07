@@ -1114,15 +1114,8 @@ class ApiController
                         AND te.event_summary LIKE '%New patient registered%' 
                         ORDER BY te.created_at ASC 
                         LIMIT 1) as created_by_doctor_id,
-                       (SELECT d.display_name
-                        FROM timeline_events te
-                        LEFT JOIN users u ON te.actor_user_id = u.id
-                        LEFT JOIN doctors d ON u.id = d.user_id
-                        WHERE te.patient_id = p.id
-                        AND te.event_type = 'Booking'
-                        AND te.event_summary LIKE '%New patient registered%'
-                        ORDER BY te.created_at ASC
-                        LIMIT 1) as created_by_doctor_name,
+                       (SELECT d.display_name FROM doctors d
+                        WHERE d.id = p.created_by_doctor_id LIMIT 1) as created_by_doctor_name,
                        last_clinic.id   as last_clinic_id,
                        last_clinic.code as last_clinic_code,
                        last_clinic.name_ar as last_clinic_name_ar,
@@ -14947,17 +14940,17 @@ class ApiController
 
             // Get system folders (grouped by treating doctor)
             // System folders are computed dynamically
+            // D (2026-06-07): system-folder membership now comes from the real
+            // patients.created_by_doctor_id column (backfilled from the old
+            // timeline_events LIKE match) — deterministic + indexable.
             $systemFoldersStmt = $this->pdo->prepare("
                 SELECT d.id as doctor_id,
                        d.display_name as doctor_name,
                        u.profile_image,
-                       COUNT(DISTINCT p.id) as patient_count
+                       COUNT(p.id) as patient_count
                 FROM doctors d
                 LEFT JOIN users u ON d.user_id = u.id
-                LEFT JOIN timeline_events te ON te.actor_user_id = d.user_id 
-                    AND te.event_type = 'Booking' 
-                    AND te.event_summary LIKE '%New patient registered%'
-                LEFT JOIN patients p ON te.patient_id = p.id
+                LEFT JOIN patients p ON p.created_by_doctor_id = d.id
                 WHERE d.id IS NOT NULL
                 GROUP BY d.id, d.display_name, u.profile_image
                 HAVING patient_count > 0
@@ -15106,6 +15099,56 @@ class ApiController
      * POST /api/patient-folders
      * Create a new custom folder
      */
+    /**
+     * D5 (2026-06-07): curated, readable folder gradient presets. These are the
+     * ONLY gradient values the server accepts on write — closing the free-text
+     * `gradient_color` stored-XSS (P2). The client picker offers exactly these
+     * strings; `renderFolderCard` also re-validates at render time.
+     */
+    private function folderGradientPresets()
+    {
+        return [
+            'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)', // indigo → violet
+            'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)', // indigo → purple
+            'linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%)', // sky → blue
+            'linear-gradient(135deg, #0891b2 0%, #0e7490 100%)', // cyan
+            'linear-gradient(135deg, #10b981 0%, #059669 100%)', // emerald
+            'linear-gradient(135deg, #14b8a6 0%, #0d9488 100%)', // teal
+            'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', // amber
+            'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)', // orange
+            'linear-gradient(135deg, #f43f5e 0%, #be123c 100%)', // rose
+            'linear-gradient(135deg, #ec4899 0%, #be185d 100%)', // pink
+            'linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%)', // violet
+            'linear-gradient(135deg, #475569 0%, #1e293b 100%)', // slate
+            'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)', // legacy default (kept valid)
+        ];
+    }
+
+    /**
+     * Validate a folder gradient against the curated allow-list.
+     * @return string|null|false  string=valid, null=not provided, false=invalid
+     */
+    private function sanitizeFolderGradient($g)
+    {
+        $g = trim((string)$g);
+        if ($g === '') {
+            return null;
+        }
+        return in_array($g, $this->folderGradientPresets(), true) ? $g : false;
+    }
+
+    /**
+     * Validate a Bootstrap icon class (bi-*). Returns string|null|false as above.
+     */
+    private function sanitizeFolderIcon($i)
+    {
+        $i = trim((string)$i);
+        if ($i === '') {
+            return null;
+        }
+        return preg_match('/^bi-[a-z0-9-]{1,40}$/', $i) ? $i : false;
+    }
+
     public function createPatientFolder()
     {
         try {
@@ -15122,8 +15165,11 @@ class ApiController
             $parentId = isset($data['parent_id']) ? $data['parent_id'] : null;
             $parentType = trim($data['parent_type'] ?? '');
 
-            if (empty($name)) {
+            if ($name === '') {
                 return $this->jsonResponse(['error' => 'Folder name is required'], 400);
+            }
+            if (mb_strlen($name) > 120) {
+                return $this->jsonResponse(['error' => 'Folder name must be 120 characters or fewer'], 422);
             }
 
             // If doctor_id is provided, ensure it matches current doctor (for private folders)
@@ -15201,7 +15247,8 @@ class ApiController
             ]);
 
         } catch (\Exception $e) {
-            return $this->jsonResponse(['error' => $e->getMessage()], 500);
+            error_log('FolderAPI createPatientFolder: ' . $e->getMessage());
+            return $this->jsonResponse(['error' => 'Server error'], 500);
         }
     }
 
@@ -15282,8 +15329,8 @@ class ApiController
                     'gradient_color' => $sf['gradient_color'] ?? 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
                     'created_at' => $sf['created_at'],
                     'updated_at' => $sf['updated_at'],
-                    'parent_id' => $sf['parent_id'] ?? $id, // Current folder is the parent
-                    'parent_type' => $sf['parent_type'] ?? ($folder['parent_type'] ?? 'custom')
+                    'parent_id' => $sf['parent_id'] ?? $parentId, // Current folder is the parent
+                    'parent_type' => $sf['parent_type'] ?? $parentType
                 ];
             }
 
@@ -15293,7 +15340,8 @@ class ApiController
             ]);
 
         } catch (\Exception $e) {
-            return $this->jsonResponse(['error' => $e->getMessage()], 500);
+            error_log('FolderAPI getSubFolders: ' . $e->getMessage());
+            return $this->jsonResponse(['error' => 'Server error'], 500);
         }
     }
 
@@ -15321,16 +15369,11 @@ class ApiController
                 return $this->jsonResponse(['error' => 'Invalid sort type'], 400);
             }
 
-            // Get all patients for this system folder
+            // Get all patients for this system folder (D: via created_by_doctor_id)
             $patientsStmt = $this->pdo->prepare("
-                SELECT DISTINCT p.*
+                SELECT p.*
                 FROM patients p
-                INNER JOIN timeline_events te ON te.patient_id = p.id
-                INNER JOIN users u ON te.actor_user_id = u.id
-                INNER JOIN doctors d ON u.id = d.user_id
-                WHERE d.id = ?
-                AND te.event_type = 'Booking'
-                AND te.event_summary LIKE '%New patient registered%'
+                WHERE p.created_by_doctor_id = ?
                 ORDER BY p.first_name, p.last_name
             ");
             $patientsStmt->execute([$systemDoctorId]);
@@ -15338,6 +15381,10 @@ class ApiController
 
             $subFoldersCreated = [];
             $patientsDistributed = 0;
+
+            // D7 (2026-06-07): wrap the multi-write distribution in a transaction
+            // so a mid-loop failure can't leave a half-sorted state.
+            $this->pdo->beginTransaction();
 
             if ($sortType === 'by_date_created') {
                 // Group by Year - Month
@@ -15409,15 +15456,23 @@ class ApiController
                 $withVisits = [];
                 $withoutVisits = [];
 
-                foreach ($patients as $patient) {
-                    // Check if patient has appointments
-                    $visitsStmt = $this->pdo->prepare("
-                        SELECT COUNT(*) FROM appointments WHERE patient_id = ?
-                    ");
-                    $visitsStmt->execute([$patient['id']]);
-                    $visitCount = $visitsStmt->fetchColumn();
+                // P15 (2026-06-07): one grouped query for "who has appointments"
+                // instead of a COUNT query per patient (was O(N) round-trips).
+                $visitedIds = [];
+                $patientIds = array_map(function ($p) { return (int)$p['id']; }, $patients);
+                if (!empty($patientIds)) {
+                    $ph = implode(',', array_fill(0, count($patientIds), '?'));
+                    $visitsStmt = $this->pdo->prepare(
+                        "SELECT DISTINCT patient_id FROM appointments WHERE patient_id IN ($ph)"
+                    );
+                    $visitsStmt->execute($patientIds);
+                    foreach ($visitsStmt->fetchAll(\PDO::FETCH_COLUMN) as $vid) {
+                        $visitedIds[(int)$vid] = true;
+                    }
+                }
 
-                    if ($visitCount > 0) {
+                foreach ($patients as $patient) {
+                    if (isset($visitedIds[(int)$patient['id']])) {
                         $withVisits[] = $patient;
                     } else {
                         $withoutVisits[] = $patient;
@@ -15519,6 +15574,8 @@ class ApiController
                 }
             }
 
+            $this->pdo->commit();
+
             return $this->jsonResponse([
                 'ok' => true,
                 'message' => 'Patients sorted successfully',
@@ -15527,7 +15584,11 @@ class ApiController
             ]);
 
         } catch (\Exception $e) {
-            return $this->jsonResponse(['error' => $e->getMessage()], 500);
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+            error_log('FolderAPI quickSortSystemFolder: ' . $e->getMessage());
+            return $this->jsonResponse(['error' => 'Server error'], 500);
         }
     }
 
@@ -15577,21 +15638,48 @@ class ApiController
             $updateFields = [];
             $updateValues = [];
             
-            if (!empty($name)) {
+            if ($name !== '') {
+                if (mb_strlen($name) > 120) {
+                    return $this->jsonResponse(['error' => 'Folder name must be 120 characters or fewer'], 422);
+                }
                 $updateFields[] = "name = ?";
                 $updateValues[] = $name;
             }
-            
-            if (!empty($icon)) {
+
+            // D5 (2026-06-07): icon + gradient validated against allow-lists —
+            // closes the free-text gradient_color stored-XSS (P2).
+            $iconV = $this->sanitizeFolderIcon($icon);
+            if ($iconV === false) {
+                return $this->jsonResponse(['error' => 'Invalid icon'], 422);
+            }
+            if ($iconV !== null) {
                 $updateFields[] = "icon = ?";
-                $updateValues[] = $icon;
+                $updateValues[] = $iconV;
             }
-            
-            if (!empty($gradientColor)) {
+
+            $gradientV = $this->sanitizeFolderGradient($gradientColor);
+            if ($gradientV === false) {
+                return $this->jsonResponse(['error' => 'Invalid gradient'], 422);
+            }
+            if ($gradientV !== null) {
                 $updateFields[] = "gradient_color = ?";
-                $updateValues[] = $gradientColor;
+                $updateValues[] = $gradientV;
             }
-            
+
+            // 2026-06-07: folder MOVE (re-parent). parent_id null = move to top
+            // level; a numeric id nests it under that custom folder. We refuse
+            // self-parenting (a folder cannot be its own parent).
+            if (array_key_exists('parent_id', $data)) {
+                $newParent = ($data['parent_id'] === null || $data['parent_id'] === '') ? null : (int)$data['parent_id'];
+                if ($newParent !== null && $newParent === (int)$id) {
+                    return $this->jsonResponse(['error' => 'A folder cannot be moved into itself'], 422);
+                }
+                $updateFields[] = "parent_id = ?";
+                $updateValues[] = $newParent;
+                $updateFields[] = "parent_type = ?";
+                $updateValues[] = $newParent === null ? null : 'custom';
+            }
+
             if (empty($updateFields)) {
                 return $this->jsonResponse(['error' => 'No fields to update'], 400);
             }
@@ -15612,7 +15700,8 @@ class ApiController
             ]);
 
         } catch (\Exception $e) {
-            return $this->jsonResponse(['error' => $e->getMessage()], 500);
+            error_log('FolderAPI updatePatientFolder: ' . $e->getMessage());
+            return $this->jsonResponse(['error' => 'Server error'], 500);
         }
     }
 
@@ -15642,9 +15731,12 @@ class ApiController
                 return $this->jsonResponse(['error' => 'Folder not found'], 404);
             }
 
-            // No permission check - all doctors can access all folders
+            // D1 (2026-06-07): folders are a shared clinic workspace by design —
+            // any authenticated doctor may act on any folder. Intentionally no
+            // per-folder ownership gate. (Sub-folders cascade-delete; the client
+            // confirmation warns about nested loss — see D8.)
 
-            // Delete folder (CASCADE will delete patient mappings)
+            // Delete folder (CASCADE will delete patient mappings + sub-folders)
             $stmt = $this->pdo->prepare("DELETE FROM patient_folders WHERE id = ?");
             $stmt->execute([$id]);
 
@@ -15654,7 +15746,8 @@ class ApiController
             ]);
 
         } catch (\Exception $e) {
-            return $this->jsonResponse(['error' => $e->getMessage()], 500);
+            error_log('FolderAPI deletePatientFolder: ' . $e->getMessage());
+            return $this->jsonResponse(['error' => 'Server error'], 500);
         }
     }
 
@@ -15664,20 +15757,24 @@ class ApiController
      */
     public function bulkDeletePatientFolders()
     {
-        error_log("bulkDeletePatientFolders: Function called");
         try {
             if (!$this->auth->check()) {
-                error_log("bulkDeletePatientFolders: Unauthorized");
                 return $this->jsonResponse(['error' => 'Unauthorized'], 401);
             }
 
             $input = json_decode(file_get_contents('php://input'), true);
             $folderIds = $input['folder_ids'] ?? [];
-            
-            error_log("bulkDeletePatientFolders: Received folder_ids: " . json_encode($folderIds));
 
             if (empty($folderIds) || !is_array($folderIds)) {
                 return $this->jsonResponse(['error' => 'No folder IDs provided'], 400);
+            }
+
+            // Coerce to positive ints (only custom folders have numeric ids).
+            $folderIds = array_values(array_unique(array_filter(array_map('intval', $folderIds), function ($v) {
+                return $v > 0;
+            })));
+            if (empty($folderIds)) {
+                return $this->jsonResponse(['error' => 'No valid folder IDs provided'], 400);
             }
 
             // Validate all folder IDs exist
@@ -15701,7 +15798,8 @@ class ApiController
             ]);
 
         } catch (\Exception $e) {
-            return $this->jsonResponse(['error' => $e->getMessage()], 500);
+            error_log('FolderAPI bulkDeletePatientFolders: ' . $e->getMessage());
+            return $this->jsonResponse(['error' => 'Server error'], 500);
         }
     }
 
@@ -15738,7 +15836,7 @@ class ApiController
                 return $this->jsonResponse(['error' => 'Folder not found'], 404);
             }
 
-            // No permission check - all doctors can access all folders
+            // D1 (2026-06-07): shared clinic workspace — no per-folder ownership gate.
 
             // Check if patient exists
             $patientStmt = $this->pdo->prepare("SELECT id FROM patients WHERE id = ?");
@@ -15747,45 +15845,25 @@ class ApiController
                 return $this->jsonResponse(['error' => 'Patient not found'], 404);
             }
 
-            // Check if this is a "move" operation (remove from all other folders first)
-            $isMove = $data['move'] ?? false;
-            
-            if ($isMove) {
-                // Remove patient from all folders first
-                $removeStmt = $this->pdo->prepare("
-                    DELETE FROM patient_folder_patients 
-                    WHERE patient_id = ?
-                ");
-                $removeStmt->execute([$patientId]);
-            } else {
-                // Check if already in folder
-                $existsStmt = $this->pdo->prepare("
-                    SELECT folder_id FROM patient_folder_patients 
-                    WHERE folder_id = ? AND patient_id = ?
-                ");
-                $existsStmt->execute([$id, $patientId]);
-                if ($existsStmt->fetch()) {
-                    return $this->jsonResponse([
-                        'ok' => true,
-                        'message' => 'Patient already in folder'
-                    ]);
-                }
-            }
-
-            // Add patient to folder
+            // D12 (2026-06-07): "move" is now "add to folder" (copy). A patient may
+            // belong to multiple folders; we NEVER strip them from other folders
+            // (the old move=true did an unscoped DELETE — removed here). INSERT
+            // IGNORE is idempotent against PK (folder_id, patient_id).
             $stmt = $this->pdo->prepare("
-                INSERT INTO patient_folder_patients (folder_id, patient_id)
+                INSERT IGNORE INTO patient_folder_patients (folder_id, patient_id)
                 VALUES (?, ?)
             ");
             $stmt->execute([$id, $patientId]);
+            $alreadyIn = $stmt->rowCount() === 0;
 
             return $this->jsonResponse([
                 'ok' => true,
-                'message' => 'Patient added to folder successfully'
+                'message' => $alreadyIn ? 'Patient already in folder' : 'Patient added to folder successfully'
             ]);
 
         } catch (\Exception $e) {
-            return $this->jsonResponse(['error' => $e->getMessage()], 500);
+            error_log('FolderAPI addPatientToFolder: ' . $e->getMessage());
+            return $this->jsonResponse(['error' => 'Server error'], 500);
         }
     }
 
@@ -15820,11 +15898,11 @@ class ApiController
                 return $this->jsonResponse(['error' => 'Folder not found'], 404);
             }
 
-            // No permission check - all doctors can access all folders
+            // D1 (2026-06-07): shared clinic workspace — no per-folder ownership gate.
 
             // Remove patient from folder
             $stmt = $this->pdo->prepare("
-                DELETE FROM patient_folder_patients 
+                DELETE FROM patient_folder_patients
                 WHERE folder_id = ? AND patient_id = ?
             ");
             $stmt->execute([$id, $patientId]);
@@ -15835,7 +15913,8 @@ class ApiController
             ]);
 
         } catch (\Exception $e) {
-            return $this->jsonResponse(['error' => $e->getMessage()], 500);
+            error_log('FolderAPI removePatientFromFolder: ' . $e->getMessage());
+            return $this->jsonResponse(['error' => 'Server error'], 500);
         }
     }
 
@@ -15884,15 +15963,8 @@ class ApiController
                                           ELSE '0000-00-00 00:00:00' END DESC,
                                      pa.created_at DESC
                             LIMIT 1) as latest_attachment_id,
-                           (SELECT d.display_name
-                            FROM timeline_events te2
-                            LEFT JOIN users u2 ON te2.actor_user_id = u2.id
-                            LEFT JOIN doctors d ON u2.id = d.user_id
-                            WHERE te2.patient_id = p.id
-                            AND te2.event_type = 'Booking'
-                            AND te2.event_summary LIKE '%New patient registered%'
-                            ORDER BY te2.created_at ASC
-                            LIMIT 1) as created_by_doctor_name,
+                           (SELECT d.display_name FROM doctors d
+                            WHERE d.id = p.created_by_doctor_id LIMIT 1) as created_by_doctor_name,
                            last_clinic.id   as last_clinic_id,
                            last_clinic.code as last_clinic_code,
                            last_clinic.name_ar as last_clinic_name_ar,
@@ -15978,23 +16050,13 @@ class ApiController
                                 END DESC,
                                 pa.created_at DESC 
                             LIMIT 1) as latest_attachment_id,
-                           (SELECT d.display_name
-                            FROM timeline_events te2
-                            LEFT JOIN users u2 ON te2.actor_user_id = u2.id
-                            LEFT JOIN doctors d ON u2.id = d.user_id
-                            WHERE te2.patient_id = p.id
-                            AND te2.event_type = 'Booking'
-                            AND te2.event_summary LIKE '%New patient registered%'
-                            ORDER BY te2.created_at ASC
-                            LIMIT 1) as created_by_doctor_name,
+                           (SELECT d.display_name FROM doctors d
+                            WHERE d.id = p.created_by_doctor_id LIMIT 1) as created_by_doctor_name,
                            last_clinic.id   as last_clinic_id,
                            last_clinic.code as last_clinic_code,
                            last_clinic.name_ar as last_clinic_name_ar,
                            last_clinic.name_en as last_clinic_name_en
                     FROM patients p
-                    INNER JOIN timeline_events te ON te.patient_id = p.id
-                    INNER JOIN users u ON te.actor_user_id = u.id
-                    INNER JOIN doctors d ON u.id = d.user_id
                     LEFT JOIN appointments a ON p.id = a.patient_id
                     LEFT JOIN prescriptions pr ON a.id = pr.appointment_id
                     LEFT JOIN glasses_prescriptions gp ON a.id = gp.appointment_id
@@ -16008,9 +16070,7 @@ class ApiController
                         WHERE clinic_id IS NOT NULL
                     ) latest_appt ON latest_appt.patient_id = p.id AND latest_appt.rn = 1
                     LEFT JOIN clinics last_clinic ON last_clinic.id = latest_appt.clinic_id
-                    WHERE d.id = ?
-                    AND te.event_type = 'Booking'
-                    AND te.event_summary LIKE '%New patient registered%'
+                    WHERE p.created_by_doctor_id = ?
                     GROUP BY p.id
                     ORDER BY p.first_name, p.last_name
                 ");
@@ -16086,23 +16146,13 @@ class ApiController
                                 END DESC,
                                 pa.created_at DESC 
                             LIMIT 1) as latest_attachment_id,
-                           (SELECT d.display_name
-                            FROM timeline_events te2
-                            LEFT JOIN users u2 ON te2.actor_user_id = u2.id
-                            LEFT JOIN doctors d ON u2.id = d.user_id
-                            WHERE te2.patient_id = p.id
-                            AND te2.event_type = 'Booking'
-                            AND te2.event_summary LIKE '%New patient registered%'
-                            ORDER BY te2.created_at ASC
-                            LIMIT 1) as created_by_doctor_name,
+                           (SELECT d.display_name FROM doctors d
+                            WHERE d.id = p.created_by_doctor_id LIMIT 1) as created_by_doctor_name,
                            last_clinic.id   as last_clinic_id,
                            last_clinic.code as last_clinic_code,
                            last_clinic.name_ar as last_clinic_name_ar,
                            last_clinic.name_en as last_clinic_name_en
                     FROM patients p
-                    INNER JOIN timeline_events te ON te.patient_id = p.id
-                    INNER JOIN users u ON te.actor_user_id = u.id
-                    INNER JOIN doctors d ON u.id = d.user_id
                     LEFT JOIN appointments a ON p.id = a.patient_id
                     LEFT JOIN prescriptions pr ON a.id = pr.appointment_id
                     LEFT JOIN glasses_prescriptions gp ON a.id = gp.appointment_id
@@ -16116,9 +16166,7 @@ class ApiController
                         WHERE clinic_id IS NOT NULL
                     ) latest_appt ON latest_appt.patient_id = p.id AND latest_appt.rn = 1
                     LEFT JOIN clinics last_clinic ON last_clinic.id = latest_appt.clinic_id
-                    WHERE d.id = ?
-                    AND te.event_type = 'Booking'
-                    AND te.event_summary LIKE '%New patient registered%'
+                    WHERE p.created_by_doctor_id = ?
                     AND NOT EXISTS (
                         SELECT 1 FROM patient_folder_patients pfp
                         INNER JOIN patient_folders pf ON pfp.folder_id = pf.id
@@ -16205,15 +16253,8 @@ class ApiController
                             END DESC,
                             pa.created_at DESC 
                         LIMIT 1) as latest_attachment_id,
-                       (SELECT d.display_name
-                        FROM timeline_events te
-                        LEFT JOIN users u ON te.actor_user_id = u.id
-                        LEFT JOIN doctors d ON u.id = d.user_id
-                        WHERE te.patient_id = p.id
-                        AND te.event_type = 'Booking'
-                        AND te.event_summary LIKE '%New patient registered%'
-                        ORDER BY te.created_at ASC
-                        LIMIT 1) as created_by_doctor_name,
+                       (SELECT d.display_name FROM doctors d
+                        WHERE d.id = p.created_by_doctor_id LIMIT 1) as created_by_doctor_name,
                        last_clinic.id   as last_clinic_id,
                        last_clinic.code as last_clinic_code,
                        last_clinic.name_ar as last_clinic_name_ar,
