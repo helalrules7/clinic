@@ -469,6 +469,7 @@ $patientTrendDeltas = $patientTrendDeltas ?? ['total' => 0, 'active' => 0, 'new'
 <div id="secCardsView" class="sec-view-pane" style="display:none"></div>
 <div id="secFoldersView" class="sec-view-pane" style="display:none"></div>
 <script src="/app/Views/secretary/assets/js/sec-mini-stats.js?v=<?= file_exists(__DIR__ . '/assets/js/sec-mini-stats.js') ? filemtime(__DIR__ . '/assets/js/sec-mini-stats.js') : time() ?>"></script>
+<script src="/app/Views/secretary/assets/js/sec-clinic-chip.js?v=<?= file_exists(__DIR__ . '/assets/js/sec-clinic-chip.js') ? filemtime(__DIR__ . '/assets/js/sec-clinic-chip.js') : time() ?>"></script>
 <script src="/app/Views/secretary/assets/js/secretary-patients.js?v=<?= file_exists(__DIR__ . '/assets/js/secretary-patients.js') ? filemtime(__DIR__ . '/assets/js/secretary-patients.js') : time() ?>"></script>
 
 <!-- Search Modal -->
@@ -572,9 +573,9 @@ $patientTrendDeltas = $patientTrendDeltas ?? ['total' => 0, 'active' => 0, 'new'
                     <!-- Success/Error Messages -->
                     <div id="addPatientMessage" class="alert d-none" role="alert"></div>
                     
-                    <div class="row">
+                    <div class="row add-patient-form-row">
                         <!-- Basic Information -->
-                        <div class="col-md-6">
+                        <div class="col-md-6 add-patient-col">
                             <h6 class="text-primary mb-3 arabic-text">
                                 <i class="bi bi-person me-1"></i>
                                 المعلومات الأساسية
@@ -603,10 +604,41 @@ $patientTrendDeltas = $patientTrendDeltas ?? ['total' => 0, 'active' => 0, 'new'
                                 <input type="date" class="form-control" id="dob" name="dob">
                                 <div class="form-text arabic-text">تاريخ ميلاد المريض (إذا ترك فارغاً سيتم استخدام تاريخ اليوم)</div>
                             </div>
+
+                            <div class="mb-3">
+                                <label for="gender" class="form-label arabic-text">الجنس <span class="text-danger">*</span></label>
+                                <select class="form-select" id="gender" name="gender" required>
+                                    <option value="Male" class="arabic-text">ذكر</option>
+                                    <option value="Female" class="arabic-text">أنثى</option>
+                                </select>
+                                <div class="invalid-feedback"></div>
+                                <div class="form-text text-danger arabic-text"><strong>مطلوب:</strong> غير الجنس إذا لزم الأمر</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="patientClinic" class="form-label arabic-text">العيادة <span class="text-danger">*</span></label>
+                                <div class="input-group clinic-input-group" style="--clinic-color: <?= $__v0['color'] ?>;">
+                                    <span class="input-group-text clinic-icon-chip" id="patientClinicIcon" aria-hidden="true">
+                                        <i class="bi <?= $__v0['icon'] ?>"></i>
+                                    </span>
+                                    <select class="form-select arabic-text" id="patientClinic" name="clinic_id" required
+                                            <?php if (count($__calClinics) === 1): ?> aria-readonly="true" tabindex="-1" style="pointer-events:none;background-color:#f1f5f9;" <?php endif; ?>>
+                                        <?php if (count($__calClinics) !== 1): ?>
+                                            <option value="">اختر العيادة...</option>
+                                        <?php endif; ?>
+                                        <?php foreach ($__calClinics as $__c): ?>
+                                            <option value="<?= (int)$__c['id'] ?>"
+                                                    data-clinic-code="<?= htmlspecialchars($__c['code']) ?>"
+                                                    <?= count($__calClinics) === 1 ? 'selected' : '' ?>><?= htmlspecialchars($__c['name_ar'] ?: $__c['name_en']) ?></option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
+                                <div class="invalid-feedback"></div>
+                            </div>
                         </div>
                         
                         <!-- Contact Information -->
-                        <div class="col-md-6">
+                        <div class="col-md-6 add-patient-col">
                             <h6 class="text-primary mb-3 arabic-text">
                                 <i class="bi bi-telephone me-1"></i>
                                 معلومات الاتصال
@@ -631,41 +663,10 @@ $patientTrendDeltas = $patientTrendDeltas ?? ['total' => 0, 'active' => 0, 'new'
                                 <div class="form-text arabic-text">الرقم القومي (اختياري)</div>
                             </div>
                             
-                            <div class="mb-3">
+                            <div class="mb-0 add-patient-address-field">
                                 <label for="address" class="form-label arabic-text">العنوان</label>
-                                <textarea class="form-control" id="address" name="address" rows="3" maxlength="500"></textarea>
+                                <textarea class="form-control add-patient-address-input" id="address" name="address" rows="3" maxlength="500"></textarea>
                                 <div class="form-text arabic-text">عنوان المنزل (اختياري)</div>
-                            </div>
-                            
-                            <div class="mb-3">
-                                <label for="gender" class="form-label arabic-text">الجنس <span class="text-danger">*</span></label>
-                                <select class="form-select" id="gender" name="gender" required>
-                                    <option value="Male" class="arabic-text">ذكر</option>
-                                    <option value="Female" class="arabic-text">أنثى</option>
-                                </select>
-                                <div class="invalid-feedback"></div>
-                                <div class="form-text text-danger arabic-text"><strong>مطلوب:</strong> غير الجنس إذا لزم الأمر</div>
-                            </div>
-
-                            <div class="mb-3">
-                                <label for="patientClinic" class="form-label arabic-text">العيادة <span class="text-danger">*</span></label>
-                                <div class="input-group clinic-input-group">
-                                    <span class="input-group-text" id="patientClinicIcon" style="color: <?= $__v0['color'] ?>; background: rgba(0,0,0,0.02); min-width: 44px; justify-content: center;">
-                                        <i class="bi <?= $__v0['icon'] ?> fs-5"></i>
-                                    </span>
-                                    <select class="form-select arabic-text" id="patientClinic" name="clinic_id" required
-                                            <?php if (count($__calClinics) === 1): ?> aria-readonly="true" tabindex="-1" style="pointer-events:none;background-color:#f1f5f9;" <?php endif; ?>>
-                                        <?php if (count($__calClinics) !== 1): ?>
-                                            <option value="">اختر العيادة...</option>
-                                        <?php endif; ?>
-                                        <?php foreach ($__calClinics as $__c): ?>
-                                            <option value="<?= (int)$__c['id'] ?>"
-                                                    data-clinic-code="<?= htmlspecialchars($__c['code']) ?>"
-                                                    <?= count($__calClinics) === 1 ? 'selected' : '' ?>><?= htmlspecialchars($__c['name_ar'] ?: $__c['name_en']) ?></option>
-                                        <?php endforeach; ?>
-                                    </select>
-                                </div>
-                                <div class="invalid-feedback"></div>
                             </div>
                         </div>
                     </div>
@@ -1637,6 +1638,9 @@ function filterPatientsTable() {
 
 document.addEventListener('DOMContentLoaded', function() {
     initializeAddPatientModal();
+    if (typeof window.bindClinicIconSync === 'function') {
+        window.bindClinicIconSync('patientClinic', 'patientClinicIcon');
+    }
     initializePhoneTooltips();
     addSortFunctionality();
     
@@ -1837,11 +1841,7 @@ document.addEventListener('DOMContentLoaded', function() {
 <link href="/app/Views/doctor/assets/css/patients.css?v=<?= file_exists(__DIR__ . '/../../doctor/assets/css/patients.css') ? filemtime(__DIR__ . '/../../doctor/assets/css/patients.css') : time() ?>" rel="stylesheet">
 
 <style>
-/* RTL specific adjustments */
-.me-2 { margin-left: 0.5rem !important; margin-right: 0 !important; }
-.me-3 { margin-left: 1rem !important; margin-right: 0 !important; }
-.ms-2 { margin-right: 0.5rem !important; margin-left: 0 !important; }
-.ms-3 { margin-right: 1rem !important; margin-left: 0 !important; }
+/* RTL — icon spacing: sec-style.css §secretary icon spacing */
 .text-start { text-align: right !important; }
 .text-end { text-align: left !important; }
 .justify-content-start { justify-content: flex-end !important; }
@@ -3999,20 +3999,14 @@ color: var(--text) !important;
         margin-right: 0.25rem !important;
     }
 
-/* Modal z-index and centering */
+/* Modal centering — backdrop/z-index: sec-style.css + modal-kit.css */
 .modal {
-    z-index: 1000002 !important;
     align-items: center;
     justify-content: center;
     padding: 1rem !important;
 }
 
-.modal-backdrop {
-    z-index: 1000000 !important;
-}
-
 .modal-dialog {
-    z-index: 1000002 !important;
     margin: 0 auto;
     max-width: 500px;
 }

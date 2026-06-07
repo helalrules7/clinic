@@ -464,10 +464,7 @@
     text-align: right;
 }
 
-.me-2 { margin-left: 0.5rem !important; margin-right: 0 !important; }
-.me-3 { margin-left: 1rem !important; margin-right: 0 !important; }
-.ms-2 { margin-right: 0.5rem !important; margin-left: 0 !important; }
-.ms-3 { margin-right: 1rem !important; margin-left: 0 !important; }
+/* RTL icon spacing — sec-style.css §secretary icon spacing */
 .text-start { text-align: right !important; }
 .text-end { text-align: left !important; }
 

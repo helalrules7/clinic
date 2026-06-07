@@ -570,20 +570,14 @@ label {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
-/* Modal z-index and centering */
+/* Modal centering — backdrop/z-index: sec-style.css + modal-kit.css */
 .modal {
-    z-index: 1000002 !important;
     align-items: center;
     justify-content: center;
     padding: 1rem !important;
 }
 
-.modal-backdrop {
-    z-index: 1000000 !important;
-}
-
 .modal-dialog {
-    z-index: 1000002 !important;
     margin: 0 auto;
     max-width: 500px;
 }

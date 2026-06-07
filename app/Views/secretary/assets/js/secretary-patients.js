@@ -51,6 +51,85 @@
         try { console.log('[secPatients]', msg); } catch (e) {}
     }
 
+    // ----- modals (replace window.prompt / window.confirm) -----------------
+    function buildModal(bodyHtml, footerHtml) {
+        var wrap = document.createElement('div');
+        wrap.className = 'modal fade sec-modal';
+        wrap.setAttribute('tabindex', '-1');
+        wrap.setAttribute('dir', 'rtl');
+        wrap.innerHTML =
+            '<div class="modal-dialog modal-dialog-centered"><div class="modal-content">' +
+                bodyHtml + '<div class="modal-footer">' + footerHtml + '</div>' +
+            '</div></div>';
+        document.body.appendChild(wrap);
+        var bs = (window.bootstrap && bootstrap.Modal) ? new bootstrap.Modal(wrap) : null;
+        wrap.addEventListener('hidden.bs.modal', function () { wrap.remove(); });
+        return { el: wrap, show: function () { if (bs) bs.show(); else wrap.style.display = 'block'; },
+                 hide: function () { if (bs) bs.hide(); else wrap.remove(); } };
+    }
+    function head(title) {
+        return '<div class="modal-header"><h5 class="modal-title arabic-text">' + esc(title) + '</h5>' +
+            '<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="إغلاق"></button></div>';
+    }
+    function secPrompt(o) {
+        o = o || {};
+        return new Promise(function (resolve) {
+            var m = buildModal(
+                head(o.title || '') +
+                '<div class="modal-body"><label class="form-label arabic-text">' + esc(o.label || '') + '</label>' +
+                '<input type="text" class="form-control sec-modal-input" value="' + esc(o.value || '') + '" placeholder="' + esc(o.placeholder || '') + '"></div>',
+                '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>' +
+                '<button type="button" class="btn btn-primary sec-modal-ok">' + esc(o.confirmText || 'حفظ') + '</button>'
+            );
+            var input = m.el.querySelector('.sec-modal-input'), done = false;
+            function ok() { if (done) return; var v = (input.value || '').trim(); done = true; m.hide(); resolve(v || null); }
+            m.el.querySelector('.sec-modal-ok').addEventListener('click', ok);
+            input.addEventListener('keydown', function (e) { if (e.key === 'Enter') ok(); });
+            m.el.addEventListener('hidden.bs.modal', function () { if (!done) resolve(null); });
+            m.show();
+            setTimeout(function () { try { input.focus(); input.select(); } catch (e) {} }, 220);
+        });
+    }
+    function secConfirm(o) {
+        o = o || {};
+        return new Promise(function (resolve) {
+            var m = buildModal(
+                head(o.title || 'تأكيد') +
+                '<div class="modal-body arabic-text">' + esc(o.message || '') + '</div>',
+                '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>' +
+                '<button type="button" class="btn ' + (o.danger ? 'btn-danger' : 'btn-primary') + ' sec-modal-ok">' + esc(o.confirmText || 'تأكيد') + '</button>'
+            );
+            var done = false;
+            m.el.querySelector('.sec-modal-ok').addEventListener('click', function () { done = true; m.hide(); resolve(true); });
+            m.el.addEventListener('hidden.bs.modal', function () { if (!done) resolve(false); });
+            m.show();
+        });
+    }
+    function secFolderPick(o) {
+        o = o || {};
+        return new Promise(function (resolve) {
+            var list = state.folders.filter(function (f) { return !o.exclude || String(f.id) !== String(o.exclude); });
+            var rows = list.length ? list.map(function (f) {
+                return '<label class="sec-pick-row"><input type="radio" name="secpick" value="' + f.id + '">' +
+                    '<i class="bi ' + esc(f.icon || 'bi-folder') + '"></i><span>' + esc(f.name) + '</span>' +
+                    '<span class="text-muted">(' + (f.patient_count || 0) + ')</span></label>';
+            }).join('') : '<div class="text-muted arabic-text">لا توجد مجلدات — أنشئ مجلداً أولاً</div>';
+            var m = buildModal(
+                head(o.title || 'اختر مجلداً') + '<div class="modal-body sec-pick-list">' + rows + '</div>',
+                '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>' +
+                '<button type="button" class="btn btn-primary sec-modal-ok">' + esc(o.confirmText || 'تأكيد') + '</button>'
+            );
+            var done = false;
+            m.el.querySelector('.sec-modal-ok').addEventListener('click', function () {
+                var sel = m.el.querySelector('input[name="secpick"]:checked');
+                if (!sel) return;
+                done = true; m.hide(); resolve(parseInt(sel.value, 10));
+            });
+            m.el.addEventListener('hidden.bs.modal', function () { if (!done) resolve(null); });
+            m.show();
+        });
+    }
+
     // Read the page's existing filter inputs into query params.
     function filterParams() {
         var p = new URLSearchParams();
@@ -154,6 +233,7 @@
             foldersView.innerHTML =
                 '<div class="sec-toolbar">' +
                     '<button class="btn btn-sm btn-primary sec-new-folder"><i class="bi bi-folder-plus me-1"></i>مجلد جديد</button>' +
+                    '<button class="btn btn-sm btn-outline-primary sec-auto-month"><i class="bi bi-calendar-month me-1"></i>تنظيم تلقائي بالشهور</button>' +
                     '<span class="text-muted arabic-text">' + state.folders.length + ' مجلد · ' + ((res && res.total_patients) || 0) + ' مريض</span>' +
                 '</div>' +
                 (state.folders.length
@@ -198,24 +278,19 @@
     }
 
     // ----- folder operations ----------------------------------------------
-    function promptFolderPicker(title, cb) {
-        var opts = state.folders.map(function (f) { return '<option value="' + f.id + '">' + esc(f.name) + '</option>'; }).join('');
-        var sel = window.prompt(title + '\n' + state.folders.map(function (f) { return f.id + ': ' + f.name; }).join('\n') + '\n\nاكتب رقم المجلد:');
-        if (sel === null) return;
-        var id = parseInt(sel, 10);
-        if (state.folders.some(function (f) { return f.id === id; })) cb(id);
-        else toast('مجلد غير صالح', 'danger');
-    }
-
     function doBulk(mode) {
         var ids = Array.from(state.selection).map(Number);
         if (!ids.length) return;
         if (mode === 'remove') {
-            api('/api/secretary/patient-folders/move', { method: 'POST', body: JSON.stringify({ patient_ids: ids, from: state.folder, mode: 'remove' }) })
-                .then(function () { toast('تمت الإزالة'); openFolder(state.folder, state.folderName); });
+            secConfirm({ title: 'إزالة من المجلد', message: 'إزالة ' + ids.length + ' مريض من هذا المجلد؟ (لن يُحذف المرضى أنفسهم)', confirmText: 'إزالة' }).then(function (ok) {
+                if (!ok) return;
+                api('/api/secretary/patient-folders/move', { method: 'POST', body: JSON.stringify({ patient_ids: ids, from: state.folder, mode: 'remove' }) })
+                    .then(function () { toast('تمت الإزالة'); openFolder(state.folder, state.folderName); });
+            });
             return;
         }
-        promptFolderPicker(mode === 'move' ? 'نقل إلى مجلد' : 'نسخ إلى مجلد', function (to) {
+        secFolderPick({ title: mode === 'move' ? 'نقل إلى مجلد' : 'نسخ إلى مجلد', confirmText: mode === 'move' ? 'نقل' : 'نسخ', exclude: state.folder }).then(function (to) {
+            if (!to) return;
             api('/api/secretary/patient-folders/move', { method: 'POST', body: JSON.stringify({ patient_ids: ids, from: state.folder, to: to, mode: mode }) })
                 .then(function () { toast(mode === 'move' ? 'تم النقل' : 'تم النسخ'); openFolder(state.folder, state.folderName); });
         });
@@ -294,17 +369,36 @@
         var tb = e.target.closest('.sec-tag-btn'); if (tb) { openTagPicker(tb.dataset.id, tb); return; }
         // folders
         if (e.target.closest('.sec-new-folder')) {
-            var name = window.prompt('اسم المجلد الجديد:'); if (!name) return;
-            api('/api/secretary/patient-folders', { method: 'POST', body: JSON.stringify({ name: name }) }).then(function (r) { if (r && r.ok) loadFolders(); else toast((r && r.error) || 'خطأ', 'danger'); });
+            secPrompt({ title: 'مجلد جديد', label: 'اسم المجلد', placeholder: 'مثال: مرضى مميّزون', confirmText: 'إنشاء' }).then(function (name) {
+                if (!name) return;
+                api('/api/secretary/patient-folders', { method: 'POST', body: JSON.stringify({ name: name }) }).then(function (r) { if (r && r.ok) loadFolders(); else toast((r && r.error) || 'خطأ', 'danger'); });
+            });
+            return;
+        }
+        if (e.target.closest('.sec-auto-month')) {
+            secConfirm({ title: 'تنظيم تلقائي بالشهور', message: 'سيتم إنشاء مجلد لكل شهر تسجيل وإضافة المرضى إليه تلقائياً (يمكن تكراره بأمان). متابعة؟', confirmText: 'تنظيم' }).then(function (ok) {
+                if (!ok) return;
+                var btn = document.querySelector('.sec-auto-month');
+                if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>'; }
+                api('/api/secretary/patient-folders/auto-month', { method: 'POST', body: '{}' }).then(function (r) {
+                    if (r && r.ok) toast('تم إنشاء ' + r.folders_created + ' مجلد وتنظيم ' + r.patients_filed + ' مريض');
+                    else toast((r && r.error) || 'خطأ', 'danger');
+                    loadFolders();
+                });
+            });
             return;
         }
         var fdel = e.target.closest('.sec-folder-del'); if (fdel) { e.stopPropagation();
-            if (window.confirm('حذف هذا المجلد؟')) api('/api/secretary/patient-folders/' + fdel.dataset.id, { method: 'DELETE' }).then(loadFolders);
+            secConfirm({ title: 'حذف المجلد', message: 'سيتم حذف هذا المجلد (ومجلداته الفرعية إن وُجدت). لن يُحذف المرضى أنفسهم.', danger: true, confirmText: 'حذف' }).then(function (ok) {
+                if (ok) api('/api/secretary/patient-folders/' + fdel.dataset.id, { method: 'DELETE' }).then(loadFolders);
+            });
             return;
         }
         var fedit = e.target.closest('.sec-folder-edit'); if (fedit) { e.stopPropagation();
-            var nn = window.prompt('إعادة تسمية المجلد:', fedit.dataset.name); if (nn === null || !nn.trim()) return;
-            api('/api/secretary/patient-folders/' + fedit.dataset.id, { method: 'POST', body: JSON.stringify({ name: nn.trim() }) }).then(loadFolders);
+            secPrompt({ title: 'إعادة تسمية المجلد', label: 'الاسم الجديد', value: fedit.dataset.name, confirmText: 'حفظ' }).then(function (nn) {
+                if (!nn) return;
+                api('/api/secretary/patient-folders/' + fedit.dataset.id, { method: 'POST', body: JSON.stringify({ name: nn }) }).then(loadFolders);
+            });
             return;
         }
         var fcard = e.target.closest('.sec-folder-card'); if (fcard) { var f = state.folders.find(function (x) { return String(x.id) === fcard.dataset.id; }); openFolder(fcard.dataset.id, f ? f.name : ''); return; }

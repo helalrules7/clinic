@@ -400,11 +400,11 @@ body {
        a positioned z-index here makes this box a CSS stacking context, which traps
        every Bootstrap modal authored inside the page content at this box's
        effective root-level z-index (1). The body-level .modal-backdrop (z-index
-       1000000) then paints OVER the modal, so close / Esc / every control goes
+       1000002) then paints OVER the modal, so close / Esc / every control goes
        dead — the bug being fixed here. position:relative on its own (z-index:auto)
-       does NOT create a context. The internal modal scheme (backdrop
-       1000000 < sidebar 1000001 < .modal-dialog 1000002) only resolves correctly
-       once this box stops trapping it. */
+       does NOT create a context. The internal modal scheme (sidebar 1000001 <
+       backdrop 1000002 < .modal-dialog 1000003) only resolves correctly once this
+       box stops trapping it. */
     position: relative;
 }
 
@@ -3645,22 +3645,16 @@ body {
             overflow: visible;
         }
 
-/* Modal Backdrop Styles - Ensure backdrop appears behind modals */
-/* Backdrop should be below sidebar (1000001) but above regular content */
+/* Modal Backdrop Styles — full-viewport dim including sidebar + top chrome */
+/* Stack: sidebar 1000001 < backdrop 1000002 < modal 1000003 */
 .modal-backdrop {
     position: fixed;
     top: 0;
     left: 0;
-    z-index: 1000000 !important; /* Below sidebar (1000001) but above content */
+    z-index: 1000002 !important; /* Above sidebar (1000001) — dims entire UI */
     width: 100vw;
     height: 100vh;
-    background-color: rgba(0, 0, 0, 0.5);
-    backdrop-filter: blur(2px);
-    -webkit-backdrop-filter: blur(2px);
-}
-
-.modal-backdrop.show {
-    opacity: 1;
+    background-color: #0b1220;
 }
 
 .modal-backdrop.fade {
@@ -3668,9 +3662,22 @@ body {
     transition: opacity 0.15s linear;
 }
 
-/* Modals should be above sidebar (1000001) */
+/* .fade must not override .show — Bootstrap always adds both classes */
+.modal-backdrop.fade.show {
+    opacity: 0.72;
+}
+
+@supports ((backdrop-filter: blur(2px)) or (-webkit-backdrop-filter: blur(2px))) {
+    .modal-backdrop.fade.show {
+        opacity: 0.82;
+        backdrop-filter: blur(10px) saturate(160%);
+        -webkit-backdrop-filter: blur(10px) saturate(160%);
+    }
+}
+
+/* Modals above backdrop */
 .modal {
-    z-index: 1000002 !important; /* Above sidebar (1000001) */
+    z-index: 1000003 !important;
     position: fixed;
     top: 0;
     left: 0;
@@ -3683,7 +3690,7 @@ body {
 
 .modal.show {
     display: block;
-    z-index: 1000002 !important; /* Ensure it stays above sidebar */
+    z-index: 1000003 !important;
 }
 
 .modal.fade {
@@ -3699,16 +3706,246 @@ body {
     width: auto;
     margin: 0.5rem;
     pointer-events: none;
-    z-index: 1000002 !important; /* Ensure dialog is above backdrop */
+    z-index: 1000003 !important;
 }
 
 .modal.show .modal-dialog {
     pointer-events: auto;
 }
 
+/* Stacked modals (confirm on top of parent modal) */
+.modal-backdrop + .modal-backdrop {
+    z-index: 1000004 !important;
+}
+.modal.show ~ .modal.show {
+    z-index: 1000005 !important;
+}
+
+/* Mobile sidebar uses 1000002 when open — keep it under backdrop while modal is up */
+body.modal-open .sidebar {
+    z-index: 1000001 !important;
+}
+
 /* Dark mode modal backdrop */
 .dark .modal-backdrop {
-    background-color: rgba(0, 0, 0, 0.7);
+    background-color: #020617;
+}
+.dark .modal-backdrop.fade.show {
+    opacity: 0.78;
+}
+@supports ((backdrop-filter: blur(2px)) or (-webkit-backdrop-filter: blur(2px))) {
+    .dark .modal-backdrop.fade.show {
+        opacity: 0.86;
+        backdrop-filter: blur(12px) saturate(150%);
+        -webkit-backdrop-filter: blur(12px) saturate(150%);
+    }
+}
+
+/* =====================================================================
+   Secretary clinic identity chip (add-booking + add-patient modals)
+   ===================================================================== */
+.clinic-input-group {
+    --clinic-color: var(--accent, #10b981);
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid color-mix(in srgb, var(--clinic-color) 32%, #e2e8f0);
+    box-shadow:
+        0 2px 12px color-mix(in srgb, var(--clinic-color) 16%, transparent),
+        inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.clinic-input-group:focus-within {
+    border-color: color-mix(in srgb, var(--clinic-color) 55%, transparent);
+    box-shadow:
+        0 0 0 3px color-mix(in srgb, var(--clinic-color) 22%, transparent),
+        0 4px 16px color-mix(in srgb, var(--clinic-color) 20%, transparent);
+}
+
+.clinic-icon-chip {
+    border: none !important;
+    min-width: 56px !important;
+    padding: 0.65rem 0.75rem !important;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(
+        155deg,
+        color-mix(in srgb, var(--clinic-color) 24%, #fff) 0%,
+        color-mix(in srgb, var(--clinic-color) 10%, #f8fafc) 100%
+    ) !important;
+    position: relative;
+}
+
+.clinic-icon-chip::before {
+    content: '';
+    position: absolute;
+    inset: 6px;
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--clinic-color) 14%, transparent);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+
+.clinic-icon-chip i {
+    position: relative;
+    z-index: 1;
+    font-size: 1.4rem !important;
+    color: var(--clinic-color) !important;
+    filter: drop-shadow(0 2px 6px color-mix(in srgb, var(--clinic-color) 45%, transparent));
+    transition: transform 0.2s ease, filter 0.2s ease;
+}
+
+.clinic-input-group:focus-within .clinic-icon-chip i {
+    transform: scale(1.06);
+}
+
+.clinic-input-group .form-select {
+    border: none;
+    border-inline-start: 1px solid color-mix(in srgb, var(--clinic-color) 18%, #e2e8f0);
+    background: var(--card, #fff);
+    padding: 0.7rem 0.85rem;
+    font-weight: 600;
+    color: color-mix(in srgb, var(--clinic-color) 55%, #1e293b);
+    box-shadow: none;
+}
+
+.clinic-input-group .form-select:focus {
+    box-shadow: none;
+}
+
+.dark .clinic-input-group {
+    border-color: color-mix(in srgb, var(--clinic-color) 40%, #334155);
+}
+
+.dark .clinic-icon-chip {
+    background: linear-gradient(
+        155deg,
+        color-mix(in srgb, var(--clinic-color) 30%, #1e293b) 0%,
+        color-mix(in srgb, var(--clinic-color) 12%, #0f172a) 100%
+    ) !important;
+}
+
+.dark .clinic-input-group .form-select {
+    background: var(--card, #1e293b);
+    color: color-mix(in srgb, var(--clinic-color) 70%, #f1f5f9);
+    border-inline-start-color: color-mix(in srgb, var(--clinic-color) 25%, #475569);
+}
+
+/* Add-patient modal — stretch address to match basic-info column height */
+#addPatientModal .add-patient-form-row {
+    align-items: stretch;
+}
+
+#addPatientModal .add-patient-col {
+    display: flex;
+    flex-direction: column;
+}
+
+#addPatientModal .add-patient-address-field {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    margin-top: 0.25rem;
+}
+
+#addPatientModal .add-patient-address-input {
+    flex: 1 1 auto;
+    min-height: 7.5rem;
+    resize: vertical;
+}
+
+@media (min-width: 768px) {
+    #addPatientModal .add-patient-address-input {
+        min-height: 10.5rem;
+    }
+}
+
+/* Custom field.menu selects — secretary uses span.custom-select-text, not h3.
+   Doctor grid template (icon/name/description) auto-places spans per-word → fix with flex. */
+html[data-layout="secretary"] .field.menu menu li {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    grid-template: none;
+}
+
+html[data-layout="secretary"] .field.menu menu li > .custom-select-text {
+    flex: 1 1 auto;
+    min-width: 0;
+    white-space: nowrap;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text);
+}
+
+html[data-layout="secretary"] .field.menu menu li > i,
+html[data-layout="secretary"] .field.menu menu li > svg {
+    flex-shrink: 0;
+    width: 1.25rem;
+    height: auto;
+}
+
+html[data-layout="secretary"] .field.menu menu li:hover > .custom-select-text,
+html[data-layout="secretary"] .field.menu menu li:focus > .custom-select-text,
+html[data-layout="secretary"] .field.menu menu li.selected > .custom-select-text {
+    color: var(--accent);
+}
+
+html[data-layout="secretary"] .field.menu menu li:hover > i,
+html[data-layout="secretary"] .field.menu menu li:focus > i,
+html[data-layout="secretary"] .field.menu menu li.selected > i {
+    color: var(--accent);
+    opacity: 1;
+}
+
+/* =====================================================================
+   Secretary RTL — icon ↔ text spacing (canonical; replaces per-view hacks)
+   ===================================================================== */
+html[data-layout="secretary"][dir="rtl"] .me-1 { margin-inline-end: 0.35rem !important; margin-inline-start: 0 !important; }
+html[data-layout="secretary"][dir="rtl"] .me-2 { margin-inline-end: 0.5rem !important; margin-inline-start: 0 !important; }
+html[data-layout="secretary"][dir="rtl"] .me-3 { margin-inline-end: 0.75rem !important; margin-inline-start: 0 !important; }
+html[data-layout="secretary"][dir="rtl"] .ms-1 { margin-inline-start: 0.35rem !important; margin-inline-end: 0 !important; }
+html[data-layout="secretary"][dir="rtl"] .ms-2 { margin-inline-start: 0.5rem !important; margin-inline-end: 0 !important; }
+html[data-layout="secretary"][dir="rtl"] .ms-3 { margin-inline-start: 0.75rem !important; margin-inline-end: 0 !important; }
+
+html[data-layout="secretary"] .btn:where(:has(> .bi), :has(> i[class*="bi-"]), :has(> .fa), :has(> i[class*="fa-"])) {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+html[data-layout="secretary"] .btn > .bi,
+html[data-layout="secretary"] .btn > i[class*="bi-"],
+html[data-layout="secretary"] .btn > .fa,
+html[data-layout="secretary"] .btn > i[class*="fa-"] {
+    margin: 0 !important;
+    flex-shrink: 0;
+}
+
+html[data-layout="secretary"] :is(.card-header, .modal-title, h4, h5, h6):where(:has(> .bi), :has(> i[class*="bi-"])) {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+html[data-layout="secretary"] :is(.card-header, .modal-title, h4, h5, h6) > .bi,
+html[data-layout="secretary"] :is(.card-header, .modal-title, h4, h5, h6) > i[class*="bi-"] {
+    margin: 0 !important;
+    flex-shrink: 0;
+}
+
+html[data-layout="secretary"] .d-flex.align-items-center:where(:has(> .bi), :has(> i[class*="bi-"])) {
+    gap: 0.5rem;
+}
+html[data-layout="secretary"] .d-flex.align-items-center > .bi,
+html[data-layout="secretary"] .d-flex.align-items-center > i[class*="bi-"] {
+    flex-shrink: 0;
+}
+
+html[data-layout="secretary"] .form-label:where(:has(> .bi), :has(> i[class*="bi-"])),
+html[data-layout="secretary"] label.arabic-text:where(:has(> .bi), :has(> i[class*="bi-"])) {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
 }
 
 /* Prevent body scroll when modal is open */
@@ -4277,3 +4514,13 @@ body > .global-search-container.expanded {
 .sec-popover-tags { flex-direction: column; align-items: stretch; min-width: 180px; }
 .sec-pop-tag { display: flex; align-items: center; gap: 0.4rem; padding: 0.2rem 0.3rem; cursor: pointer; font-family: 'Cairo', sans-serif; }
 .sec-pop-newtag { display: flex; gap: 0.3rem; margin-top: 0.3rem; }
+
+/* folder-picker modal rows */
+.sec-pick-list { max-height: 50vh; overflow-y: auto; display: flex; flex-direction: column; gap: 0.35rem; }
+.sec-pick-row {
+    display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.7rem;
+    border: 1px solid var(--border); border-radius: var(--r-md, 10px); cursor: pointer;
+    font-family: 'Cairo', sans-serif;
+}
+.sec-pick-row:hover { background: rgba(99, 102, 241, 0.06); border-color: var(--accent); }
+.sec-pick-row span:first-of-type { flex: 1; }

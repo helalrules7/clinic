@@ -216,10 +216,7 @@ function printExpense(expenseId) {
 </script>
 
 <style>
-/* RTL specific adjustments */
-.me-2 { margin-left: 0.5rem !important; margin-right: 0 !important; }
-.me-3 { margin-left: 1rem !important; margin-right: 0 !important; }
-.ms-2 { margin-right: 0.5rem !important; margin-left: 0 !important; }
+/* RTL — icon spacing: sec-style.css §secretary icon spacing */
 .text-start { text-align: right !important; }
 .text-end { text-align: left !important; }
 .justify-content-start { justify-content: flex-end !important; }
@@ -317,11 +314,7 @@ function printExpense(expenseId) {
     }
 }
 
-/* RTL specific adjustments */
-.me-2 { margin-left: 0.5rem !important; margin-right: 0 !important; }
-.me-3 { margin-left: 1rem !important; margin-right: 0 !important; }
-.ms-2 { margin-right: 0.5rem !important; margin-left: 0 !important; }
-.ms-3 { margin-right: 1rem !important; margin-left: 0 !important; }
+/* RTL — icon spacing: sec-style.css §secretary icon spacing */
 .text-start { text-align: right !important; }
 .text-end { text-align: left !important; }
 .justify-content-start { justify-content: flex-end !important; }
@@ -591,20 +584,14 @@ label{
     color: dodgerblue !important;
 }
 
-/* Modal z-index and centering */
+/* Modal centering — backdrop/z-index: sec-style.css + modal-kit.css */
 .modal {
-    z-index: 1000002 !important;
     align-items: center;
     justify-content: center;
     padding: 1rem !important;
 }
 
-.modal-backdrop {
-    z-index: 1000000 !important;
-}
-
 .modal-dialog {
-    z-index: 1000002 !important;
     margin: 0 auto;
     max-width: 500px;
 }

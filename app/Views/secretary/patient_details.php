@@ -20,11 +20,22 @@
                         • <?= $viewHelper->calculateAge($patient['dob']) ?> سنة
                     <?php endif; ?>
                 </p>
+                <?php $__td = (!empty($appointments) && !empty($appointments[0]['doctor_name'])) ? $appointments[0]['doctor_name'] : ''; ?>
+                <?php if ($__td): ?>
+                <p class="text-muted mb-0 arabic-text small"><i class="bi bi-person-badge me-1"></i>الطبيب المعالج: <?= htmlspecialchars($__td) ?></p>
+                <?php endif; ?>
+                <div id="secProfileOrg" class="mt-2 d-flex align-items-center gap-2 flex-wrap" data-patient="<?= (int)$patient['id'] ?>"></div>
             </div>
         </div>
     </div>
     <div class="col-md-4 text-end">
-        <div class="d-flex gap-2 justify-content-end">
+        <div class="d-flex gap-2 justify-content-end flex-wrap">
+            <button type="button" class="btn btn-outline-secondary" id="secEditPatientBtn">
+                <i class="bi bi-pencil me-2"></i>تعديل البيانات
+            </button>
+            <a href="/secretary/patients/<?= $patient['id'] ?>/invoice" target="_blank" class="btn btn-outline-primary">
+                <i class="bi bi-receipt me-2"></i>طباعة الفاتورة
+            </a>
             <a href="/secretary/bookings?patient_id=<?= $patient['id'] ?>" class="btn btn-success">
                 <i class="bi bi-calendar-plus me-2"></i>
                 حجز موعد جديد
@@ -315,11 +326,7 @@
 </div>
 
 <style>
-/* RTL specific adjustments */
-.me-2 { margin-left: 0.5rem !important; margin-right: 0 !important; }
-.me-3 { margin-left: 1rem !important; margin-right: 0 !important; }
-.ms-2 { margin-right: 0.5rem !important; margin-left: 0 !important; }
-.ms-3 { margin-right: 1rem !important; margin-left: 0 !important; }
+/* RTL — icon spacing: sec-style.css §secretary icon spacing */
 
 /* Arabic text styling */
 .arabic-text {
@@ -409,3 +416,60 @@
 }
 
 </style>
+
+<!-- v11: Edit patient (basics) modal — secretary operational scope, no delete -->
+<div class="modal fade" id="secEditPatientModal" tabindex="-1" dir="rtl" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title arabic-text"><i class="bi bi-pencil me-2"></i>تعديل بيانات المريض</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="إغلاق"></button>
+      </div>
+      <div class="modal-body">
+        <div id="secEditMsg" class="alert d-none arabic-text" role="alert"></div>
+        <form id="secEditForm" class="row g-3">
+          <div class="col-md-6"><label class="form-label arabic-text">الاسم الأول</label><input class="form-control" name="first_name" maxlength="50" value="<?= htmlspecialchars($patient['first_name'] ?? '') ?>"></div>
+          <div class="col-md-6"><label class="form-label arabic-text">اسم العائلة</label><input class="form-control" name="last_name" maxlength="50" value="<?= htmlspecialchars($patient['last_name'] ?? '') ?>"></div>
+          <div class="col-md-6"><label class="form-label arabic-text">الجنس</label><select class="form-select" name="gender"><option value="Male"<?= ($patient['gender'] ?? '') === 'Male' ? ' selected' : '' ?>>ذكر</option><option value="Female"<?= ($patient['gender'] ?? '') === 'Female' ? ' selected' : '' ?>>أنثى</option></select></div>
+          <div class="col-md-6"><label class="form-label arabic-text">تاريخ الميلاد</label><input type="date" class="form-control" name="dob" value="<?= htmlspecialchars($patient['dob'] ?? '') ?>"></div>
+          <div class="col-md-6"><label class="form-label arabic-text">الهاتف</label><input class="form-control" name="phone" maxlength="20" value="<?= htmlspecialchars($patient['phone'] ?? '') ?>"></div>
+          <div class="col-md-6"><label class="form-label arabic-text">هاتف بديل</label><input class="form-control" name="alt_phone" maxlength="20" value="<?= htmlspecialchars($patient['alt_phone'] ?? '') ?>"></div>
+          <div class="col-md-6"><label class="form-label arabic-text">الرقم القومي</label><input class="form-control" name="national_id" maxlength="20" value="<?= htmlspecialchars($patient['national_id'] ?? '') ?>"></div>
+          <div class="col-md-6"><label class="form-label arabic-text">العنوان</label><input class="form-control" name="address" maxlength="500" value="<?= htmlspecialchars($patient['address'] ?? '') ?>"></div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+        <button type="button" class="btn btn-primary" id="secEditSave"><i class="bi bi-check-lg me-1"></i>حفظ</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+(function () {
+    var pid = <?= (int)$patient['id'] ?>;
+    var btn = document.getElementById('secEditPatientBtn');
+    var modalEl = document.getElementById('secEditPatientModal');
+    if (!btn || !modalEl) return;
+    // Create the instance lazily at click time — this inline script runs during
+    // parse, before the layout's Bootstrap bundle (echoed after the content) loads.
+    btn.addEventListener('click', function () {
+        if (window.bootstrap && bootstrap.Modal) { bootstrap.Modal.getOrCreateInstance(modalEl).show(); }
+    });
+    document.getElementById('secEditSave').addEventListener('click', function () {
+        var save = this, form = document.getElementById('secEditForm'), msg = document.getElementById('secEditMsg');
+        var data = {};
+        Array.prototype.forEach.call(form.elements, function (el) { if (el.name) data[el.name] = el.value; });
+        if (!(data.first_name || '').trim() || !(data.last_name || '').trim()) {
+            msg.className = 'alert alert-warning arabic-text'; msg.textContent = 'الاسم الأول واسم العائلة مطلوبان'; return;
+        }
+        save.disabled = true; save.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+        fetch('/api/secretary/patients/' + pid + '/update', {
+            method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }, body: JSON.stringify(data)
+        }).then(function (r) { return r.json(); }).then(function (res) {
+            if (res && res.ok) { location.reload(); }
+            else { msg.className = 'alert alert-danger arabic-text'; msg.textContent = (res && res.error) || 'تعذّر الحفظ'; save.disabled = false; save.innerHTML = 'حفظ'; }
+        }).catch(function () { msg.className = 'alert alert-danger arabic-text'; msg.textContent = 'خطأ في الاتصال'; save.disabled = false; save.innerHTML = 'حفظ'; });
+    });
+})();
+</script>

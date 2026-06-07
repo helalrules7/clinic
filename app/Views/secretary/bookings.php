@@ -287,6 +287,12 @@ $bookingTrendDates = $bookingTrendDates ?? [];
                                     <option value="">اختر الوقت...</option>
                                 </select>
                             </div>
+
+                            <div class="mb-3">
+                                <label for="bookingNotes" class="form-label arabic-text">ملاحظات</label>
+                                <textarea class="form-control" id="bookingNotes" name="notes"
+                                          rows="3" placeholder="أي ملاحظات إضافية..."></textarea>
+                            </div>
                         </div>
                         
                         <div class="col-md-6">
@@ -337,12 +343,12 @@ $bookingTrendDates = $bookingTrendDates ?? [];
                                             <option value="FollowUp" class="arabic-text" data-cost="<?= $settings['repeated_visit_cost'] ?? 100 ?>">إعادة كشف - <?= $settings['repeated_visit_cost'] ?? 100 ?> جنيه</option>
                                             <option value="Consultation" class="arabic-text" data-cost="<?= $settings['consultation_cost'] ?? 100 ?>">استشارة / إجراء طبي - <?= $settings['consultation_cost'] ?? 100 ?> جنيه</option>
                                         </select>
-                                        <button type="button" class="custom-select-toggle arabic-text" aria-expanded="false"><i class="bi bi-person-plus"></i> <span class="custom-select-text">اختر نوع الزيارة...</span></button>
+                                        <button type="button" class="custom-select-toggle arabic-text" aria-expanded="false"><i class="bi bi-person-plus"></i><span class="custom-select-text">اختر نوع الزيارة...</span></button>
                                         <menu>
                                             <li data-option="" tabindex="0" role="button" class="selected"><span class="custom-select-text">اختر نوع الزيارة...</span></li>
-                                            <li data-option="New" tabindex="0" role="button"><i class="bi bi-person-plus"></i> <span class="custom-select-text">زيارة جديدة - <?= $settings['new_visit_cost'] ?? 150 ?> جنيه</span></li>
-                                            <li data-option="FollowUp" tabindex="0" role="button"><i class="bi bi-person-check"></i> <span class="custom-select-text">إعادة كشف - <?= $settings['repeated_visit_cost'] ?? 100 ?> جنيه</span></li>
-                                            <li data-option="Consultation" tabindex="0" role="button"><i class="bi bi-file-earmark-medical"></i> <span class="custom-select-text">استشارة / إجراء طبي - <?= $settings['consultation_cost'] ?? 100 ?> جنيه</span></li>
+                                            <li data-option="New" tabindex="0" role="button"><i class="bi bi-person-plus"></i><span class="custom-select-text">زيارة جديدة - <?= $settings['new_visit_cost'] ?? 150 ?> جنيه</span></li>
+                                            <li data-option="FollowUp" tabindex="0" role="button"><i class="bi bi-person-check"></i><span class="custom-select-text">إعادة كشف - <?= $settings['repeated_visit_cost'] ?? 100 ?> جنيه</span></li>
+                                            <li data-option="Consultation" tabindex="0" role="button"><i class="bi bi-file-earmark-medical"></i><span class="custom-select-text">استشارة / إجراء طبي - <?= $settings['consultation_cost'] ?? 100 ?> جنيه</span></li>
                                         </menu>
                                     </div>
                                 </section>
@@ -356,19 +362,13 @@ $bookingTrendDates = $bookingTrendDates ?? [];
                                             <option value="Walk-in" class="arabic-text" selected>حضوري</option>
                                             <option value="Phone" class="arabic-text">هاتف</option>
                                         </select>
-                                        <button type="button" class="custom-select-toggle arabic-text" aria-expanded="false"><i class="bi bi-people"></i> <span class="custom-select-text">حضوري</span></button>
+                                        <button type="button" class="custom-select-toggle arabic-text" aria-expanded="false"><i class="bi bi-people"></i><span class="custom-select-text">حضوري</span></button>
                                         <menu>
-                                            <li data-option="Walk-in" tabindex="0" role="button" class="selected"><i class="bi bi-people"></i> <span class="custom-select-text">حضوري</span></li>
-                                            <li data-option="Phone" tabindex="0" role="button"><i class="bi bi-telephone"></i> <span class="custom-select-text">هاتف</span></li>
+                                            <li data-option="Walk-in" tabindex="0" role="button" class="selected"><i class="bi bi-people"></i><span class="custom-select-text">حضوري</span></li>
+                                            <li data-option="Phone" tabindex="0" role="button"><i class="bi bi-telephone"></i><span class="custom-select-text">هاتف</span></li>
                                         </menu>
                                     </div>
                                 </section>
-                            </div>
-                            
-                            <div class="mb-3">
-                                <label for="bookingNotes" class="form-label arabic-text">ملاحظات</label>
-                                <textarea class="form-control" id="bookingNotes" name="notes" 
-                                          rows="3" placeholder="أي ملاحظات إضافية..."></textarea>
                             </div>
                         </div>
                     </div>
@@ -452,9 +452,9 @@ $bookingTrendDates = $bookingTrendDates ?? [];
                     <!-- Success/Error Messages -->
                     <div id="addPatientMessage" class="alert d-none" role="alert"></div>
                     
-                    <div class="row">
+                    <div class="row add-patient-form-row">
                         <!-- Basic Information -->
-                        <div class="col-md-6">
+                        <div class="col-md-6 add-patient-col">
                             <h6 class="text-primary mb-3 arabic-text">
                                 <i class="bi bi-person me-1"></i>
                                 المعلومات الأساسية
@@ -483,28 +483,7 @@ $bookingTrendDates = $bookingTrendDates ?? [];
                                 <input type="date" class="form-control" id="dob" name="dob">
                                 <div class="form-text arabic-text">تاريخ ميلاد المريض (إذا ترك فارغاً سيتم استخدام تاريخ اليوم)</div>
                             </div>
-                        </div>
-                        
-                        <!-- Contact Information -->
-                        <div class="col-md-6">
-                            <h6 class="text-primary mb-3 arabic-text">
-                                <i class="bi bi-telephone me-1"></i>
-                                معلومات الاتصال
-                            </h6>
-                            
-                            <div class="mb-3">
-                                <label for="phone" class="form-label arabic-text">رقم الهاتف <span class="text-danger">*</span></label>
-                                <input type="tel" class="form-control" id="phone" name="phone" required maxlength="20">
-                                <div class="invalid-feedback"></div>
-                                <div class="form-text arabic-text">رقم الاتصال الأساسي</div>
-                            </div>
-                            
-                            <div class="mb-3">
-                                <label for="address" class="form-label arabic-text">العنوان</label>
-                                <textarea class="form-control" id="address" name="address" rows="3" maxlength="500"></textarea>
-                                <div class="form-text arabic-text">عنوان المنزل (اختياري)</div>
-                            </div>
-                            
+
                             <div class="mb-3">
                                 <label for="gender" class="form-label arabic-text">الجنس <span class="text-danger">*</span></label>
                                 <select class="form-select" id="gender" name="gender" required>
@@ -534,6 +513,27 @@ $bookingTrendDates = $bookingTrendDates ?? [];
                                     </select>
                                 </div>
                                 <div class="invalid-feedback"></div>
+                            </div>
+                        </div>
+                        
+                        <!-- Contact Information -->
+                        <div class="col-md-6 add-patient-col">
+                            <h6 class="text-primary mb-3 arabic-text">
+                                <i class="bi bi-telephone me-1"></i>
+                                معلومات الاتصال
+                            </h6>
+                            
+                            <div class="mb-3">
+                                <label for="phone" class="form-label arabic-text">رقم الهاتف <span class="text-danger">*</span></label>
+                                <input type="tel" class="form-control" id="phone" name="phone" required maxlength="20">
+                                <div class="invalid-feedback"></div>
+                                <div class="form-text arabic-text">رقم الاتصال الأساسي</div>
+                            </div>
+                            
+                            <div class="mb-0 add-patient-address-field">
+                                <label for="address" class="form-label arabic-text">العنوان</label>
+                                <textarea class="form-control add-patient-address-input" id="address" name="address" rows="3" maxlength="500"></textarea>
+                                <div class="form-text arabic-text">عنوان المنزل (اختياري)</div>
                             </div>
                         </div>
                     </div>
@@ -954,4 +954,5 @@ window.BOOKINGS_CONFIG = {
 };
 </script>
 <script src="/app/Views/secretary/assets/js/sec-mini-stats.js?v=<?= file_exists(__DIR__ . '/assets/js/sec-mini-stats.js') ? filemtime(__DIR__ . '/assets/js/sec-mini-stats.js') : time() ?>"></script>
+<script src="/app/Views/secretary/assets/js/sec-clinic-chip.js?v=<?= file_exists(__DIR__ . '/assets/js/sec-clinic-chip.js') ? filemtime(__DIR__ . '/assets/js/sec-clinic-chip.js') : time() ?>"></script>
 <script src="/app/Views/secretary/assets/js/bookings.js?v=<?= file_exists(__DIR__ . '/assets/js/bookings.js') ? filemtime(__DIR__ . '/assets/js/bookings.js') : time() ?>"></script>

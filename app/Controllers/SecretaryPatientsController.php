@@ -230,6 +230,49 @@ class SecretaryPatientsController
         return (bool)$s->fetchColumn();
     }
 
+    /**
+     * Auto-organize: create one clinic folder per registration month and file every
+     * patient registered that month into it (idempotent — re-runnable, INSERT IGNORE).
+     */
+    public function autoOrganizeByMonth()
+    {
+        if (!$this->needClinic()) return;
+        try {
+            $months = [1 => 'يناير', 2 => 'فبراير', 3 => 'مارس', 4 => 'أبريل', 5 => 'مايو', 6 => 'يونيو',
+                       7 => 'يوليو', 8 => 'أغسطس', 9 => 'سبتمبر', 10 => 'أكتوبر', 11 => 'نوفمبر', 12 => 'ديسمبر'];
+            $groups = $this->pdo->query("
+                SELECT YEAR(created_at) y, MONTH(created_at) m, COUNT(*) c
+                FROM patients WHERE created_at IS NOT NULL
+                GROUP BY y, m ORDER BY y, m
+            ")->fetchAll(\PDO::FETCH_ASSOC);
+
+            $foldersCreated = 0; $filed = 0;
+            $find = $this->pdo->prepare("SELECT id FROM patient_folders WHERE clinic_id = ? AND parent_type='custom' AND name = ? LIMIT 1");
+            $ins  = $this->pdo->prepare("INSERT INTO patient_folders (doctor_id, clinic_id, name, created_by_user_id, icon, gradient_color, parent_id, parent_type) VALUES (NULL, ?, ?, ?, 'bi-calendar-month', ?, NULL, 'custom')");
+            $fill = $this->pdo->prepare("INSERT IGNORE INTO patient_folder_patients (folder_id, patient_id) SELECT ?, id FROM patients WHERE YEAR(created_at) = ? AND MONTH(created_at) = ?");
+            $grad = 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)';
+            $uid  = $this->auth->user()['id'];
+
+            foreach ($groups as $g) {
+                $y = (int)$g['y']; $m = (int)$g['m'];
+                if ($m < 1 || $m > 12 || $y < 2000) continue;
+                $name = $months[$m] . ' ' . $y;
+                $find->execute([$this->clinicId, $name]);
+                $fid = $find->fetchColumn();
+                if (!$fid) {
+                    $ins->execute([$this->clinicId, $name, $uid, $grad]);
+                    $fid = (int)$this->pdo->lastInsertId();
+                    $foldersCreated++;
+                }
+                $fill->execute([(int)$fid, $y, $m]);
+                $filed += $fill->rowCount();
+            }
+            return $this->json(['ok' => true, 'folders_created' => $foldersCreated, 'patients_filed' => $filed]);
+        } catch (\Exception $e) {
+            return $this->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
     // ========================================================================
     //  TAGS  (clinic-owned)
     // ========================================================================
@@ -348,6 +391,66 @@ class SecretaryPatientsController
             ");
             $s->execute([$pid, $this->clinicId, $color]);
             return $this->json(['ok' => true, 'color_code' => $color]);
+        } catch (\Exception $e) {
+            return $this->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    // ========================================================================
+    //  PATIENT — edit basics (operational scope: NO delete)
+    // ========================================================================
+    public function updatePatientBasics($id)
+    {
+        if (!$this->auth->check()) return $this->json(['error' => 'Unauthorized'], 401);
+        try {
+            $id = (int)$id;
+            $d = $this->body();
+            $sets = []; $params = [];
+            foreach (['first_name', 'last_name', 'phone', 'alt_phone', 'national_id', 'address', 'emergency_contact', 'emergency_phone'] as $f) {
+                if (!array_key_exists($f, $d)) continue;
+                $v = trim((string)$d[$f]);
+                if (($f === 'first_name' || $f === 'last_name') && $v === '') return $this->json(['error' => 'الاسم الأول واسم العائلة مطلوبان'], 422);
+                $sets[] = "$f = ?"; $params[] = $v;
+            }
+            if (array_key_exists('gender', $d) && in_array($d['gender'], ['Male', 'Female'], true)) { $sets[] = 'gender = ?'; $params[] = $d['gender']; }
+            if (!empty($d['dob'])) { $sets[] = 'dob = ?'; $params[] = $d['dob']; }
+            elseif (isset($d['age']) && $d['age'] !== '' && is_numeric($d['age'])) {
+                $sets[] = 'dob = ?'; $params[] = date('Y-m-d', strtotime('-' . (int)$d['age'] . ' years'));
+            }
+            if (!empty($d['clinic_id'])) {
+                $ck = $this->pdo->prepare("SELECT 1 FROM clinics WHERE id = ? AND is_active = 1");
+                $ck->execute([(int)$d['clinic_id']]);
+                if ($ck->fetchColumn()) { $sets[] = 'clinic_id = ?'; $params[] = (int)$d['clinic_id']; }
+            }
+            if (!$sets) return $this->json(['ok' => true]);
+            $params[] = $id;
+            $this->pdo->prepare("UPDATE patients SET " . implode(', ', $sets) . " WHERE id = ?")->execute($params);
+            return $this->json(['ok' => true]);
+        } catch (\Exception $e) {
+            return $this->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    /** Profile header data: this patient's clinic marker + tags + the clinic tag list. */
+    public function patientOrg($id)
+    {
+        if (!$this->needClinic()) return;
+        try {
+            $pid = (int)$id;
+            $mk = $this->pdo->prepare("SELECT color_code FROM patient_clinic_color_markers WHERE patient_id = ? AND clinic_id = ?");
+            $mk->execute([$pid, $this->clinicId]);
+            $marker = $mk->fetchColumn() ?: null;
+            $tg = $this->pdo->prepare("
+                SELECT t.id, t.name, t.color, t.icon
+                FROM patient_tag_assignments ta
+                JOIN patient_tags t ON t.id = ta.tag_id AND t.clinic_id = ?
+                WHERE ta.patient_id = ?
+            ");
+            $tg->execute([$this->clinicId, $pid]);
+            $tags = $tg->fetchAll(\PDO::FETCH_ASSOC);
+            $all = $this->pdo->prepare("SELECT id, name, color, icon FROM patient_tags WHERE clinic_id = ? ORDER BY name ASC");
+            $all->execute([$this->clinicId]);
+            return $this->json(['ok' => true, 'marker' => $marker, 'tags' => $tags, 'all_tags' => $all->fetchAll(\PDO::FETCH_ASSOC)]);
         } catch (\Exception $e) {
             return $this->json(['error' => $e->getMessage()], 500);
         }

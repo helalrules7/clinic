@@ -1738,11 +1738,7 @@ function filterPaymentsBySearch(query) {
 </script>
 
 <style>
-/* RTL specific adjustments */
-.me-2 { margin-left: 0.5rem !important; margin-right: 0 !important; }
-.me-3 { margin-left: 1rem !important; margin-right: 0 !important; }
-.ms-2 { margin-right: 0.5rem !important; margin-left: 0 !important; }
-.ms-3 { margin-right: 1rem !important; margin-left: 0 !important; }
+/* RTL — icon spacing: sec-style.css §secretary icon spacing */
 .text-start { text-align: right !important; }
 .text-end { text-align: left !important; }
 .justify-content-start { justify-content: flex-end !important; }
@@ -3221,29 +3217,12 @@ h1, h2, h3, h4, h5, h6 {
 color: var(--text) !important;
 }
 
-/* (Removed) The previous rule
-       body > div.modal-backdrop.fade.show { display: none !important; }
-   hid the dim layer entirely, which broke stacked modals — opening the
-   delete-confirmation modal on top of another modal left a phantom overlay
-   above the dialog. Letting Bootstrap manage its own backdrops keeps stacked
-   confirmations clean (same approach used on the appointments / calendar pages). */
-
-/* Modal z-index and centering */
+/* Modal centering — backdrop/z-index: sec-style.css + modal-kit.css */
 .modal {
-    z-index: 1000002 !important;
     align-items: center;
     justify-content: center;
     padding: 1rem !important;
 }
-
-.modal-backdrop {
-    z-index: 1000000 !important;
-}
-
-/* When a second modal stacks above the first, raise its backdrop + dialog
-   so it cleanly covers the modal beneath instead of fighting the same plane. */
-.modal-backdrop + .modal-backdrop { z-index: 1000003 !important; }
-.modal.show ~ .modal.show          { z-index: 1000005 !important; }
 
 .modal-dialog {
     z-index: 1000002 !important;

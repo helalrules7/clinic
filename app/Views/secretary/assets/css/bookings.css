@@ -152,99 +152,9 @@
     background: color-mix(in srgb, var(--accent, #38bdf8) 18%, var(--bg-alt, #0f172a));
 }
 
-/* ── Clinic identity chip (booking + add-patient modals) ── */
-.clinic-input-group {
-    --clinic-color: var(--accent, #10b981);
-    border-radius: 12px;
-    overflow: hidden;
-    border: 1px solid color-mix(in srgb, var(--clinic-color) 32%, #e2e8f0);
-    box-shadow:
-        0 2px 12px color-mix(in srgb, var(--clinic-color) 16%, transparent),
-        inset 0 1px 0 rgba(255, 255, 255, 0.5);
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
-}
+/* Clinic identity chip — sec-style.css (shared secretary modals) */
 
-.clinic-input-group:focus-within {
-    border-color: color-mix(in srgb, var(--clinic-color) 55%, transparent);
-    box-shadow:
-        0 0 0 3px color-mix(in srgb, var(--clinic-color) 22%, transparent),
-        0 4px 16px color-mix(in srgb, var(--clinic-color) 20%, transparent);
-}
-
-.clinic-icon-chip {
-    border: none !important;
-    min-width: 56px !important;
-    padding: 0.65rem 0.75rem !important;
-    display: flex !important;
-    align-items: center;
-    justify-content: center;
-    background: linear-gradient(
-        155deg,
-        color-mix(in srgb, var(--clinic-color) 24%, #fff) 0%,
-        color-mix(in srgb, var(--clinic-color) 10%, #f8fafc) 100%
-    ) !important;
-    position: relative;
-}
-
-.clinic-icon-chip::before {
-    content: '';
-    position: absolute;
-    inset: 6px;
-    border-radius: 10px;
-    background: color-mix(in srgb, var(--clinic-color) 14%, transparent);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45);
-}
-
-.clinic-icon-chip i {
-    position: relative;
-    z-index: 1;
-    font-size: 1.4rem !important;
-    color: var(--clinic-color) !important;
-    filter: drop-shadow(0 2px 6px color-mix(in srgb, var(--clinic-color) 45%, transparent));
-    transition: transform 0.2s ease, filter 0.2s ease;
-}
-
-.clinic-input-group:focus-within .clinic-icon-chip i {
-    transform: scale(1.06);
-}
-
-.clinic-input-group .form-select {
-    border: none;
-    border-inline-start: 1px solid color-mix(in srgb, var(--clinic-color) 18%, #e2e8f0);
-    background: var(--card, #fff);
-    padding: 0.7rem 0.85rem;
-    font-weight: 600;
-    color: color-mix(in srgb, var(--clinic-color) 55%, #1e293b);
-    box-shadow: none;
-}
-
-.clinic-input-group .form-select:focus {
-    box-shadow: none;
-}
-
-.dark .clinic-input-group {
-    border-color: color-mix(in srgb, var(--clinic-color) 40%, #334155);
-}
-
-.dark .clinic-icon-chip {
-    background: linear-gradient(
-        155deg,
-        color-mix(in srgb, var(--clinic-color) 30%, #1e293b) 0%,
-        color-mix(in srgb, var(--clinic-color) 12%, #0f172a) 100%
-    ) !important;
-}
-
-.dark .clinic-input-group .form-select {
-    background: var(--card, #1e293b);
-    color: color-mix(in srgb, var(--clinic-color) 70%, #f1f5f9);
-    border-inline-start-color: color-mix(in srgb, var(--clinic-color) 25%, #475569);
-}
-
-/* RTL specific adjustments */
-.me-2 { margin-left: 0.5rem !important; margin-right: 0 !important; }
-.me-3 { margin-left: 1rem !important; margin-right: 0 !important; }
-.ms-2 { margin-right: 0.5rem !important; margin-left: 0 !important; }
-.ms-3 { margin-right: 1rem !important; margin-left: 0 !important; }
+/* RTL icon spacing — sec-style.css §secretary icon spacing */
 
 /* Modal header RTL — owned by layouts/modal-kit.css (do not override here) */
 
@@ -2234,20 +2144,14 @@ input[readonly] {
     margin-right: 10px !important;
 }
 
-/* Modal z-index and centering */
+/* Modal centering — backdrop/z-index: sec-style.css + modal-kit.css */
 .modal {
-    z-index: 1000002 !important;
     align-items: center;
     justify-content: center;
     padding: 1rem !important;
 }
 
-.modal-backdrop {
-    z-index: 1000000 !important;
-}
-
 .modal-dialog {
-    z-index: 1000002 !important;
     margin: 0 auto;
     max-width: 500px;
 }

@@ -120,6 +120,7 @@ try {
     $router->get('/api/secretary/patients-export', 'SecretaryPatientsController@exportCsv');
     $router->get('/api/secretary/patient-folders', 'SecretaryPatientsController@folders');
     $router->post('/api/secretary/patient-folders/move', 'SecretaryPatientsController@movePatients');
+    $router->post('/api/secretary/patient-folders/auto-month', 'SecretaryPatientsController@autoOrganizeByMonth');
     $router->post('/api/secretary/patient-folders', 'SecretaryPatientsController@createFolder');
     $router->post('/api/secretary/patient-folders/{id}', 'SecretaryPatientsController@updateFolder');
     $router->delete('/api/secretary/patient-folders/{id}', 'SecretaryPatientsController@deleteFolder');
@@ -128,6 +129,8 @@ try {
     $router->post('/api/secretary/patient-tags', 'SecretaryPatientsController@createTag');
     $router->delete('/api/secretary/patient-tags/{id}', 'SecretaryPatientsController@deleteTag');
     $router->post('/api/secretary/patient-marker/{id}', 'SecretaryPatientsController@setMarker');
+    $router->post('/api/secretary/patients/{id}/update', 'SecretaryPatientsController@updatePatientBasics');
+    $router->get('/api/secretary/patient-org/{id}', 'SecretaryPatientsController@patientOrg');
     $router->get('/secretary/patients/new', 'SecretaryController@newPatient');
     $router->post('/secretary/patients', 'SecretaryController@createPatient');
     $router->get('/secretary/patients/{id}', 'SecretaryController@viewPatient');
