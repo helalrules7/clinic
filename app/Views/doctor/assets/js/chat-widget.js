@@ -136,8 +136,9 @@
         '<div class="chat-input-row">' +
           '<input type="file" id="chatFile" hidden accept="image/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt">' +
           '<button class="chat-attach" id="chatAttach" title="' + t('Attach', 'إرفاق') + '"><i class="bi bi-paperclip"></i></button>' +
+          '<button class="chat-attach" id="chatCam" title="' + t('Camera', 'كاميرا') + '"><i class="bi bi-camera"></i></button>' +
           '<button class="chat-attach chat-mic" id="chatMic" title="' + t('Voice message', 'رسالة صوتية') + '"><i class="bi bi-mic"></i></button>' +
-          '<textarea class="chat-input" id="chatInput" rows="1" placeholder="' + t('Message… (@patient #appointment)', 'رسالة… (@مريض #موعد)') + '"></textarea>' +
+          '<textarea class="chat-input" id="chatInput" rows="1" placeholder="' + t('Message…', 'رسالة…') + '"></textarea>' +
           '<button class="chat-send" id="chatSend" disabled><i class="bi bi-send"></i></button>' +
         '</div>' +
       '</div>';
@@ -177,6 +178,7 @@
     panel.querySelector('#chatAttach').onclick = function () { panel.querySelector('#chatFile').click(); };
     panel.querySelector('#chatFile').onchange = onPickFile;
     panel.querySelector('#chatMic').onclick = toggleRecording;
+    panel.querySelector('#chatCam').onclick = openCamera;
     document.addEventListener('click', function (e) {
       if (!reactPop.contains(e.target) && !e.target.closest('[data-reactpop]')) hideReactPop();
     });
@@ -427,6 +429,18 @@
     box.querySelectorAll('[data-editcancel]').forEach(function (b) { b.onclick = function () { cancelEdit(); renderThread(false); }; });
     box.querySelectorAll('.chat-msg-att img').forEach(function (im) { im.style.cursor = 'zoom-in'; im.onclick = function () { openImage(im.getAttribute('data-img') || im.src); }; });
     box.querySelectorAll('.chat-audio').forEach(wireAudio);
+    // double-click (desktop) or double-tap (touch) on a bubble → quote-reply
+    box.querySelectorAll('.chat-msg').forEach(function (el) {
+      var mid = +String(el.id).replace('msg-', ''); if (!mid) return;
+      var skip = function (e) { return e.target.closest && e.target.closest('a,button,audio,input,textarea,.chat-audio-track,.chat-react,.chat-msg-actions'); };
+      el.addEventListener('dblclick', function (e) { if (skip(e)) return; startReply(mid); });
+      var lastTap = 0;
+      el.addEventListener('touchend', function (e) {
+        if (skip(e)) return;
+        var now = Date.now();
+        if (now - lastTap < 320) { e.preventDefault(); startReply(mid); lastTap = 0; } else { lastTap = now; }
+      });
+    });
     if (S.editing) {
       var ed = box.querySelector('.chat-edit-input');
       if (ed) { ed.oninput = function () { S.editText = ed.value; }; ed.focus(); ed.setSelectionRange(ed.value.length, ed.value.length); }
@@ -807,6 +821,33 @@
   }
   function stopRecording() { clearInterval(rec.timer); if (rec.mr && rec.mr.state === 'recording') { rec.mr.stop(); } else { stopRecStream(); setMicRecording(false); } }
   function stopRecStream() { if (rec.stream) { rec.stream.getTracks().forEach(function (tr) { tr.stop(); }); rec.stream = null; } }
+
+  // ---- camera capture (live getUserMedia modal; mobile-native fallback) ----
+  function openCamera() {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      var fi = panel.querySelector('#chatFile'); fi.setAttribute('accept', 'image/*'); fi.setAttribute('capture', 'environment');
+      fi.click(); setTimeout(function () { fi.removeAttribute('capture'); fi.setAttribute('accept', 'image/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt'); }, 1500);
+      return;
+    }
+    var ov = document.createElement('div'); ov.className = 'chat-cam';
+    ov.innerHTML = '<div class="chat-cam-box"><video autoplay playsinline muted></video>' +
+      '<div class="chat-cam-actions"><button type="button" class="chat-cam-shot"><i class="bi bi-camera-fill"></i> ' + t('Capture', 'التقاط') + '</button>' +
+      '<button type="button" class="chat-cam-cancel">' + t('Cancel', 'إلغاء') + '</button></div></div>';
+    document.body.appendChild(ov);
+    var video = ov.querySelector('video'), stream = null;
+    function stop() { if (stream) stream.getTracks().forEach(function (tr) { tr.stop(); }); ov.remove(); }
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false })
+      .then(function (s) { stream = s; video.srcObject = s; })
+      .catch(function () { stop(); panel.querySelector('#chatSub').textContent = t('Camera unavailable', 'الكاميرا غير متاحة'); });
+    ov.querySelector('.chat-cam-cancel').onclick = stop;
+    ov.onclick = function (e) { if (e.target === ov) stop(); };
+    ov.querySelector('.chat-cam-shot').onclick = function () {
+      if (!video.videoWidth) return;
+      var cv = document.createElement('canvas'); cv.width = video.videoWidth; cv.height = video.videoHeight;
+      cv.getContext('2d').drawImage(video, 0, 0);
+      cv.toBlob(function (blob) { if (blob) { sendTyping('image'); uploadBlob(blob, 'camera_' + Date.now() + '.jpg'); } stop(); }, 'image/jpeg', 0.9);
+    };
+  }
   function react(mid, emoji) {
     api('/api/chat/messages/' + mid + '/reactions', { method: 'POST', body: { emoji: emoji } }).then(function (d) {
       if (d && d.ok) pollThread();
@@ -833,13 +874,16 @@
       // conversation gone / no longer a participant (e.g. removed, or deleted) →
       // stop hammering it with 403s and drop back to the list.
       if (d.ok === false) { stopThreadPoll(); if (S.view === 'thread') showList(); return; }
-      var hasNew = false;
-      (d.messages || []).forEach(function (m) { upsertMsg(m); hasNew = true; });
+      var hasNew = false, justSent = {};
+      (d.messages || []).forEach(function (m) { upsertMsg(m); hasNew = true; if (!m.deleted) justSent[m.sender_id] = 1; });
       S.cursor = d.cursor || S.cursor;
       var readChanged = typeof d.read_up_to === 'number' && d.read_up_to !== S.readUpTo;
       if (readChanged) S.readUpTo = d.read_up_to;
       var tp = panel.querySelector('#chatTyping');
-      if (tp) tp.innerHTML = (d.typing || []).length ? typingLabel(d.typing[0]) : '';
+      // A "typing…/sending…" indicator must never linger AFTER the message lands:
+      // drop any typer whose message just arrived in this same poll batch.
+      var typers = (d.typing || []).filter(function (x) { return !justSent[x.user_id]; });
+      if (tp) tp.innerHTML = typers.length ? typingLabel(typers[0]) : '';
       // New messages always re-render. A read-receipt-only tick re-renders too,
       // EXCEPT while the user is mid-edit (a full innerHTML rebuild would disrupt
       // the open editor — the tick syncs on the next message change). markRead
@@ -948,6 +992,17 @@
     refreshBadge();
     startVersionPoll();
     document.addEventListener('visibilitychange', function () { if (!document.hidden && S.open) { refreshBadge(); pollThread(); } });
+    // public hook — the notification center calls this to jump straight into a chat
+    window.RoayaChat = {
+      open: function () { if (!S.open) open(); },
+      openConversation: function (cid) {
+        cid = +cid; if (!cid) return;
+        setGlow(false);
+        if (!S.open) open();
+        if (S.convos.find(function (x) { return x.id === cid; })) openConversation(cid);
+        else loadConversations(function () { openConversation(cid); });
+      }
+    };
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);

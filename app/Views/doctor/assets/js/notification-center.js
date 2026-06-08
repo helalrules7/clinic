@@ -529,6 +529,9 @@
             icon: n.icon || null,
             patient_id: n.patient_id || null,
             patient_name: n.patient_name || null,
+            // related_type/related_id power deep-actions (e.g. chat → open conversation)
+            related_type: n.related_type || n.relatedType || null,
+            related_id: n.related_id || n.relatedId || null,
             time_ago: n.time_ago || null
         };
     }
@@ -1113,6 +1116,16 @@
                 if (!id) return;
                 if (state.notifications) {
                     var found = findInGrouped(state.notifications, id);
+                    // chat notification → open the conversation in the chat widget (no navigation)
+                    if (found && found.related_type === 'chat' && found.related_id &&
+                        window.RoayaChat && typeof window.RoayaChat.openConversation === 'function') {
+                        window.RoayaChat.openConversation(found.related_id);
+                        if (!rowEl.classList.contains('is-read')) {
+                            rowEl.classList.add('is-read'); markCachedAsRead(id); updateBadge();
+                            api('/api/notifications/' + encodeURIComponent(id) + '/read', { method: 'PUT' }).then(loadUnreadCount).catch(noop);
+                        }
+                        return;
+                    }
                     if (found && found.url) { window.location.href = found.url; return; }
                     // To-do notifications without a deep-link (the secretary has no
                     // tasks page) open the shared to-do drawer instead. Then fall

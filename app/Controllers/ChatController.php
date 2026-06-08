@@ -489,6 +489,9 @@ class ChatController
         }
 
         $this->pdo->prepare("UPDATE chat_conversations SET last_message_id = ? WHERE id = ?")->execute([$mid, $cid]);
+        // sending IS the end of typing/recording/uploading — drop my typing row now so
+        // the recipient's next poll never shows a stale "typing…/sending…" AFTER the message.
+        $this->pdo->prepare("DELETE FROM chat_typing WHERE conversation_id = ? AND user_id = ?")->execute([$cid, $uid]);
 
         $this->notifyParticipants($cid, $uid, $me, $body, $attachKind);
 
@@ -571,9 +574,9 @@ class ChatController
                     $snip = $snip !== '' ? mb_substr($snip, 0, 60) : '';
                     $verb = $ar ? 'تفاعل مع رسالتك' : 'reacted to your message';
                     $msg  = $emoji . ' ' . $verb . ($snip !== '' ? ' «' . $snip . '»' : '');
-                    \App\Controllers\NotificationController::create(
+                    $this->pushChatNotification(
                         $author, 'chat_reaction', trim($me['name'] ?? $me['username'] ?? 'User'),
-                        $msg, 'chat', $conv, null
+                        $msg, $conv, 'chatrx:' . $conv . ':' . $uid
                     );
                 } catch (\Throwable $e) { /* non-fatal */ }
             }
@@ -854,9 +857,21 @@ class ChatController
                 if ($clean !== '')        { $message = mb_substr($clean, 0, 120); }
                 elseif ($attachKind !== '') { $message = $this->attachLabel($ar, $attachKind); }
                 else                       { $message = ''; }
-                \App\Controllers\NotificationController::create((int) $row['user_id'], 'chat_message', $name, $message, 'chat', $cid, null);
+                $this->pushChatNotification((int) $row['user_id'], 'chat_message', $name, $message, $cid, 'chat:' . $cid . ':' . $senderId);
             }
         } catch (\Throwable $e) { /* non-fatal */ }
+    }
+
+    /**
+     * Create a chat notification that COLLAPSES with prior ones from the same
+     * sender in the same conversation: the recipient's earlier UNREAD notification
+     * of this group is removed first, so the bell only ever shows the LATEST.
+     */
+    private function pushChatNotification(int $userId, string $type, string $title, string $message, int $cid, string $groupKey): void
+    {
+        $this->pdo->prepare("DELETE FROM notifications WHERE user_id = ? AND group_key = ? AND is_read = 0")
+             ->execute([$userId, $groupKey]);
+        \App\Controllers\NotificationController::create($userId, $type, $title, $message, 'chat', $cid, null, $groupKey);
     }
 
     /** Localized "sent you an image / voice message / file" label. */

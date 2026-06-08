@@ -412,6 +412,16 @@ html[dir="rtl"] .chat-msg.theirs .chat-bubble { border-bottom-left-radius: 14px;
 .chat-msg.mine .chat-audio-time { color: #fff; }
 
 /* reaction glow on the chat trigger (dock button / FAB) */
-.chat-glow { position: relative; }
-.chat-glow::after { content: ""; position: absolute; top: 6px; inset-inline-end: 6px; width: 10px; height: 10px; border-radius: 50%; background: #22d3ee; box-shadow: 0 0 0 0 rgba(34, 211, 238, .7); animation: chatGlowPulse 1.5s infinite; z-index: 2; pointer-events: none; }
+/* NB: do NOT set position on .chat-glow — the FAB is position:fixed and the dock
+   button is position:relative already; overriding it drops the FAB out of the corner. */
+.chat-glow::after { content: ""; position: absolute; top: 4px; inset-inline-end: 4px; width: 11px; height: 11px; border-radius: 50%; background: #22d3ee; border: 2px solid var(--card, #fff); box-shadow: 0 0 0 0 rgba(34, 211, 238, .7); animation: chatGlowPulse 1.5s infinite; z-index: 2; pointer-events: none; }
 @keyframes chatGlowPulse { 0% { box-shadow: 0 0 0 0 rgba(34,211,238,.7); } 70% { box-shadow: 0 0 0 9px rgba(34,211,238,0); } 100% { box-shadow: 0 0 0 0 rgba(34,211,238,0); } }
+
+/* ===== camera capture modal (chat) ===== */
+.chat-cam { position: fixed; inset: 0; z-index: 1000060; display: flex; align-items: center; justify-content: center; background: rgba(2, 6, 23, .72); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+.chat-cam-box { width: 92vw; max-width: 540px; background: var(--card, #fff); border-radius: 16px; padding: 1rem; box-shadow: 0 20px 60px rgba(0,0,0,.4); }
+.chat-cam-box video { width: 100%; max-height: 60vh; object-fit: contain; background: #000; border-radius: 12px; display: block; }
+.chat-cam-actions { display: flex; gap: .6rem; justify-content: center; margin-top: .8rem; }
+.chat-cam-shot, .chat-cam-cancel { border: none; border-radius: 12px; padding: .6rem 1.1rem; font-size: .9rem; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: .4rem; }
+.chat-cam-shot { background: var(--accent, #4f46e5); color: #fff; }
+.chat-cam-cancel { background: var(--bg-alt, #e2e8f0); color: var(--text, #334155); }

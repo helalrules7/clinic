@@ -378,6 +378,8 @@ class NotificationControllerV11 extends NotificationController
                 'body'          => $r['body'],
                 'icon'          => $iconForType[$type] ?? 'bell-fill',
                 'link'          => $link,
+                'related_type'  => $rt,
+                'related_id'    => $ri !== null ? (int)$ri : null,
                 'patient_id'    => $pid,
                 'patient_name'  => ($pid !== null && isset($patientMap[$pid])) ? $patientMap[$pid] : null,
                 'is_read'       => (int)($r['is_read'] ?? 0),
