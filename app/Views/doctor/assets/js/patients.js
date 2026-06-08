@@ -3310,7 +3310,10 @@ function searchPatients(query) {
     // Create new request
     currentSearchRequest = new AbortController();
     
-    fetch(`/api/patients/search?q=${encodeURIComponent(query.trim())}`, {
+    const searchUrl = (window.DigitNormalizer && window.DigitNormalizer.patientSearchUrl)
+        ? window.DigitNormalizer.patientSearchUrl(query.trim())
+        : `/api/patients/search?q=${encodeURIComponent(query.trim())}`;
+    fetch(searchUrl, {
         signal: currentSearchRequest.signal
     })
     .then(response => response.json())

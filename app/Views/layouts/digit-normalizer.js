@@ -89,6 +89,115 @@
         };
     }
 
+    /** Live input value — search keeps letters; phone keeps +()- space; digits strips non-digits. */
+    function normalizeInputValue(value, mode) {
+        if (value == null) return '';
+        var s = String(value);
+        if (mode === 'digits') return digitsOnly(s);
+        if (mode === 'phone') return toAsciiDigits(s);
+        return toAsciiDigits(s);
+    }
+
+    function bindInput(el, mode) {
+        if (!el || el.nodeType !== 1 || el.dataset.digitNormalizeBound) return;
+        mode = mode || 'search';
+        el.dataset.digitNormalizeBound = mode;
+
+        function apply() {
+            if (el.readOnly || el.disabled) return;
+            var val = el.value;
+            var norm = normalizeInputValue(val, mode);
+            if (norm !== val) {
+                var start = el.selectionStart;
+                var end = el.selectionEnd;
+                el.value = norm;
+                if (start != null && end != null) {
+                    try {
+                        el.setSelectionRange(start, end);
+                    } catch (_) { /* type=number etc. */ }
+                }
+            }
+        }
+
+        el.addEventListener('input', apply);
+        el.addEventListener('change', apply);
+        el.addEventListener('paste', function () {
+            setTimeout(apply, 0);
+        });
+    }
+
+    var BIND_RULES = [
+        {
+            mode: 'phone',
+            sel: [
+                '#phone',
+                'input[name="phone"]',
+                'input[name="alt_phone"]',
+                'input[name="emergency_phone"]',
+                'input[type="tel"]:not([data-no-digit-normalize])'
+            ].join(',')
+        },
+        {
+            mode: 'digits',
+            sel: [
+                '#age',
+                'input[name="age"]',
+                '#national_id',
+                'input[name="national_id"]'
+            ].join(',')
+        },
+        {
+            mode: 'search',
+            sel: [
+                '#patientSearch',
+                '#editPatientSearch',
+                '#alertPatientSearch',
+                '.patient-search-input',
+                '#search',
+                '#quickSearch',
+                '#quickSearchCards',
+                '#globalSearch',
+                '#globalSearchInput',
+                '#cmdkInput'
+            ].join(',')
+        }
+    ];
+
+    function scanAndBind(root) {
+        root = root || document;
+        if (!root.querySelectorAll) return;
+        var i, rule, nodes, j;
+        for (i = 0; i < BIND_RULES.length; i++) {
+            rule = BIND_RULES[i];
+            nodes = root.querySelectorAll(rule.sel);
+            for (j = 0; j < nodes.length; j++) {
+                bindInput(nodes[j], rule.mode);
+            }
+        }
+        nodes = root.querySelectorAll('[data-digit-normalize]');
+        for (j = 0; j < nodes.length; j++) {
+            bindInput(nodes[j], nodes[j].getAttribute('data-digit-normalize') || 'search');
+        }
+    }
+
+    function initInputBindings() {
+        if (global.__digitNormalizerInputsBound) return;
+        global.__digitNormalizerInputsBound = true;
+        scanAndBind(document);
+        if (global.MutationObserver && document.body) {
+            var mo = new MutationObserver(function (mutations) {
+                var m, n, node;
+                for (m = 0; m < mutations.length; m++) {
+                    for (n = 0; n < mutations[m].addedNodes.length; n++) {
+                        node = mutations[m].addedNodes[n];
+                        if (node.nodeType === 1) scanAndBind(node);
+                    }
+                }
+            });
+            mo.observe(document.body, { childList: true, subtree: true });
+        }
+    }
+
     var api = {
         toAsciiDigits: toAsciiDigits,
         normalizeSearchQuery: normalizeSearchQuery,
@@ -96,6 +205,9 @@
         normalizePhone: normalizePhone,
         isPhoneNumberSearch: isPhoneNumberSearch,
         patientSearchUrl: patientSearchUrl,
+        normalizeInputValue: normalizeInputValue,
+        bindInput: bindInput,
+        scanAndBind: scanAndBind,
         isDateQuery: function (query) {
             var trimmed = normalizeSearchQuery(query);
             if (trimmed.length < 6) return false;
@@ -106,4 +218,12 @@
 
     global.DigitNormalizer = api;
     patchFetch();
+
+    if (typeof document !== 'undefined') {
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initInputBindings);
+        } else {
+            initInputBindings();
+        }
+    }
 })(typeof window !== 'undefined' ? window : this);

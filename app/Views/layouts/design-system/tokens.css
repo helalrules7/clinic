@@ -81,6 +81,9 @@
     --bs-link-color-rgb: 79, 70, 229;
     --bs-link-hover-color: #4338CA;
     --bs-link-hover-color-rgb: 67, 56, 202;
+    /* Bootstrap .form-text / muted helpers — follow theme tokens */
+    --bs-secondary-color: var(--muted);
+    --bs-tertiary-color: var(--muted);
 }
 
 .dark {
@@ -129,6 +132,8 @@
     --bs-link-color-rgb: 129, 140, 248;
     --bs-link-hover-color: #A5B4FC;
     --bs-link-hover-color-rgb: 165, 180, 252;
+    --bs-secondary-color: var(--muted);
+    --bs-tertiary-color: var(--muted);
 }
 
 /* Direction-aware UI font: secretary layout is <html dir="rtl"> → Cairo. */

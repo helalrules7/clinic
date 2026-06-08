@@ -1954,7 +1954,11 @@ function searchPatients() {
     return;
   }
 
-  fetch(`/api/patients/search?q=${encodeURIComponent(query)}`)
+  fetch(
+    window.DigitNormalizer && window.DigitNormalizer.patientSearchUrl
+      ? window.DigitNormalizer.patientSearchUrl(query)
+      : `/api/patients/search?q=${encodeURIComponent(query)}`
+  )
     .then((response) => response.json())
     .then((data) => {
       if (data.ok) {

@@ -34,6 +34,8 @@ let refreshInterval;
 let highlightedAppointmentId = null;
 let currentTimeFilter = null;
 let calendarData = null;
+/** When true, re-open #addBookingModal after #addPatientModal closes (booking flow). */
+let reopenBookingAfterPatient = false;
 
 window.SEC_BOOKINGS_MINI_CARDS = [
     { chartId: 'chartBkTotal', trendId: 'trendBkTotal', trendKey: 'total', statKey: 'total_appointments', valueId: 'totalBookings', staticToday: true },
@@ -131,13 +133,11 @@ function setupEventListeners() {
     // Add booking form submission
     document.getElementById('addBookingForm').addEventListener('submit', handleAddBooking);
     
-    // New patient button
-    document.getElementById('newPatientBtn').addEventListener('click', () => {
-        bootstrap.Modal.getInstance(document.getElementById('addBookingModal')).hide();
-        setTimeout(() => {
-            const addPatientModal = new bootstrap.Modal(document.getElementById('addPatientModal'));
-            addPatientModal.show();
-        }, 300);
+    // New patient — hide booking first, then open patient (one backdrop; modal-kit teleports to body).
+    document.getElementById('newPatientBtn').addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        openAddPatientFromBooking();
     });
     
     // Delete booking confirmation
@@ -610,6 +610,67 @@ function clearPreselectedPatientUI() {
     patientSearchField.style.backgroundColor = '';
     patientSearchField.style.cursor = '';
     document.getElementById('newPatientBtn').style.display = 'block';
+    document.getElementById('preselectedLabel').style.display = 'none';
+}
+
+function calculateAgeFromDOB(dob) {
+    if (!dob) return null;
+    try {
+        const today = new Date();
+        const birthDate = new Date(dob);
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const monthDiff = today.getMonth() - birthDate.getMonth();
+
+        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+            age--;
+        }
+
+        return age > 0 ? age : null;
+    } catch (error) {
+        return null;
+    }
+}
+
+/** Apply newly created patient to the booking form (module-level — used after patient modal closes). */
+function selectNewPatient(patientData) {
+    const firstName = patientData.first_name || patientData.firstName || '';
+    const lastName = patientData.last_name || patientData.lastName || '';
+    const fullName = `${firstName} ${lastName}`.trim();
+    const patientId = patientData.id || patientData.patient_id;
+    const phone = patientData.phone || patientData.phone_number || '';
+    const age = patientData.age || calculateAgeFromDOB(patientData.dob) || 'غير محدد';
+
+    preselectedPatient = normalizePreselectedPatient({
+        id: patientId,
+        first_name: firstName,
+        last_name: lastName,
+        full_name: fullName,
+        phone,
+        age
+    });
+
+    document.getElementById('patientSearch').value = fullName;
+    document.getElementById('selectedPatientId').value = patientId;
+
+    document.getElementById('patientSearchResults').innerHTML = `
+        <div class="selected-patient-info alert alert-success">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <strong>تم إضافة مريض جديد:</strong> ${fullName}<br>
+                    <small>الهاتف: ${phone} • العمر: ${age}</small>
+                </div>
+                <button type="button" class="btn btn-sm btn-outline-primary" onclick="clearPreselectedPatient()">
+                    تغيير المريض
+                </button>
+            </div>
+        </div>
+    `;
+
+    const patientSearchField = document.getElementById('patientSearch');
+    patientSearchField.readOnly = true;
+    patientSearchField.style.backgroundColor = 'var(--bg)';
+    patientSearchField.style.cursor = 'not-allowed';
+    document.getElementById('newPatientBtn').style.display = 'none';
     document.getElementById('preselectedLabel').style.display = 'none';
 }
 
@@ -1889,12 +1950,78 @@ function debounce(func, wait) {
     };
 }
 
+function showAddBookingModal(onShown) {
+    const bookingEl = document.getElementById('addBookingModal');
+    if (!bookingEl) return;
+    let inst = bootstrap.Modal.getInstance(bookingEl);
+    if (!inst) inst = new bootstrap.Modal(bookingEl);
+    if (typeof onShown === 'function') {
+        bookingEl.addEventListener('shown.bs.modal', onShown, { once: true });
+    }
+    inst.show();
+}
+
+/** Hide booking modal, then show add-patient (sequential — avoids stacked backdrops). */
+function openAddPatientFromBooking() {
+    const bookingEl = document.getElementById('addBookingModal');
+    const patientEl = document.getElementById('addPatientModal');
+    if (!patientEl) return;
+
+    reopenBookingAfterPatient = true;
+
+    const openPatient = () => {
+        let patientInst = bootstrap.Modal.getInstance(patientEl);
+        if (!patientInst) patientInst = new bootstrap.Modal(patientEl);
+        patientInst.show();
+    };
+
+    if (bookingEl && bookingEl.classList.contains('show')) {
+        const bookingInst = bootstrap.Modal.getInstance(bookingEl);
+        if (bookingInst) {
+            bookingEl.addEventListener('hidden.bs.modal', openPatient, { once: true });
+            bookingInst.hide();
+            return;
+        }
+    }
+    openPatient();
+}
+
+function handleAddPatientModalHiddenFromBooking() {
+    const pending = window.__secBookingPatientPending;
+    let onBookingShown = null;
+
+    if (pending) {
+        delete window.__secBookingPatientPending;
+        if (pending.patientInfo) {
+            const info = pending.patientInfo;
+            onBookingShown = () => {
+                selectNewPatient(info);
+                const visitTypeEl = document.getElementById('visitType');
+                if (visitTypeEl) {
+                    visitTypeEl.value = 'New';
+                    updateVisitCost();
+                    syncFieldMenuSelect('visitType');
+                }
+            };
+        } else if (pending.warning) {
+            showNotification(pending.warning, 'warning');
+        }
+    }
+
+    if (reopenBookingAfterPatient) {
+        reopenBookingAfterPatient = false;
+        showAddBookingModal(onBookingShown);
+    }
+}
+
 // Add Patient functionality - Age and Date of Birth conversion
 function initializeAddPatientModal() {
     const addPatientForm = document.getElementById('addPatientForm');
     const addPatientModal = document.getElementById('addPatientModal');
     const addPatientSubmit = document.getElementById('addPatientSubmit');
     const addPatientMessage = document.getElementById('addPatientMessage');
+
+    addPatientModal.addEventListener('hidden.bs.modal', handleAddPatientModalHiddenFromBooking);
     
     // Reset form when modal opens
     addPatientModal.addEventListener('show.bs.modal', function() {
@@ -1994,37 +2121,28 @@ function initializeAddPatientModal() {
                 addPatientForm.reset();
                 addPatientForm.classList.remove('was-validated');
                 
-                // Close modal after delay and return to appointment modal
-                setTimeout(() => {
-                    bootstrap.Modal.getInstance(addPatientModal).hide();
-                    
-                    // Return to appointment modal with new patient selected
-                    setTimeout(() => {
-                        const appointmentModal = new bootstrap.Modal(document.getElementById('addBookingModal'));
-                        appointmentModal.show();
-                        
-                        // Auto-select the new patient
-                        const patientData = data.data || data.patient || data;
-                        
-                        if (patientData && (patientData.id || patientData.patient_id)) {
-                            const patientInfo = {
-                                id: patientData.id || patientData.patient_id,
-                                first_name: savedFormData.first_name,
-                                last_name: savedFormData.last_name,
-                                phone: savedFormData.phone,
-                                gender: savedFormData.gender,
-                                dob: savedFormData.dob,
-                                age: savedFormData.age
-                            };
-                            
-                            selectNewPatient(patientInfo);
-                            
-                            // Set visit type to "New" automatically
-                            document.getElementById('visitType').value = 'New';
-                        } else {
-                            showNotification('تم إضافة المريض ولكن لا يمكن تحديده تلقائياً. يرجى البحث عن المريض يدوياً.', 'warning');
+                const patientData = data.data || data.patient || data;
+                if (patientData && (patientData.id || patientData.patient_id)) {
+                    window.__secBookingPatientPending = {
+                        patientInfo: {
+                            id: patientData.id || patientData.patient_id,
+                            first_name: savedFormData.first_name,
+                            last_name: savedFormData.last_name,
+                            phone: savedFormData.phone,
+                            gender: savedFormData.gender,
+                            dob: savedFormData.dob,
+                            age: savedFormData.age
                         }
-                    }, 300);
+                    };
+                } else {
+                    window.__secBookingPatientPending = {
+                        warning: 'تم إضافة المريض ولكن لا يمكن تحديده تلقائياً. يرجى البحث عن المريض يدوياً.'
+                    };
+                }
+
+                setTimeout(() => {
+                    const patientInst = bootstrap.Modal.getInstance(addPatientModal);
+                    if (patientInst) patientInst.hide();
                 }, 1500);
                 
             } else {
@@ -2042,52 +2160,6 @@ function initializeAddPatientModal() {
             setSubmitButtonLoading(false);
             showMessage('حدث خطأ أثناء إضافة المريض. يرجى المحاولة مرة أخرى.', 'error');
         });
-    }
-    
-    function selectNewPatient(patientData) {
-        const firstName = patientData.first_name || patientData.firstName || '';
-        const lastName = patientData.last_name || patientData.lastName || '';
-        const fullName = `${firstName} ${lastName}`.trim();
-        const patientId = patientData.id || patientData.patient_id;
-        const phone = patientData.phone || patientData.phone_number || '';
-        const age = patientData.age || calculateAgeFromDOB(patientData.dob) || 'غير محدد';
-        
-        // Fill patient search field
-        document.getElementById('patientSearch').value = fullName;
-        document.getElementById('selectedPatientId').value = patientId;
-        
-        // Show patient info
-        document.getElementById('patientSearchResults').innerHTML = `
-            <div class="selected-patient-info alert alert-success">
-                <div class="d-flex justify-content-between align-items-start">
-                    <div>
-                        <strong>تم إضافة مريض جديد:</strong> ${fullName}<br>
-                        <small>الهاتف: ${phone} • العمر: ${age}</small>
-                    </div>
-                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="clearPreselectedPatient()">
-                        تغيير المريض
-                    </button>
-                </div>
-            </div>
-        `;
-    }
-    
-    function calculateAgeFromDOB(dob) {
-        if (!dob) return null;
-        try {
-            const today = new Date();
-            const birthDate = new Date(dob);
-            let age = today.getFullYear() - birthDate.getFullYear();
-            const monthDiff = today.getMonth() - birthDate.getMonth();
-            
-            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-                age--;
-            }
-            
-            return age > 0 ? age : null;
-        } catch (error) {
-            return null;
-        }
     }
     
     function showMessage(message, type) {

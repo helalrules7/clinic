@@ -83,7 +83,8 @@
         if (isNaN(d.getTime())) return '';
         var diff = Math.max(0, (Date.now() - d.getTime()) / 1000);
         if (isAr) {
-            if (diff < 45) return 'الآن';
+            if (diff < 5) return 'الآن';
+            if (diff < 60) return 'منذ ' + Math.round(diff) + ' ث';
             if (diff < 90) return 'منذ دقيقة';
             if (diff < 3600) return 'منذ ' + Math.round(diff / 60) + ' د';
             if (diff < 5400) return 'منذ ساعة';
@@ -92,7 +93,8 @@
             if (diff < 604800) return 'منذ ' + Math.round(diff / 86400) + ' ي';
             return d.toLocaleDateString('ar-EG');
         }
-        if (diff < 45) return 'just now';
+        if (diff < 5) return 'just now';
+        if (diff < 60) return Math.round(diff) + 's ago';
         if (diff < 90) return '1m ago';
         if (diff < 3600) return Math.round(diff / 60) + 'm ago';
         if (diff < 5400) return '1h ago';
@@ -356,23 +358,67 @@
         });
     }
 
-    // Returns an HTML string (inserted via innerHTML). The actor is rendered as a
-    // bold "You" / "أنت" when the event was performed by the logged-in user
-    // (actor_is_self), otherwise the actor's escaped name. Everything else is escaped.
+    var STATUS_AR = {
+        Booked: 'محجوز', CheckedIn: 'تم الحضور', InProgress: 'جارٍ',
+        Completed: 'مكتمل', Cancelled: 'ملغي', NoShow: 'لم يحضر',
+        Rescheduled: 'معاد جدولته', Closed: 'مغلق'
+    };
+    // "للمريضة فلانة" / "للمريض فلان" / "للمريض/ة فلان" (gender-aware), prefixed.
+    function arForPatient(a) {
+        var n = a.patient_name ? escHtml(a.patient_name) : '';
+        if (!n) return '';
+        var w = a.patient_gender === 'Female' ? 'للمريضة' : (a.patient_gender === 'Male' ? 'للمريض' : 'للمريض/ة');
+        return ' ' + w + ' ' + n;
+    }
+    // "المريضة فلانة" (no «لـ» prefix) — for the check-in phrasing.
+    function arBarePatient(a) {
+        var n = a.patient_name ? escHtml(a.patient_name) : '';
+        if (!n) return '';
+        var w = a.patient_gender === 'Female' ? 'المريضة' : (a.patient_gender === 'Male' ? 'المريض' : 'المريض/ة');
+        return ' ' + w + ' ' + n;
+    }
+    // Arabic activity verb phrase (incl. the patient). Returns null for unknown codes
+    // so the caller falls back to the English `action`. `did` = «قمت بـ» (you) / «قام بـ» (other).
+    function arActivityVerb(a) {
+        var self = !!a.actor_is_self;
+        var did = self ? 'قمت ب' : 'قام ب';
+        switch (a.action_code) {
+            case 'booked':         return did + 'حجز موعد' + arForPatient(a);
+            case 'status_changed': return did + 'تغيير حالة الموعد إلى «' + escHtml(STATUS_AR[a.detail] || a.detail || '') + '»' + arForPatient(a);
+            case 'deleted':        return did + 'حذف موعد' + arForPatient(a);
+            case 'rescheduled':    return did + 'إعادة جدولة الموعد' + arForPatient(a);
+            case 'edited':         return did + 'تعديل الموعد' + arForPatient(a);
+            case 'checked_in':     return (self ? 'سجّلت' : 'سجّل') + ' حضور' + (arBarePatient(a) || ' المريض');
+            case 'note_added':     return did + 'إضافة ملاحظة طبية' + arForPatient(a);
+            case 'alert_created':  return did + 'إنشاء تنبيه' + arForPatient(a);
+            case 'todo_created':   return (self ? 'أضفت' : 'أضاف') + ' مهمة' + (a.detail ? ' «' + escHtml(a.detail) + '»' : '');
+            default:               return null;
+        }
+    }
+
+    // Returns an HTML string (inserted via innerHTML). The actor is a bold "You"/"أنت"
+    // when the logged-in user performed it. For the Arabic panel the whole line is
+    // built in Arabic (gender-aware) from the structured action_code; the English
+    // panel uses the server-rendered `action` + patient label. Everything is escaped.
     function formatActivityLine(a) {
         if (!a) return '';
         if (a.text || a.message || a.title) {
             return escHtml(a.text || a.message || a.title);
         }
-        var parts = [];
-        if (a.actor_is_self) {
-            parts.push('<strong>' + (isAr ? 'أنت' : 'You') + '</strong>');
-        } else if (a.actor_name) {
-            parts.push(escHtml(a.actor_name));
+        var actorPart = a.actor_is_self
+            ? '<strong>' + (isAr ? 'أنت' : 'You') + '</strong>'
+            : (a.actor_name ? escHtml(a.actor_name) : (isAr ? 'مستخدم' : 'Someone'));
+
+        if (isAr && a.action_code) {
+            var verb = arActivityVerb(a);
+            if (verb) return actorPart + ' ' + verb;
         }
+
+        // English / fallback
+        var parts = [actorPart];
         if (a.action) parts.push(escHtml(a.action));
         if (a.target_label) parts.push(escHtml(a.target_label));
-        if (parts.length) return parts.join(' ');
+        if (parts.length > 1) return parts.join(' ');
         return isAr ? 'نشاط' : 'Activity';
     }
 
@@ -614,7 +660,8 @@
             var dot = node.querySelector('[data-dot]');
             dot.style.background = colorFor(type);
             node.querySelector('[data-text]').innerHTML = formatActivityLine(a);
-            node.querySelector('[data-time]').textContent = a.time_ago || timeAgo(a.ts || a.created_at || a.time);
+            // Prefer the client's localized timeAgo (the server's time_ago is English).
+            node.querySelector('[data-time]').textContent = timeAgo(a.ts || a.created_at || a.time) || a.time_ago;
             wrap.appendChild(node);
         });
         body.appendChild(wrap);

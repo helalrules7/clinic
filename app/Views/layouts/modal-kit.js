@@ -164,6 +164,16 @@
     document.addEventListener('pointerdown', onPointerDown, true);
     document.addEventListener('hidden.bs.modal', onHidden, true);
 
+    // Teleport modals to <body> before show — prevents the "modal under
+    // backdrop" bug when dialogs live inside .main-content stacking contexts.
+    document.addEventListener('show.bs.modal', function (e) {
+        var modal = e.target;
+        if (!modal || !modal.classList || !modal.classList.contains('modal')) return;
+        if (modal.parentNode && modal.parentNode !== document.body) {
+            document.body.appendChild(modal);
+        }
+    }, true);
+
     // =====================================================================
     // Reusable confirm / alert modals — a themed replacement for the native
     // window.confirm() / window.alert(). The dialog is a normal Bootstrap

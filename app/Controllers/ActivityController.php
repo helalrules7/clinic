@@ -206,7 +206,8 @@ class ActivityController
                        u.name        AS actor_name,
                        u.username    AS actor_username,
                        p.first_name  AS p_first,
-                       p.last_name   AS p_last
+                       p.last_name   AS p_last,
+                       p.gender      AS p_gender
                 FROM consultation_notes cn
                 LEFT JOIN appointments a ON a.id = cn.appointment_id
                 LEFT JOIN doctors d      ON d.id = a.doctor_id
@@ -234,6 +235,10 @@ class ActivityController
                 'actor_id'     => $r['actor_id'] !== null ? (int)$r['actor_id'] : null,
                 'actor_name'   => $r['actor_name'] ?: ($r['actor_username'] ?: 'Unknown'),
                 'action'       => 'added a consultation note',
+                'action_code'  => 'note_added',
+                'detail'       => null,
+                'patient_name' => $patientLabel,
+                'patient_gender' => $r['p_gender'] ?? null,
                 'target_label' => $patientLabel !== '' ? $patientLabel : ($r['patient_id'] ? ('Patient #' . $r['patient_id']) : ''),
                 'target_link'  => $r['patient_id'] ? ('/patient/' . (int)$r['patient_id']) : null,
                 'ts'           => $r['ts'],
@@ -267,7 +272,8 @@ class ActivityController
                        u.name           AS actor_name,
                        u.username       AS actor_username,
                        p.first_name     AS p_first,
-                       p.last_name      AS p_last
+                       p.last_name      AS p_last,
+                       p.gender         AS p_gender
                 FROM activity_log al
                 LEFT JOIN users u    ON u.id = al.actor_user_id
                 LEFT JOIN patients p ON p.id = al.patient_id
@@ -292,6 +298,10 @@ class ActivityController
                 'actor_id'     => $r['actor_id'] !== null ? (int)$r['actor_id'] : null,
                 'actor_name'   => $r['actor_name'] ?: ($r['actor_username'] ?: 'Someone'),
                 'action'       => $this->describeActivityAction($r['action_code'], $r['detail']),
+                'action_code'  => $r['action_code'],
+                'detail'       => $r['detail'],
+                'patient_name' => $patientLabel,
+                'patient_gender' => $r['p_gender'] ?? null,
                 'target_label' => $patientLabel !== '' ? $patientLabel : ($r['patient_id'] ? ('Patient #' . $r['patient_id']) : ''),
                 'target_link'  => $r['entity_id'] ? ('/appointment/' . (int)$r['entity_id']) : '',
                 'ts'           => $r['ts'],
@@ -423,7 +433,8 @@ class ActivityController
                        u.name        AS actor_name,
                        u.username    AS actor_username,
                        p.first_name  AS p_first,
-                       p.last_name   AS p_last
+                       p.last_name   AS p_last,
+                       p.gender      AS p_gender
                 FROM alerts al
                 LEFT JOIN users u    ON u.id = {$actorCol}
                 LEFT JOIN patients p ON p.id = {$patientCol}
@@ -450,6 +461,10 @@ class ActivityController
                 'actor_id'     => $r['actor_id'] !== null ? (int)$r['actor_id'] : null,
                 'actor_name'   => $r['actor_name'] ?: ($r['actor_username'] ?: 'Unknown'),
                 'action'       => 'created an alert',
+                'action_code'  => 'alert_created',
+                'detail'       => null,
+                'patient_name' => $patientLabel,
+                'patient_gender' => $r['p_gender'] ?? null,
                 'target_label' => $patientLabel !== '' ? $patientLabel : ($r['patient_id'] ? ('Patient #' . $r['patient_id']) : (string)($r['message'] ?? '')),
                 'target_link'  => $r['patient_id'] ? ('/patient/' . (int)$r['patient_id']) : null,
                 'ts'           => $r['ts'],
@@ -510,6 +525,10 @@ class ActivityController
                 'actor_id'     => (int)$r['actor_id'],
                 'actor_name'   => $r['actor_name'] ?: ($r['actor_username'] ?: 'You'),
                 'action'       => 'created a task',
+                'action_code'  => 'todo_created',
+                'detail'       => $title,
+                'patient_name' => $patientLabel,
+                'patient_gender' => null,
                 'target_label' => $label,
                 'target_link'  => '/todos#todo-' . (int)$r['row_id'],
                 'ts'           => $r['ts'],

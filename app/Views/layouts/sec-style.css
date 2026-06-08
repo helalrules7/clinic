@@ -3840,6 +3840,13 @@ body {
 .modal.show ~ .modal.show {
     z-index: 1000005 !important;
 }
+/* Booking → add-patient stack (secretary) */
+html[data-layout="secretary"] #addBookingModal.modal.show {
+    z-index: 1000003 !important;
+}
+html[data-layout="secretary"] #addPatientModal.modal.show {
+    z-index: 1000005 !important;
+}
 
 /* Mobile sidebar uses 1000002 when open — keep it under backdrop while modal is up */
 body.modal-open .sidebar {
@@ -5018,4 +5025,34 @@ html[data-layout="secretary"] .notif-act--danger:hover i {
 }
 html[data-layout="secretary"] .notif-act:active {
     transform: translateY(0) scale(0.94);
+}
+
+/* ============================================
+   §27 — Booking / patient modals: helper text colors
+   Bootstrap .form-text uses --bs-secondary-color; bridged in tokens.css.
+   Reinforced here for add/edit booking + add patient modals (RTL).
+   ============================================ */
+html[data-layout="secretary"] #addBookingModal .form-text,
+html[data-layout="secretary"] #editBookingModal .form-text,
+html[data-layout="secretary"] #addPatientModal .form-text,
+html[data-layout="secretary"] #confirmAttendanceModal .form-text,
+html[data-layout="secretary"] .modal .form-text:not(.text-danger):not(.text-primary) {
+    color: var(--muted) !important;
+    font-size: 0.8rem;
+    line-height: 1.45;
+}
+html[data-layout="secretary"] #addBookingModal .max-payment-info,
+html[data-layout="secretary"] #editBookingModal .max-payment-info,
+html[data-layout="secretary"] .modal .max-payment-info {
+    color: var(--muted) !important;
+    font-size: 0.8rem;
+    font-style: italic;
+}
+html[data-layout="secretary"] .modal .form-text.text-danger,
+html[data-layout="secretary"] .modal .form-text.text-danger strong {
+    color: var(--danger) !important;
+}
+html[data-layout="secretary"] .modal small.form-text,
+html[data-layout="secretary"] .modal .form-text.text-muted {
+    color: var(--muted) !important;
 }

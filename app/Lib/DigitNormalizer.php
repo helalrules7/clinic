@@ -77,13 +77,16 @@ class DigitNormalizer
         return $ascii !== '' && preg_match('/^\d+$/', $ascii) === 1;
     }
 
-    /** Normalize phone / national_id fields before validation & storage. */
+    /** Normalize phone / age / national_id fields before validation & storage. */
     public static function normalizePatientNumericFields(array $data): array
     {
         foreach (['phone', 'alt_phone', 'emergency_phone', 'national_id'] as $field) {
             if (isset($data[$field]) && $data[$field] !== '' && $data[$field] !== null) {
                 $data[$field] = self::toAsciiDigits(trim((string) $data[$field]));
             }
+        }
+        if (isset($data['age']) && $data['age'] !== '' && $data['age'] !== null) {
+            $data['age'] = self::digitsOnly((string) $data['age']);
         }
         return $data;
     }

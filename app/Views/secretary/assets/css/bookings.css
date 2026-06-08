@@ -1961,8 +1961,10 @@ input[readonly] {
     font-size: 0.875rem;
 }
 
-#addBookingModal .form-text {
+#addBookingModal .form-text,
+#editBookingModal .form-text {
     font-size: 0.8rem;
+    color: var(--muted) !important;
 }
 
 /* Booking modals — keyboard-hint layout (scoped; global RTL header = modal-kit.css) */

@@ -316,32 +316,109 @@ class NotificationController
         // Audit log first (real actor) — drives the activity feed.
         \App\Lib\Helpers::logActivity($actorUserId, $action, $apptId ?: null, $patientId, $doctorId, $clinicId, $detail);
 
-        $recipients = [];
+        // Language per recipient: the secretary UI is Arabic, the doctor UI English.
+        // Secretaries → Arabic message (built below); the assigned doctor → the
+        // English $title/$message passed in.
+        $langByUid = [];
         if ($doctorId) {
-            $recipients[] = self::resolveUserIdForDoctorId($doctorId);
+            $du = self::resolveUserIdForDoctorId($doctorId);
+            if ($du) {
+                $langByUid[(int)$du] = 'en';
+            }
         }
         foreach (self::resolveSecretaryUserIdsForClinic($clinicId) as $sid) {
-            $recipients[] = $sid;
+            $langByUid[(int)$sid] = 'ar'; // secretary wins if somehow both
         }
-        $recipients = array_values(array_unique(array_filter(array_map('intval', $recipients))));
 
         $actorUserId = (int)$actorUserId;
+        $arTitle = null;
+        $arMessage = null;
         $created = [];
-        foreach ($recipients as $uid) {
+        foreach ($langByUid as $uid => $lang) {
+            $uid = (int)$uid;
             if ($uid === $actorUserId) {
                 continue; // never notify the actor about their own action
             }
-            // Honour the per-doctor appointment-notification opt-out. The key only
-            // exists for doctors, so secretaries are unaffected and always notified.
+            // Honour the per-doctor appointment-notification opt-out (doctors only).
             if (self::userSkipsNotification($uid, 'dont_create_notification_for_appointments')) {
                 continue;
             }
-            $nid = self::create($uid, 'appointment', $title, $message, 'appointment', $apptId ?: null, $patientId, $groupKey);
+            if ($lang === 'ar') {
+                if ($arTitle === null) {
+                    [$arTitle, $arMessage] = self::buildArabicAppointmentNotif($appointment, $actorUserId, $action, $detail);
+                }
+                $t = $arTitle;
+                $m = $arMessage;
+            } else {
+                $t = $title;
+                $m = $message;
+            }
+            $nid = self::create($uid, 'appointment', $t, $m, 'appointment', $apptId ?: null, $patientId, $groupKey);
             if ($nid) {
                 $created[] = (int)$nid;
             }
         }
         return $created;
+    }
+
+    /** Arabic (gender-aware) title + message for an appointment notification. */
+    private static function buildArabicAppointmentNotif(array $appointment, $actorUserId, $action, $detail)
+    {
+        $pdo = Database::getInstance()->getConnection();
+        $patientName = '';
+        $gender = null;
+        try {
+            $stmt = $pdo->prepare('SELECT first_name, last_name, gender FROM patients WHERE id = ? LIMIT 1');
+            $stmt->execute([(int)($appointment['patient_id'] ?? 0)]);
+            if ($row = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+                $patientName = trim(($row['first_name'] ?? '') . ' ' . ($row['last_name'] ?? ''));
+                $gender = $row['gender'] ?? null;
+            }
+        } catch (\Throwable $e) { /* best-effort */ }
+
+        $actor = 'مستخدم';
+        try {
+            $stmt = $pdo->prepare('SELECT name, username FROM users WHERE id = ? LIMIT 1');
+            $stmt->execute([(int)$actorUserId]);
+            if ($row = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+                $actor = trim($row['name'] ?? '') ?: ($row['username'] ?? 'مستخدم');
+            }
+        } catch (\Throwable $e) { /* best-effort */ }
+
+        $forP = $patientName !== ''
+            ? (($gender === 'Female' ? 'للمريضة' : ($gender === 'Male' ? 'للمريض' : 'للمريض/ة')) . ' ' . $patientName)
+            : '';
+        $bareP = $patientName !== ''
+            ? (($gender === 'Female' ? 'المريضة' : ($gender === 'Male' ? 'المريض' : 'المريض/ة')) . ' ' . $patientName)
+            : 'المريض';
+        $date = $appointment['date'] ?? '';
+        $time = isset($appointment['start_time']) ? substr((string)$appointment['start_time'], 0, 5) : '';
+        $when = ($date ? (' يوم ' . $date) : '') . ($time ? (' الساعة ' . $time) : '');
+
+        $statusAr = [
+            'Booked' => 'محجوز', 'CheckedIn' => 'تم الحضور', 'InProgress' => 'جارٍ',
+            'Completed' => 'مكتمل', 'Cancelled' => 'ملغي', 'NoShow' => 'لم يحضر',
+            'Rescheduled' => 'معاد جدولته', 'Closed' => 'مغلق',
+        ];
+
+        switch ($action) {
+            case 'booked':
+                return ['موعد جديد', "قام {$actor} بحجز موعد {$forP}{$when}"];
+            case 'status_changed':
+                $s = $statusAr[$detail] ?? (string)$detail;
+                return ['تحديث حالة موعد', "قام {$actor} بتغيير حالة الموعد إلى «{$s}» {$forP}"];
+            case 'deleted':
+                return ['حذف موعد', "قام {$actor} بحذف موعد {$forP}{$when}"];
+            case 'rescheduled':
+                $d = $detail ? str_replace('to ', 'إلى ', (string)$detail) : '';
+                return ['إعادة جدولة موعد', trim("قام {$actor} بإعادة جدولة موعد {$forP} {$d}")];
+            case 'edited':
+                return ['تعديل موعد', "قام {$actor} بتعديل موعد {$forP}"];
+            case 'checked_in':
+                return ['تسجيل حضور', "تم تسجيل حضور {$bareP}{$when}"];
+            default:
+                return ['إشعار موعد', "تحديث على موعد {$forP}"];
+        }
     }
 
     /**
