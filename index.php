@@ -21,12 +21,17 @@ if (file_exists($vendorAutoload)) {
     require_once $vendorAutoload;
 }
 
+// v11.0.0 — Global procedural helpers (base_url, asset_url) used by view partials.
+require_once __DIR__ . '/app/Lib/global_helpers.php';
+
 // Load Controllers
 require_once __DIR__ . '/app/Controllers/SecretaryController.php';
+require_once __DIR__ . '/app/Controllers/SecretaryPatientsController.php';
 require_once __DIR__ . '/app/Controllers/AlertController.php';
 require_once __DIR__ . '/app/Controllers/BoardController.php';
 require_once __DIR__ . '/app/Controllers/CommentsController.php';
 require_once __DIR__ . '/app/Controllers/PatientSummaryController.php';
+require_once __DIR__ . '/app/Controllers/ChatController.php';
 // require_once __DIR__ . '/app/Controllers/NotesController.php';
 
 // Load environment variables
@@ -115,6 +120,29 @@ try {
     $router->get('/api/secretary/payments', 'SecretaryController@getPaymentsData');
     $router->get('/secretary/patients', 'SecretaryController@patients');
     $router->get('/api/secretary/patients', 'SecretaryController@getPatientsData');
+    // v11 — secretary clinic-scoped patient organization (folders/tags/markers/list/export)
+    $router->get('/api/secretary/patients-list', 'SecretaryPatientsController@list');
+    $router->get('/api/secretary/patients-export', 'SecretaryPatientsController@exportCsv');
+    $router->get('/api/secretary/patient-folders', 'SecretaryPatientsController@folders');
+    $router->post('/api/secretary/patient-folders/move', 'SecretaryPatientsController@movePatients');
+    $router->post('/api/secretary/patient-folders/auto-month', 'SecretaryPatientsController@autoOrganizeByMonth');
+    $router->post('/api/secretary/patient-folders', 'SecretaryPatientsController@createFolder');
+    $router->post('/api/secretary/patient-folders/{id}', 'SecretaryPatientsController@updateFolder');
+    $router->delete('/api/secretary/patient-folders/{id}', 'SecretaryPatientsController@deleteFolder');
+    $router->get('/api/secretary/patient-tags', 'SecretaryPatientsController@tags');
+    $router->post('/api/secretary/patient-tags/assign', 'SecretaryPatientsController@assignTags');
+    $router->post('/api/secretary/patient-tags', 'SecretaryPatientsController@createTag');
+    $router->delete('/api/secretary/patient-tags/{id}', 'SecretaryPatientsController@deleteTag');
+    $router->post('/api/secretary/patient-marker/{id}', 'SecretaryPatientsController@setMarker');
+    $router->post('/api/secretary/patients/{id}/update', 'SecretaryPatientsController@updatePatientBasics');
+    $router->get('/api/secretary/patient-org-bulk', 'SecretaryPatientsController@patientOrgBulk');
+    $router->get('/api/secretary/next-appointments', 'SecretaryPatientsController@nextAppointments');
+    $router->get('/api/secretary/month', 'SecretaryPatientsController@month');
+    $router->get('/api/secretary/patient-org/{id}', 'SecretaryPatientsController@patientOrg');
+    $router->post('/api/secretary/patient-files/{id}', 'SecretaryPatientsController@uploadFile');
+    $router->get('/api/secretary/patient-files/view/{fileId}', 'SecretaryPatientsController@viewFile');
+    $router->get('/api/secretary/patient-files/{id}', 'SecretaryPatientsController@listFiles');
+    $router->delete('/api/secretary/patient-files/{fileId}', 'SecretaryPatientsController@deleteFile');
     $router->get('/secretary/patients/new', 'SecretaryController@newPatient');
     $router->post('/secretary/patients', 'SecretaryController@createPatient');
     $router->get('/secretary/patients/{id}', 'SecretaryController@viewPatient');
@@ -194,7 +222,87 @@ try {
     $router->delete('/api/notifications/clear-all', 'NotificationController@clearAll');
     $router->delete('/api/notifications/{id}', 'NotificationController@delete');
     $router->post('/api/notifications/system', 'NotificationController@createSystemNotification');
-  
+
+    // v11.0.0 — Notification center extensions
+    $router->get('/api/notifications/grouped',        'NotificationControllerV11@grouped');
+    $router->post('/api/notifications/{id}/snooze',   'NotificationControllerV11@snooze');
+    $router->post('/api/notifications/{id}/unsnooze', 'NotificationControllerV11@unsnooze');
+    $router->post('/api/notifications/{id}/pin',      'NotificationControllerV11@pin');
+    $router->post('/api/notifications/{id}/unpin',    'NotificationControllerV11@unpin');
+
+    // v11.0.0 — To-Do (multi-list)
+    $router->get('/doctor/todos',           'TodoController@page');
+    $router->get('/api/todos',              'TodoController@index');
+    $router->get('/api/todos/counts',       'TodoController@counts');
+    $router->get('/api/todos/due-check',    'TodoController@dueCheck');
+    $router->post('/api/todos/reorder',     'TodoController@reorder');
+    $router->get('/api/todos/{id}',         'TodoController@show');
+    $router->post('/api/todos',             'TodoController@create');
+    $router->patch('/api/todos/{id}',       'TodoController@update');
+    $router->delete('/api/todos/{id}',      'TodoController@delete');
+    $router->post('/api/todos/{id}/done',   'TodoController@markDone');
+    $router->post('/api/todos/{id}/reopen', 'TodoController@reopen');
+    $router->post('/api/todos/{id}/snooze', 'TodoController@snooze');
+
+    // v11.0.0 — To-Do lists
+    $router->get('/api/todo-lists',                  'TodoListController@index');
+    $router->post('/api/todo-lists/reorder',         'TodoListController@reorder');
+    $router->get('/api/todo-lists/{id}',             'TodoListController@show');
+    $router->post('/api/todo-lists',                 'TodoListController@create');
+    $router->patch('/api/todo-lists/{id}',           'TodoListController@update');
+    $router->post('/api/todo-lists/{id}/archive',    'TodoListController@archive');
+    $router->post('/api/todo-lists/{id}/restore',    'TodoListController@restore');
+    $router->delete('/api/todo-lists/{id}',          'TodoListController@delete');
+
+    // v11.0.0 — Quick notes
+    $router->get('/api/quick-notes',              'QuickNoteController@index');
+    $router->post('/api/quick-notes',             'QuickNoteController@create');
+    $router->get('/api/quick-notes/{id}',         'QuickNoteController@show');
+    $router->patch('/api/quick-notes/{id}',       'QuickNoteController@update');
+    $router->delete('/api/quick-notes/{id}',      'QuickNoteController@delete');
+    $router->post('/api/quick-notes/{id}/pin',    'QuickNoteController@pin');
+    $router->post('/api/quick-notes/{id}/unpin',  'QuickNoteController@unpin');
+
+    // v11.0.0 — Note templates
+    $router->get('/api/note-templates',                    'NoteTemplateController@index');
+    $router->post('/api/note-templates',                   'NoteTemplateController@create');
+    $router->post('/api/note-templates/reorder',           'NoteTemplateController@reorder');
+    $router->post('/api/note-templates/seed-defaults',     'NoteTemplateController@seedDefaults');
+    $router->get('/api/note-templates/{id}',               'NoteTemplateController@show');
+    $router->patch('/api/note-templates/{id}',             'NoteTemplateController@update');
+    $router->delete('/api/note-templates/{id}',            'NoteTemplateController@delete');
+    $router->post('/api/note-templates/{id}/used',         'NoteTemplateController@markUsed');
+
+    // v11 — Medical instruction templates + per-appointment instructions
+    $router->get('/api/instruction-templates/suggestions',                    'MedicalInstructionController@suggestions');
+    $router->get('/api/instruction-templates',                                'MedicalInstructionController@indexTemplates');
+    $router->post('/api/instruction-templates',                               'MedicalInstructionController@createTemplate');
+    $router->get('/api/instruction-templates/{id}',                           'MedicalInstructionController@showTemplate');
+    $router->patch('/api/instruction-templates/{id}',                         'MedicalInstructionController@updateTemplate');
+    $router->delete('/api/instruction-templates/{id}',                          'MedicalInstructionController@deleteTemplate');
+    $router->get('/api/appointments/{id}/medical-instructions',               'MedicalInstructionController@indexAppointment');
+    $router->post('/api/appointments/{id}/medical-instructions',              'MedicalInstructionController@createAppointment');
+    $router->patch('/api/appointments/{id}/medical-instructions/{instId}',    'MedicalInstructionController@updateAppointment');
+    $router->delete('/api/appointments/{id}/medical-instructions/{instId}',   'MedicalInstructionController@deleteAppointment');
+
+    // v11.0.0 — Activity, Cmd+K, hover-card, settings extensions
+    $router->get('/api/activity',                       'ActivityController@feed');
+    $router->get('/api/search/palette',                 'SearchController@palette');
+    $router->get('/api/patients/{id}/summary',          'PatientSummaryController@summary');
+    $router->get('/api/settings/appearance',            'SettingsControllerV11@getAppearance');
+    $router->post('/api/settings/theme-palette',        'SettingsControllerV11@setThemePalette');
+    $router->post('/api/settings/theme-auto-schedule',  'SettingsControllerV11@setThemeAutoSchedule');
+    
+    // Doctor Forum routes
+    
+    
+    
+    
+    
+    
+    
+    
+    
     // Medical History routes
     $router->get('/api/patients/{id}/medical-history', 'ApiController@getPatientMedicalHistory');
     $router->post('/api/patients/{id}/medical-history', 'ApiController@createMedicalHistory');
@@ -238,6 +346,34 @@ try {
     // API routes
     $router->get('/api/clinics', 'ApiController@getClinics');
     $router->get('/api/calendar', 'ApiController@getCalendar');
+    $router->get('/api/calendar/version', 'ApiController@calendarVersion');
+    // --- Chat (doctor<->secretary) — see ChatController + CHAT_FEATURE_PLAN.md ---
+    $router->get('/api/chat/version',                   'ChatController@version');
+    $router->get('/api/chat/link-preview',              'ChatController@linkPreview'); // literal: must precede /api/chat/{id}
+    $router->get('/api/chat/roster',                    'ChatController@roster');
+    $router->get('/api/chat/conversations',             'ChatController@conversations');
+    $router->post('/api/chat/conversations',            'ChatController@startConversation');
+    $router->get('/api/chat/contacts',                  'ChatController@contacts');
+    $router->post('/api/chat/contacts',                 'ChatController@addContact');
+    $router->delete('/api/chat/contacts/{id}',          'ChatController@removeContact');
+    $router->post('/api/chat/attachments',              'ChatController@uploadAttachment');
+    $router->get('/api/chat/attachments/{id}',          'ChatController@viewAttachment');
+    $router->patch('/api/chat/messages/{id}',           'ChatController@editMessage');
+    $router->delete('/api/chat/messages/{id}',          'ChatController@deleteMessage');
+    $router->post('/api/chat/messages/{id}/reactions',  'ChatController@react');
+    $router->post('/api/chat/messages/{id}/pin',        'ChatController@pinMessage');
+    $router->get('/api/chat/{id}/messages',             'ChatController@messages');
+    $router->post('/api/chat/{id}/messages',            'ChatController@send');
+    $router->put('/api/chat/{id}/read',                 'ChatController@markRead');
+    $router->post('/api/chat/{id}/typing',              'ChatController@typing');
+    $router->post('/api/chat/{id}/group',               'ChatController@updateGroup');
+    $router->post('/api/chat/{id}/add-member',          'ChatController@addMember');
+    $router->post('/api/chat/{id}/remove-member',       'ChatController@removeMember');
+    $router->post('/api/chat/{id}/leave',               'ChatController@leaveGroup');
+    $router->put('/api/chat/{id}/mute',                 'ChatController@toggleMute');
+    $router->get('/api/chat/{id}/pins',                 'ChatController@pins');
+    $router->get('/api/chat/{id}/search',               'ChatController@searchMessages');
+    $router->post('/api/chat/{id}/forward',             'ChatController@forwardMessage');
     $router->get('/api/organizer/month', 'ApiController@getOrganizerMonth');
     // More specific routes first
     // More specific routes first - search must come before {id}
@@ -393,6 +529,10 @@ try {
     $router->get('/api/getMostUsedDrugs', 'ApiController@getMostUsedDrugs');
     $router->get('/api/searchDrugsAutocomplete', 'ApiController@searchDrugsAutocomplete');
     $router->post('/api/drugs/update-database', 'ApiController@updateDrugsDatabase');
+    // Per-doctor drug defaults (saved route + instructions per drug)
+    $router->get('/api/drug-defaults', 'ApiController@getDrugDefault');
+    $router->post('/api/drug-defaults', 'ApiController@saveDrugDefault');
+    $router->delete('/api/drug-defaults', 'ApiController@deleteDrugDefault');
     
     // Comprehensive Search API route
     $router->get('/api/search/comprehensive', 'ApiController@comprehensiveSearch');

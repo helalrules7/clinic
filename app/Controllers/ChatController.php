@@ -56,6 +56,15 @@ class ChatController
         return is_array($data) ? $data : ($_POST ?: []);
     }
 
+    /** Servable profile-image URL — mirrors main.php/secretary_main.php: prepend
+     *  /public unless already absolute or already /public-prefixed. */
+    private function avatarUrl(?string $img): ?string
+    {
+        if (!$img) return null;
+        if (preg_match('#^https?://#i', $img)) return $img;
+        return strpos($img, '/public/') === 0 ? $img : '/public' . $img;
+    }
+
     /** Atomic per-conversation monotonic counter; returns the new rev. */
     private function bumpRev(int $conversationId): int
     {
@@ -216,7 +225,7 @@ class ChatController
         )->fetchAll(PDO::FETCH_ASSOC);
         $users = array_map(fn($u) => [
             'id' => (int) $u['id'], 'name' => $u['name'] ?: $u['username'],
-            'role' => $u['role'], 'avatar' => $u['profile_image'] ?: null,
+            'role' => $u['role'], 'avatar' => $this->avatarUrl($u['profile_image'] ?? null),
         ], $rows);
         $this->json(['ok' => true, 'users' => $users]);
     }
@@ -284,7 +293,7 @@ class ChatController
             $parts->execute([$cid]);
             $members = array_map(fn($u) => [
                 'id' => (int) $u['id'], 'name' => $u['name'] ?: $u['username'],
-                'role' => $u['role'], 'avatar' => $u['profile_image'] ?: null,
+                'role' => $u['role'], 'avatar' => $this->avatarUrl($u['profile_image'] ?? null),
                 'group_role' => $u['group_role'],
             ], $parts->fetchAll(PDO::FETCH_ASSOC));
             $other = null;
@@ -1035,7 +1044,7 @@ class ChatController
         $rows->execute([$uid]);
         $this->json(['ok' => true, 'contacts' => array_map(fn($u) => [
             'id' => (int) $u['id'], 'name' => $u['name'] ?: $u['username'], 'role' => $u['role'],
-            'avatar' => $u['profile_image'] ?: null, 'hidden' => (int) $u['hidden'],
+            'avatar' => $this->avatarUrl($u['profile_image'] ?? null), 'hidden' => (int) $u['hidden'],
         ], $rows->fetchAll(PDO::FETCH_ASSOC))]);
     }
 

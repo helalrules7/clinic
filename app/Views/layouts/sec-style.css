@@ -4957,6 +4957,20 @@ html[data-layout="secretary"] .sec-icon-action-btn i,
 html[data-layout="secretary"] .appt-actions .btn i {
     font-size: 1rem;
 }
+/* Action-tile icons ALWAYS white — the btn-outline-* icons were inheriting the
+   outline hue (currentColor) → low contrast on the solid gradient tile bg. Covers
+   the dashboard appt widget, the bookings list, and the shared icon-pill class.
+   sec-dash-icon SVGs use stroke:currentColor, so color:#fff whitens them too. */
+html[data-layout="secretary"] .appt-actions .btn,
+html[data-layout="secretary"] .appt-actions .btn i,
+html[data-layout="secretary"] .appt-actions .btn .sec-dash-icon,
+html[data-layout="secretary"] .appointment-actions .btn,
+html[data-layout="secretary"] .appointment-actions .btn i,
+html[data-layout="secretary"] .sec-icon-action-btn,
+html[data-layout="secretary"] .sec-icon-action-btn i,
+html[data-layout="secretary"] .sec-icon-action-btn .sec-dash-icon {
+    color: #fff !important;
+}
 /* §24 exception — top-bar header chips keep doctor glass (header-chips.css) */
 html[data-layout="secretary"] .top-bar :where(.btn[class*="btn-outline-"]) {
     border: 1px solid var(--header-chip-border) !important;
