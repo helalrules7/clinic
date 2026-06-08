@@ -201,6 +201,9 @@ function toggleAIChatWidget() {
             toggleAIChatExpand();
         }
     }
+    if (typeof window.__roayaChatSyncAiLayout === 'function') {
+        window.__roayaChatSyncAiLayout();
+    }
 }
 
 /**

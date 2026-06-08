@@ -352,6 +352,7 @@ try {
     $router->get('/api/calendar/version', 'ApiController@calendarVersion');
     // --- Chat (doctor<->secretary) — see ChatController + CHAT_FEATURE_PLAN.md ---
     $router->get('/api/chat/version',                   'ChatController@version');
+    $router->get('/api/chat/link-preview',              'ChatController@linkPreview'); // literal: must precede /api/chat/{id}
     $router->get('/api/chat/roster',                    'ChatController@roster');
     $router->get('/api/chat/conversations',             'ChatController@conversations');
     $router->post('/api/chat/conversations',            'ChatController@startConversation');

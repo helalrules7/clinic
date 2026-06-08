@@ -1057,4 +1057,233 @@ class ChatController
         $this->pdo->prepare("DELETE FROM chat_contacts WHERE owner_user_id = ? AND contact_user_id = ?")->execute([(int) $me['id'], (int) $id]);
         $this->json(['ok' => true]);
     }
+
+    // ---------- link preview (SSRF-safe unfurl + cache) --------------------
+
+    /** GET /api/chat/link-preview?url=...  — cached OG/title unfurl for chat links. */
+    public function linkPreview()
+    {
+        $me   = $this->requireAuth();
+        $role = $me['role'] ?? '';
+        if ($role !== 'doctor' && $role !== 'secretary') {   // chat users only
+            $this->json(['ok' => false, 'error' => 'forbidden'], 403);
+        }
+        $url = trim((string) ($_GET['url'] ?? ''));
+        if ($url === '' || strlen($url) > 2048) {
+            $this->json(['ok' => false, 'error' => 'bad url'], 422);
+        }
+        $norm = $this->lpNormalizeUrl($url);
+        if ($norm === null) {
+            $this->json(['ok' => false, 'error' => 'unsupported url'], 422);
+        }
+        $hash = hash('sha256', $norm);
+
+        // cache: success good for 7d, negative cached 30m (avoid re-hammering bad URLs)
+        $st = $this->pdo->prepare(
+            "SELECT url, title, description, image, site_name, status, UNIX_TIMESTAMP(fetched_at) AS ts
+               FROM chat_link_previews WHERE url_hash = ? LIMIT 1"
+        );
+        $st->execute([$hash]);
+        if ($row = $st->fetch(PDO::FETCH_ASSOC)) {
+            $age = time() - (int) $row['ts'];
+            $ttl = $row['status'] === 'ok' ? 604800 : 1800;
+            if ($age < $ttl) {
+                if ($row['status'] !== 'ok') { $this->json(['ok' => false, 'error' => 'no preview']); }
+                $this->json(['ok' => true, 'preview' => $this->lpRow($row)]);
+            }
+        }
+
+        $data   = $this->lpFetch($norm);             // null on any failure
+        $status = $data ? 'ok' : 'error';
+        $this->pdo->prepare(
+            "INSERT INTO chat_link_previews (url_hash, url, title, description, image, site_name, status, fetched_at)
+             VALUES (?,?,?,?,?,?,?,NOW())
+             ON DUPLICATE KEY UPDATE url=VALUES(url), title=VALUES(title), description=VALUES(description),
+                image=VALUES(image), site_name=VALUES(site_name), status=VALUES(status), fetched_at=NOW()"
+        )->execute([
+            $hash, $norm, $data['title'] ?? null, $data['description'] ?? null,
+            $data['image'] ?? null, $data['site_name'] ?? null, $status,
+        ]);
+        if (!$data) { $this->json(['ok' => false, 'error' => 'no preview']); }
+        $this->json(['ok' => true, 'preview' => $this->lpRow(array_merge($data, ['url' => $norm]))]);
+    }
+
+    private function lpRow(array $r): array
+    {
+        return [
+            'url'         => $r['url'] ?? '',
+            'title'       => $r['title'] ?? null,
+            'description' => $r['description'] ?? null,
+            'image'       => $r['image'] ?? null,
+            'site_name'   => $r['site_name'] ?? null,
+        ];
+    }
+
+    /** Validate + canonicalize a user URL → http(s) only, no userinfo, port 80/443. */
+    private function lpNormalizeUrl(string $url): ?string
+    {
+        $p = parse_url($url);
+        if (!is_array($p)) return null;
+        $scheme = strtolower($p['scheme'] ?? '');
+        if ($scheme !== 'http' && $scheme !== 'https') return null;
+        if (isset($p['user']) || isset($p['pass'])) return null;
+        $host = $p['host'] ?? '';
+        if ($host === '') return null;
+        $port = isset($p['port']) ? (int) $p['port'] : ($scheme === 'https' ? 443 : 80);
+        if ($port !== 80 && $port !== 443) return null;
+        $path     = $p['path'] ?? '/';
+        $query    = isset($p['query']) ? '?' . $p['query'] : '';
+        $defaultP = ($scheme === 'https' && $port === 443) || ($scheme === 'http' && $port === 80);
+        $portPart = $defaultP ? '' : ':' . $port;
+        return $scheme . '://' . $host . $portPart . $path . $query;     // fragment dropped
+    }
+
+    /** True iff $ip is a public, routable address (blocks SSRF targets). */
+    private function lpIpAllowed(string $ip): bool
+    {
+        if (!filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
+            return false;   // 10/8, 172.16/12, 192.168/16, 127/8, 169.254/16, ::1, fe80::, fc00::, 0.0.0.0, multicast…
+        }
+        if (in_array($ip, ['169.254.169.254', '0.0.0.0', '::', '::1'], true)) return false; // cloud metadata + edge
+        if (stripos($ip, '::ffff:') === 0) return false;                 // IPv4-mapped IPv6
+        if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
+            $l = ip2long($ip);                                           // CGNAT 100.64.0.0/10
+            if ($l !== false && ($l & 0xFFC00000) === (ip2long('100.64.0.0') & 0xFFC00000)) return false;
+        }
+        return true;
+    }
+
+    /** Resolve $host to IPs; reject if ANY is non-public. Returns one validated IP or null. */
+    private function lpResolveSafe(string $host): ?string
+    {
+        if (filter_var($host, FILTER_VALIDATE_IP)) {
+            return $this->lpIpAllowed($host) ? $host : null;            // bare-IP host
+        }
+        $ips = @gethostbynamel($host) ?: [];
+        foreach ((@dns_get_record($host, DNS_AAAA) ?: []) as $rec) {
+            if (!empty($rec['ipv6'])) $ips[] = $rec['ipv6'];
+        }
+        if (!$ips) return null;
+        $pick = null;
+        foreach ($ips as $ip) {
+            if (!$this->lpIpAllowed($ip)) return null;                  // one bad IP → reject the host
+            if ($pick === null) $pick = $ip;
+        }
+        return $pick;
+    }
+
+    /** SSRF-safe fetch of a URL's <head>; manual redirect loop (≤3 hops, re-validated). */
+    private function lpFetch(string $url): ?array
+    {
+        for ($hop = 0; $hop <= 3; $hop++) {
+            $norm = $this->lpNormalizeUrl($url);
+            if ($norm === null) return null;
+            $p    = parse_url($norm);
+            $host = $p['host'];
+            $sch  = strtolower($p['scheme']);
+            $port = isset($p['port']) ? (int) $p['port'] : ($sch === 'https' ? 443 : 80);
+            $ip   = $this->lpResolveSafe($host);
+            if ($ip === null) return null;
+            $resolveAddr = (strpos($ip, ':') !== false) ? "[$ip]" : $ip; // bracket IPv6
+
+            $body = '';
+            $ch = curl_init();
+            curl_setopt_array($ch, [
+                CURLOPT_URL             => $norm,
+                CURLOPT_RETURNTRANSFER  => true,
+                CURLOPT_HEADER          => false,
+                CURLOPT_FOLLOWLOCATION  => false,
+                CURLOPT_CONNECTTIMEOUT  => 4,
+                CURLOPT_TIMEOUT         => 6,
+                CURLOPT_SSL_VERIFYPEER  => true,
+                CURLOPT_SSL_VERIFYHOST  => 2,
+                CURLOPT_PROTOCOLS       => CURLPROTO_HTTP | CURLPROTO_HTTPS,
+                CURLOPT_USERAGENT       => 'RoayaClinicBot/1.0 (+link-preview)',
+                CURLOPT_ACCEPT_ENCODING => '',
+                CURLOPT_RESOLVE         => ["$host:$port:$resolveAddr"], // pin vetted IP (anti DNS-rebind)
+                CURLOPT_WRITEFUNCTION   => function ($c, $chunk) use (&$body) {
+                    $body .= $chunk;
+                    if (strlen($body) > 524288 || stripos($body, '</head>') !== false) return -1; // abort early
+                    return strlen($chunk);
+                },
+            ]);
+            curl_exec($ch);
+            $code  = (int) curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
+            $ctype = (string) curl_getinfo($ch, CURLINFO_CONTENT_TYPE);
+            $loc   = (string) curl_getinfo($ch, CURLINFO_REDIRECT_URL);
+            curl_close($ch);
+
+            if ($code >= 300 && $code < 400) {
+                if ($loc === '') return null;
+                $next = $this->lpAbsUrl($loc, $norm);
+                if ($next === null) return null;
+                $url = $next;
+                continue;                                               // re-validate next hop
+            }
+            if ($code < 200 || $code >= 300) return null;
+            if ($ctype !== '' && stripos($ctype, 'text/html') === false && stripos($ctype, 'xhtml') === false) return null;
+            if ($body === '') return null;
+            $res = $this->lpParseHead($body, $norm);
+            return $res ?: null;
+        }
+        return null;
+    }
+
+    /** Resolve a possibly-relative URL against a base. */
+    private function lpAbsUrl(string $href, string $base): ?string
+    {
+        $href = trim($href);
+        if ($href === '') return null;
+        if (preg_match('#^https?://#i', $href)) return $href;
+        if (preg_match('#^[a-z][a-z0-9+.\-]*:#i', $href)) return null;   // some other scheme → refuse
+        $b = parse_url($base);
+        if (!isset($b['scheme'], $b['host'])) return null;
+        $root = $b['scheme'] . '://' . $b['host'] . (isset($b['port']) ? ':' . $b['port'] : '');
+        if ($href[0] === '/') return $root . $href;
+        $path = isset($b['path']) ? preg_replace('#/[^/]*$#', '/', $b['path']) : '/';
+        return $root . $path . $href;
+    }
+
+    /** Pull OG / twitter / <title> / site-name from a fetched <head> blob. */
+    private function lpParseHead(string $html, string $finalUrl): array
+    {
+        $head = $html;
+        if (($pos = stripos($html, '</head>')) !== false) $head = substr($html, 0, $pos);
+
+        $dom = new \DOMDocument();
+        libxml_use_internal_errors(true);
+        $dom->loadHTML('<?xml encoding="UTF-8">' . $head);             // force UTF-8 (Arabic OG)
+        libxml_clear_errors();
+
+        $metas = [];
+        foreach ($dom->getElementsByTagName('meta') as $m) {
+            $key = strtolower($m->getAttribute('property') ?: $m->getAttribute('name'));
+            $val = $m->getAttribute('content');
+            if ($key !== '' && $val !== '' && !isset($metas[$key])) $metas[$key] = $val;
+        }
+        $titleTag = '';
+        $tl = $dom->getElementsByTagName('title');
+        if ($tl->length) $titleTag = trim($tl->item(0)->textContent);
+
+        $pick = function (array $keys) use ($metas) {
+            foreach ($keys as $k) { if (!empty($metas[$k])) return $metas[$k]; }
+            return null;
+        };
+        $title = $pick(['og:title', 'twitter:title']) ?: ($titleTag ?: null);
+        $desc  = $pick(['og:description', 'twitter:description', 'description']);
+        $img   = $pick(['og:image', 'og:image:url', 'og:image:secure_url', 'twitter:image', 'twitter:image:src']);
+        $site  = $pick(['og:site_name', 'application-name']);
+
+        if ($img !== null) {                                            // absolutize + scheme-check image
+            $abs = $this->lpAbsUrl($img, $finalUrl);
+            $img = ($abs !== null && preg_match('#^https?://#i', $abs)) ? $abs : null;
+        }
+        if ($title === null && $desc === null && $img === null) return [];
+        return [
+            'title'       => $title !== null ? mb_substr(trim($title), 0, 500) : null,
+            'description' => $desc  !== null ? mb_substr(trim($desc), 0, 1000) : null,
+            'image'       => $img   !== null ? mb_substr($img, 0, 2040) : null,
+            'site_name'   => $site  !== null ? mb_substr(trim($site), 0, 250) : null,
+        ];
+    }
 }

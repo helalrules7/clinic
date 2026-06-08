@@ -6,7 +6,7 @@
 
 /* Clear Chat Confirmation Modal */
 #aiChatClearConfirmModal {
-    z-index: 1000005 !important; /* Above chat widget */
+    z-index: 1056 !important; /* Bootstrap modal stack — above AI widget, below app modals on secretary */
 }
 
 #aiChatClearConfirmModal .modal-content {
@@ -60,7 +60,8 @@
     position: fixed;
     bottom: 2rem;
     right: 2rem;
-    z-index: 1000004;
+    /* Above doctor chat panel (1041) but below modals (1050+) / drawers (1070+) */
+    z-index: 1042;
     max-width: calc(100vw - 24px);
     font-family: inherit;
     /* Animate the lift smoothly when back-to-top toggles. */
@@ -107,7 +108,7 @@
     align-items: center;
     justify-content: center;
     position: relative;
-    z-index: 1000005;
+    z-index: 1043;
 }
 .dark .ai-chat-toggle {
     background: var(--glass-bg-strong, rgba(17, 24, 39, 0.72));
@@ -237,7 +238,7 @@
     max-width: none !important;
     max-height: none !important;
     border-radius: var(--r-xl, 22px);
-    z-index: 1000003 !important; /* Below modals but above sidebar */
+    z-index: 1042;
 }
 
 /* Responsive: Adjust for smaller screens */
@@ -758,7 +759,7 @@
         height: auto;
         max-height: none;
         border-radius: var(--r-xl, 22px);
-        z-index: 1000004;
+        z-index: 1042;
     }
 
     body.ai-chat-open .ai-chat-window-expanded {
@@ -789,12 +790,9 @@
     }
 }
 
-/* Ensure widget appears above sidebar */
-.ai-chat-widget {
-    z-index: 1000004 !important;
-}
-
-/* Ensure widget appears below modals */
-body:has(.modal.show) .ai-chat-widget {
-    z-index: 999 !important;
+/* Below Bootstrap modals / todo·notes drawers — same ladder as chat-widget.css */
+body:has(.modal.show) .ai-chat-widget,
+body:has(.todo-drawer.open) .ai-chat-widget,
+body:has(.notes-drawer.open) .ai-chat-widget {
+    z-index: 1038;
 }

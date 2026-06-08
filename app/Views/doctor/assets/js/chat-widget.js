@@ -95,13 +95,63 @@
     var out = '', last = 0, m;
     TOKEN_RE.lastIndex = 0;
     while ((m = TOKEN_RE.exec(text)) !== null) {
-      out += esc(text.slice(last, m.index));
+      out += linkifyEsc(text.slice(last, m.index));
       out += chipHtml(m[3], m[4], m[2]);
       last = TOKEN_RE.lastIndex;
     }
-    out += esc(text.slice(last));
+    out += linkifyEsc(text.slice(last));
     return out;
   }
+
+  // ---- link preview (URL unfurl) ---------------------------------------
+  var URL_RE   = /\bhttps?:\/\/[^\s<>"']+/i;            // first url in a message
+  var URL_RE_G = /\bhttps?:\/\/[^\s<>"']+/gi;           // linkify every url
+  var LP_CACHE = {};                                    // url -> {state:'loading'|'done'|'fail', data}
+  function lpTrim(u) { return u.replace(/[)\].,;!?]+$/, ''); }  // strip trailing punctuation
+  function safeHref(u) { return /^https?:\/\//i.test(u) ? u : ''; }
+  function firstUrl(body) { if (body == null) return null; var m = String(body).match(URL_RE); return m ? lpTrim(m[0]) : null; }
+  // esc() the gaps + wrap bare urls in safe anchors (chips already consumed upstream)
+  function linkifyEsc(str) {
+    var out = '', last = 0, m; URL_RE_G.lastIndex = 0;
+    while ((m = URL_RE_G.exec(str)) !== null) {
+      var url = lpTrim(m[0]), end = m.index + url.length, href = safeHref(url);
+      out += esc(str.slice(last, m.index));
+      out += href ? ('<a class="chat-link" href="' + esc(href) + '" target="_blank" rel="noopener noreferrer">' + esc(url) + '</a>') : esc(url);
+      last = end; URL_RE_G.lastIndex = end;
+    }
+    out += esc(str.slice(last));
+    return out;
+  }
+  // PURE: reads only LP_CACHE — never fetches (runs on every poll re-render)
+  function lpCardHtml(m) {
+    var url = firstUrl(m.body); if (!url) return '';
+    var href = safeHref(url); if (!href) return '';
+    var c = LP_CACHE[url];
+    if (!c || c.state === 'loading') {
+      return '<a class="chat-link-preview chat-lp-skel" data-lp="' + esc(url) + '" href="' + esc(href) +
+        '" target="_blank" rel="noopener noreferrer"><span class="chat-lp-line"></span><span class="chat-lp-line short"></span></a>';
+    }
+    if (c.state !== 'done' || !c.data) return '';
+    var d = c.data;
+    var img   = (d.image && /^https?:\/\//i.test(d.image)) ? '<div class="chat-lp-img"><img src="' + esc(d.image) + '" alt="" data-lpimg></div>' : '';
+    var site  = d.site_name   ? '<div class="chat-lp-site">' + esc(d.site_name) + '</div>' : '';
+    var title = d.title       ? '<div class="chat-lp-title">' + esc(d.title) + '</div>' : '';
+    var desc  = d.description ? '<div class="chat-lp-desc">' + esc(d.description) + '</div>' : '';
+    if (!title && !desc && !img) return '';
+    return '<a class="chat-link-preview" href="' + esc(href) + '" target="_blank" rel="noopener noreferrer">' +
+      img + '<div class="chat-lp-body">' + site + title + desc + '</div></a>';
+  }
+  // fetch one preview (once per url), then re-render the thread so the card appears
+  function lpFetchPreview(url) {
+    if (!url || LP_CACHE[url]) return;
+    LP_CACHE[url] = { state: 'loading' };
+    api('/api/chat/link-preview?url=' + encodeURIComponent(url)).then(function (r) {
+      LP_CACHE[url] = (r && r.ok && r.preview) ? { state: 'done', data: r.preview } : { state: 'fail' };
+      if (S.view === 'thread') renderThread(false);
+    });
+  }
+
+  var CHAT_UI_KEY = 'roayaChatUI';
 
   var S = { me: 0, convos: [], activeCid: null, view: 'list', cursor: 0, open: false,
             verTimer: null, threadTimer: null, lastConvRev: -1, pendingAtt: [],
@@ -329,6 +379,23 @@
   }
 
   // ---- views -----------------------------------------------------------
+  function persistChatUI() {
+    try {
+      sessionStorage.setItem(CHAT_UI_KEY, JSON.stringify({
+        open: !!S.open,
+        activeCid: S.activeCid || null,
+        view: S.view || 'list'
+      }));
+    } catch (e) { /* quota / private mode */ }
+  }
+
+  function syncChatAiLayout() {
+    var desktop = window.innerWidth >= 769;
+    var aiOpen = document.body.classList.contains('ai-chat-open');
+    document.documentElement.classList.toggle('chat-offset-for-ai', desktop && aiOpen && S.open);
+  }
+  window.__roayaChatSyncAiLayout = syncChatAiLayout;
+
   function showList() {
     S.view = 'list'; S.activeCid = null; stopThreadPoll(); clearReply(); cancelEdit();
     panel.querySelector('#chatBack').style.display = 'none';
@@ -343,6 +410,8 @@
     panel.querySelector('#chatTyping').textContent = '';
     renderList();
     loadConversations();
+    persistChatUI();
+    syncChatAiLayout();
   }
   function renderList() {
     if (!S.convos.length) { body.innerHTML = '<div class="chat-empty">' + t('No conversations yet. Start one with the ✎ button.', 'لا محادثات بعد. ابدأ واحدة بزر ✎.') + '</div>'; return; }
@@ -517,6 +586,8 @@
   function openConversation(cid) {
     var c = S.convos.find(function (x) { return x.id === cid; });
     S.view = 'thread'; S.activeCid = cid; S.cursor = 0; S.readUpTo = 0; clearReply(); cancelEdit();
+    persistChatUI();
+    syncChatAiLayout();
     CUR_IS_GROUP = !!(c && c.type === 'group');
     panel.querySelector('#chatBack').style.display = '';
     panel.querySelector('#chatBack').onclick = showList;
@@ -588,6 +659,12 @@
       var replay = function () { ims.forEach(replayEmoji); };
       mEl.addEventListener('mouseenter', replay);
       mEl.addEventListener('click', replay);
+    });
+    // link previews: kick off a one-time fetch for each unresolved card; drop broken images
+    box.querySelectorAll('.chat-link-preview[data-lp]').forEach(function (el) { lpFetchPreview(el.getAttribute('data-lp')); });
+    box.querySelectorAll('.chat-lp-img img[data-lpimg]').forEach(function (im) {
+      im.onerror = function () { var w = im.closest('.chat-lp-img'); if (w) w.remove(); };
+      if (im.complete && im.naturalWidth === 0) { var w = im.closest('.chat-lp-img'); if (w) w.remove(); }
     });
     // quote-reply gestures: double-click (desktop), double-tap OR horizontal
     // swipe (touch). `touch-action: pan-y` (CSS) lets vertical scroll through
@@ -696,7 +773,7 @@
     var emBig = (!atts && !quote && m.body != null) ? emojiOnly(m.body) : null;
     var content = emBig
       ? '<div class="chat-emoji-big' + (emBig.length > 1 ? ' multi' : '') + '">' + emBig.map(function (e) { return animEmojiImg(e); }).join('') + '</div>'
-      : '<div class="chat-bubble">' + quote + bodyHtml + atts + '</div>';
+      : '<div class="chat-bubble">' + quote + bodyHtml + atts + '</div>' + lpCardHtml(m);
     return '<div class="chat-msg ' + (mine ? 'mine' : 'theirs') + (emBig ? ' chat-msg--emoji' : '') + '" id="msg-' + m.id + '">' + sender +
       content +
       '<div class="chat-msg-foot">' + (mine ? actions : '') + pinMark +
@@ -1171,6 +1248,27 @@
   function startVersionPoll() { if (S.verTimer) return; S.verTimer = setInterval(function () { if (!document.hidden) refreshBadge(); }, 12000); }
 
   // ---- open/close ------------------------------------------------------
+  function restoreChatUI() {
+    var raw;
+    try { raw = sessionStorage.getItem(CHAT_UI_KEY); } catch (e) { return; }
+    if (!raw) return;
+    var st;
+    try { st = JSON.parse(raw); } catch (e) { return; }
+    if (!st || !st.open) return;
+    loadConversations(function () {
+      var cid = st.view === 'thread' && st.activeCid ? (+st.activeCid || null) : null;
+      if (cid) {
+        S.view = 'thread';
+        S.activeCid = cid;
+      } else {
+        S.view = 'list';
+        S.activeCid = null;
+      }
+      open();
+      if (cid) openConversation(cid);
+    });
+  }
+
   function open() {
     S.open = true;
     // PERF: suppress the glass blur for the ~0.25s open slide (re-blurring a
@@ -1187,8 +1285,18 @@
     setGlow(false);
     if (S.view === 'thread' && S.activeCid) { startThreadPoll(); pollThread(); }
     else showList();
+    persistChatUI();
+    syncChatAiLayout();
   }
-  function close() { S.open = false; panel.classList.remove('open'); stopThreadPoll(); hideReactPop(); hideTA(); }
+  function close() {
+    S.open = false;
+    panel.classList.remove('open');
+    stopThreadPoll();
+    hideReactPop();
+    hideTA();
+    persistChatUI();
+    syncChatAiLayout();
+  }
   function toggle() { S.open ? close() : open(); }
 
   function boot() {
@@ -1215,10 +1323,13 @@
     }
     refreshBadge();
     startVersionPoll();
+    restoreChatUI();
     document.addEventListener('visibilitychange', function () { if (!document.hidden && S.open) { refreshBadge(); pollThread(); } });
+    window.addEventListener('resize', syncChatAiLayout);
     // public hook — the notification center calls this to jump straight into a chat
     window.RoayaChat = {
       open: function () { if (!S.open) open(); },
+      isOpen: function () { return !!S.open; },
       openConversation: function (cid) {
         cid = +cid; if (!cid) return;
         setGlow(false);
