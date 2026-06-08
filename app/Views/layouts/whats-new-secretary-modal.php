@@ -332,6 +332,126 @@
     .swn-profile-line { height: 5px; border-radius: 999px; background: rgba(148,163,184,.3); }
     @keyframes swn-pal-glow { 0%,100%{transform:scale(1);} 50%{transform:scale(1.1);} }
 
+    /* slide — chat widget (RTL mockup) */
+    .swn-chat-stage { padding: 8px; }
+    .swn-chat-bg {
+        position: absolute; inset: 0;
+        background: radial-gradient(110% 70% at 15% 15%, rgba(99,102,241,.22), transparent 55%),
+                    radial-gradient(80% 60% at 90% 90%, rgba(14,165,233,.12), transparent 60%);
+    }
+    .swn-chat-fab {
+        position: absolute; bottom: 8px; left: 8px; width: 28px; height: 28px;
+        border-radius: 50%; background: rgba(248,250,252,.72);
+        border: 1px solid rgba(226,232,240,.35); color: var(--swn-accent-soft);
+        display: flex; align-items: center; justify-content: center; font-size: 12px;
+        box-shadow: 0 4px 12px rgba(0,0,0,.18); z-index: 1;
+        animation: swn-chat-fab 6s ease-in-out infinite;
+    }
+    .swn-chat-fab-badge {
+        position: absolute; top: -4px; left: -4px; min-width: 13px; height: 13px;
+        padding: 0 3px; border-radius: 7px; background: #ef4444; color: #fff;
+        font-size: 7px; font-weight: 700; display: flex; align-items: center; justify-content: center;
+        border: 1.5px solid var(--swn-bg-deep); animation: swn-chat-badge 6s ease-in-out infinite;
+    }
+    .swn-chat-panel {
+        position: absolute; bottom: 6px; left: 6px; width: 80%; max-width: 310px;
+        border-radius: 14px; background: linear-gradient(160deg, rgba(30,41,59,.92), rgba(15,23,42,.88));
+        border: 1px solid var(--swn-border);
+        box-shadow: 0 12px 28px rgba(0,0,0,.32), inset 0 1px 0 rgba(255,255,255,.05);
+        padding: 6px 7px; direction: rtl; transform-origin: bottom left;
+        animation: swn-chat-panel 6s ease-in-out infinite; z-index: 2;
+    }
+    html:not(.dark) .swn-chat-panel {
+        background: linear-gradient(160deg, rgba(255,255,255,.98), rgba(248,250,252,.95));
+        box-shadow: 0 12px 28px rgba(15,23,42,.12), inset 0 1px 0 rgba(255,255,255,.8);
+    }
+    html:not(.dark) .swn-chat-fab { background: rgba(255,255,255,.88); }
+    .swn-chat-head {
+        display: flex; align-items: center; gap: 5px; padding: 0 2px 5px;
+        border-bottom: 1px solid rgba(148,163,184,.14); margin-bottom: 4px;
+    }
+    .swn-chat-av {
+        width: 18px; height: 18px; border-radius: 50%;
+        background: linear-gradient(135deg, #6366f1, #0ea5e9); color: #fff;
+        font-size: 8px; font-weight: 700; display: flex; align-items: center; justify-content: center;
+    }
+    .swn-chat-name { flex: 1; font-size: 9px; font-weight: 700; color: var(--swn-text); }
+    .swn-chat-live { font-size: 7px; color: #34d399; font-weight: 600; }
+    .swn-chat-body { display: flex; flex-direction: column; gap: 4px; min-height: 78px; padding: 2px; }
+    .swn-chat-bubble {
+        max-width: 82%; padding: 4px 7px; border-radius: 10px; font-size: 8.5px;
+        line-height: 1.4; opacity: 0; transform: translateY(6px);
+    }
+    .swn-chat-theirs {
+        align-self: flex-end; background: var(--swn-bg-row); border: 1px solid var(--swn-border);
+        color: var(--swn-text); border-bottom-right-radius: 3px;
+        animation: swn-chat-theirs 6s ease-in-out infinite;
+    }
+    .swn-chat-mine {
+        align-self: flex-start; background: linear-gradient(135deg, #4f46e5, #0ea5e9); color: #fff;
+        border-bottom-left-radius: 3px; animation: swn-chat-mine 6s ease-in-out infinite;
+    }
+    .swn-chat-typing {
+        align-self: flex-end; display: inline-flex; gap: 3px; padding: 5px 9px;
+        border-radius: 10px; background: var(--swn-bg-row); border: 1px solid var(--swn-border);
+        opacity: 0; animation: swn-chat-typing 6s ease-in-out infinite;
+    }
+    .swn-chat-typing i {
+        width: 4px; height: 4px; border-radius: 50%; background: #94a3b8;
+        animation: swn-chat-dot 1s ease-in-out infinite;
+    }
+    .swn-chat-typing i:nth-child(2) { animation-delay: .15s; }
+    .swn-chat-typing i:nth-child(3) { animation-delay: .3s; }
+    .swn-chat-ticks {
+        align-self: flex-start; font-size: 7px; color: #38bdf8; opacity: 0;
+        animation: swn-chat-ticks 6s ease-in-out infinite;
+    }
+    .swn-chat-react {
+        position: absolute; right: 28%; bottom: 46px; padding: 3px 6px; border-radius: 12px;
+        background: var(--swn-bg-card); border: 1px solid var(--swn-border);
+        box-shadow: 0 6px 16px rgba(0,0,0,.2); font-size: 10px; opacity: 0;
+        transform: scale(.7); animation: swn-chat-react 6s ease-in-out infinite; z-index: 3;
+    }
+    @keyframes swn-chat-panel {
+        0%,8%{opacity:0;transform:translateY(14px) scale(.94);}
+        14%,92%{opacity:1;transform:translateY(0) scale(1);}
+        100%{opacity:0;transform:translateY(14px) scale(.94);}
+    }
+    @keyframes swn-chat-theirs {
+        0%,12%{opacity:0;transform:translateY(6px);}
+        18%,90%{opacity:1;transform:translateY(0);}
+        100%{opacity:0;transform:translateY(6px);}
+    }
+    @keyframes swn-chat-mine {
+        0%,28%{opacity:0;transform:translateY(6px);}
+        34%,90%{opacity:1;transform:translateY(0);}
+        100%{opacity:0;transform:translateY(6px);}
+    }
+    @keyframes swn-chat-typing {
+        0%,38%{opacity:0;transform:scale(.9);}
+        44%,52%{opacity:1;transform:scale(1);}
+        58%,100%{opacity:0;transform:scale(.9);}
+    }
+    @keyframes swn-chat-dot {
+        0%,60%,100%{transform:translateY(0);opacity:.45;}
+        30%{transform:translateY(-3px);opacity:1;}
+    }
+    @keyframes swn-chat-ticks {
+        0%,52%{opacity:0;} 58%,88%{opacity:1;} 100%{opacity:0;}
+    }
+    @keyframes swn-chat-react {
+        0%,48%{opacity:0;transform:scale(.7);}
+        54%,82%{opacity:1;transform:scale(1);}
+        90%,100%{opacity:0;transform:scale(.7);}
+    }
+    @keyframes swn-chat-fab {
+        0%,80%,100%{transform:translateY(0);}
+        44%,52%{transform:translateY(-3px);box-shadow:0 8px 18px rgba(79,70,229,.3);}
+    }
+    @keyframes swn-chat-badge {
+        0%,20%{transform:scale(0);} 28%,70%{transform:scale(1);} 78%,100%{transform:scale(0);}
+    }
+
     @media (prefers-reduced-motion: reduce) {
         .swn-track { transition: none; }
         .swn-welcome-hero::after, .swn-welcome-stat::after, .swn-stat-card .swn-line,
@@ -339,6 +459,9 @@
         .swn-pager span.is-on, .swn-cal-cell.is-active, .swn-cal-tip,
         .swn-modal-bg, .swn-modal-field.is-notes, .swn-done-badge,
         .swn-pal-swatch { animation: none; }
+        .swn-chat-panel, .swn-chat-bubble, .swn-chat-typing, .swn-chat-ticks,
+        .swn-chat-react, .swn-chat-fab, .swn-chat-fab-badge { animation: none; opacity: 1; transform: none; }
+        .swn-chat-typing i { animation: none; }
     }
 </style>
 
@@ -349,7 +472,7 @@
                 <h5 class="modal-title arabic-text">
                     <i class="bi bi-stars"></i>
                     ما الجديد
-                    <span class="swn-version-pill">v11.0.3</span>
+                    <span class="swn-version-pill">v11.0.0</span>
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="إغلاق"></button>
             </div>
@@ -626,12 +749,45 @@
                         </div>
 
                         <div class="swn-slide">
+                            <span class="swn-kicker">محادثة فورية</span>
+                            <div class="swn-stage swn-chat-stage" aria-hidden="true">
+                                <div class="swn-chat-bg"></div>
+                                <div class="swn-chat-fab">
+                                    <i class="bi bi-chat-dots-fill"></i>
+                                    <span class="swn-chat-fab-badge">٢</span>
+                                </div>
+                                <div class="swn-chat-panel">
+                                    <div class="swn-chat-head">
+                                        <span class="swn-chat-av">د</span>
+                                        <span class="swn-chat-name arabic-text">د. محمد حلال</span>
+                                        <span class="swn-chat-live">● مباشر</span>
+                                    </div>
+                                    <div class="swn-chat-body">
+                                        <div class="swn-chat-bubble swn-chat-theirs arabic-text">المريض أحمد وصل للموعد ٢:٣٠</div>
+                                        <div class="swn-chat-bubble swn-chat-mine arabic-text">حاضر — أوصل خلال ٥ دقائق</div>
+                                        <div class="swn-chat-typing"><i></i><i></i><i></i></div>
+                                        <span class="swn-chat-ticks arabic-text">✓✓ مقروء</span>
+                                    </div>
+                                </div>
+                                <div class="swn-chat-react">👍 ❤️</div>
+                            </div>
+                            <h3 class="arabic-text">شات زجاجي — سكرتير ↔ طبيب</h3>
+                            <p class="arabic-text">زر دائري زجاجي في كل صفحة يفتح لوحة محادثة فورية مع الأطباء — وتبقى مفتوحة على نفس المحادثة عند التنقل.</p>
+                            <ul class="swn-bullets arabic-text">
+                                <li><i class="bi bi-chat-heart"></i><span>مجموعات · تفاعلات · صور · رسائل صوتية</span></li>
+                                <li><i class="bi bi-check2-all"></i><span>إيصالات قراءة ✓✓ وعداد غير مقروء</span></li>
+                                <li><i class="bi bi-bell"></i><span>إشعار الجرس يفتح المحادثة مباشرة</span></li>
+                                <li><i class="bi bi-layers"></i><span>المهام والملاحظات والمودالات فوق الشات دائماً</span></li>
+                            </ul>
+                        </div>
+
+                        <div class="swn-slide">
                             <span class="swn-kicker">جاهز للاستخدام</span>
                             <div class="swn-stage swn-done-stage" aria-hidden="true">
                                 <div class="swn-done-badge"><i class="bi bi-check-lg"></i></div>
                             </div>
-                            <h3 class="arabic-text">كل شيء جاهز — v11.0.3</h3>
-                            <p class="arabic-text">١٥ شريحة من التحسينات — من اللوحة إلى المرضى والبحث الذكي. نتمنى لك يوماً سلساً.</p>
+                            <h3 class="arabic-text">كل شيء جاهز — v11.0.0</h3>
+                            <p class="arabic-text">١٦ شريحة من التحسينات — من اللوحة إلى المحادثة الفورية. نتمنى لك يوماً سلساً.</p>
                         </div>
 
                     </div>
@@ -663,7 +819,7 @@
 
 <script>
 (function () {
-    const VERSION = 'v11_0_3';
+    const VERSION = 'v11_0_4';
     const OPT_OUT_KEY = 'secWhatsNew_' + VERSION + '_optOut';
 
     function init() {

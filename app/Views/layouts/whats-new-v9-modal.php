@@ -2079,6 +2079,11 @@
     html:not(.dark) #whatsNewV9Modal .wn-todo-bar { background: rgba(148,163,184,.25); }
     html:not(.dark) #whatsNewV9Modal .wn-todo-row { background: var(--wn-bg-row); color: var(--wn-text); border-color: var(--wn-border); }
 
+    html:not(.dark) #whatsNewV9Modal .wn-chat-fab { background: rgba(255,255,255,.88); border-color: var(--wn-border); }
+    html:not(.dark) #whatsNewV9Modal .wn-chat-fab-badge { border-color: var(--wn-bg-deep); }
+    html:not(.dark) #whatsNewV9Modal .wn-chat-theirs { background: var(--wn-bg-row); }
+    html:not(.dark) #whatsNewV9Modal .wn-chat-typing { background: var(--wn-bg-row); }
+
     html:not(.dark) #whatsNewV9Modal .wn-pal-sw,
     html:not(.dark) #whatsNewV9Modal .wn-pal-preview { background: var(--wn-bg-card); box-shadow: 0 4px 14px rgba(15,23,42,.08); }
     html:not(.dark) #whatsNewV9Modal .wn-pal-lbl { color: var(--wn-muted); }
@@ -2287,6 +2292,38 @@
     @keyframes wn-iv-reset{0%,45%{box-shadow:none;}55%,68%{box-shadow:0 0 0 2px rgba(16,185,129,.5);}78%,100%{box-shadow:none;}}
     @keyframes wn-iv-foot{0%,35%{opacity:.5;}48%,70%{opacity:1;}82%,100%{opacity:.5;}}
 
+    /* ===== wn-chat — Doctor ↔ Secretary real-time chat ===== */
+    .wn-chat-bg{position:absolute;inset:0;background:radial-gradient(110% 70% at 85% 15%,rgba(99,102,241,.2),transparent 55%),radial-gradient(80% 60% at 10% 90%,rgba(14,165,233,.14),transparent 60%);}
+    .wn-chat-scene{position:absolute;inset:0;padding:8px 10px 8px 8px;}
+    .wn-chat-panel{position:absolute;bottom:6px;right:6px;width:78%;max-width:300px;border-radius:14px;background:var(--wn-glass);border:1px solid var(--wn-border);box-shadow:0 12px 28px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.06);padding:6px 7px 7px;transform-origin:bottom right;animation:wn-chat-panel 6s ease-in-out infinite;z-index:2;}
+    .wn-chat-head{display:flex;align-items:center;gap:5px;padding:0 2px 5px;border-bottom:1px solid rgba(148,163,184,.14);margin-bottom:4px;}
+    .wn-chat-av{width:18px;height:18px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#0ea5e9);color:#fff;font-size:8px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+    .wn-chat-name{flex:1;font-size:9px;font-weight:700;color:var(--wn-text);text-align:left;}
+    .wn-chat-online{font-size:7px;color:#34d399;font-weight:600;}
+    .wn-chat-body{display:flex;flex-direction:column;gap:4px;min-height:78px;padding:2px 1px;}
+    .wn-chat-bubble{max-width:82%;padding:4px 7px;border-radius:10px;font-size:8.5px;line-height:1.35;opacity:0;transform:translateY(6px);}
+    .wn-chat-theirs{align-self:flex-start;background:var(--wn-bg-inset);border:1px solid var(--wn-border);color:var(--wn-text);border-bottom-left-radius:3px;animation:wn-chat-theirs 6s ease-in-out infinite;}
+    .wn-chat-mine{align-self:flex-end;background:linear-gradient(135deg,#4f46e5,#0ea5e9);color:#fff;border-bottom-right-radius:3px;animation:wn-chat-mine 6s ease-in-out infinite;}
+    .wn-chat-chip{display:inline-block;margin-top:2px;padding:1px 5px;border-radius:6px;font-size:7.5px;font-weight:600;background:rgba(255,255,255,.22);}
+    .wn-chat-typing{align-self:flex-start;display:inline-flex;gap:3px;padding:5px 9px;border-radius:10px;background:var(--wn-bg-inset);border:1px solid var(--wn-border);opacity:0;animation:wn-chat-typing 6s ease-in-out infinite;}
+    .wn-chat-typing i{width:4px;height:4px;border-radius:50%;background:#94a3b8;animation:wn-chat-dot 1s ease-in-out infinite;}
+    .wn-chat-typing i:nth-child(2){animation-delay:.15s;}
+    .wn-chat-typing i:nth-child(3){animation-delay:.3s;}
+    .wn-chat-ticks{align-self:flex-end;font-size:7px;color:#38bdf8;opacity:0;animation:wn-chat-ticks 6s ease-in-out infinite;}
+    .wn-chat-react{position:absolute;left:28%;bottom:46px;display:flex;gap:2px;padding:3px 6px;border-radius:12px;background:var(--wn-chip-bg);border:1px solid var(--wn-border);box-shadow:0 6px 16px rgba(0,0,0,.25);font-size:10px;opacity:0;transform:scale(.7);animation:wn-chat-react 6s ease-in-out infinite;z-index:3;}
+    .wn-chat-fab{position:absolute;bottom:4px;right:4px;width:26px;height:26px;border-radius:50%;background:rgba(248,250,252,.75);border:1px solid rgba(226,232,240,.35);color:#4f46e5;display:flex;align-items:center;justify-content:center;font-size:12px;box-shadow:0 4px 12px rgba(0,0,0,.2);z-index:1;animation:wn-chat-fab 6s ease-in-out infinite;}
+    .wn-chat-fab-badge{position:absolute;top:-4px;right:-4px;min-width:13px;height:13px;padding:0 3px;border-radius:7px;background:#ef4444;color:#fff;font-size:7px;font-weight:700;display:flex;align-items:center;justify-content:center;border:1.5px solid var(--wn-bg-deep);animation:wn-chat-badge 6s ease-in-out infinite;}
+    @keyframes wn-chat-panel{0%,8%{opacity:0;transform:translateY(14px) scale(.94);}14%,92%{opacity:1;transform:translateY(0) scale(1);}100%{opacity:0;transform:translateY(14px) scale(.94);}}
+    @keyframes wn-chat-theirs{0%,12%{opacity:0;transform:translateY(6px);}18%,90%{opacity:1;transform:translateY(0);}100%{opacity:0;transform:translateY(6px);}}
+    @keyframes wn-chat-mine{0%,28%{opacity:0;transform:translateY(6px);}34%,90%{opacity:1;transform:translateY(0);}100%{opacity:0;transform:translateY(6px);}}
+    @keyframes wn-chat-typing{0%,38%{opacity:0;transform:scale(.9);}44%,52%{opacity:1;transform:scale(1);}58%,100%{opacity:0;transform:scale(.9);}}
+    @keyframes wn-chat-dot{0%,60%,100%{transform:translateY(0);opacity:.45;}30%{transform:translateY(-3px);opacity:1;}}
+    @keyframes wn-chat-ticks{0%,52%{opacity:0;}58%,88%{opacity:1;}100%{opacity:0;}}
+    @keyframes wn-chat-react{0%,48%{opacity:0;transform:scale(.7);}54%,82%{opacity:1;transform:scale(1);}90%,100%{opacity:0;transform:scale(.7);}}
+    @keyframes wn-chat-fab{0%,80%,100%{transform:translateY(0);}44%,52%{transform:translateY(-3px);box-shadow:0 8px 18px rgba(79,70,229,.35);}}
+    @keyframes wn-chat-badge{0%,20%{transform:scale(0);}28%,70%{transform:scale(1);}78%,100%{transform:scale(0);}}
+    @media (max-width:575.98px){.wn-chat-panel{width:88%;padding:5px 6px;}.wn-chat-bubble{font-size:8px;}.wn-chat-fab{width:22px;height:22px;font-size:10px;}}
+
     /* ===== wn-fixes — Bug fixes & polish (static list) ===== */
     .wn-fixes-stage {
         height: auto;
@@ -2395,6 +2432,8 @@
     @media (prefers-reduced-motion: reduce) {
         .wn-fld-card, .wn-fld-shield { animation: none; opacity: 1; transform: none; }
         .wn-fld-row.is-active::after { animation: none; opacity: .7; }
+        .wn-chat-panel, .wn-chat-bubble, .wn-chat-typing, .wn-chat-ticks, .wn-chat-react, .wn-chat-fab, .wn-chat-fab-badge { animation: none; opacity: 1; transform: none; }
+        .wn-chat-typing i { animation: none; }
     }
 
     /* v11.0.3 — Smart digit search */
@@ -2431,7 +2470,7 @@
       <div class="modal-header">
         <h5 class="modal-title">
           <i class="bi bi-stars me-2"></i>What's New
-          <span class="version-pill">v11.0.3</span>
+          <span class="version-pill">v11.0.0</span>
         </h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
@@ -3306,6 +3345,36 @@
               <p>The Folders view got a security &amp; UX overhaul: a curated, theme-aware gradient palette, a safer <strong>&ldquo;Add to folder&rdquo;</strong> that never strips a patient from their other folders, transactional quick-sort, and clearer delete warnings.</p>
             </div>
 
+            <!-- v11.0.0 — wn-chat (Doctor ↔ Secretary real-time chat) -->
+            <div class="wn-slide">
+              <span class="wn-kicker">Communication</span>
+              <div class="wn-stage">
+                <div class="wn-chat-bg" aria-hidden="true"></div>
+                <div class="wn-chat-scene" aria-hidden="true">
+                  <div class="wn-chat-fab">
+                    <i class="bi bi-chat-dots-fill"></i>
+                    <span class="wn-chat-fab-badge">2</span>
+                  </div>
+                  <div class="wn-chat-panel">
+                    <div class="wn-chat-head">
+                      <span class="wn-chat-av">SM</span>
+                      <span class="wn-chat-name">Sarah · Secretary</span>
+                      <span class="wn-chat-online">● live</span>
+                    </div>
+                    <div class="wn-chat-body">
+                      <div class="wn-chat-bubble wn-chat-theirs">Patient Ahmed is here for 2:30 PM</div>
+                      <div class="wn-chat-bubble wn-chat-mine">On my way — 5 min<span class="wn-chat-chip">@Ahmed</span></div>
+                      <div class="wn-chat-typing"><i></i><i></i><i></i></div>
+                      <span class="wn-chat-ticks">✓✓ read</span>
+                    </div>
+                  </div>
+                  <div class="wn-chat-react">👍 ❤️</div>
+                </div>
+              </div>
+              <h3>Real-time chat — Doctor ↔ Secretary</h3>
+              <p>A <strong>glass chat panel</strong> on every page: open from the dock, message your secretary instantly, and pick up the same thread after you navigate away. <strong>Groups</strong>, emoji reactions, <strong>✓✓ read receipts</strong>, voice notes, photos, and <strong>@patient</strong> chips — with bell notifications that jump straight into the conversation.</p>
+            </div>
+
             <!-- v11.0.3 — Smart Unicode digit search -->
             <div class="wn-slide">
               <span class="wn-kicker">Search</span>
@@ -3411,7 +3480,7 @@
     //   • "Don't show again" opts out permanently.
     // Bumping VERSION (e.g. v9_0_0 → v9_1_0) RESETS first-seen / opt-out /
     // session-shown for every browser, so the wizard resurfaces fresh.
-    const VERSION       = 'v11_0_3';
+    const VERSION       = 'v11_0_4';
     const OPT_OUT_KEY   = 'whatsNew_' + VERSION + '_optOut';     // permanent
     const FIRST_SEEN_KEY= 'whatsNew_' + VERSION + '_firstSeen';  // ms epoch
     const SESSION_KEY   = 'whatsNew_' + VERSION + '_shownSession';

@@ -455,6 +455,53 @@
     transform: translateX(-4px);
 }
 
+/* ---- secretary RTL celebrate (Arabic dashboard bar) ---- */
+.whatsnew-celebrate[dir="rtl"] {
+    font-family: 'Cairo', sans-serif;
+    flex-direction: row-reverse;
+}
+
+.whatsnew-celebrate[dir="rtl"] .wn-headline {
+    font-weight: 900;
+    letter-spacing: 0;
+}
+
+.whatsnew-celebrate[dir="rtl"] .wn-subcopy {
+    font-size: 0.9rem;
+    line-height: 1.65;
+}
+
+.whatsnew-celebrate[dir="rtl"] .wn-pill-spark {
+    letter-spacing: 0;
+    font-size: 0.62rem;
+    padding: 2px 7px;
+}
+
+.whatsnew-celebrate .wn-emoji-pop {
+    display: inline-block;
+    animation: wnEmojiBounce 1.4s ease-in-out infinite;
+}
+
+@keyframes wnEmojiBounce {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    35%      { transform: translateY(-5px) rotate(-8deg); }
+    65%      { transform: translateY(-2px) rotate(6deg); }
+}
+
+.whatsnew-celebrate[dir="rtl"] .whatsnew-notice-cta {
+    flex-direction: row-reverse;
+}
+
+@media (max-width: 768px) {
+    .whatsnew-celebrate[dir="rtl"] {
+        flex-wrap: wrap;
+    }
+    .whatsnew-celebrate[dir="rtl"] .whatsnew-notice-cta {
+        margin-inline-start: 0;
+        margin-inline-end: auto;
+    }
+}
+
 /* ---- close ---- */
 .whatsnew-celebrate .whatsnew-notice-close {
     width: 32px;
@@ -525,7 +572,8 @@
     .whatsnew-celebrate .wn-pill-spark,
     .whatsnew-celebrate .wn-headline,
     .whatsnew-celebrate .whatsnew-notice-cta,
-    .whatsnew-celebrate .wn-cta-shine {
+    .whatsnew-celebrate .wn-cta-shine,
+    .whatsnew-celebrate .wn-emoji-pop {
         animation: none !important;
     }
 

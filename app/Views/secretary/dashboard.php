@@ -6,44 +6,73 @@
     $secWhatsNewLaunchTs   = strtotime('2026-06-06 12:00:00');
     $secWhatsNewLaunchDays = 7;
     $secWhatsNewVisibleUntil = $secWhatsNewLaunchTs + ($secWhatsNewLaunchDays * 24 * 3600);
-    $secWhatsNewVersion = 'v11_0_3';
+    $secWhatsNewVersion = 'v11_0_4';
 ?>
 <?php if (time() < $secWhatsNewVisibleUntil): ?>
-<div class="whatsnew-notice mb-4 arabic-text" id="secWhatsNewNotice"
+<div class="whatsnew-notice whatsnew-celebrate mb-4 arabic-text" id="secWhatsNewNotice"
      dir="rtl" lang="ar"
-     data-version="<?= htmlspecialchars($secWhatsNewVersion) ?>">
+     data-version="<?= htmlspecialchars($secWhatsNewVersion) ?>"
+     data-visible-until="<?= (int)$secWhatsNewVisibleUntil ?>">
+    <span class="wn-aurora" aria-hidden="true"></span>
+    <span class="wn-border-beam" aria-hidden="true"></span>
     <span class="whatsnew-notice-glow" aria-hidden="true"></span>
+    <span class="wn-orbs" aria-hidden="true">
+        <span class="wn-orb wn-orb-1"></span>
+        <span class="wn-orb wn-orb-2"></span>
+        <span class="wn-orb wn-orb-3"></span>
+    </span>
+    <span class="whatsnew-sparkles" aria-hidden="true"></span>
+    <span class="wn-shimmer-sweep" aria-hidden="true"></span>
+    <span class="whatsnew-confetti" id="secWhatsNewConfetti" aria-hidden="true"></span>
     <span class="whatsnew-notice-pill">
+        <span class="wn-pill-ring" aria-hidden="true"></span>
         <?= sec_dash_icon('stars', 'sm') ?>
-        <span>v11.0.3</span>
+        <span class="wn-pill-label">v11.0.0</span>
+        <span class="wn-pill-spark" aria-hidden="true">جديد</span>
     </span>
     <span class="whatsnew-notice-text">
-        <strong>تحسينات واجهة السكرتارية</strong>
-        إحصائيات حية، مواعيد اليوم بترقيم AJAX، ملخص المريض عند التمرير، وتقويم حجوزات أوضح.
+        <strong class="wn-headline">محادثة فورية مع الأطباء! <span class="wn-emoji-pop" aria-hidden="true">🎉</span></strong>
+        <span class="wn-subcopy">زر شات زجاجي في كل صفحة — مجموعات، تفاعلات، صور ورسائل صوتية، وإيصالات قراءة ✓✓. تبقى المحادثة مفتوحة عند التنقل بين الصفحات.</span>
     </span>
     <button type="button" class="whatsnew-notice-cta"
             data-bs-toggle="modal" data-bs-target="#secWhatsNewModal">
-        استكشف الجديد <?= sec_dash_icon_inline('arrow-left', 'sm') ?>
+        <span class="wn-cta-shine" aria-hidden="true"></span>
+        <span class="wn-cta-label">استكشف الجديد</span>
+        <?= sec_dash_icon_inline('arrow-left', 'sm') ?>
     </button>
     <button type="button" class="whatsnew-notice-close" id="secWhatsNewNoticeClose"
             aria-label="إخفاء إشعار التحديث">
         <?= sec_dash_icon('close', 'sm') ?>
     </button>
 </div>
+<script src="/app/Views/doctor/assets/js/celebration.js?v=<?= file_exists(__DIR__ . '/../doctor/assets/js/celebration.js') ? filemtime(__DIR__ . '/../doctor/assets/js/celebration.js') : time() ?>"></script>
 <script>
 (function () {
     var el = document.getElementById('secWhatsNewNotice');
     if (!el) return;
     var ver = el.getAttribute('data-version');
     var dismissKey = 'whatsNew_' + ver + '_noticeDismissed';
+    var confettiKey = 'whatsNew_' + ver + '_confettiShown';
     try {
         if (localStorage.getItem(dismissKey) === '1') { el.style.display = 'none'; return; }
     } catch (_) {}
     var btn = document.getElementById('secWhatsNewNoticeClose');
+    requestAnimationFrame(function () {
+        el.classList.add('is-visible');
+    });
     if (btn) btn.addEventListener('click', function () {
-        el.style.display = 'none';
+        el.classList.add('is-dismissing');
+        setTimeout(function () { el.style.display = 'none'; }, 420);
         try { localStorage.setItem(dismissKey, '1'); } catch (_) {}
     });
+    try {
+        var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (!reduced && sessionStorage.getItem(confettiKey) !== '1' && window.fireCelebrationConfetti) {
+            var box = document.getElementById('secWhatsNewConfetti');
+            window.fireCelebrationConfetti(box, { waves: 2, count: 64 });
+            sessionStorage.setItem(confettiKey, '1');
+        }
+    } catch (_) {}
 })();
 </script>
 <?php endif; ?>

@@ -1,20 +1,17 @@
 <link href="/app/Views/doctor/assets/css/dashboard.css?v=<?= file_exists(__DIR__ . '/assets/css/dashboard.css') ? filemtime(__DIR__ . '/assets/css/dashboard.css') : time() ?>" rel="stylesheet">
 
-<!-- v11.0.0 celebration notice bar — major-release fanfare. Layered FX:
+<!-- v11.0.0 celebration notice bar — chat release fanfare. Layered FX:
      entrance reveal, aurora mesh, rotating border-beam, floating orbs,
      shimmer sweep, sparkle drift, gradient sweep, pulsing pill + CTA,
      one-shot confetti burst (sessionStorage). Dismissable per browser.
-     3-day TTL from launch timestamp. Wizard auto-show disabled — bar only.
+     7-day TTL from launch timestamp. Wizard auto-show disabled — bar only.
      Respects prefers-reduced-motion. -->
 <?php
-    // Launch epoch — bump this when you launch a NEW release to extend the
-    // visibility window. Pinning a constant (not time()) means the bar
-    // disappears exactly N days after THIS release, not N days from each
-    // user's first visit.
-    $whatsNewLaunchTs   = strtotime('2026-06-04 12:00:00');
-    $whatsNewLaunchDays = 3;
+    // Launch epoch — bump when shipping a NEW release to extend visibility.
+    $whatsNewLaunchTs   = strtotime('2026-06-06 12:00:00');
+    $whatsNewLaunchDays = 7;
     $whatsNewVisibleUntil = $whatsNewLaunchTs + ($whatsNewLaunchDays * 24 * 3600);
-    $whatsNewVersion = 'v11_0_0';
+    $whatsNewVersion = 'v11_0_4';
 ?>
 <?php if (time() < $whatsNewVisibleUntil): ?>
 <div class="whatsnew-notice whatsnew-celebrate mb-4" id="whatsNewNotice"
@@ -38,11 +35,10 @@
         <span class="wn-pill-spark" aria-hidden="true">NEW</span>
     </span>
     <span class="whatsnew-notice-text">
-        <strong class="wn-headline">The biggest release yet.</strong>
-        <span class="wn-subcopy">A re-designed iOS-style notification center, the new To-Do, theme
-        palettes with auto dark/light schedule, a Cmd+K command palette,
-        patient hover-cards, @mentions, focus mode, note templates &mdash;
-        and more.</span>
+        <strong class="wn-headline">Real-time chat is here!</strong>
+        <span class="wn-subcopy">Message your secretary from the dock &mdash; glass panel, groups,
+        emoji reactions, voice notes, photos, <strong>@patient</strong> chips, and
+        <strong>✓✓</strong> read receipts. Your thread stays open as you move between pages.</span>
     </span>
     <button type="button" class="whatsnew-notice-cta"
             data-bs-toggle="modal" data-bs-target="#whatsNewV9Modal">

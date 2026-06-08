@@ -110,6 +110,12 @@
   function lpTrim(u) { return u.replace(/[)\].,;!?]+$/, ''); }  // strip trailing punctuation
   function safeHref(u) { return /^https?:\/\//i.test(u) ? u : ''; }
   function firstUrl(body) { if (body == null) return null; var m = String(body).match(URL_RE); return m ? lpTrim(m[0]) : null; }
+  // extract an 11-char YouTube video id from any youtube/youtu.be url form
+  function ytId(url) {
+    if (!url) return null;
+    var m = String(url).match(/(?:youtube(?:-nocookie)?\.com\/(?:watch\?(?:.*?&)?v=|embed\/|shorts\/|live\/|v\/)|youtu\.be\/)([A-Za-z0-9_-]{11})(?![A-Za-z0-9_-])/i);
+    return m ? m[1] : null;
+  }
   // esc() the gaps + wrap bare urls in safe anchors (chips already consumed upstream)
   function linkifyEsc(str) {
     var out = '', last = 0, m; URL_RE_G.lastIndex = 0;
@@ -126,6 +132,8 @@
   function lpCardHtml(m) {
     var url = firstUrl(m.body); if (!url) return '';
     var href = safeHref(url); if (!href) return '';
+    var yt = ytId(url);
+    if (yt) return ytCardHtml(yt, url, href);          // YouTube → click-to-play video card
     var c = LP_CACHE[url];
     if (!c || c.state === 'loading') {
       return '<a class="chat-link-preview chat-lp-skel" data-lp="' + esc(url) + '" href="' + esc(href) +
@@ -149,6 +157,55 @@
       LP_CACHE[url] = (r && r.ok && r.preview) ? { state: 'done', data: r.preview } : { state: 'fail' };
       if (S.view === 'thread') renderThread(false);
     });
+  }
+  // YouTube card: thumbnail (from id, always available) + ▶ → opens the modal player.
+  // Title is enriched from the backend OG fetch when it resolves (data-lp).
+  function ytCardHtml(id, url, href) {
+    var c = LP_CACHE[url];
+    var title = (c && c.state === 'done' && c.data && c.data.title) ? c.data.title : '';
+    var thumb = 'https://i.ytimg.com/vi/' + id + '/hqdefault.jpg';
+    return '<div class="chat-link-preview chat-lp-video" data-lp="' + esc(url) + '" data-yt="' + esc(id) + '">' +
+        '<div class="chat-lp-img chat-lp-poster">' +
+          '<img src="' + esc(thumb) + '" alt="">' +
+          '<button type="button" class="chat-lp-play" aria-label="' + t('Play', 'تشغيل') + '"><i class="bi bi-play-fill"></i></button>' +
+        '</div>' +
+        '<a class="chat-lp-body" href="' + esc(href) + '" target="_blank" rel="noopener noreferrer">' +
+          '<div class="chat-lp-site">YouTube</div>' + (title ? '<div class="chat-lp-title">' + esc(title) + '</div>' : '') +
+        '</a>' +
+      '</div>';
+  }
+  // glass modal player — lives on <body>, OUTSIDE the poll-rebuilt thread, so the
+  // iframe is never destroyed mid-play. Only ever embeds youtube-nocookie + a vetted id.
+  var videoModal;
+  function openVideoModal(id) {
+    if (!/^[A-Za-z0-9_-]{11}$/.test(id || '')) return;
+    if (!videoModal) {
+      videoModal = document.createElement('div');
+      videoModal.className = 'chat-video-modal'; videoModal.style.display = 'none';
+      videoModal.innerHTML = '<div class="chat-video-box"><button class="chat-video-close" aria-label="' + t('Close', 'إغلاق') +
+        '"><i class="bi bi-x-lg"></i></button><div class="chat-video-frame"></div></div>';
+      document.body.appendChild(videoModal);
+      videoModal.addEventListener('click', function (e) {
+        if (e.target === videoModal || e.target.closest('.chat-video-close')) closeVideoModal();
+      });
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && videoModal && videoModal.style.display !== 'none') closeVideoModal();
+      });
+    }
+    var f = document.createElement('iframe');
+    f.src = 'https://www.youtube-nocookie.com/embed/' + id + '?autoplay=1&rel=0';
+    f.setAttribute('allow', 'autoplay; encrypted-media; fullscreen; picture-in-picture');
+    f.setAttribute('allowfullscreen', '');
+    f.setAttribute('frameborder', '0');
+    var frame = videoModal.querySelector('.chat-video-frame');
+    frame.innerHTML = ''; frame.appendChild(f);
+    videoModal.style.display = 'flex';
+  }
+  function closeVideoModal() {
+    if (!videoModal) return;
+    videoModal.style.display = 'none';
+    var frame = videoModal.querySelector('.chat-video-frame');
+    if (frame) frame.innerHTML = '';                   // stop playback
   }
 
   var CHAT_UI_KEY = 'roayaChatUI';
@@ -665,6 +722,9 @@
     box.querySelectorAll('.chat-lp-img img[data-lpimg]').forEach(function (im) {
       im.onerror = function () { var w = im.closest('.chat-lp-img'); if (w) w.remove(); };
       if (im.complete && im.naturalWidth === 0) { var w = im.closest('.chat-lp-img'); if (w) w.remove(); }
+    });
+    box.querySelectorAll('.chat-lp-play').forEach(function (btn) {
+      btn.onclick = function (e) { e.preventDefault(); e.stopPropagation(); var card = btn.closest('.chat-lp-video'); if (card) openVideoModal(card.getAttribute('data-yt')); };
     });
     // quote-reply gestures: double-click (desktop), double-tap OR horizontal
     // swipe (touch). `touch-action: pan-y` (CSS) lets vertical scroll through
