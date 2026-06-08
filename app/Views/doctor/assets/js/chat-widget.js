@@ -106,12 +106,55 @@
   var S = { me: 0, convos: [], activeCid: null, view: 'list', cursor: 0, open: false,
             verTimer: null, threadTimer: null, lastConvRev: -1, pendingAtt: [],
             replyTo: null, editing: null, editText: '', readUpTo: 0, msgs: {}, order: [],
-            lastUnread: null, lastReact: null, pins: [] };
+            lastUnread: null, lastReact: null, pins: [], unreadAnchor: 0 };
 
   var REACTION_SET = ['👍', '❤️', '😂', '😮', '😢', '🙏'];
 
+  // ---- animated emoji (Noto) -------------------------------------------
+  // server-hosted set (downloaded WebP); anything else falls back to the
+  // gstatic CDN, then to the plain native glyph (onerror).
+  // full "Smileys & Emotion" Unicode group that Noto animates (server-hosted WebP), in picker order
+  var EMOJI_SMILEYS = ('1f600,1f603,1f604,1f601,1f606,1f605,1f923,1f602,1f642,1f643,1fae0,1f609,1f60a,1f607,1f970,1f60d,1f929,1f618,1f617,263a_fe0f,1f61a,1f619,1f972,1f60b,1f61b,1f61c,1f92a,1f61d,1f911,1f917,1f92d,1fae2,1fae3,1f92b,1f914,1fae1,1f910,1f928,1f610,1f611,1f636,1fae5,1f636_200d_1f32b_fe0f,1f60f,1f612,1f644,1f62c,1f62e_200d_1f4a8,1f925,1fae8,1f642_200d_2194_fe0f,1f642_200d_2195_fe0f,1f60c,1f614,1f62a,1f924,1f634,1f637,1f912,1f915,1f922,1f92e,1f927,1f975,1f976,1f974,1f635,1f635_200d_1f4ab,1f92f,1f920,1f973,1f978,1f60e,1f913,1f9d0,1f615,1fae4,1f61f,1f641,2639_fe0f,1f62e,1f62f,1f632,1f633,1f97a,1f979,1f626,1f627,1f628,1f630,1f625,1f622,1f62d,1f631,1f616,1f623,1f61e,1f613,1f629,1f62b,1f971,1f624,1f621,1f620,1f92c,1f608,1f47f,1f480,1f4a9,1f921,1f479,1f47b,1f47d,1f47e,1f916,1f63a,1f638,1f639,1f63b,1f63c,1f63d,1f640,1f63f,1f63e,1f648,1f649,1f64a,1f48c,1f498,1f49d,1f496,1f497,1f493,1f49e,1f495,1f49f,2763_fe0f,1f494,2764_fe0f_200d_1f525,2764_fe0f_200d_1fa79,2764_fe0f,1fa77,1f9e1,1f49b,1f49a,1f499,1fa75,1f49c,1f90e,1f5a4,1fa76,1f90d,1f48b,1f4af,1f4a5,1f4ab,1f573_fe0f,1f4ac,1f5ef_fe0f').split(',');
+  var EMOJI_LOCAL = {};
+  // earlier reaction/symbol set + the full smileys group are all on our server now
+  ('1f389,1f44c,1f44d,1f44e,1f44f,1f4aa,1f525,1f64c,1f64f,1f91d,2705,2728,274c,2b50').split(',')
+    .concat(EMOJI_SMILEYS).forEach(function (c) { EMOJI_LOCAL[c] = 1; });
+  var EMOJI_BASE = '/app/Views/doctor/assets/emoji/';
+  function emojiCp(e) { return Array.from(e).map(function (c) { return c.codePointAt(0).toString(16); }).join('_'); }
+  // gstatic codepoint string ("2764_fe0f_200d_1f525") → native emoji glyph
+  function cpToChar(cp) { return String.fromCodePoint.apply(null, cp.split('_').map(function (h) { return parseInt(h, 16); })); }
+  function emojiSrc(cp) {
+    return EMOJI_LOCAL[cp] ? (EMOJI_BASE + cp + '.webp')
+      : ('https://fonts.gstatic.com/s/e/notoemoji/latest/' + cp + '/512.webp');
+  }
+  // tiny static first-frame (64px) used as the picker's default, so animations only
+  // play on hover (keeps the popover light — no 150 webp animating at once)
+  function emojiPosterSrc(cp) { return EMOJI_BASE + 'poster/' + cp + '.webp'; }
+  function animEmojiImg(emoji, extra) {
+    var cp = emojiCp(emoji);
+    return '<img class="chat-emoji-anim' + (extra ? ' ' + extra : '') + '" src="' + esc(emojiSrc(cp)) +
+      '" alt="' + esc(emoji) + '" data-emoji="' + esc(emoji) + '" draggable="false">';
+  }
+  // swap any failed animated emoji <img> for its native glyph (CSP-safe, no inline handlers)
+  function wireEmojiFallback(root) {
+    if (!root) return;
+    root.querySelectorAll('img.chat-emoji-anim').forEach(function (im) {
+      function fb() { var s = document.createElement('span'); s.className = 'chat-emoji-native'; s.textContent = im.getAttribute('data-emoji') || ''; if (im.parentNode) im.replaceWith(s); }
+      im.onerror = fb;
+      if (im.complete && im.naturalWidth === 0) fb();
+    });
+  }
+  // a body that is ONLY 1–3 emoji (no other text) → returns the emoji array, else null
+  function emojiOnly(text) {
+    var s = (text == null ? '' : String(text)).trim(); if (!s) return null;
+    var re = /(\p{Extended_Pictographic}(\uFE0F|\u200D\p{Extended_Pictographic})*)/gu;
+    var matches = s.match(re); if (!matches || matches.length > 3) return null;
+    if (s.replace(re, '').replace(/\s+/g, '').length) return null; // leftover non-emoji text
+    return matches;
+  }
+
   // ---- DOM -------------------------------------------------------------
-  var panel, body, head, reactPop, typeahead, badgeEls = [], glowEls = [];
+  var panel, body, head, reactPop, typeahead, emojiPop, emojiObs, badgeEls = [], glowEls = [];
   function setGlow(on) { glowEls.forEach(function (el) { if (el) el.classList.toggle('chat-glow', !!on); }); }
   function build() {
     panel = document.createElement('div');
@@ -133,13 +176,16 @@
       '<div class="chat-reply-bar" id="chatReplyBar" style="display:none"></div>' +
       '<div class="chat-input-area" id="chatInputArea" style="display:none">' +
         '<div class="chat-att-preview" id="chatAttPreview" style="display:none"></div>' +
+        '<input type="file" id="chatFile" hidden accept="image/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt">' +
         '<div class="chat-input-row">' +
-          '<input type="file" id="chatFile" hidden accept="image/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt">' +
-          '<button class="chat-attach" id="chatAttach" title="' + t('Attach', 'إرفاق') + '"><i class="bi bi-paperclip"></i></button>' +
-          '<button class="chat-attach" id="chatCam" title="' + t('Camera', 'كاميرا') + '"><i class="bi bi-camera"></i></button>' +
-          '<button class="chat-attach chat-mic" id="chatMic" title="' + t('Voice message', 'رسالة صوتية') + '"><i class="bi bi-mic"></i></button>' +
           '<textarea class="chat-input" id="chatInput" rows="1" placeholder="' + t('Message…', 'رسالة…') + '"></textarea>' +
           '<button class="chat-send" id="chatSend" disabled><i class="bi bi-send"></i></button>' +
+        '</div>' +
+        '<div class="chat-input-tools">' +
+          '<button class="chat-attach" id="chatCam" title="' + t('Camera', 'كاميرا') + '"><i class="bi bi-camera"></i></button>' +
+          '<button class="chat-attach chat-mic" id="chatMic" title="' + t('Voice message', 'رسالة صوتية') + '"><i class="bi bi-mic"></i></button>' +
+          '<button class="chat-attach" id="chatAttach" title="' + t('Attach', 'إرفاق') + '"><i class="bi bi-paperclip"></i></button>' +
+          '<button class="chat-attach chat-emoji-btn" id="chatEmoji" title="' + t('Emoji', 'إيموجي') + '"><i class="bi bi-emoji-smile"></i></button>' +
         '</div>' +
       '</div>';
     document.body.appendChild(panel);
@@ -148,13 +194,15 @@
 
     // shared reaction popover + mention typeahead (positioned on demand)
     reactPop = document.createElement('div'); reactPop.className = 'chat-react-pop'; reactPop.style.display = 'none';
-    reactPop.innerHTML = REACTION_SET.map(function (e) { return '<button data-emoji="' + e + '">' + e + '</button>'; }).join('');
+    reactPop.innerHTML = REACTION_SET.map(function (e) { return '<button data-emoji="' + esc(e) + '">' + animEmojiImg(e) + '</button>'; }).join('');
+    wireEmojiFallback(reactPop);
     panel.appendChild(reactPop);
     reactPop.querySelectorAll('button').forEach(function (b) {
       b.onclick = function () { if (reactPop.dataset.mid) react(+reactPop.dataset.mid, b.dataset.emoji); hideReactPop(); };
     });
     typeahead = document.createElement('div'); typeahead.className = 'chat-typeahead'; typeahead.style.display = 'none';
     panel.appendChild(typeahead);
+    buildEmojiPicker();
 
     panel.querySelector('#chatClose').onclick = close;
     panel.querySelector('#chatBack').onclick = showList;
@@ -179,9 +227,86 @@
     panel.querySelector('#chatFile').onchange = onPickFile;
     panel.querySelector('#chatMic').onclick = toggleRecording;
     panel.querySelector('#chatCam').onclick = openCamera;
+    panel.querySelector('#chatEmoji').onclick = function (e) { e.stopPropagation(); toggleEmojiPicker(); };
     document.addEventListener('click', function (e) {
       if (!reactPop.contains(e.target) && !e.target.closest('[data-reactpop]')) hideReactPop();
+      if (emojiPop && emojiPop.style.display !== 'none' &&
+          !emojiPop.contains(e.target) && !e.target.closest('#chatEmoji')) hideEmojiPicker();
     });
+  }
+
+  // ---- composer emoji picker (animated Smileys & Emotion) --------------
+  function buildEmojiPicker() {
+    emojiPop = document.createElement('div');
+    emojiPop.className = 'chat-emoji-pop'; emojiPop.style.display = 'none';
+    var grid = '<div class="chat-emoji-grid">' + EMOJI_SMILEYS.map(function (cp) {
+      var ch = cpToChar(cp);
+      // default = light static poster (set into src lazily on scroll); the animated
+      // webp (data-anim) is swapped in only while the cell is hovered/focused.
+      return '<button type="button" class="chat-emoji-cell" data-emoji="' + esc(ch) + '" title="' + esc(ch) + '">' +
+        '<img class="chat-emoji-anim" data-poster="' + esc(emojiPosterSrc(cp)) + '" data-anim="' + esc(emojiSrc(cp)) +
+        '" alt="' + esc(ch) + '" data-emoji="' + esc(ch) + '" draggable="false"></button>';
+    }).join('') + '</div>';
+    emojiPop.innerHTML = '<div class="chat-emoji-pop-title">' + t('Emoji', 'إيموجي') + '</div>' + grid;
+    panel.appendChild(emojiPop);
+    // lazy-load the POSTER (not the animation) when a cell scrolls into the picker viewport.
+    if ('IntersectionObserver' in window) {
+      emojiObs = new IntersectionObserver(function (entries) {
+        entries.forEach(function (en) {
+          if (!en.isIntersecting) return;
+          lazyLoadEmoji(en.target);
+          emojiObs.unobserve(en.target);
+        });
+      }, { root: emojiPop, rootMargin: '120px' });
+    }
+    emojiPop.querySelectorAll('.chat-emoji-cell').forEach(function (b) {
+      var im = b.querySelector('img');
+      b.onclick = function () { insertEmoji(b.dataset.emoji); };
+      // animate ONLY this cell while pointed at / focused → at most one animation runs
+      function play() { if (!im) return; if (!im.src) lazyLoadEmoji(im); if (im.dataset.anim) im.src = im.dataset.anim; }
+      function stop() { if (im && im.dataset.poster) im.src = im.dataset.poster; }
+      b.addEventListener('mouseenter', play);
+      b.addEventListener('mouseleave', stop);
+      b.addEventListener('focus', play);
+      b.addEventListener('blur', stop);
+    });
+  }
+  // load the static poster into an idle picker cell (+ wire native-glyph fallback once)
+  function lazyLoadEmoji(im) {
+    if (!im || im.src || !im.dataset.poster) return;
+    im.onerror = function () {
+      var s = document.createElement('span'); s.className = 'chat-emoji-native';
+      s.textContent = im.getAttribute('data-emoji') || '';
+      if (im.parentNode) im.replaceWith(s);
+    };
+    im.src = im.dataset.poster;
+  }
+
+  function toggleEmojiPicker() {
+    if (!emojiPop) return;
+    if (emojiPop.style.display === 'none') showEmojiPicker(); else hideEmojiPicker();
+  }
+  function showEmojiPicker() {
+    hideReactPop();
+    // sit just above the composer (input area), spanning the panel width
+    var area = panel.querySelector('#chatInputArea');
+    emojiPop.style.bottom = ((area ? area.offsetHeight : 96) + 8) + 'px';
+    emojiPop.style.display = 'block';
+    // start lazy-loading posters: observe each idle cell (or, if no observer, load them all)
+    emojiPop.querySelectorAll('img.chat-emoji-anim:not([src])').forEach(function (im) {
+      if (emojiObs) emojiObs.observe(im); else lazyLoadEmoji(im);
+    });
+  }
+  function hideEmojiPicker() { if (emojiPop) emojiPop.style.display = 'none'; }
+
+  function insertEmoji(ch) {
+    var input = panel.querySelector('#chatInput'); if (!input) return;
+    var s = input.selectionStart, e = input.selectionEnd, v = input.value;
+    if (typeof s === 'number') { input.value = v.slice(0, s) + ch + v.slice(e); var p = s + ch.length; input.setSelectionRange(p, p); }
+    else { input.value = v + ch; }
+    input.focus();
+    // mirror the manual-typing side effects (enable send, autosize, typing ping)
+    input.dispatchEvent(new Event('input', { bubbles: true }));
   }
 
   function setBadge(n) {
@@ -400,6 +525,16 @@
       S.cursor = d.cursor || 0;
       S.readUpTo = d.read_up_to || 0;
       (d.messages || []).forEach(upsertMsg);
+      // "unread from here" divider: anchor on the first message from SOMEONE ELSE
+      // newer than my last-read position (only if I've read part of it before).
+      var lr = d.my_last_read || 0; S.unreadAnchor = 0;
+      if (lr > 0) {
+        S.order.slice().sort(function (a, b) { return a - b; }).some(function (mid) {
+          var mm = S.msgs[mid];
+          if (mm && mm.id > lr && mm.sender_id !== S.me) { S.unreadAnchor = mm.id; return true; }
+          return false;
+        });
+      }
       renderThread(true);
       markRead();
       startThreadPoll();
@@ -415,7 +550,11 @@
   function renderThread(scroll) {
     var box = panel.querySelector('#chatMessages'); if (!box) return;
     S.order.sort(function (a, b) { return a - b; });
-    box.innerHTML = S.order.map(function (id) { return msgHtml(S.msgs[id]); }).join('');
+    box.innerHTML = S.order.map(function (id) {
+      var sep = (S.unreadAnchor && id === S.unreadAnchor)
+        ? '<div class="chat-unread-sep"><span>' + t('Unread messages', 'رسائل غير مقروءة') + '</span></div>' : '';
+      return sep + msgHtml(S.msgs[id]);
+    }).join('');
     // existing-reaction chips toggle; quick pickers; reply / edit / delete; quote jump
     box.querySelectorAll('[data-react]').forEach(function (b) { b.onclick = function () { react(+b.dataset.mid, b.dataset.react); }; });
     box.querySelectorAll('[data-reactpop]').forEach(function (b) { b.onclick = function (e) { e.stopPropagation(); openReactPop(+b.dataset.reactpop, b); }; });
@@ -429,6 +568,7 @@
     box.querySelectorAll('[data-editcancel]').forEach(function (b) { b.onclick = function () { cancelEdit(); renderThread(false); }; });
     box.querySelectorAll('.chat-msg-att img').forEach(function (im) { im.style.cursor = 'zoom-in'; im.onclick = function () { openImage(im.getAttribute('data-img') || im.src); }; });
     box.querySelectorAll('.chat-audio').forEach(wireAudio);
+    wireEmojiFallback(box);
     // quote-reply gestures: double-click (desktop), double-tap OR horizontal
     // swipe (touch). `touch-action: pan-y` (CSS) lets vertical scroll through
     // while we own horizontal drags, so no preventDefault / passive issues.
@@ -473,8 +613,21 @@
       var ed = box.querySelector('.chat-edit-input');
       if (ed) { ed.oninput = function () { S.editText = ed.value; }; ed.focus(); ed.setSelectionRange(ed.value.length, ed.value.length); }
     }
-    if (scroll) box.scrollTop = box.scrollHeight + 9999;
-    else { var nearBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 120; if (nearBottom) box.scrollTop = box.scrollHeight + 9999; }
+    // The SCROLL container is #chatBody (overflow-y:auto), NOT #chatMessages.
+    var scroller = panel.querySelector('#chatBody') || box;
+    function toBottom() { if (scroller) scroller.scrollTop = scroller.scrollHeight + 9999; }
+    if (scroll) {
+      toBottom();
+      requestAnimationFrame(toBottom);   // after layout settles
+      // images/audio grow as they decode → stay pinned to the bottom
+      box.querySelectorAll('img, audio').forEach(function (el) {
+        var ev = el.tagName === 'IMG' ? 'load' : 'loadedmetadata';
+        if (!(el.tagName === 'IMG' && el.complete)) el.addEventListener(ev, toBottom, { once: true });
+      });
+    } else {
+      var nearBottom = scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight < 120;
+      if (nearBottom) toBottom();
+    }
   }
   function msgHtml(m) {
     var mine = m.sender_id === S.me;
@@ -498,7 +651,7 @@
     }).join('');
     var reacts = (m.reactions || []).map(function (r) {
       var on = (r.users || []).indexOf(S.me) !== -1 ? ' on' : '';
-      return '<span class="chat-react' + on + '" data-react="' + esc(r.emoji) + '" data-mid="' + m.id + '">' + esc(r.emoji) + ' ' + r.count + '</span>';
+      return '<span class="chat-react' + on + '" data-react="' + esc(r.emoji) + '" data-mid="' + m.id + '">' + animEmojiImg(r.emoji) + ' ' + r.count + '</span>';
     }).join('');
     var actions = '<span class="chat-msg-actions">' +
       '<button data-reply="' + m.id + '" title="' + t('Reply', 'رد') + '"><i class="bi bi-reply"></i></button>' +
@@ -519,8 +672,13 @@
     var bodyHtml = m.body != null ? renderBody(m.body) : '';
     var tick = mine ? '<span class="chat-tick' + (m.id <= S.readUpTo ? ' read' : '') + '">' + (m.id <= S.readUpTo ? '✓✓' : '✓') + '</span>' : '';
     var pinMark = m.pinned ? '<i class="bi bi-pin-angle-fill chat-pin-mark" title="' + t('Pinned', 'مثبّتة') + '"></i>' : '';
-    return '<div class="chat-msg ' + (mine ? 'mine' : 'theirs') + '" id="msg-' + m.id + '">' + sender +
-      '<div class="chat-bubble">' + quote + bodyHtml + atts + '</div>' +
+    // emoji-only message (1–3 emoji, no attachment/quote) → big animated emoji, no bubble
+    var emBig = (!atts && !quote && m.body != null) ? emojiOnly(m.body) : null;
+    var content = emBig
+      ? '<div class="chat-emoji-big' + (emBig.length > 1 ? ' multi' : '') + '">' + emBig.map(function (e) { return animEmojiImg(e); }).join('') + '</div>'
+      : '<div class="chat-bubble">' + quote + bodyHtml + atts + '</div>';
+    return '<div class="chat-msg ' + (mine ? 'mine' : 'theirs') + (emBig ? ' chat-msg--emoji' : '') + '" id="msg-' + m.id + '">' + sender +
+      content +
       '<div class="chat-msg-foot">' + (mine ? actions : '') + pinMark +
       '<span class="chat-msg-time">' + timeShort(m.created_at) + '</span>' + tick + (!mine ? actions : '') + '</div>' +
       (reacts ? '<div class="chat-msg-reacts">' + reacts + '</div>' : '') + '</div>';

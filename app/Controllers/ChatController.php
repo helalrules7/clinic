@@ -435,6 +435,11 @@ class ChatController
             "SELECT COALESCE(MIN(COALESCE(last_read_message_id,0)),0) FROM chat_participants
               WHERE conversation_id = $cid AND user_id <> $uid AND left_at IS NULL"
         )->fetchColumn() ?: 0);
+        // MY last-read position (before this open marks it read) → drives the
+        // "unread from here" divider client-side.
+        $myLastRead = (int) ($this->pdo->query(
+            "SELECT COALESCE(last_read_message_id,0) FROM chat_participants WHERE conversation_id = $cid AND user_id = $uid"
+        )->fetchColumn() ?: 0);
 
         // active typing (≤6s), excluding me
         $typeStmt = $this->pdo->prepare(
@@ -444,7 +449,7 @@ class ChatController
         $typeStmt->execute([$cid, $uid]);
         $typing = array_map(fn($t) => ['user_id' => (int) $t['user_id'], 'name' => $t['name'], 'state' => $t['state']], $typeStmt->fetchAll(PDO::FETCH_ASSOC));
 
-        $this->json(['ok' => true, 'messages' => $this->hydrateMessages($rows), 'cursor' => $cursor, 'typing' => $typing, 'read_up_to' => $readUpTo]);
+        $this->json(['ok' => true, 'messages' => $this->hydrateMessages($rows), 'cursor' => $cursor, 'typing' => $typing, 'read_up_to' => $readUpTo, 'my_last_read' => $myLastRead]);
     }
 
     /** POST /api/chat/{id}/messages {body, reply_to_id?, attachment_ids[]} */
@@ -549,7 +554,13 @@ class ChatController
         $uid  = (int) $me['id'];
         $mid  = (int) $id;
         $emoji = mb_substr(trim((string) ($this->readBody()['emoji'] ?? '')), 0, 16);
-        if ($emoji === '') { $this->json(['ok' => false, 'error' => 'no emoji'], 422); }
+        // Store ONLY a clean native emoji glyph — never markup/tokens (the animated <img>
+        // lives client-side). A real emoji has no '<>' and no ASCII alphanumerics, so this
+        // keeps notification text + grouping stable on a FIXED native char no matter what.
+        $emoji = str_replace(['<', '>'], '', $emoji);
+        if ($emoji === '' || preg_match('/[A-Za-z0-9]/', $emoji)) {
+            $this->json(['ok' => false, 'error' => 'invalid emoji'], 422);
+        }
         $m = $this->pdo->prepare("SELECT m.conversation_id, m.sender_id, m.body, u.role AS author_role
                                     FROM chat_messages m JOIN users u ON u.id = m.sender_id
                                    WHERE m.id = ? AND m.deleted_at IS NULL");
