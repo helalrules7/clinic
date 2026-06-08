@@ -61,8 +61,8 @@ body {
     top: 0;
     right: 0; /* Changed from left: 0 for RTL */
     height: 100vh;
+    height: 100dvh;
     width: var(--sidebar-width);
-    /* Glass effect - same as main.php */
     background: rgba(248, 250, 252, 0.35);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
@@ -71,6 +71,10 @@ body {
     z-index: 1000001 !important;
     transition: transform 0.3s ease, background 0.3s ease, border-color 0.3s ease;
     overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior: contain;
+    touch-action: pan-y;
+    -webkit-overflow-scrolling: touch;
 }
 
 /* Ensure sidebar is completely hidden on mobile by default */
@@ -396,6 +400,7 @@ body {
     padding: 2rem;
     padding-top: 0; /* top-bar bleeds to viewport top — mirrors doctor style.css */
     min-height: 100vh;
+    min-height: 100dvh;
     transition: margin-right 0.3s ease; /* Changed from margin-left for RTL */
     /* Keep .main-content CONTEXT-FREE (mirrors the doctor layout's style.css note):
        a positioned z-index here makes this box a CSS stacking context, which traps
@@ -464,10 +469,23 @@ body {
 }
         /* v11 notice bar — live clock + next appointment (header-height parity with doctor) */
         .notice-bar {
-            position: absolute; top: 0; left: 0; right: 0; height: 20px;
-            display: flex; align-items: center; gap: 1.2rem; padding: 4px 2rem 0;
-            font-size: 0.72rem; color: var(--muted); z-index: 1000; overflow: hidden;
-            pointer-events: none; font-family: 'Cairo', sans-serif;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0 2rem;
+            padding-top: 5px;
+            font-size: 0.72rem;
+            color: var(--muted);
+            z-index: 1000;
+            overflow: visible;
+            pointer-events: none;
+            font-family: 'Cairo', sans-serif;
+            background: transparent;
         }
         .notice-bar .notice-bar-clock, .notice-bar .notice-bar-next { display: inline-flex; align-items: center; gap: 0.35rem; white-space: nowrap; }
         /* Container stays click-through (so the empty strip doesn't block the top-bar),
@@ -4166,13 +4184,14 @@ body.sidebar-mini .sidebar .clinic-logo img {
 }
 body.sidebar-mini .sidebar .user-info {
     padding: 0.75rem 0.5rem;
+    border-bottom: 1px solid var(--border);
     justify-content: center;
 }
 body.sidebar-mini .sidebar .user-info .d-flex {
     justify-content: center;
 }
 body.sidebar-mini .sidebar .user-avatar {
-    margin: 0 !important;
+    margin: 0 auto !important;
     width: 40px;
     height: 40px;
 }
@@ -5093,4 +5112,99 @@ html[data-layout="secretary"] #addBookingModal .modal-header:has(.keyboard-hint)
 html[data-layout="secretary"] #editBookingModal .modal-header:has(.keyboard-hint) .modal-title {
     padding-inline: 2.75rem;
     padding-left: unset;
+}
+
+/* ============================================================================
+   §31 — Desktop chrome parity (header height + sidebar) with doctor layout
+   Tokens mirror style.css + design-system.css; RTL flips margin/border only.
+   ============================================================================ */
+html[data-layout="secretary"] {
+    --chrome-notice-h: 20px;
+    --chrome-bar-pad-top: 1rem;
+    --chrome-bar-pad-bottom: 1rem;
+    --chrome-sidebar-w: 280px;
+    --chrome-sidebar-mini-w: 76px;
+}
+
+@media (min-width: 1200px) {
+    html[data-layout="secretary"] .top-bar {
+        padding-top: calc(var(--chrome-bar-pad-top) + var(--chrome-notice-h));
+        padding-bottom: var(--chrome-bar-pad-bottom);
+        padding-right: 2rem;
+        padding-left: 2rem;
+        margin-bottom: 2rem;
+        align-items: center;
+        gap: 0;
+    }
+
+    html[data-layout="secretary"] .top-bar.notice-bar-hidden {
+        padding-top: var(--chrome-bar-pad-top);
+    }
+
+    html[data-layout="secretary"] .top-bar.scrolled {
+        padding-top: calc(var(--chrome-bar-pad-top) + var(--chrome-notice-h));
+    }
+
+    html[data-layout="secretary"] .notice-bar {
+        height: var(--chrome-notice-h);
+        padding: 0 2rem;
+        padding-top: 5px;
+        gap: 1rem;
+    }
+
+    html[data-layout="secretary"] .page-title h1 {
+        font-size: 2.5rem;
+        font-weight: 600;
+        line-height: 1.2;
+    }
+
+    html[data-layout="secretary"] .sidebar-toggle {
+        min-width: 44px;
+        min-height: 44px;
+        padding: 0.75rem;
+        border-radius: 8px;
+        flex-shrink: 0;
+    }
+
+    html[data-layout="secretary"] .top-bar > .page-title {
+        margin-right: 1rem;
+        margin-left: auto;
+    }
+
+    html[data-layout="secretary"] .top-bar-cluster {
+        gap: 1rem;
+    }
+
+    html[data-layout="secretary"] .top-actions {
+        gap: 1rem;
+    }
+
+    html[data-layout="secretary"] .sidebar {
+        width: var(--chrome-sidebar-w);
+    }
+
+    html[data-layout="secretary"] .main-content {
+        margin-right: var(--chrome-sidebar-w);
+    }
+
+    html[data-layout="secretary"] body.sidebar-mini .sidebar {
+        width: var(--chrome-sidebar-mini-w);
+    }
+
+    html[data-layout="secretary"] body.sidebar-mini .main-content {
+        margin-right: var(--chrome-sidebar-mini-w);
+    }
+
+    /* style.css ORTHO SIDEBAR PARITY — mini rail keeps top-bar height aligned */
+    html[data-layout="secretary"] body.sidebar-mini .top-bar {
+        min-height: 130px;
+    }
+
+    html[data-layout="secretary"] .sidebar-header {
+        padding: 1.5rem;
+    }
+
+    html[data-layout="secretary"] .user-info {
+        padding: 1rem 1.5rem;
+    }
 }

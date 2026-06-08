@@ -236,8 +236,8 @@
         </div>
         
         <div class="user-info">
-            <div class="d-flex align-items-center">
-                <div class="user-avatar" id="sidebarUserAvatar">
+            <div class="d-flex flex-column align-items-center text-center">
+                <div class="user-avatar mb-2" id="sidebarUserAvatar">
                     <?php
                     $currentUser = $this->getCurrentUser();
                     if (!empty($currentUser['profile_image'])):
@@ -251,7 +251,9 @@
                     <?php endif; ?>
                 </div>
                 <div class="user-details">
-                    <h6><?= htmlspecialchars(($this->getCurrentUser()['name'] ?? 'المستخدم')) ?></h6>
+                    <a href="/secretary/profile" class="user-name-link">
+                        <h6 class="mb-1"><?= htmlspecialchars(($this->getCurrentUser()['name'] ?? 'المستخدم')) ?></h6>
+                    </a>
                     <small class="secretary-badge">سكرتارية</small>
                 </div>
             </div>
