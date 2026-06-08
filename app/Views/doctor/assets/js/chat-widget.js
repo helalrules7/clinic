@@ -132,8 +132,19 @@
   function emojiPosterSrc(cp) { return EMOJI_BASE + 'poster/' + cp + '.webp'; }
   function animEmojiImg(emoji, extra) {
     var cp = emojiCp(emoji);
+    // data-anim/data-poster let us REPLAY the 3-loop animation on hover/tap (files are
+    // baked with loop=3 → they auto-play 3× then freeze on the last frame).
+    var poster = EMOJI_LOCAL[cp] ? (' data-poster="' + esc(emojiPosterSrc(cp)) + '"') : '';
     return '<img class="chat-emoji-anim' + (extra ? ' ' + extra : '') + '" src="' + esc(emojiSrc(cp)) +
-      '" alt="' + esc(emoji) + '" data-emoji="' + esc(emoji) + '" draggable="false">';
+      '" alt="' + esc(emoji) + '" data-emoji="' + esc(emoji) + '" data-anim="' + esc(emojiSrc(cp)) + '"' + poster + ' draggable="false">';
+  }
+  // re-trigger a frozen 3-loop emoji. Bridge through the poster (a real file) instead of
+  // src='' so the fallback onerror (→ native glyph) never fires on an empty src.
+  function replayEmoji(img) {
+    var anim = img.dataset.anim; if (!anim) return;
+    var poster = img.dataset.poster;
+    if (poster) { img.src = poster; requestAnimationFrame(function () { img.src = anim; }); }
+    else { img.src = anim; }
   }
   // swap any failed animated emoji <img> for its native glyph (CSP-safe, no inline handlers)
   function wireEmojiFallback(root) {
@@ -569,6 +580,15 @@
     box.querySelectorAll('.chat-msg-att img').forEach(function (im) { im.style.cursor = 'zoom-in'; im.onclick = function () { openImage(im.getAttribute('data-img') || im.src); }; });
     box.querySelectorAll('.chat-audio').forEach(wireAudio);
     wireEmojiFallback(box);
+    // emoji in a message plays 3× then freezes (loop=3 baked in); hovering or tapping the
+    // message replays it 3× more — keeps the thread light (no perpetual animation).
+    box.querySelectorAll('.chat-msg').forEach(function (mEl) {
+      var ims = mEl.querySelectorAll('img.chat-emoji-anim');
+      if (!ims.length) return;
+      var replay = function () { ims.forEach(replayEmoji); };
+      mEl.addEventListener('mouseenter', replay);
+      mEl.addEventListener('click', replay);
+    });
     // quote-reply gestures: double-click (desktop), double-tap OR horizontal
     // swipe (touch). `touch-action: pan-y` (CSS) lets vertical scroll through
     // while we own horizontal drags, so no preventDefault / passive issues.
@@ -833,6 +853,7 @@
     hideReactPop();
     reactPop.dataset.mid = mid;
     reactPop.style.display = 'flex';
+    reactPop.querySelectorAll('img.chat-emoji-anim').forEach(replayEmoji); // re-run the 3-loop preview
     var pr = panel.getBoundingClientRect(), ar = anchor.getBoundingClientRect();
     var left = ar.left - pr.left + ar.width / 2 - reactPop.offsetWidth / 2;
     left = Math.max(8, Math.min(left, panel.clientWidth - reactPop.offsetWidth - 8));
