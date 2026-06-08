@@ -217,7 +217,20 @@ html[dir="rtl"] .chat-panel { right: auto; left: 1.25rem; direction: rtl; }
 
 /* ---- thread ---- */
 .chat-messages { display: flex; flex-direction: column; gap: .4rem; padding: .8rem; }
-.chat-msg { max-width: 80%; display: flex; flex-direction: column; }
+.chat-msg { max-width: 80%; display: flex; flex-direction: column; position: relative; touch-action: pan-y; }
+/* swipe-to-reply: the bubble slides (JS), a reply icon is revealed behind it */
+.chat-msg .chat-bubble { will-change: transform; }
+.chat-msg.chat-swiping .chat-bubble { position: relative; z-index: 1; }
+.chat-msg::after {
+  content: "↩"; position: absolute; top: 12px; inset-inline-start: 4px; inset-inline-end: auto;
+  width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  font-size: .95rem; color: #fff; background: var(--accent, #4f46e5);
+  opacity: 0; transform: scale(.6); transition: opacity .12s ease, transform .12s ease; pointer-events: none; z-index: 0;
+}
+.chat-msg.chat-swipe-left::after { inset-inline-start: auto; inset-inline-end: 4px; }
+.chat-msg.chat-swiping::after { opacity: .5; transform: scale(.85); }
+.chat-msg.chat-swipe-armed::after { opacity: 1; transform: scale(1); }
+.chat-msg.chat-swipe-armed .chat-bubble { box-shadow: 0 0 0 2px var(--accent, #4f46e5); }
 .chat-msg.mine { align-self: flex-end; align-items: flex-end; }
 .chat-msg.theirs { align-self: flex-start; align-items: flex-start; }
 .chat-bubble {

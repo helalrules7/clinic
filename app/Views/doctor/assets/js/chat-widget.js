@@ -429,17 +429,45 @@
     box.querySelectorAll('[data-editcancel]').forEach(function (b) { b.onclick = function () { cancelEdit(); renderThread(false); }; });
     box.querySelectorAll('.chat-msg-att img').forEach(function (im) { im.style.cursor = 'zoom-in'; im.onclick = function () { openImage(im.getAttribute('data-img') || im.src); }; });
     box.querySelectorAll('.chat-audio').forEach(wireAudio);
-    // double-click (desktop) or double-tap (touch) on a bubble → quote-reply
+    // quote-reply gestures: double-click (desktop), double-tap OR horizontal
+    // swipe (touch). `touch-action: pan-y` (CSS) lets vertical scroll through
+    // while we own horizontal drags, so no preventDefault / passive issues.
     box.querySelectorAll('.chat-msg').forEach(function (el) {
       var mid = +String(el.id).replace('msg-', ''); if (!mid) return;
       var skip = function (e) { return e.target.closest && e.target.closest('a,button,audio,input,textarea,.chat-audio-track,.chat-react,.chat-msg-actions'); };
       el.addEventListener('dblclick', function (e) { if (skip(e)) return; startReply(mid); });
-      var lastTap = 0;
+      var bubble = el.querySelector('.chat-bubble') || el;
+      var sx = 0, sy = 0, active = false, armed = false, moved = false, lastTap = 0;
+      function endSwipe() {
+        bubble.style.transition = 'transform .18s ease'; bubble.style.transform = '';
+        setTimeout(function () { bubble.style.transition = ''; }, 200);
+        el.classList.remove('chat-swiping', 'chat-swipe-armed', 'chat-swipe-left');
+      }
+      el.addEventListener('touchstart', function (e) {
+        if (skip(e) || e.touches.length !== 1) { active = false; return; }
+        sx = e.touches[0].clientX; sy = e.touches[0].clientY; active = true; armed = false; moved = false;
+      }, { passive: true });
+      el.addEventListener('touchmove', function (e) {
+        if (!active) return;
+        var dx = e.touches[0].clientX - sx, dy = e.touches[0].clientY - sy;
+        if (Math.abs(dx) < 6 || Math.abs(dy) > Math.abs(dx)) return; // vertical → let it scroll
+        moved = true;
+        var drag = Math.max(-96, Math.min(96, dx));
+        bubble.style.transform = 'translateX(' + drag + 'px)';
+        el.classList.add('chat-swiping');
+        el.classList.toggle('chat-swipe-left', dx < 0);
+        armed = Math.abs(dx) >= 56;
+        el.classList.toggle('chat-swipe-armed', armed);
+      }, { passive: true });
       el.addEventListener('touchend', function (e) {
+        if (!active) return; active = false;
+        if (armed) { startReply(mid); endSwipe(); return; }
+        if (moved) { endSwipe(); return; }            // small swipe, not a tap
         if (skip(e)) return;
-        var now = Date.now();
+        var now = Date.now();                          // stationary → double-tap
         if (now - lastTap < 320) { e.preventDefault(); startReply(mid); lastTap = 0; } else { lastTap = now; }
       });
+      el.addEventListener('touchcancel', function () { active = false; endSwipe(); });
     });
     if (S.editing) {
       var ed = box.querySelector('.chat-edit-input');
@@ -922,8 +950,15 @@
       // someone reacted to MY message → glow the chat button (reactions don't bump
       // unread_total). Glow only when the panel is closed; it clears on open().
       var rc = d.react_cursor || 0;
-      if (S.lastReact != null && rc > S.lastReact && !S.open) setGlow(true);
+      var reactedNew = S.lastReact != null && rc > S.lastReact;
+      if (reactedNew && !S.open) setGlow(true);
       S.lastReact = rc;
+      // a new message OR reaction for me also produced a bell notification — refresh
+      // the notification center promptly (it otherwise polls only every 30–60s) so
+      // the latest grouped notification "arrives" within this 12s tick, not a minute later.
+      if ((increased || reactedNew) && window.notifCenter && typeof window.notifCenter.refresh === 'function') {
+        try { window.notifCenter.refresh(); } catch (e) { /* */ }
+      }
       if (d.conversations_rev !== S.lastConvRev) {
         S.lastConvRev = d.conversations_rev;
         if (S.open && S.view === 'list') loadConversations();

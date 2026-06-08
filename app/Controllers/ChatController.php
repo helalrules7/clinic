@@ -574,9 +574,11 @@ class ChatController
                     $snip = $snip !== '' ? mb_substr($snip, 0, 60) : '';
                     $verb = $ar ? 'تفاعل مع رسالتك' : 'reacted to your message';
                     $msg  = $emoji . ' ' . $verb . ($snip !== '' ? ' «' . $snip . '»' : '');
+                    // SAME group key as messages → ALL activity from this person in this
+                    // conversation collapses to one bell entry (the latest), message or reaction.
                     $this->pushChatNotification(
                         $author, 'chat_reaction', trim($me['name'] ?? $me['username'] ?? 'User'),
-                        $msg, $conv, 'chatrx:' . $conv . ':' . $uid
+                        $msg, $conv, 'chat:' . $conv . ':' . $uid
                     );
                 } catch (\Throwable $e) { /* non-fatal */ }
             }
@@ -869,7 +871,10 @@ class ChatController
      */
     private function pushChatNotification(int $userId, string $type, string $title, string $message, int $cid, string $groupKey): void
     {
-        $this->pdo->prepare("DELETE FROM notifications WHERE user_id = ? AND group_key = ? AND is_read = 0")
+        // Remove this recipient's prior notification(s) of the same group (any read
+        // state, except a pinned one) so the bell shows exactly ONE entry per
+        // sender·conversation — the latest activity, message OR reaction.
+        $this->pdo->prepare("DELETE FROM notifications WHERE user_id = ? AND group_key = ? AND pinned_at IS NULL")
              ->execute([$userId, $groupKey]);
         \App\Controllers\NotificationController::create($userId, $type, $title, $message, 'chat', $cid, null, $groupKey);
     }
