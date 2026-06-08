@@ -431,7 +431,7 @@ $patientTrendDeltas = $patientTrendDeltas ?? ['total' => 0, 'active' => 0, 'new'
                                     <?php endif; ?>
                                 </td>
                                 <td>
-                                    <div class="btn-group" role="group">
+                                    <div class="sec-patient-actions" role="group">
                                         <a href="/secretary/patients/<?= $patient['id'] ?>"
                                            class="btn btn-sm btn-outline-warning"
                                            data-bs-toggle="tooltip"
@@ -840,7 +840,7 @@ function displaySearchResults(patients, searchTerm) {
                         </div>
                     </div>
                     <div class="search-result-actions ms-3">
-                        <div class="btn-group-vertical">
+                        <div class="sec-patient-actions sec-patient-actions--stack">
                             <a href="/secretary/patients/${patient.id}" class="btn btn-sm btn-outline-warning arabic-text">
                                 <i class="bi bi-eye me-1"></i>عرض
                             </a>
@@ -1956,13 +1956,7 @@ document.addEventListener('DOMContentLoaded', function() {
     border-top: 1px solid var(--border);
 }
 
-.btn-group .btn {
-    border-radius: 10px !important;
-}
-
-.btn-group .btn:not(:last-child) {
-    border-left: 1px solid var(--border) !important;
-}
+/* §25 — sec-patient-actions: sec-style.css */
 
 /* Search Modal Styles */
 .modal-content {
@@ -2430,9 +2424,7 @@ kbd[lang="ar"] {
     color: var(--text);
 }
 
-.btn-group .btn {
-    margin: 0 1px;
-}
+/* §25 — sec-patient-actions: sec-style.css */
 
 /* Search Modal Styles */
 .modal-content {
@@ -3335,47 +3327,7 @@ kbd[lang="ar"] {
     }
 }
 
-/* Custom Tooltip Styling */
-.tooltip {
-    font-family: 'Cairo', sans-serif;
-    font-size: 0.85rem;
-    z-index: 9999;
-}
-
-.tooltip .tooltip-inner {
-    background-color: rgba(33, 37, 41, 0.95);
-    color: #ffffff;
-    border-radius: 8px;
-    padding: 8px 12px;
-    max-width: 280px;
-    text-align: center;
-    line-height: 1.4;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-/* Dark mode tooltip styling */
-.dark .tooltip .tooltip-inner {
-    background-color: rgba(248, 250, 252, 0.95);
-    color: #1e293b;
-    border: 1px solid rgba(0, 0, 0, 0.1);
-    box-shadow: 0 4px 12px rgba(255, 255, 255, 0.1);
-}
-
-/* Tooltip arrow styling */
-.tooltip .tooltip-arrow::before {
-    border-top-color: rgba(33, 37, 41, 0.95) !important;
-    border-bottom-color: rgba(33, 37, 41, 0.95) !important;
-    border-left-color: rgba(33, 37, 41, 0.95) !important;
-    border-right-color: rgba(33, 37, 41, 0.95) !important;
-}
-
-.dark .tooltip .tooltip-arrow::before {
-    border-top-color: rgba(248, 250, 252, 0.95) !important;
-    border-bottom-color: rgba(248, 250, 252, 0.95) !important;
-    border-left-color: rgba(248, 250, 252, 0.95) !important;
-    border-right-color: rgba(248, 250, 252, 0.95) !important;
-}
+/* §25 — Bootstrap tooltips + patient action gaps: sec-style.css */
 
 /* Improved button hover states with tooltips */
 .btn:hover[data-bs-toggle="tooltip"] {

@@ -557,7 +557,7 @@ body {
 .notifications-badge {
     position: absolute;
     top: -5px;
-    left: -5px; /* Changed from right for RTL */
+    right: -5px; /* top-right of the bell — identical to the doctor layout */
     background: var(--danger);
     color: white;
     border-radius: 50%;
@@ -4593,7 +4593,7 @@ body > .global-search-container.expanded {
 .sec-pcard-meta { font-size: 0.8rem; color: var(--muted); margin-top: 0.15rem; }
 .sec-pcard-tags { display: flex; flex-wrap: wrap; gap: 0.25rem; justify-content: center; margin-top: 0.4rem; }
 .sec-tag-chip { font-size: 0.7rem; padding: 0.1rem 0.5rem; border-radius: 999px; border: 1px solid; font-weight: 600; }
-.sec-pcard-actions { display: flex; gap: 0.3rem; justify-content: center; margin-top: 0.7rem; }
+.sec-pcard-actions { display: flex; gap: 0.5rem; justify-content: center; margin-top: 0.7rem; flex-wrap: wrap; }
 
 .sec-color-filters { display: flex; gap: 0.3rem; }
 .sec-color-filter { width: 20px; height: 20px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; opacity: 0.55; }
@@ -4782,6 +4782,34 @@ html[data-layout="secretary"] .sec-icon-action-btn i,
 html[data-layout="secretary"] .appt-actions .btn i {
     font-size: 1rem;
 }
+/* §24 exception — top-bar header chips keep doctor glass (header-chips.css) */
+html[data-layout="secretary"] .top-bar :where(.btn[class*="btn-outline-"]) {
+    border: 1px solid var(--header-chip-border) !important;
+    background: var(--header-chip-bg) !important;
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+    color: var(--text) !important;
+    font-weight: inherit;
+    box-shadow: var(--header-chip-shadow) !important;
+    filter: none;
+}
+html[data-layout="secretary"] .top-bar :where(.btn[class*="btn-outline-"]) i,
+html[data-layout="secretary"] .top-bar :where(.btn[class*="btn-outline-"]) .bi {
+    color: var(--accent) !important;
+}
+html[data-layout="secretary"] .top-bar :where(.btn[class*="btn-outline-"]):hover:not(:disabled):not(.disabled) {
+    background: var(--header-chip-hover-bg) !important;
+    border-color: var(--header-chip-hover-border) !important;
+    box-shadow: var(--header-chip-hover-shadow) !important;
+    transform: translateY(-1px);
+    filter: none;
+    color: var(--text) !important;
+}
+html[data-layout="secretary"] .top-bar :where(.btn[class*="btn-outline-"]):active:not(:disabled):not(.disabled) {
+    transform: translateY(0) scale(0.97);
+    filter: none;
+}
+
 /* §24 exception — push toast keeps glass outline-light (§21) */
 html[data-layout="secretary"] .push-notification-toast .btn-outline-light {
     border: 1px solid rgba(70, 130, 180, 0.5) !important;
@@ -4837,3 +4865,157 @@ html[data-layout="secretary"] .push-notification-toast .btn-outline-light i {
 .sec-img-toolbar .sec-img-close { background: rgba(239, 68, 68, 0.35); }
 .sec-img-stage { flex: 1; overflow: auto; display: flex; align-items: center; justify-content: center; }
 .sec-img-stage img { transition: transform 0.12s ease; transform-origin: center center; max-width: none; user-select: none; }
+
+/* ============================================
+   §25 — Patients table action pills + Bootstrap tooltips (glass)
+   Equal gaps between icon buttons; tooltip colors match theme/mode.
+   ============================================ */
+html[data-layout="secretary"] .sec-patient-actions,
+html[data-layout="secretary"] .sec-pcard-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+html[data-layout="secretary"] .sec-patient-actions--stack {
+    flex-direction: column;
+    align-items: stretch;
+}
+html[data-layout="secretary"] .sec-patient-actions .btn,
+html[data-layout="secretary"] .sec-pcard-actions .btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 2rem;
+    height: 2rem;
+    padding: 0 !important;
+    margin: 0 !important;
+    border-radius: 10px !important;
+    flex: 0 0 auto;
+}
+html[data-layout="secretary"] .sec-patient-actions--stack .btn {
+    width: auto;
+    min-width: 7.5rem;
+    height: auto;
+    padding: 0.35rem 0.75rem !important;
+}
+/* Undo Bootstrap btn-group join + doctor patients.css overrides */
+html[data-layout="secretary"] #patientsTableBody .btn-group .btn,
+html[data-layout="secretary"] #secTableView .btn-group .btn {
+    margin: 0 !important;
+    border-left: none !important;
+}
+
+/* Bootstrap tooltips — glass parity with .htooltip (§dock) */
+html[data-layout="secretary"] .tooltip {
+    font-family: 'Cairo', sans-serif;
+    font-size: 0.85rem;
+    z-index: 1000004;
+    pointer-events: none;
+}
+html[data-layout="secretary"] .tooltip .tooltip-inner {
+    padding: 8px 14px;
+    border-radius: 9px;
+    max-width: 280px;
+    text-align: center;
+    line-height: 1.45;
+    font-weight: 600;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.14);
+    background: rgba(248, 250, 252, 0.92) !important;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    color: #1e293b !important;
+    border: 1px solid rgba(226, 232, 240, 0.5) !important;
+}
+/* .dark lives on <html> — must use html.dark, not html .dark */
+html[data-layout="secretary"].dark .tooltip .tooltip-inner {
+    background: rgba(11, 18, 32, 0.92) !important;
+    color: #f8fafc !important;
+    border: 1px solid rgba(51, 65, 85, 0.5) !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+html[data-layout="secretary"] .tooltip .tooltip-arrow::before {
+    border-top-color: rgba(248, 250, 252, 0.92) !important;
+    border-bottom-color: rgba(248, 250, 252, 0.92) !important;
+    border-left-color: rgba(248, 250, 252, 0.92) !important;
+    border-right-color: rgba(248, 250, 252, 0.92) !important;
+}
+html[data-layout="secretary"].dark .tooltip .tooltip-arrow::before {
+    border-top-color: rgba(11, 18, 32, 0.92) !important;
+    border-bottom-color: rgba(11, 18, 32, 0.92) !important;
+    border-left-color: rgba(11, 18, 32, 0.92) !important;
+    border-right-color: rgba(11, 18, 32, 0.92) !important;
+}
+
+/* ============================================
+   §26 — Notification row actions (secretary RTL)
+   Actions on the LEFT; hover-reveal on desktop only;
+   .notif-act pills match doctor glass-chip / qa-btn tone.
+   ============================================ */
+html[data-layout="secretary"] .notif-row__actions {
+    left: 8px;
+    right: auto;
+    gap: 0.35rem;
+}
+@media (min-width: 576px) {
+    html[data-layout="secretary"] .notif-row__actions {
+        transform: translate(-8px, -50%);
+        padding: 4px 6px 4px 18px;
+        gap: 0.35rem;
+        opacity: 0;
+        pointer-events: none;
+        background: linear-gradient(
+            to left,
+            rgba(var(--accent-rgb, 99, 102, 241), 0) 0%,
+            color-mix(in srgb, var(--accent) 12%, var(--card, #fff)) 18%,
+            color-mix(in srgb, var(--accent) 12%, var(--card, #fff)) 100%);
+    }
+    html[data-layout="secretary"].dark .notif-row__actions {
+        background: linear-gradient(
+            to left,
+            rgba(15, 21, 38, 0) 0%,
+            rgba(30, 41, 59, 0.92) 18%,
+            rgba(30, 41, 59, 0.92) 100%);
+    }
+    html[data-layout="secretary"] .notif-row:hover .notif-row__actions,
+    html[data-layout="secretary"] .notif-row:focus-within .notif-row__actions {
+        opacity: 1;
+        transform: translate(0, -50%);
+        pointer-events: auto;
+    }
+}
+/* Mobile — always visible (notification-center.css default) */
+/* Action pills — glass surface like doctor header-chips / qa-btn */
+html[data-layout="secretary"] .notif-act {
+    width: 28px;
+    height: 28px;
+    border: 1px solid var(--header-chip-border, rgba(255, 255, 255, 0.18));
+    background: var(--header-chip-bg, color-mix(in srgb, var(--accent) 5%, var(--glass-bg-strong)));
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+    color: var(--accent) !important;
+    box-shadow: var(--header-chip-shadow, 0 1px 4px rgba(15, 23, 42, 0.06));
+    transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+}
+html[data-layout="secretary"] .notif-act i {
+    color: var(--accent) !important;
+    font-size: 0.85rem;
+}
+html[data-layout="secretary"] .notif-act:hover {
+    background: var(--header-chip-hover-bg, color-mix(in srgb, var(--accent) 10%, var(--glass-bg-strong))) !important;
+    border-color: var(--header-chip-hover-border, color-mix(in srgb, var(--accent) 34%, var(--glass-border))) !important;
+    box-shadow: var(--header-chip-hover-shadow, 0 4px 16px color-mix(in srgb, var(--accent) 16%, rgba(15, 23, 42, 0.10))) !important;
+    transform: translateY(-1px);
+    color: var(--accent) !important;
+}
+html[data-layout="secretary"] .notif-act--danger:hover {
+    background: color-mix(in srgb, var(--palette-rose, #f43f5e) 14%, var(--glass-bg-strong)) !important;
+    border-color: color-mix(in srgb, var(--palette-rose, #f43f5e) 40%, var(--glass-border)) !important;
+    color: var(--palette-rose, #f43f5e) !important;
+}
+html[data-layout="secretary"] .notif-act--danger:hover i {
+    color: var(--palette-rose, #f43f5e) !important;
+}
+html[data-layout="secretary"] .notif-act:active {
+    transform: translateY(0) scale(0.94);
+}

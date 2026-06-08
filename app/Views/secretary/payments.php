@@ -3073,47 +3073,7 @@ kbd[lang="ar"] {
     }
 }
 
-/* Custom Tooltip Styling */
-.tooltip {
-    font-family: 'Cairo', sans-serif;
-    font-size: 0.85rem;
-    z-index: 9999;
-}
-
-.tooltip .tooltip-inner {
-    background-color: rgba(33, 37, 41, 0.95);
-    color: #ffffff;
-    border-radius: 8px;
-    padding: 8px 12px;
-    max-width: 280px;
-    text-align: center;
-    line-height: 1.4;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-/* Dark mode tooltip styling */
-.dark .tooltip .tooltip-inner {
-    background-color: rgba(248, 250, 252, 0.95);
-    color: #1e293b;
-    border: 1px solid rgba(0, 0, 0, 0.1);
-    box-shadow: 0 4px 12px rgba(255, 255, 255, 0.1);
-}
-
-/* Tooltip arrow styling */
-.tooltip .tooltip-arrow::before {
-    border-top-color: rgba(33, 37, 41, 0.95) !important;
-    border-bottom-color: rgba(33, 37, 41, 0.95) !important;
-    border-left-color: rgba(33, 37, 41, 0.95) !important;
-    border-right-color: rgba(33, 37, 41, 0.95) !important;
-}
-
-.dark .tooltip .tooltip-arrow::before {
-    border-top-color: rgba(248, 250, 252, 0.95) !important;
-    border-bottom-color: rgba(248, 250, 252, 0.95) !important;
-    border-left-color: rgba(248, 250, 252, 0.95) !important;
-    border-right-color: rgba(248, 250, 252, 0.95) !important;
-}
+/* §25 — Bootstrap tooltips: sec-style.css (html.dark selector) */
 
 /* Improved button hover states with tooltips */
 .btn:hover[data-bs-toggle="tooltip"] {
