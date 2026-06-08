@@ -3940,11 +3940,11 @@ body.modal-open .sidebar {
     box-shadow: none;
 }
 
-.dark .clinic-input-group {
+html[data-layout="secretary"].dark .clinic-input-group {
     border-color: color-mix(in srgb, var(--clinic-color) 40%, #334155);
 }
 
-.dark .clinic-icon-chip {
+html[data-layout="secretary"].dark .clinic-icon-chip {
     background: linear-gradient(
         155deg,
         color-mix(in srgb, var(--clinic-color) 30%, #1e293b) 0%,
@@ -3952,10 +3952,23 @@ body.modal-open .sidebar {
     ) !important;
 }
 
-.dark .clinic-input-group .form-select {
+html[data-layout="secretary"].dark .clinic-input-group .form-select {
     background: var(--card, #1e293b);
     color: color-mix(in srgb, var(--clinic-color) 70%, #f1f5f9);
     border-inline-start-color: color-mix(in srgb, var(--clinic-color) 25%, #475569);
+}
+
+/* Single-clinic lock — no inline #f1f5f9 (breaks dark mode) */
+html[data-layout="secretary"] .clinic-input-group .form-select.is-clinic-locked {
+    pointer-events: none;
+    background-color: var(--bg, #f1f5f9) !important;
+    color: color-mix(in srgb, var(--clinic-color) 55%, var(--text, #1e293b));
+    cursor: default;
+}
+
+html[data-layout="secretary"].dark .clinic-input-group .form-select.is-clinic-locked {
+    background-color: var(--card, #1e293b) !important;
+    color: color-mix(in srgb, var(--clinic-color) 70%, #f1f5f9);
 }
 
 /* Add-patient modal — stretch address to match basic-info column height */
@@ -5055,4 +5068,29 @@ html[data-layout="secretary"] .modal .form-text.text-danger strong {
 html[data-layout="secretary"] .modal small.form-text,
 html[data-layout="secretary"] .modal .form-text.text-muted {
     color: var(--muted) !important;
+}
+
+/* §30 — add-patient / booking modals: Esc hint + clinic field (RTL + dark) */
+html[data-layout="secretary"] #addPatientModal .modal-header .keyboard-hint,
+html[data-layout="secretary"] #addBookingModal .modal-header .keyboard-hint,
+html[data-layout="secretary"] #editBookingModal .modal-header .keyboard-hint {
+    position: absolute;
+    inset-inline-start: auto;
+    inset-inline-end: 0.75rem;
+    inset-block-start: auto;
+    inset-block-end: 0.35rem;
+    transform: none;
+    margin: 0;
+    z-index: 2;
+    font-size: 0.7rem;
+    color: var(--muted);
+    white-space: nowrap;
+    opacity: 0.9;
+}
+
+html[data-layout="secretary"] #addPatientModal .modal-header:has(.keyboard-hint) .modal-title,
+html[data-layout="secretary"] #addBookingModal .modal-header:has(.keyboard-hint) .modal-title,
+html[data-layout="secretary"] #editBookingModal .modal-header:has(.keyboard-hint) .modal-title {
+    padding-inline: 2.75rem;
+    padding-left: unset;
 }

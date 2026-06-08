@@ -1976,24 +1976,7 @@ input[readonly] {
     position: relative;
 }
 
-#addPatientModal .modal-header .keyboard-hint {
-    position: absolute;
-    inset-inline-start: 12%;
-    inset-block-start: 50%;
-    transform: translateY(-50%);
-    font-size: 0.75rem;
-    color: var(--muted);
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    margin: 0;
-    z-index: 9;
-    white-space: nowrap;
-}
-
-#addPatientModal .modal-header:has(.keyboard-hint) .modal-title {
-    padding-left: 120px; /* Extra space when keyboard-hint exists */
-}
+/* keyboard-hint layout — §30 sec-style.css (RTL corner; no title overlap) */
     
 /* Stats Cards - Center Content and Background Colors */
 .stats-cards-wrapper {

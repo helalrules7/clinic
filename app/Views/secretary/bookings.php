@@ -319,8 +319,8 @@ $bookingTrendDates = $bookingTrendDates ?? [];
                                     <span class="input-group-text clinic-icon-chip" id="bookingClinicIcon" aria-hidden="true">
                                         <i class="bi <?= $__v0['icon'] ?>"></i>
                                     </span>
-                                    <select class="form-select arabic-text" id="bookingClinic" name="clinic_id" required
-                                            <?php if (count($__calClinics) === 1): ?> aria-readonly="true" tabindex="-1" style="pointer-events:none;background-color:#f1f5f9;" <?php endif; ?>>
+                                    <select class="form-select arabic-text<?= count($__calClinics) === 1 ? ' is-clinic-locked' : '' ?>" id="bookingClinic" name="clinic_id" required
+                                            <?php if (count($__calClinics) === 1): ?> aria-readonly="true" tabindex="-1" <?php endif; ?>>
                                         <?php if (count($__calClinics) !== 1): ?>
                                             <option value="">اختر العيادة...</option>
                                         <?php endif; ?>
@@ -500,8 +500,8 @@ $bookingTrendDates = $bookingTrendDates ?? [];
                                     <span class="input-group-text clinic-icon-chip" id="patientClinicIcon" aria-hidden="true">
                                         <i class="bi <?= $__v0['icon'] ?>"></i>
                                     </span>
-                                    <select class="form-select arabic-text" id="patientClinic" name="clinic_id" required
-                                            <?php if (count($__calClinics) === 1): ?> aria-readonly="true" tabindex="-1" style="pointer-events:none;background-color:#f1f5f9;" <?php endif; ?>>
+                                    <select class="form-select arabic-text<?= count($__calClinics) === 1 ? ' is-clinic-locked' : '' ?>" id="patientClinic" name="clinic_id" required
+                                            <?php if (count($__calClinics) === 1): ?> aria-readonly="true" tabindex="-1" <?php endif; ?>>
                                         <?php if (count($__calClinics) !== 1): ?>
                                             <option value="">اختر العيادة...</option>
                                         <?php endif; ?>
