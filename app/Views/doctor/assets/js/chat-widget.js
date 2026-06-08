@@ -1172,7 +1172,17 @@
 
   // ---- open/close ------------------------------------------------------
   function open() {
-    S.open = true; panel.classList.add('open');
+    S.open = true;
+    // PERF: suppress the glass blur for the ~0.25s open slide (re-blurring a
+    // translating backdrop drops frames), then restore it when the slide ends.
+    panel.classList.add('chat-opening');
+    var slideDone = function (e) {
+      if (e.animationName !== 'chatSlideUp') return;
+      panel.classList.remove('chat-opening');
+      panel.removeEventListener('animationend', slideDone);
+    };
+    panel.addEventListener('animationend', slideDone);
+    panel.classList.add('open');
     ensureChatNotifyPermission();
     setGlow(false);
     if (S.view === 'thread' && S.activeCid) { startThreadPoll(); pollThread(); }
