@@ -205,7 +205,8 @@ class View
             'FollowUp' => 'badge bg-success',
             'Consultation' => 'badge bg-info',
             'Procedure' => 'badge bg-warning',
-            'Other' => 'badge bg-secondary'
+            'Other' => 'badge bg-secondary',
+            'additional_payment' => 'badge bg-warning',
         ];
         
         return $classes[$type] ?? 'badge bg-secondary';
@@ -223,7 +224,8 @@ class View
             'FollowUp' => 'إعادة كشف',
             'Consultation' => 'استشارة طبية',
             'Procedure' => 'إجراء طبي',
-            'Other' => 'أخرى'
+            'Other' => 'أخرى',
+            'additional_payment' => 'دفعة إضافية',
         ];
         
         return $texts[$type] ?? $type;
@@ -301,7 +303,11 @@ class View
             'followup' => 'badge bg-success',
             'consultation' => 'badge bg-info',
             'procedure' => 'badge bg-warning',
-            'other' => 'badge bg-secondary'
+            'other' => 'badge bg-secondary',
+            'New' => 'badge bg-primary',
+            'FollowUp' => 'badge bg-success',
+            'Consultation' => 'badge bg-info',
+            'Procedure' => 'badge bg-warning',
         ];
         
         return $classes[$type] ?? 'badge bg-secondary';
@@ -314,7 +320,11 @@ class View
             'followup' => 'إعادة كشف',
             'consultation' => 'استشارة طبية',
             'procedure' => 'إجراء طبي',
-            'other' => 'أخرى'
+            'other' => 'أخرى',
+            'New' => 'زيارة جديدة',
+            'FollowUp' => 'إعادة كشف',
+            'Consultation' => 'استشارة طبية',
+            'Procedure' => 'إجراء طبي',
         ];
         
         return $texts[$type] ?? $type;
@@ -328,6 +338,7 @@ class View
             'Completed' => 'badge bg-info',
             'Cancelled' => 'badge bg-danger',
             'NoShow' => 'badge bg-warning',
+            'Rescheduled' => 'badge bg-info',
             'default' => 'badge bg-secondary'
         ];
         
@@ -342,10 +353,11 @@ class View
             'Completed' => 'مكتمل',
             'Cancelled' => 'ملغي',
             'NoShow' => 'لم يحضر',
+            'Rescheduled' => 'أُعيد جدولته',
             'default' => 'غير محدد'
         ];
         
-        return $texts[$status] ?? $status;
+        return $texts[$status] ?? $texts['default'];
     }
 
     public function calculateAge($dob)

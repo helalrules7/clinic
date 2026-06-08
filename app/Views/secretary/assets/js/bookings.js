@@ -1475,7 +1475,10 @@ function saveEditBooking() {
 }
 
 function viewAppointmentDetails(appointmentId) {
-    // Navigate to booking details page
+    if (typeof window.navigateToSecretaryBooking === 'function') {
+        window.navigateToSecretaryBooking(appointmentId);
+        return;
+    }
     window.location.href = `/secretary/bookings/${appointmentId}`;
 }
 
@@ -1613,31 +1616,41 @@ function toggleBookingsAutoRefresh(enabled) {
     }
 }
 
+// Live calendar sync: poll the shared change-cursor (~5s) and refetch only when
+// something actually changed — including changes made by the doctor — because
+// /api/calendar/version is computed server-side over the shared rows for the date.
+// Paused while any modal is open or the tab is hidden.
+let lastCalendarVersion = null;
+let lastSyncDate = null;
+
+function checkCalendarVersion() {
+    if (document.hidden) return;
+    if (document.querySelector('.modal.show') !== null) return;
+    const dateStr = currentDate.toISOString().split('T')[0];
+    fetch(`/api/calendar/version?date=${dateStr}`, {
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    })
+    .then(r => r.json())
+    .then(d => {
+        if (!d || !d.ok) return;
+        if (dateStr !== lastSyncDate || lastCalendarVersion === null) {
+            lastSyncDate = dateStr;
+            lastCalendarVersion = d.version;
+            return;
+        }
+        if (d.version !== lastCalendarVersion) {
+            lastCalendarVersion = d.version;
+            refreshCalendarData(); // remote change -> refetch + re-render
+        }
+    })
+    .catch(() => {});
+}
+
 function startAutoRefresh() {
-    // Clear any existing interval
     if (refreshInterval) {
         clearInterval(refreshInterval);
     }
-    
-    refreshInterval = setInterval(() => {
-        const addBookingModal = document.getElementById('addBookingModal');
-        const editBookingModal = document.getElementById('editBookingModal');
-        const deleteBookingModal = document.getElementById('deleteBookingModal');
-        const confirmAttendanceModal = document.getElementById('confirmAttendanceModal');
-        const addPatientModal = document.getElementById('addPatientModal');
-        
-        // Don't refresh if any modal is open
-        const isModalOpen = addBookingModal?.classList.contains('show') ||
-                           editBookingModal?.classList.contains('show') ||
-                           deleteBookingModal?.classList.contains('show') ||
-                           confirmAttendanceModal?.classList.contains('show') ||
-                           addPatientModal?.classList.contains('show') ||
-                           document.querySelector('.modal.show') !== null;
-        
-        if (!isModalOpen) {
-            refreshCalendarData();
-        }
-    }, 60000); // 60 seconds
+    refreshInterval = setInterval(checkCalendarVersion, 5000); // ~5s near-real-time
 }
 
 // Function to refresh calendar data via AJAX

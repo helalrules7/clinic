@@ -350,15 +350,28 @@
         return [];
     }
 
+    function escHtml(s) {
+        return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+        });
+    }
+
+    // Returns an HTML string (inserted via innerHTML). The actor is rendered as a
+    // bold "You" / "أنت" when the event was performed by the logged-in user
+    // (actor_is_self), otherwise the actor's escaped name. Everything else is escaped.
     function formatActivityLine(a) {
         if (!a) return '';
         if (a.text || a.message || a.title) {
-            return a.text || a.message || a.title;
+            return escHtml(a.text || a.message || a.title);
         }
         var parts = [];
-        if (a.actor_name) parts.push(a.actor_name);
-        if (a.action) parts.push(a.action);
-        if (a.target_label) parts.push(a.target_label);
+        if (a.actor_is_self) {
+            parts.push('<strong>' + (isAr ? 'أنت' : 'You') + '</strong>');
+        } else if (a.actor_name) {
+            parts.push(escHtml(a.actor_name));
+        }
+        if (a.action) parts.push(escHtml(a.action));
+        if (a.target_label) parts.push(escHtml(a.target_label));
         if (parts.length) return parts.join(' ');
         return isAr ? 'نشاط' : 'Activity';
     }
@@ -600,7 +613,7 @@
             node.dataset.type = type;
             var dot = node.querySelector('[data-dot]');
             dot.style.background = colorFor(type);
-            node.querySelector('[data-text]').textContent = formatActivityLine(a);
+            node.querySelector('[data-text]').innerHTML = formatActivityLine(a);
             node.querySelector('[data-time]').textContent = a.time_ago || timeAgo(a.ts || a.created_at || a.time);
             wrap.appendChild(node);
         });

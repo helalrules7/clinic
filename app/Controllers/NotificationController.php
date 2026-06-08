@@ -253,18 +253,86 @@ class NotificationController
     /**
      * Create notification (internal method, can be called from other controllers)
      */
-    public static function create($userId, $type, $title, $message, $relatedType = null, $relatedId = null, $patientId = null)
+    public static function create($userId, $type, $title, $message, $relatedType = null, $relatedId = null, $patientId = null, $groupKey = null)
     {
         $pdo = Database::getInstance()->getConnection();
-        
+
         $stmt = $pdo->prepare("
-            INSERT INTO notifications (user_id, type, title, message, related_type, related_id, patient_id, is_read)
-            VALUES (?, ?, ?, ?, ?, ?, ?, 0)
+            INSERT INTO notifications (user_id, type, title, message, related_type, related_id, patient_id, is_read, group_key)
+            VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?)
         ");
-        
-        $stmt->execute([$userId, $type, $title, $message, $relatedType, $relatedId, $patientId]);
-        
+
+        $stmt->execute([$userId, $type, $title, $message, $relatedType, $relatedId, $patientId, $groupKey]);
+
         return $pdo->lastInsertId();
+    }
+
+    /**
+     * @return int[] user ids of all secretaries in a clinic (inverse of
+     * resolveDoctorUserIdsForClinic — secretaries DO carry users.clinic_id).
+     */
+    public static function resolveSecretaryUserIdsForClinic($clinicId)
+    {
+        if (!$clinicId) {
+            return [];
+        }
+        $pdo = Database::getInstance()->getConnection();
+        try {
+            $stmt = $pdo->prepare(
+                "SELECT id FROM users WHERE clinic_id = ? AND role = 'secretary'"
+            );
+            $stmt->execute([(int)$clinicId]);
+            return array_map('intval', $stmt->fetchAll(\PDO::FETCH_COLUMN));
+        } catch (\Throwable $e) {
+            return [];
+        }
+    }
+
+    /**
+     * Cross-party appointment notification. Any book / status-change / delete /
+     * reschedule / edit on an appointment notifies the OTHER party — the
+     * appointment's assigned doctor AND every secretary of its clinic — minus the
+     * actor who performed it (never self-notify). Collapsed in the bell by
+     * group_key = "appt:{id}" so a busy day on one appointment is one stack.
+     *
+     * @param array    $appointment  needs at least: id, doctor_id, clinic_id, patient_id
+     * @param int      $actorUserId  the user who performed the action (excluded)
+     * @return int[]   created notification ids
+     */
+    public static function notifyAppointmentCounterparties(array $appointment, $actorUserId, $type, $title, $message)
+    {
+        $apptId   = (int)($appointment['id'] ?? 0);
+        $doctorId = $appointment['doctor_id'] ?? null;
+        $clinicId = $appointment['clinic_id'] ?? null;
+        $patientId = isset($appointment['patient_id']) ? (int)$appointment['patient_id'] : null;
+        $groupKey = $apptId ? ('appt:' . $apptId) : null;
+
+        $recipients = [];
+        if ($doctorId) {
+            $recipients[] = self::resolveUserIdForDoctorId($doctorId);
+        }
+        foreach (self::resolveSecretaryUserIdsForClinic($clinicId) as $sid) {
+            $recipients[] = $sid;
+        }
+        $recipients = array_values(array_unique(array_filter(array_map('intval', $recipients))));
+
+        $actorUserId = (int)$actorUserId;
+        $created = [];
+        foreach ($recipients as $uid) {
+            if ($uid === $actorUserId) {
+                continue; // never notify the actor about their own action
+            }
+            // Honour the per-doctor appointment-notification opt-out. The key only
+            // exists for doctors, so secretaries are unaffected and always notified.
+            if (self::userSkipsNotification($uid, 'dont_create_notification_for_appointments')) {
+                continue;
+            }
+            $nid = self::create($uid, $type, $title, $message, 'appointment', $apptId ?: null, $patientId, $groupKey);
+            if ($nid) {
+                $created[] = (int)$nid;
+            }
+        }
+        return $created;
     }
 
     /**

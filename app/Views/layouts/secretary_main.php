@@ -494,6 +494,7 @@
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/app/Views/secretary/assets/js/sec-booking-scope.js?v=<?= file_exists(__DIR__ . '/../secretary/assets/js/sec-booking-scope.js') ? filemtime(__DIR__ . '/../secretary/assets/js/sec-booking-scope.js') : time() ?>"></script>
     <!-- Shared modal kit: unified pointer-drag + center + showConfirm/AlertModal (after Bootstrap) -->
     <script src="/app/Views/layouts/modal-kit.js?v=<?= file_exists(__DIR__ . '/modal-kit.js') ? filemtime(__DIR__ . '/modal-kit.js') : time() ?>"></script>
     <script src="/app/Views/layouts/clinics-loader.js?v=<?= filemtime(__DIR__ . '/clinics-loader.js') ?>"></script>
@@ -1049,6 +1050,45 @@
         });
     </script>
     
+    <!-- Cross-clinic booking denied (secretary scope) — global, no page navigation -->
+    <div class="modal fade" id="bookingScopeDeniedModal" tabindex="-1"
+         data-bs-backdrop="static" data-bs-keyboard="false" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-warning">
+                <div class="modal-header bg-warning text-dark">
+                    <h5 class="modal-title arabic-text mb-0">
+                        <i class="bi bi-shield-lock me-2"></i>
+                        غير مسموح بالوصول
+                    </h5>
+                </div>
+                <div class="modal-body py-4" dir="rtl">
+                    <div class="d-flex align-items-start gap-3">
+                        <span class="d-inline-flex align-items-center justify-content-center rounded-circle bg-warning bg-opacity-25 text-warning flex-shrink-0"
+                              style="width:3rem;height:3rem;">
+                            <i class="bi bi-building-x fs-4"></i>
+                        </span>
+                        <div>
+                            <p class="arabic-text fw-semibold mb-2 fs-5">هذا الحجز ينتمي إلى عيادة أخرى</p>
+                            <p class="arabic-text text-muted mb-0 small">
+                                حسابك مربوط بعيادة مختلفة عن عيادة هذا الموعد
+                                <span id="bookingScopeDeniedIdWrap" class="d-none"> <span id="bookingScopeDeniedId" dir="ltr"></span></span>.
+                                لا يمكنك عرض تفاصيله أو تعديله.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0 justify-content-center">
+                    <button type="button" class="btn btn-warning arabic-text px-4" id="bookingScopeDeniedCloseBtn">
+                        <i class="bi bi-check-lg me-1"></i>حسناً
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary arabic-text px-4 d-none" id="bookingScopeDeniedBackBtn" aria-hidden="true">
+                        إغلاق
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Session Expiry Warning Modal -->
     <div class="modal fade" id="sessionExpiryModal" tabindex="-1" aria-labelledby="sessionExpiryModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
         <div class="modal-dialog modal-dialog-centered">

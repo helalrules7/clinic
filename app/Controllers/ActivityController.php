@@ -76,12 +76,20 @@ class ActivityController
         // user has a clinic_id, restrict actor pool to same clinic. Otherwise
         // fall back to "all users in the system".
         // ------------------------------------------------------------------
+        // Resolve the viewer's clinic. Two scopes are derived from it:
+        //  - $clinicId       → used to scope APPOINTMENTS (and the notes/consults
+        //                       hung off them) by appointments.clinic_id, because
+        //                       doctors are NOT pinned to a clinic (users.clinic_id
+        //                       is null for them) so an actor-pool filter misses
+        //                       every doctor-owned row.
+        //  - $allowedActorIds → the clinic's user ids, still used to scope ALERTS
+        //                       (alerts.doctor_id stores a users.id).
+        // A viewer with no clinic (most doctors) → both null → sees everything.
+        $clinicId = null;
         $allowedActorIds = null; // null => no filter
         try {
             $hasClinicCol = $this->columnExists('users', 'clinic_id');
             if ($hasClinicCol) {
-                // Look up the current user's clinic
-                $clinicId = null;
                 if (array_key_exists('clinic_id', $user) && $user['clinic_id'] !== null) {
                     $clinicId = (int)$user['clinic_id'];
                 } else {
@@ -105,26 +113,27 @@ class ActivityController
         } catch (\Throwable $e) {
             // Schema check / clinic lookup failed — fall back to no filter
             error_log("ActivityController::feed clinic-scope fallback: " . $e->getMessage());
+            $clinicId = null;
             $allowedActorIds = null;
         }
 
         $events = [];
 
-        // -- Source 1: consultation_notes ----------------------------------
+        // -- Source 1: consultation_notes (clinic-scoped via parent appointment) --
         try {
-            $events = array_merge($events, $this->fetchConsultationNoteEvents($allowedActorIds, $limit));
+            $events = array_merge($events, $this->fetchConsultationNoteEvents($clinicId, $limit));
         } catch (\Throwable $e) {
             error_log("ActivityController::feed consultation_notes skipped: " . $e->getMessage());
         }
 
-        // -- Source 2: appointments (status changes) -----------------------
+        // -- Source 2: appointments (status changes, clinic-scoped) ---------
         try {
-            $events = array_merge($events, $this->fetchAppointmentEvents($allowedActorIds, $limit));
+            $events = array_merge($events, $this->fetchAppointmentEvents($clinicId, $limit));
         } catch (\Throwable $e) {
             error_log("ActivityController::feed appointments skipped: " . $e->getMessage());
         }
 
-        // -- Source 3: alerts ----------------------------------------------
+        // -- Source 3: alerts (actor-pool scoped — alerts.doctor_id = users.id) --
         try {
             $events = array_merge($events, $this->fetchAlertEvents($allowedActorIds, $limit));
         } catch (\Throwable $e) {
@@ -151,10 +160,14 @@ class ActivityController
             $events = array_slice($events, 0, $limit);
         }
 
-        // Decorate with time_ago + iso ts (after sort, so it's only done $limit times)
+        // Decorate with time_ago + iso ts (after sort, so it's only done $limit times).
+        // actor_is_self lets the client render the actor as a bold "You" when the
+        // event was performed by the currently-logged-in user.
+        $meId = (int)($user['id'] ?? 0);
         foreach ($events as &$ev) {
             $ev['ts']       = $this->toIso($ev['ts'] ?? null);
             $ev['time_ago'] = $this->timeAgo($ev['ts']);
+            $ev['actor_is_self'] = ($meId > 0 && isset($ev['actor_id']) && (int)$ev['actor_id'] === $meId);
         }
         unset($ev);
 
@@ -171,41 +184,40 @@ class ActivityController
     /**
      * consultation_notes — "Dr. X added a consultation note for {patient}"
      */
-    private function fetchConsultationNoteEvents($allowedActorIds, $limit)
+    private function fetchConsultationNoteEvents($clinicId, $limit)
     {
         if (!$this->tableExists('consultation_notes')) {
             return [];
         }
 
-        $hasDoctorId = $this->columnExists('consultation_notes', 'doctor_id');
-        $hasPatientId = $this->columnExists('consultation_notes', 'patient_id');
         $hasCreatedAt = $this->columnExists('consultation_notes', 'created_at');
 
         if (!$hasCreatedAt) {
             return [];
         }
 
-        $actorCol  = $hasDoctorId ? 'cn.doctor_id' : 'NULL';
-        $patientCol = $hasPatientId ? 'cn.patient_id' : 'NULL';
-
+        // consultation_notes has neither doctor_id nor patient_id — both live on
+        // the parent appointment. Derive actor (appointment.doctor_id → doctors.id
+        // → doctors.user_id) and patient (appointment.patient_id) by joining it.
         $sql = "SELECT cn.id AS row_id,
-                       {$actorCol}   AS actor_id,
-                       {$patientCol} AS patient_id,
+                       d.user_id    AS actor_id,
+                       a.patient_id AS patient_id,
                        cn.created_at AS ts,
                        u.name        AS actor_name,
                        u.username    AS actor_username,
                        p.first_name  AS p_first,
                        p.last_name   AS p_last
                 FROM consultation_notes cn
-                LEFT JOIN users u    ON u.id = {$actorCol}
-                LEFT JOIN patients p ON p.id = {$patientCol}
+                LEFT JOIN appointments a ON a.id = cn.appointment_id
+                LEFT JOIN doctors d      ON d.id = a.doctor_id
+                LEFT JOIN users u        ON u.id = d.user_id
+                LEFT JOIN patients p     ON p.id = a.patient_id
                 WHERE 1=1";
 
         $params = [];
-        if ($hasDoctorId && is_array($allowedActorIds) && count($allowedActorIds) > 0) {
-            $ph  = implode(',', array_fill(0, count($allowedActorIds), '?'));
-            $sql .= " AND cn.doctor_id IN ($ph)";
-            $params = array_merge($params, $allowedActorIds);
+        if ($clinicId !== null && $this->columnExists('appointments', 'clinic_id')) {
+            $sql .= " AND a.clinic_id = ?";
+            $params[] = (int)$clinicId;
         }
         $sql .= " ORDER BY cn.created_at DESC LIMIT " . (int)$limit;
 
@@ -233,7 +245,7 @@ class ActivityController
     /**
      * appointments — recently status-changed
      */
-    private function fetchAppointmentEvents($allowedActorIds, $limit)
+    private function fetchAppointmentEvents($clinicId, $limit)
     {
         if (!$this->tableExists('appointments')) {
             return [];
@@ -256,7 +268,11 @@ class ActivityController
             return [];
         }
 
-        $actorCol  = $hasDoctorId  ? 'a.doctor_id'  : 'NULL';
+        // appointments.doctor_id is a doctors.id (NOT a users.id) — resolve the
+        // actor user through doctors.user_id, and clinic-scope on that user id.
+        // (Joining users directly on a.doctor_id silently matched nothing and
+        // emptied the whole feed for clinic-scoped users.)
+        $actorCol  = $hasDoctorId  ? 'd.user_id'   : 'NULL';
         $patientCol = $hasPatientId ? 'a.patient_id' : 'NULL';
         $statusCol = $hasStatus    ? 'a.status'    : "''";
 
@@ -270,15 +286,17 @@ class ActivityController
                        p.first_name  AS p_first,
                        p.last_name   AS p_last
                 FROM appointments a
-                LEFT JOIN users u    ON u.id = {$actorCol}
+                LEFT JOIN doctors d  ON d.id = a.doctor_id
+                LEFT JOIN users u    ON u.id = d.user_id
                 LEFT JOIN patients p ON p.id = {$patientCol}
                 WHERE {$tsCol} IS NOT NULL";
 
         $params = [];
-        if ($hasDoctorId && is_array($allowedActorIds) && count($allowedActorIds) > 0) {
-            $ph  = implode(',', array_fill(0, count($allowedActorIds), '?'));
-            $sql .= " AND a.doctor_id IN ($ph)";
-            $params = array_merge($params, $allowedActorIds);
+        // Clinic scope: appointments are clinic-tagged, so filter on the row's
+        // own clinic_id (works even though doctors aren't pinned to a clinic).
+        if ($clinicId !== null && $this->columnExists('appointments', 'clinic_id')) {
+            $sql .= " AND a.clinic_id = ?";
+            $params[] = (int)$clinicId;
         }
         $sql .= " ORDER BY {$tsCol} DESC LIMIT " . (int)$limit;
 
@@ -446,7 +464,12 @@ class ActivityController
             return $this->schemaCache[$key];
         }
         try {
-            $stmt = $this->pdo->prepare("SHOW TABLES LIKE ?");
+            // information_schema instead of `SHOW TABLES LIKE ?` (rejected by the
+            // prepared-statement protocol under native prepares — see columnExists).
+            $stmt = $this->pdo->prepare(
+                "SELECT COUNT(*) FROM information_schema.tables
+                 WHERE table_schema = DATABASE() AND table_name = ?"
+            );
             $stmt->execute([$table]);
             $exists = (bool)$stmt->fetchColumn();
         } catch (\Throwable $e) {
@@ -462,8 +485,15 @@ class ActivityController
             return $this->schemaCache[$key];
         }
         try {
-            $stmt = $this->pdo->prepare("SHOW COLUMNS FROM `{$table}` LIKE ?");
-            $stmt->execute([$column]);
+            // information_schema (NOT `SHOW COLUMNS ... LIKE ?`): SHOW statements
+            // are rejected by MariaDB's prepared-statement protocol when PDO native
+            // prepares are on, which made every columnExists() throw → return false
+            // → the whole activity feed silently came back empty.
+            $stmt = $this->pdo->prepare(
+                "SELECT COUNT(*) FROM information_schema.columns
+                 WHERE table_schema = DATABASE() AND table_name = ? AND column_name = ?"
+            );
+            $stmt->execute([$table, $column]);
             $exists = (bool)$stmt->fetchColumn();
         } catch (\Throwable $e) {
             $exists = false;

@@ -399,7 +399,13 @@
                 paint();
                 if (apptId) {
                     nextEl.style.cursor = 'pointer';
-                    nextEl.onclick = () => { window.location.href = `/secretary/bookings/${apptId}`; };
+                    nextEl.onclick = () => {
+                        if (typeof window.navigateToSecretaryBooking === 'function') {
+                            window.navigateToSecretaryBooking(apptId);
+                        } else {
+                            window.location.href = `/secretary/bookings/${apptId}`;
+                        }
+                    };
                 }
                 popover._intervals.push(setInterval(paint, 1000));
             })
@@ -513,7 +519,7 @@
             html += `
                 <div class="appointment-item ${isNext ? 'is-next' : ''}" data-appointment-id="${a.id}" style="--appt-color:${sColor}">
                     <div class="appointment-item-avatar" style="background:${sColor}">${escapeHtml(apptInitials(patientName))}</div>
-                    <div class="appointment-item-content" onclick="window.location.href='/secretary/bookings/${a.id}'">
+                    <div class="appointment-item-content" onclick="(window.navigateToSecretaryBooking?window.navigateToSecretaryBooking(${a.id}):window.location.href='/secretary/bookings/${a.id}')">
                         <div class="appointment-item-header">
                             <div class="appointment-item-patient">${escapeHtml(patientName)}${isNext ? '<span class="appt-pop-next"><i class="bi bi-stars"></i> التالي</span>' : ''}</div>
                             <div class="appointment-item-time">${timeStr}</div>

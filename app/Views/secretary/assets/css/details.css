@@ -392,49 +392,7 @@
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-.btn-outline-primary {
-    color: var(--accent);
-    border-color: var(--accent);
-}
-
-.btn-outline-primary:hover {
-    background-color: var(--accent);
-    border-color: var(--accent);
-    color: white;
-}
-
-.btn-outline-info {
-    color: #0ea5e9;
-    border-color: #0ea5e9;
-}
-
-.btn-outline-info:hover {
-    background-color: #0ea5e9;
-    border-color: #0ea5e9;
-    color: white;
-}
-
-.btn-outline-secondary {
-    color: var(--muted);
-    border-color: var(--border);
-}
-
-.btn-outline-secondary:hover {
-    background-color: var(--muted);
-    border-color: var(--muted);
-    color: white;
-}
-
-.dark .btn-outline-primary {
-    color: var(--accent);
-    border-color: var(--accent);
-}
-
-.dark .btn-outline-primary:hover {
-    background-color: var(--accent);
-    border-color: var(--accent);
-    color: white;
-}
+/* §24 — outline buttons: sec-style.css global gradient system */
 
 /* Text Colors */
 .text-muted {
@@ -467,6 +425,202 @@
 /* RTL icon spacing — sec-style.css §secretary icon spacing */
 .text-start { text-align: right !important; }
 .text-end { text-align: left !important; }
+
+/* ============================================
+   Secretary detail pages — gradient action buttons
+   ============================================ */
+.sec-detail-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    padding: 0.5rem 1rem;
+    border: none !important;
+    border-radius: 10px !important;
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: #fff !important;
+    text-decoration: none;
+    transition: transform 0.15s ease, filter 0.15s ease, box-shadow 0.15s ease;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.14);
+    cursor: pointer;
+}
+
+.sec-detail-btn--sm {
+    padding: 0.35rem 0.65rem !important;
+    font-size: 0.8125rem !important;
+    border-radius: 8px !important;
+}
+
+.sec-detail-btn i {
+    color: #fff !important;
+    font-size: 1rem;
+}
+
+.sec-detail-btn:hover,
+.sec-detail-btn:focus {
+    transform: translateY(-1px);
+    filter: brightness(0.88);
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.2);
+    color: #fff !important;
+}
+
+.sec-detail-btn--primary {
+    background: linear-gradient(135deg, var(--accent) 0%, var(--ds-accent-2, #4f46e5) 100%) !important;
+}
+
+.sec-detail-btn--sky {
+    background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%) !important;
+}
+
+.sec-detail-btn--info {
+    background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%) !important;
+}
+
+.sec-detail-btn--muted {
+    background: linear-gradient(135deg, #64748b 0%, #475569 100%) !important;
+}
+
+.sec-detail-btn--success {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+}
+
+/* Booking details page */
+.sec-booking-details-page .sec-booking-summary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    direction: rtl;
+}
+
+.sec-booking-details-page .sec-booking-summary__chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.65rem 1rem;
+    border-radius: 12px;
+    background: linear-gradient(135deg, rgba(var(--accent-rgb, 99, 102, 241), 0.12) 0%, rgba(var(--accent-rgb, 99, 102, 241), 0.04) 100%), var(--card);
+    border: 1px solid rgba(var(--accent-rgb, 99, 102, 241), 0.22);
+    color: var(--text);
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.sec-booking-details-page .sec-booking-summary__chip i {
+    color: var(--accent);
+    font-size: 1.1rem;
+}
+
+.sec-booking-details-page .sec-detail-kv {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.65rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.85rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.sec-booking-details-page .sec-detail-kv:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.sec-booking-details-page .sec-detail-kv__icon {
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    background: linear-gradient(135deg, rgba(var(--accent-rgb, 99, 102, 241), 0.18) 0%, rgba(var(--accent-rgb, 99, 102, 241), 0.06) 100%);
+    color: var(--accent);
+}
+
+.sec-booking-details-page .sec-detail-kv__label {
+    font-size: 0.75rem;
+    color: var(--muted);
+    font-weight: 600;
+    margin-bottom: 0.15rem;
+}
+
+.sec-booking-details-page .sec-detail-kv__value {
+    color: var(--text);
+    font-weight: 600;
+    margin: 0;
+}
+
+.sec-booking-details-page .sec-finance-strip {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px dashed var(--border);
+}
+
+.sec-booking-details-page .sec-finance-tile {
+    text-align: center;
+    padding: 0.75rem 0.5rem;
+    border-radius: 10px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+}
+
+.sec-booking-details-page .sec-finance-tile__label {
+    font-size: 0.7rem;
+    color: var(--muted);
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.sec-booking-details-page .sec-finance-tile__value {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.sec-booking-details-page .sec-finance-tile--paid .sec-finance-tile__value {
+    color: var(--success);
+}
+
+.sec-booking-details-page .sec-finance-tile--due .sec-finance-tile__value {
+    color: #f59e0b;
+}
+
+.sec-booking-details-page .sec-notes-box {
+    background: var(--bg) !important;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1rem !important;
+    line-height: 1.7;
+}
+
+.sec-booking-details-page .dashboard-card .card-header h6 {
+    color: var(--accent) !important;
+}
+
+.sec-booking-details-page .table-actions {
+    display: flex;
+    gap: 0.35rem;
+    justify-content: flex-end;
+}
+
+.sec-booking-details-page .related-bookings-card .card-header {
+    background: transparent;
+    border-bottom: 1px solid var(--border);
+}
+
+@media (max-width: 768px) {
+    .sec-booking-details-page .sec-finance-strip {
+        grid-template-columns: 1fr;
+    }
+
+    .sec-booking-details-page .sec-booking-summary {
+        flex-direction: column;
+    }
+}
 
 /* Responsive */
 @media (max-width: 768px) {

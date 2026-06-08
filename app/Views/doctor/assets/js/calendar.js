@@ -1521,37 +1521,43 @@ function toggleCalendarAutoRefresh(enabled) {
   }
 }
 
-// Auto-refresh calendar data every 60 seconds using AJAX (pause when modals are open or user is interacting)
+// Live calendar sync: poll a lightweight change-cursor (~5s) and only refetch the
+// full calendar when something actually changed — including changes made by the
+// OTHER party (secretary <-> doctor), because /api/calendar/version is computed
+// server-side over the shared rows for the date. Paused while any modal is open
+// (don't yank the grid out from under an edit) or while the tab is hidden.
+let lastCalendarVersion = null;
+let lastSyncDate = null;
+
+function checkCalendarVersion() {
+  if (document.hidden) return;
+  if (document.querySelector(".modal.show") !== null) return;
+  const dateStr = currentDate.toISOString().split("T")[0];
+  fetch(`/api/calendar/version?date=${dateStr}`, {
+    headers: { "X-Requested-With": "XMLHttpRequest" },
+  })
+    .then((r) => r.json())
+    .then((d) => {
+      if (!d || !d.ok) return;
+      // Silently (re)baseline on first poll or when the viewed date changed.
+      if (dateStr !== lastSyncDate || lastCalendarVersion === null) {
+        lastSyncDate = dateStr;
+        lastCalendarVersion = d.version;
+        return;
+      }
+      if (d.version !== lastCalendarVersion) {
+        lastCalendarVersion = d.version;
+        refreshCalendarData(); // remote change -> refetch + re-render
+      }
+    })
+    .catch(() => {});
+}
+
 function startAutoRefresh() {
-  // Clear any existing interval
   if (refreshInterval) {
     clearInterval(refreshInterval);
   }
-
-  refreshInterval = setInterval(() => {
-    const searchModal = document.getElementById("searchModal");
-    const addAppointmentModal = document.getElementById("addAppointmentModal");
-    const addPatientModal = document.getElementById("addPatientModal");
-    const appointmentModal = document.getElementById("appointmentModal");
-    const cancelModal = document.getElementById("cancelModal");
-    const deleteAppointmentModal = document.getElementById(
-      "deleteAppointmentModal"
-    );
-
-    // Don't refresh if any modal is open
-    const isModalOpen =
-      searchModal?.classList.contains("show") ||
-      addAppointmentModal?.classList.contains("show") ||
-      addPatientModal?.classList.contains("show") ||
-      appointmentModal?.classList.contains("show") ||
-      cancelModal?.classList.contains("show") ||
-      deleteAppointmentModal?.classList.contains("show") ||
-      document.querySelector(".modal.show") !== null;
-
-    if (!isModalOpen) {
-      refreshCalendarData();
-    }
-  }, 60000); // 60 seconds
+  refreshInterval = setInterval(checkCalendarVersion, 5000); // ~5s near-real-time
 }
 
 // Function to refresh calendar data via AJAX

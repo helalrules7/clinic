@@ -968,6 +968,7 @@ window.BOOKINGS_CONFIG = {
         patientProfile: '/secretary/patients'
     }
 };
+window.__SHOW_CROSS_CLINIC_MODAL = <?= !empty($showCrossClinicModal) ? 'true' : 'false' ?>;
 </script>
 <script src="/app/Views/secretary/assets/js/sec-mini-stats.js?v=<?= file_exists(__DIR__ . '/assets/js/sec-mini-stats.js') ? filemtime(__DIR__ . '/assets/js/sec-mini-stats.js') : time() ?>"></script>
 <script src="/app/Views/secretary/assets/js/sec-clinic-chip.js?v=<?= file_exists(__DIR__ . '/assets/js/sec-clinic-chip.js') ? filemtime(__DIR__ . '/assets/js/sec-clinic-chip.js') : time() ?>"></script>

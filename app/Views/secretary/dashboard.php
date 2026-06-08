@@ -519,6 +519,10 @@ $secTipToday = $secDailyTips[$secTipIndex];
      * View appointment function
      */
     window.viewAppointment = function(appointmentId) {
+        if (typeof window.navigateToSecretaryBooking === 'function') {
+            window.navigateToSecretaryBooking(appointmentId);
+            return;
+        }
         window.location.href = `/secretary/bookings/${appointmentId}`;
     };
 
@@ -972,65 +976,7 @@ document.addEventListener('DOMContentLoaded', function() {
         transition: all 0.2s ease !important;
     }
     
-    .btn-group .btn-outline-primary {
-        color: white !important;
-        background: var(--accent) !important;
-        border-radius: 10px !important;
-        border: 1px solid var(--accent) !important;
-    }
-    
-    .btn-group .btn-outline-primary:hover {
-        background: var(--accent) !important;
-        color: white !important;
-    }
-
-    .btn-group .btn-outline-warning {
-        color: white !important;
-        background: #ffc107 !important;
-        border: 1px solid #ffc107 !important;
-        border-radius: 10px !important;
-    }
-    
-    .btn-group .btn-outline-warning:hover {
-        background: #ffc107 !important;
-        color: white !important;
-    }
-
-    .btn-group .btn-outline-info {
-        color: white !important;
-        background: #4F46E5 !important;
-        border: 1px solid #4F46E5 !important;
-        border-radius: 10px !important;
-    }
-    
-    .btn-group .btn-outline-info:hover {
-        background: #4F46E5 !important;
-        color: white !important;
-    }
-    
-    .btn-group .btn-outline-success {
-        color: white !important;
-        background: var(--success) !important;
-        border: 1px solid var(--success) !important;
-        border-radius: 10px !important;
-    }
-    
-    .btn-group .btn-outline-success:hover {
-        background: var(--success) !important;
-        color: white !important;
-    }
-    
-    .btn-group .btn-outline-danger {
-        color: white !important;
-        background: var(--danger) !important;
-        border: 1px solid var(--danger) !important;
-        border-radius: 10px !important;
-    }
-    
-    .btn-group .btn-outline-danger:hover {
-        background: var(--danger) !important;
-        color: white !important;
-    }
+    /* §24 — btn-group outline fills: sec-style.css global gradient system */
 
 /* Quick Actions Wrapper - RTL Support */
 .quick-actions-wrapper {

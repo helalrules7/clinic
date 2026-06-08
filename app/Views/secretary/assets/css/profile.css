@@ -96,16 +96,7 @@ html.dark .form-control:focus {
     color: #fff;
 }
 
-.sec-profile-page .btn-outline-primary {
-    color: var(--accent);
-    border-color: var(--accent);
-}
-
-.sec-profile-page .btn-outline-primary:hover {
-    background: var(--accent);
-    border-color: var(--accent);
-    color: #fff;
-}
+/* §24 — outline buttons: sec-style.css global gradient system */
 
 .sec-profile-page .alert-info {
     background: color-mix(in srgb, var(--accent) 8%, transparent);

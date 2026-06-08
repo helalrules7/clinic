@@ -345,6 +345,7 @@ try {
     // API routes
     $router->get('/api/clinics', 'ApiController@getClinics');
     $router->get('/api/calendar', 'ApiController@getCalendar');
+    $router->get('/api/calendar/version', 'ApiController@calendarVersion');
     $router->get('/api/organizer/month', 'ApiController@getOrganizerMonth');
     // More specific routes first
     // More specific routes first - search must come before {id}

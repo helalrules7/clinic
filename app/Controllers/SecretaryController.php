@@ -111,12 +111,15 @@ class SecretaryController
 
     public function bookings()
     {
-        $user = $this->auth->user();
-        
-        // Get all doctors for booking form
+        $this->renderBookingsPage();
+    }
+
+    /**
+     * Shared renderer for /secretary/bookings (and cross-clinic fallback).
+     */
+    private function renderBookingsPage(array $options = [])
+    {
         $doctors = $this->getAllDoctors();
-        
-        // Get system settings for payment limits
         $settings = $this->getSystemSettings();
 
         $today = date('Y-m-d');
@@ -131,7 +134,10 @@ class SecretaryController
         if ($patientId) {
             $preselectedPatient = $this->getPatientInfoForBooking($patientId);
         }
-        
+
+        $showCrossClinicModal = !empty($options['showCrossClinicModal'])
+            || (isset($_GET['crossClinic']) && $_GET['crossClinic'] === '1');
+
         $content = $this->view->render('secretary/bookings', [
             'doctors' => $doctors,
             'settings' => $settings,
@@ -141,14 +147,15 @@ class SecretaryController
             'bookingTrendDates' => $bookingTrendDates,
             'preselectedPatient' => $preselectedPatient,
             'preselectedPatientId' => $patientId,
+            'showCrossClinicModal' => $showCrossClinicModal,
         ]);
-        
+
         echo $this->view->render('layouts/secretary_main', [
             'title' => 'عيادة رؤية - إدارة الحجوزات',
             'pageTitle' => 'إدارة الحجوزات',
             'pageSubtitle' => 'إنشاء وإدارة المواعيد',
             'content' => $content,
-            'viewHelper' => $this->view
+            'viewHelper' => $this->view,
         ]);
     }
 
@@ -292,18 +299,21 @@ class SecretaryController
                 $patientStmt = $this->pdo->prepare("SELECT first_name, last_name FROM patients WHERE id = ?");
                 $patientStmt->execute([(int)$input['patient_id']]);
                 $patient = $patientStmt->fetch(\PDO::FETCH_ASSOC);
-                if ($patient) {
-                    $patientName = trim($patient['first_name'] . ' ' . $patient['last_name']);
-                    \App\Controllers\NotificationController::notifyDoctorAppointmentBookedBySecretary(
-                        $currentUser,
-                        (int)$input['doctor_id'],
-                        (int)$appointmentId,
-                        (int)$input['patient_id'],
-                        $patientName,
-                        $input['date'],
-                        $startTime
-                    );
-                }
+                $patientName = $patient ? trim($patient['first_name'] . ' ' . $patient['last_name']) : 'a patient';
+                $actorLabel = trim($currentUser['name'] ?? $currentUser['username'] ?? 'Secretary');
+                // Notify the assigned doctor + co-secretaries of the clinic (minus actor).
+                \App\Controllers\NotificationController::notifyAppointmentCounterparties(
+                    [
+                        'id'         => (int)$appointmentId,
+                        'doctor_id'  => (int)$input['doctor_id'],
+                        'clinic_id'  => $input['clinic_id'] ?? null,
+                        'patient_id' => (int)$input['patient_id'],
+                    ],
+                    $currentUser['id'],
+                    'appointment',
+                    'New Appointment',
+                    "Appointment booked for {$patientName} on {$input['date']} at {$startTime} by {$actorLabel}"
+                );
             } catch (\Exception $e) {
                 // Continue even if notification creation fails
             }
@@ -425,18 +435,38 @@ class SecretaryController
                 ], 422);
             }
 
-            // No payments → safe to remove the appointment.
-            $stmt = $this->pdo->prepare("DELETE FROM appointments WHERE id = ?");
+            // No payments → SOFT CANCEL (status='Cancelled'): the row survives for
+            // audit + the activity feed and the time slot is freed. Secretaries
+            // never hard-delete (that is admin-only via the doctor API).
+            $stmt = $this->pdo->prepare("
+                UPDATE appointments
+                   SET status = 'Cancelled', cancellation_reason = 'Cancelled by secretary', updated_at = NOW()
+                 WHERE id = ?
+            ");
             $stmt->execute([$id]);
 
-            if ($stmt->rowCount() > 0) {
-                return $this->jsonResponse([
-                    'ok' => true,
-                    'message' => 'Booking deleted successfully'
-                ]);
-            } else {
-                return $this->jsonResponse(['error' => 'Failed to delete booking'], 500);
+            // Notify the assigned doctor (+ co-secretaries) of the cancellation.
+            try {
+                $patientName = trim(($appointment['first_name'] ?? '') . ' ' . ($appointment['last_name'] ?? ''));
+                if ($patientName === '') {
+                    $patientName = $appointment['patient_name'] ?? 'a patient';
+                }
+                \App\Controllers\NotificationController::notifyAppointmentCounterparties(
+                    $appointment,
+                    $this->auth->user()['id'],
+                    'appointment',
+                    'Appointment Cancelled',
+                    "Cancelled appointment for {$patientName} on {$appointment['date']} at {$appointment['start_time']}"
+                );
+            } catch (\Exception $e) {
+                // non-fatal
             }
+
+            return $this->jsonResponse([
+                'ok'      => true,
+                'soft'    => true,
+                'message' => 'Booking cancelled successfully'
+            ]);
 
         } catch (Exception $e) {
             return $this->jsonResponse(['error' => 'Failed to delete booking'], 500);
@@ -540,6 +570,20 @@ class SecretaryController
 
                 if ($stmt->rowCount() > 0) {
                     $this->pdo->commit();
+
+                    // Notify the assigned doctor (+ co-secretaries) of the check-in.
+                    try {
+                        \App\Controllers\NotificationController::notifyAppointmentCounterparties(
+                            $appointment,
+                            $this->auth->user()['id'],
+                            'appointment',
+                            'Patient Checked In',
+                            "Patient {$appointment['patient_name']} checked in on {$appointment['date']} at {$appointment['start_time']}"
+                        );
+                    } catch (\Exception $e) {
+                        // non-fatal
+                    }
+
                     return $this->jsonResponse([
                         'ok' => true,
                         'message' => 'تم تأكيد الحضور بنجاح'
@@ -2319,6 +2363,28 @@ class SecretaryController
                     'additional_payment' => $input['additional_payment'] ?? 0,
                 ], 'Secretary booking edit');
 
+                // Notify the OTHER party of the edit.
+                try {
+                    $pName = trim(($existing['first_name'] ?? '') . ' ' . ($existing['last_name'] ?? ''));
+                    if ($pName === '') {
+                        $pName = $existing['patient_name'] ?? 'a patient';
+                    }
+                    \App\Controllers\NotificationController::notifyAppointmentCounterparties(
+                        [
+                            'id'         => $id,
+                            'doctor_id'  => $input['doctor_id'] ?? ($existing['doctor_id'] ?? null),
+                            'clinic_id'  => $existing['clinic_id'] ?? null,
+                            'patient_id' => $input['patient_id'] ?? ($existing['patient_id'] ?? null),
+                        ],
+                        $this->auth->user()['id'],
+                        'appointment',
+                        'Appointment Updated',
+                        "Appointment for {$pName} updated to {$input['date']} at {$input['start_time']}"
+                    );
+                } catch (\Exception $e) {
+                    // non-fatal
+                }
+
                 return $this->jsonResponse([
                     'ok' => true,
                     'message' => 'Booking updated successfully'
@@ -2703,10 +2769,10 @@ class SecretaryController
                     a.visit_type,
                     a.notes,
                     a.created_at,
-                    d.name as doctor_name,
-                    d.specialization
+                    d.display_name as doctor_name,
+                    d.specialty as specialization
                 FROM appointments a
-                LEFT JOIN users d ON a.doctor_id = d.id
+                JOIN doctors d ON a.doctor_id = d.id
                 WHERE a.patient_id = ?
                 ORDER BY a.date DESC, a.start_time DESC
                 LIMIT 20
@@ -2822,12 +2888,16 @@ class SecretaryController
                        CONCAT(p.first_name, ' ', p.last_name) as patient_name,
                        p.phone as patient_phone,
                        p.dob,
-                       d.name as doctor_display_name,
-                       d.id as doctor_id,
+                       doc.display_name as doctor_display_name,
+                       doc.id as doctor_id,
+                       c.name_ar as clinic_name_ar,
+                       c.name_en as clinic_name_en,
+                       c.code as clinic_code,
                        COALESCE(SUM(pay.amount), 0) as total_paid
                 FROM appointments a
                 JOIN patients p ON a.patient_id = p.id
-                JOIN users d ON a.doctor_id = d.id
+                JOIN doctors doc ON a.doctor_id = doc.id
+                LEFT JOIN clinics c ON a.clinic_id = c.id
                 LEFT JOIN payments pay ON a.id = pay.appointment_id
                 WHERE a.id = ?
                 GROUP BY a.id
@@ -2841,12 +2911,12 @@ class SecretaryController
                 return;
             }
 
-            // Block secretaries from viewing bookings outside their clinic.
+            // Block secretaries from viewing bookings outside their clinic —
+            // render the bookings calendar in-place; modal opens via JS (no redirect).
             if (($user['role'] ?? null) === 'secretary'
                 && !empty($user['clinic_id'])
                 && (int)$booking['clinic_id'] !== (int)$user['clinic_id']) {
-                http_response_code(403);
-                echo "This booking belongs to another clinic.";
+                $this->renderBookingsPage(['showCrossClinicModal' => true]);
                 return;
             }
 
@@ -2874,9 +2944,6 @@ class SecretaryController
                 return;
             }
             
-            // Get doctor details
-            $doctor = $this->getUserDetails($booking['doctor_id']);
-            
             // Get payment details if exists
             $payments = $this->getBookingPayments($id);
             
@@ -2886,7 +2953,6 @@ class SecretaryController
             $content = $this->view->render('secretary/booking_details', [
                 'booking' => $booking,
                 'patient' => $patient,
-                'doctor' => $doctor,
                 'payments' => $payments,
                 'relatedBookings' => $relatedBookings
             ]);

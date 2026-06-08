@@ -2603,85 +2603,7 @@ kbd[lang="ar"] {
     box-shadow: 0 0 0 0.2rem rgba(var(--accent-rgb), 0.25);
 }
 
-/* Button styling for dark mode */
-.btn-outline-primary {
-    background: var(--accent) !important;
-    border-color: var(--accent);
-    color: white !important;
-    border-radius: 10px !important;
-}
-
-.btn-outline-primary:hover {
-    background:rgb(0, 166, 255) !important;
-    border-color:rgb(0, 166, 255) !important;
-}
-
-.btn-outline-success {
-    background: #28a745 !important;
-    color: white !important;
-    border-radius: 10px !important;
-    border-color: #28a745 !important;
-}
-
-.btn-outline-success:hover {
-    background:rgb(0, 153, 36) !important;
-    border-color:rgb(0, 153, 36) !important;
-    color: white !important;
-}
-
-.btn-outline-secondary {
-    background: var(--muted) !important;
-    color: white !important;
-    border-radius: 10px !important;
-    border-color: var(--border);
-}
-
-.btn-outline-secondary:hover {
-    background: var(--muted) !important;
-    border-color: var(--muted) !important;
-    color: white !important;
-}
-
-
-
-/* Button styling for dark mode */
-.dark .btn-outline-primary {
-    background: var(--accent) !important;
-    border-color: var(--accent);
-    color: white !important;
-    border-radius: 10px !important;
-}
-
-.dark .btn-outline-primary:hover {
-    background:rgb(0, 166, 255) !important;
-    border-color:rgb(0, 166, 255) !important;
-}
-
-.dark .btn-outline-success {
-    background: #28a745 !important;
-    color: white !important;
-    border-radius: 10px !important;
-    border-color: #28a745 !important;
-}
-
-.dark .btn-outline-success:hover {
-    background:rgb(0, 153, 36) !important;
-    border-color:rgb(0, 153, 36) !important;
-    color: white !important;
-}
-
-.dark .btn-outline-secondary {
-    background: var(--muted) !important;
-    color: white !important;
-    border-radius: 10px !important;
-    border-color: var(--border);
-}
-
-.dark .btn-outline-secondary:hover {
-    background: var(--muted) !important;
-    border-color: var(--muted) !important;
-    color: white !important;
-}
+/* §24 — outline buttons: sec-style.css global gradient system */
 
 
 .btn-secondary {
@@ -3043,18 +2965,7 @@ kbd[lang="ar"] {
     background-color: var(--bg-alt);
 }
 
-.btn-outline-danger {
-    background: #dc3545 !important;
-    color: white !important;
-    border-color: #dc3545 !important;
-    border-radius: 10px !important;
-}
-
-.btn-outline-danger:hover {
-    background:rgb(220, 83, 97) !important;
-    border-color:rgb(220, 83, 97) !important;
-    color: white;
-}
+/* §24 — btn-outline-danger: sec-style.css */
 
 .btn-warning {
     background: #ffc107 !important;
@@ -3294,22 +3205,11 @@ kbd[lang="ar"] {
     border-right: 1px solid var(--border);
 }
 
-.input-group-sm .btn-outline-secondary {
-    border-color: var(--border);
-    color: var(--muted);
-    font-size: 0.875rem;
-    border-left: 1px solid var(--border);
-}
-
-.input-group-sm .btn-outline-secondary:hover {
-    background-color: var(--bg-alt);
-    border-color: var(--border);
-    color: var(--text);
-}
+/* §24 — input-group outline buttons: sec-style.css */
 
 /* Quick search focus state */
 #quickSearch:focus + .btn-outline-secondary {
-    border-color: var(--accent);
+    box-shadow: 0 0 0 0.15rem rgba(var(--accent-rgb), 0.2);
 }
 
 .input-group:focus-within .input-group-text {
@@ -3402,35 +3302,7 @@ kbd[lang="ar"] {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
-#doctorFilterGroup .btn-outline-primary.active {
-    background-color: var(--accent);
-    border-color: var(--accent);
-    color: white;
-}
-
-#doctorFilterGroup .btn-outline-success.active {
-    background-color: #28a745;
-    border-color: #28a745;
-    color: white;
-}
-
-#doctorFilterGroup .btn-outline-warning.active {
-    background-color: #ffc107;
-    border-color: #ffc107;
-    color: #212529;
-}
-
-#doctorFilterGroup .btn-outline-info.active {
-    background-color: #17a2b8;
-    border-color: #17a2b8;
-    color: white;
-}
-
-#doctorFilterGroup .btn-outline-secondary.active {
-    background-color: #6c757d;
-    border-color: #6c757d;
-    color: white;
-}
+/* §24 — doctorFilterGroup active: sec-style.css */
 
 #doctorFilterGroup .btn i {
     font-size: 0.9rem;
@@ -3511,17 +3383,7 @@ kbd[lang="ar"] {
     transition: all 0.2s ease;
 }
 
-.btn-outline-primary:hover[data-bs-toggle="tooltip"] {
-    box-shadow: 0 4px 12px rgba(13, 110, 253, 0.3);
-}
-
-.btn-outline-success:hover[data-bs-toggle="tooltip"] {
-    box-shadow: 0 4px 12px rgba(25, 135, 84, 0.3);
-}
-
-.btn-outline-danger:hover[data-bs-toggle="tooltip"] {
-    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
-}
+/* §24 — outline tooltip hovers: sec-style.css */
 
 h1, h2, h3, h4, h5, h6 {
 color: var(--text) !important;
@@ -3555,17 +3417,7 @@ color: var(--text) !important;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
-.btn-outline-primary:hover {
-    box-shadow: 0 2px 8px rgba(13, 110, 253, 0.3);
-}
-
-.btn-outline-success:hover {
-    box-shadow: 0 2px 8px rgba(25, 135, 84, 0.3);
-}
-
-.btn-outline-info:hover {
-    box-shadow: 0 2px 8px rgba(13, 202, 240, 0.3);
-}
+/* §24 — outline hover shadows: sec-style.css */
 
 /* Toggle Switch */
 .toggle-switch-wrapper {

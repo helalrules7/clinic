@@ -4705,7 +4705,69 @@ body > .global-search-container.expanded {
 .sec-pa-btn--invoice { background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); }
 .sec-pa-btn--edit    { background: linear-gradient(135deg, #64748b 0%, #475569 100%); }
 
-/* compact gradient icon action buttons — dashboard appts, tables, calendar pills */
+/* ============================================
+   §24 — Secretary global: .btn-outline-* → gradient fill
+   Every outline button under data-layout="secretary" becomes a
+   filled gradient pill with white text/icons; hover darkens via
+   filter: brightness(0.88). Page CSS must not re-declare outline
+   fills — see V11_SEC_LAYOUT.md §24.
+   ============================================ */
+html[data-layout="secretary"] :where(.btn[class*="btn-outline-"]) {
+    border: none !important;
+    color: #fff !important;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.12);
+    transition: transform 0.15s ease, filter 0.15s ease, box-shadow 0.15s ease;
+}
+html[data-layout="secretary"] :where(.btn[class*="btn-outline-"]) i,
+html[data-layout="secretary"] :where(.btn[class*="btn-outline-"]) .bi {
+    color: #fff !important;
+}
+html[data-layout="secretary"] :where(.btn[class*="btn-outline-"]):hover:not(:disabled):not(.disabled),
+html[data-layout="secretary"] :where(.btn[class*="btn-outline-"]):focus-visible:not(:disabled):not(.disabled),
+html[data-layout="secretary"] :where(.btn[class*="btn-outline-"]).active {
+    transform: translateY(-1px);
+    filter: brightness(0.88);
+    color: #fff !important;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.18);
+}
+html[data-layout="secretary"] :where(.btn[class*="btn-outline-"]):active:not(:disabled):not(.disabled) {
+    transform: translateY(0);
+}
+html[data-layout="secretary"] :where(.btn[class*="btn-outline-"]):disabled,
+html[data-layout="secretary"] :where(.btn[class*="btn-outline-"]).disabled {
+    opacity: 0.5;
+    filter: none;
+    transform: none;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+/* per-variant gradients */
+html[data-layout="secretary"] .btn-outline-primary {
+    background: linear-gradient(135deg, var(--accent) 0%, var(--ds-accent-2, #4f46e5) 100%) !important;
+}
+html[data-layout="secretary"] .btn-outline-secondary {
+    background: linear-gradient(135deg, #64748b 0%, #475569 100%) !important;
+}
+html[data-layout="secretary"] .btn-outline-success {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+}
+html[data-layout="secretary"] .btn-outline-danger {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+}
+html[data-layout="secretary"] .btn-outline-warning {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
+}
+html[data-layout="secretary"] .btn-outline-info {
+    background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%) !important;
+}
+html[data-layout="secretary"] .btn-outline-light {
+    background: linear-gradient(135deg, #94a3b8 0%, #64748b 100%) !important;
+}
+html[data-layout="secretary"] .btn-outline-dark {
+    background: linear-gradient(135deg, #334155 0%, #1e293b 100%) !important;
+}
+/* compact icon-only pills — dashboard appts, tables, calendar */
 html[data-layout="secretary"] .sec-icon-action-btn,
 html[data-layout="secretary"] .appt-actions .btn {
     display: inline-flex !important;
@@ -4714,40 +4776,41 @@ html[data-layout="secretary"] .appt-actions .btn {
     width: 2rem;
     height: 2rem;
     padding: 0 !important;
-    border: none !important;
     border-radius: 10px !important;
-    color: #fff !important;
-    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.12);
-    transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
 }
 html[data-layout="secretary"] .sec-icon-action-btn i,
 html[data-layout="secretary"] .appt-actions .btn i {
-    color: #fff !important;
     font-size: 1rem;
 }
-html[data-layout="secretary"] .sec-icon-action-btn:hover,
-html[data-layout="secretary"] .appt-actions .btn:hover {
-    transform: translateY(-1px);
-    color: #fff !important;
-    filter: brightness(0.88);
-    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.18);
+/* §24 exception — push toast keeps glass outline-light (§21) */
+html[data-layout="secretary"] .push-notification-toast .btn-outline-light {
+    border: 1px solid rgba(70, 130, 180, 0.5) !important;
+    color: #4682B4 !important;
+    background: rgba(255, 255, 255, 0.3) !important;
+    font-weight: 600 !important;
+    box-shadow: none !important;
+    filter: none !important;
+    transform: none !important;
 }
-html[data-layout="secretary"] .sec-icon-action-btn:active,
-html[data-layout="secretary"] .appt-actions .btn:active { transform: translateY(0); }
-html[data-layout="secretary"] .appt-actions .btn-outline-primary,
-html[data-layout="secretary"] .sec-icon-action-btn--primary {
-    background: linear-gradient(135deg, var(--accent) 0%, var(--ds-accent-2, #4f46e5) 100%) !important;
+html[data-layout="secretary"] .push-notification-toast .btn-outline-light:hover {
+    background: rgba(255, 255, 255, 0.5) !important;
+    border-color: #4682B4 !important;
+    color: #4682B4 !important;
+    filter: none !important;
+    transform: translateY(-1px) !important;
 }
-html[data-layout="secretary"] .appt-actions .btn-outline-info,
-html[data-layout="secretary"] .sec-icon-action-btn--info {
-    background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%) !important;
+html[data-layout="secretary"] .dark .push-notification-toast .btn-outline-light {
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    color: var(--text) !important;
+    background: rgba(255, 255, 255, 0.1) !important;
 }
-html[data-layout="secretary"] .appt-actions .btn-outline-success,
-html[data-layout="secretary"] .sec-icon-action-btn--success {
-    background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+html[data-layout="secretary"] .dark .push-notification-toast .btn-outline-light:hover {
+    background: rgba(255, 255, 255, 0.2) !important;
+    border-color: rgba(255, 255, 255, 0.5) !important;
+    color: var(--text) !important;
 }
-html[data-layout="secretary"] .sec-icon-action-btn--danger {
-    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+html[data-layout="secretary"] .push-notification-toast .btn-outline-light i {
+    color: inherit !important;
 }
 
 /* inline marker + tags injected into the server-rendered table rows */

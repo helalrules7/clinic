@@ -608,50 +608,5 @@ label{
     max-width: 300px;
 }
 
-.btn-outline-primary{
-    color: white !important;
-    background: var(--accent) !important;
-    border: 1px solid var(--accent) !important;
-    border-radius: 10px !important;
-}
-
-.btn-outline-primary:hover {
-    background: rgb(0, 131, 201) !important;
-    color: white !important;
-}
-
-.dark .btn-outline-primary{
-    color: white !important;
-    background: var(--accent) !important;
-    border: 1px solid var(--accent) !important;
-    border-radius: 10px !important;
-}
-
-.dark .btn-outline-primary:hover {
-    background: rgb(0, 131, 201) !important;
-    color: white !important;
-}
-.btn-outline-info{
-    color: white !important;
-    background:rgb(14, 229, 233) !important;
-    border: 1px solid rgb(14, 229, 233) !important;
-    border-radius: 10px !important;
-}
-
-.btn-outline-info:hover {
-    background:rgb(0, 162, 165) !important;
-    color: white !important;
-}
-
-.dark .btn-outline-info{
-    color: white !important;
-    background:rgb(14, 229, 233) !important;
-    border: 1px solid rgb(14, 229, 233) !important;
-    border-radius: 10px !important;
-}   
-
-.dark .btn-outline-info:hover {
-    background:rgb(0, 162, 165) !important;
-    color: white !important;
-}
+/* §24 — outline buttons: sec-style.css global gradient system */
 </style>

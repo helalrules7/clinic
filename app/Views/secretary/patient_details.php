@@ -240,7 +240,8 @@
                                             </span>
                                         </td>
                                         <td>
-                                            <a href="/secretary/bookings/<?= $appointment['id'] ?>" class="btn btn-sm btn-outline-primary">
+                                            <a href="/secretary/bookings/<?= (int) $appointment['id'] ?>" class="btn btn-sm btn-outline-primary"
+                                               onclick="if (window.navigateToSecretaryBooking) { event.preventDefault(); window.navigateToSecretaryBooking(<?= (int) $appointment['id'] ?>); }">
                                                 <i class="bi bi-eye"></i>
                                             </a>
                                         </td>
