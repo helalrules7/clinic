@@ -1,6 +1,6 @@
 /* Doctor↔Secretary chat widget. Theme via design tokens (dark/light auto),
-   RTL-aware (secretary). Mirrors the medical-assistant widget's glass look.
-   See CHAT_FEATURE_PLAN.md. */
+   RTL-aware (secretary). Glass source of truth — ai-chat-widget.css mirrors
+   this panel/FAB recipe (§44). See CHAT_FEATURE_PLAN.md. */
 
 .chat-fab {
   position: fixed; bottom: 2rem; right: 2rem; z-index: 1000050;
