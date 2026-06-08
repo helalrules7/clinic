@@ -1082,6 +1082,13 @@
                 if (state.notifications) {
                     var found = findInGrouped(state.notifications, id);
                     if (found && found.url) { window.location.href = found.url; return; }
+                    // To-do notifications without a deep-link (the secretary has no
+                    // tasks page) open the shared to-do drawer instead. Then fall
+                    // through to mark-as-read below.
+                    if (found && found.type && found.type.indexOf('todo') !== -1) {
+                        if (typeof window.openTodoDrawer === 'function') window.openTodoDrawer();
+                        else if (window.todoDrawer && typeof window.todoDrawer.open === 'function') window.todoDrawer.open();
+                    }
                 }
                 if (!rowEl.classList.contains('is-read')) {
                     rowEl.classList.add('is-read');

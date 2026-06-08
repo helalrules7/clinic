@@ -534,6 +534,12 @@ class NotificationControllerV11 extends NotificationController
             if ($rt === 'alert' && $pid) {
                 return '/secretary/patients/' . $pid;
             }
+            // To-do reminders: the secretary has no tasks page (only the drawer).
+            // Return null so the client opens window.todoDrawer instead of falling
+            // through to the patient link below.
+            if ($rt === 'todo') {
+                return null;
+            }
             if ($pid) {
                 return '/secretary/patients/' . $pid;
             }
