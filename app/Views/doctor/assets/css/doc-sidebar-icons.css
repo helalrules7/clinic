@@ -290,6 +290,30 @@ html[data-layout="doctor"] body.sidebar-mini .sidebar:has(.nav-item.has-submenu.
     margin-right: 0.75rem !important;
 }
 
+/* —— Mobile drawer — wider icon ↔ label gap (§41)
+   body.sidebar-mini + .doc-nav-icon { margin:0!important } in style.css
+   wins without !important here — override explicitly on phone overlay. —— */
+@media (max-width: 767.98px) {
+    html[data-layout="doctor"] {
+        --doc-nav-icon-gap-mobile: 0.6rem;
+    }
+
+    html[data-layout="doctor"] body.sidebar-mini .sidebar .nav-link,
+    html[data-layout="doctor"] body.sidebar-mini .sidebar .nav-submenu-link {
+        gap: var(--doc-nav-icon-gap-mobile);
+    }
+
+    html[data-layout="doctor"] body.sidebar-mini .sidebar .nav-link .doc-nav-icon,
+    html[data-layout="doctor"] body.sidebar-mini .sidebar .nav-submenu-link .doc-nav-icon {
+        margin: 0 var(--doc-nav-icon-gap-mobile) 0 0 !important;
+    }
+
+    html[data-layout="doctor"] body.sidebar-mini .sidebar .nav-link > i:not(.submenu-arrow),
+    html[data-layout="doctor"] body.sidebar-mini .sidebar .nav-submenu-link > i {
+        margin-right: var(--doc-nav-icon-gap-mobile) !important;
+    }
+}
+
 /* —— Accessibility —— */
 @media (prefers-reduced-motion: reduce) {
     html[data-layout="doctor"] .doc-nav-icon [class],

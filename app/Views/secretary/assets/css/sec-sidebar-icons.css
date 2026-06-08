@@ -174,6 +174,27 @@ body.sidebar-mini .sidebar .nav-link .sec-nav-icon {
     margin: 0 !important;
 }
 
+/* —— Mobile drawer — wider icon ↔ label gap (§41 parity, RTL)
+   body.sidebar-mini + .sec-nav-icon { margin:0!important } in sec-style.css
+   wins without !important here — override explicitly on phone overlay. —— */
+@media (max-width: 767.98px) {
+    html[data-layout="secretary"] {
+        --sec-nav-icon-gap-mobile: 0.6rem;
+    }
+
+    html[data-layout="secretary"] body.sidebar-mini .sidebar .nav-link {
+        gap: var(--sec-nav-icon-gap-mobile);
+    }
+
+    html[data-layout="secretary"] body.sidebar-mini .sidebar .nav-link .sec-nav-icon {
+        margin: 0 0 0 var(--sec-nav-icon-gap-mobile) !important;
+    }
+
+    html[data-layout="secretary"] body.sidebar-mini .sidebar .nav-link > i:not(.submenu-arrow) {
+        margin-left: var(--sec-nav-icon-gap-mobile) !important;
+    }
+}
+
 /* —— Accessibility —— */
 @media (prefers-reduced-motion: reduce) {
     .sec-nav-icon [class],

@@ -57,6 +57,7 @@
     <!-- Unified Glass / Indigo design system (loaded AFTER style.css so its tokens win) -->
     <link href="/app/Views/layouts/design-system/tokens.css?v=<?= file_exists(__DIR__ . '/design-system/tokens.css') ? filemtime(__DIR__ . '/design-system/tokens.css') : time() ?>" rel="stylesheet">
     <link href="/app/Views/layouts/design-system/design-system.css?v=<?= file_exists(__DIR__ . '/design-system/design-system.css') ? filemtime(__DIR__ . '/design-system/design-system.css') : time() ?>" rel="stylesheet">
+    <link href="/app/Views/layouts/design-system/scrollbars.css?v=<?= file_exists(__DIR__ . '/design-system/scrollbars.css') ? filemtime(__DIR__ . '/design-system/scrollbars.css') : time() ?>" rel="stylesheet">
     <!-- Shared modal kit (center + animate + drag affordance) — after design-system so it wins -->
     <link href="/app/Views/layouts/modal-kit.css?v=<?= file_exists(__DIR__ . '/modal-kit.css') ? filemtime(__DIR__ . '/modal-kit.css') : time() ?>" rel="stylesheet">
     <!-- Shared weather visuals (animated scene/icons + eye-care advisory + UV) -->

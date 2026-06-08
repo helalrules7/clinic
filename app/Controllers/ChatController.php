@@ -156,6 +156,30 @@ class ChatController
             $rx[$mid][$r['emoji']]['users'][] = (int) $r['user_id'];
         }
 
+        // reply previews — sender + snippet of each referenced (quoted) message,
+        // so a reply bubble can show the quote even when the target isn't loaded.
+        $replyTargets = [];
+        foreach ($rows as $r) { if ($r['reply_to_id'] !== null) { $replyTargets[(int) $r['reply_to_id']] = true; } }
+        $replies = [];
+        if ($replyTargets) {
+            $rp = implode(',', array_map('intval', array_keys($replyTargets)));
+            foreach ($this->pdo->query(
+                "SELECT m.id, m.body, m.deleted_at, u.name AS sender_name,
+                        (SELECT COUNT(*) FROM chat_attachments a WHERE a.chat_message_id = m.id) AS att
+                   FROM chat_messages m JOIN users u ON u.id = m.sender_id WHERE m.id IN ($rp)"
+            )->fetchAll(PDO::FETCH_ASSOC) as $q) {
+                $qid = (int) $q['id'];
+                $qDeleted = $q['deleted_at'] !== null;
+                $replies[$qid] = [
+                    'id' => $qid,
+                    'sender_name' => $q['sender_name'] ?? '',
+                    'snippet' => $qDeleted ? null
+                        : ($q['body'] !== null ? mb_substr($q['body'], 0, 120) : ((int) $q['att'] > 0 ? '📎' : '')),
+                    'deleted' => $qDeleted,
+                ];
+            }
+        }
+
         $out = [];
         foreach ($rows as $r) {
             $mid = (int) $r['id'];
@@ -167,6 +191,8 @@ class ChatController
                 'sender_name' => $r['sender_name'] ?? '',
                 'body'        => $deleted ? null : $r['body'],
                 'reply_to_id' => $r['reply_to_id'] !== null ? (int) $r['reply_to_id'] : null,
+                'reply_preview' => (!$deleted && $r['reply_to_id'] !== null && isset($replies[(int) $r['reply_to_id']]))
+                    ? $replies[(int) $r['reply_to_id']] : null,
                 'rev'         => (int) $r['rev'],
                 'edited'      => $r['edited_at'] !== null && !$deleted,
                 'deleted'     => $deleted,
@@ -361,6 +387,14 @@ class ChatController
 
         $cursor = (int) ($this->pdo->query("SELECT rev_counter FROM chat_conversations WHERE id = " . $cid)->fetchColumn() ?: 0);
 
+        // read receipts: the lowest "last read" among the OTHER participants, so a
+        // sender's own message shows ✓✓ only once everyone else has seen it. Computed
+        // fresh each poll (markRead doesn't bump rev), so ✓✓ updates within one tick.
+        $readUpTo = (int) ($this->pdo->query(
+            "SELECT COALESCE(MIN(COALESCE(last_read_message_id,0)),0) FROM chat_participants
+              WHERE conversation_id = $cid AND user_id <> $uid AND left_at IS NULL"
+        )->fetchColumn() ?: 0);
+
         // active typing (≤6s), excluding me
         $typeStmt = $this->pdo->prepare(
             "SELECT t.user_id, t.state, u.name FROM chat_typing t JOIN users u ON u.id = t.user_id
@@ -369,7 +403,7 @@ class ChatController
         $typeStmt->execute([$cid, $uid]);
         $typing = array_map(fn($t) => ['user_id' => (int) $t['user_id'], 'name' => $t['name'], 'state' => $t['state']], $typeStmt->fetchAll(PDO::FETCH_ASSOC));
 
-        $this->json(['ok' => true, 'messages' => $this->hydrateMessages($rows), 'cursor' => $cursor, 'typing' => $typing]);
+        $this->json(['ok' => true, 'messages' => $this->hydrateMessages($rows), 'cursor' => $cursor, 'typing' => $typing, 'read_up_to' => $readUpTo]);
     }
 
     /** POST /api/chat/{id}/messages {body, reply_to_id?, attachment_ids[]} */

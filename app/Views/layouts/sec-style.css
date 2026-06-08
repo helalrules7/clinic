@@ -77,8 +77,8 @@ body {
     -webkit-overflow-scrolling: touch;
 }
 
-/* Ensure sidebar is completely hidden on mobile by default */
-@media (max-width: 992px) {
+/* Phone only (<768): off-canvas drawer — NOT tablets (768+ use mini/wide rail). */
+@media (max-width: 767.98px) {
     .sidebar:not(.show) {
         transform: translateX(100%) !important;
         visibility: hidden;
@@ -1859,8 +1859,8 @@ body {
     transform: scale(0.95);
 }
 
-/* Ensure toggle button is visible on mobile devices */
-@media (max-width: 992px) {
+/* Phone only (<768): overlay drawer + toggle visibility */
+@media (max-width: 767.98px) {
     .sidebar-toggle {
         display: flex !important;
         opacity: 1;
@@ -1912,8 +1912,8 @@ body {
             opacity: 1;
         }
         
-        /* Ensure sidebar is hidden by default on mobile */
-        @media (max-width: 992px) {
+        /* Phone only (<768): hide drawer until .show */
+        @media (max-width: 767.98px) {
             .sidebar:not(.show) {
                 transform: translateX(100%) !important;
                 visibility: hidden;
@@ -4294,21 +4294,46 @@ body.sidebar-mini .sidebar .user-avatar {
         justify-content: flex-start;
         text-align: right;
     }
-    body.sidebar-mini .sidebar .nav-link i { margin-left: 0.75rem !important; }
+    body.sidebar-mini .sidebar .nav-link {
+        gap: 0.6rem;
+    }
+    body.sidebar-mini .sidebar .nav-link i { margin-left: 0.6rem !important; }
+    body.sidebar-mini .sidebar .nav-link .sec-nav-icon {
+        margin: 0 0 0 0.6rem !important;
+    }
     body.sidebar-mini .sidebar .clinic-name,
     body.sidebar-mini .sidebar .user-details,
     body.sidebar-mini .sidebar .secretary-badge { display: block !important; }
 }
 
-/* Landscape tablet — keep the rail visible instead of slide-out. */
-@media (min-width: 768px) and (max-width: 991.98px) {
-    body.sidebar-mini .sidebar { transform: none !important; }
-    body.sidebar-mini .main-content {
-        margin-right: var(--sidebar-width-mini);
+/* Tablet (768–1365) — mini rail OR expanded sidebar; never phone slide-out.
+   Legacy max-width:992 overlay rules hid the sidebar on portrait tablets
+   unless .show — breaking expand/collapse toggle (§42). */
+@media (min-width: 768px) and (max-width: 1365.98px) {
+    .sidebar {
+        transform: none !important;
+        visibility: visible !important;
+        pointer-events: auto !important;
+    }
+    .sidebar-toggle {
+        min-width: 44px;
+        min-height: 44px;
+    }
+    body.sidebar-mini .main-content,
+    body:not(.sidebar-mini) .main-content {
+        width: auto !important;
+        max-width: none !important;
         padding: 1rem;
         padding-top: 0;
     }
-    body.sidebar-mini .top-bar {
+    body.sidebar-mini .main-content {
+        margin-right: var(--sidebar-width-mini) !important;
+    }
+    body:not(.sidebar-mini) .main-content {
+        margin-right: var(--sidebar-width) !important;
+    }
+    body.sidebar-mini .top-bar,
+    body:not(.sidebar-mini) .top-bar {
         margin-right: -1rem;
         margin-left: -1rem;
         padding-right: 1rem;

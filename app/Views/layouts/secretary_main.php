@@ -30,6 +30,7 @@
     <!-- Unified Glass / Indigo design system (loaded AFTER sec-style.css so its tokens win) -->
     <link href="/app/Views/layouts/design-system/tokens.css?v=<?= file_exists(__DIR__ . '/design-system/tokens.css') ? filemtime(__DIR__ . '/design-system/tokens.css') : time() ?>" rel="stylesheet">
     <link href="/app/Views/layouts/design-system/design-system.css?v=<?= file_exists(__DIR__ . '/design-system/design-system.css') ? filemtime(__DIR__ . '/design-system/design-system.css') : time() ?>" rel="stylesheet">
+    <link href="/app/Views/layouts/design-system/scrollbars.css?v=<?= file_exists(__DIR__ . '/design-system/scrollbars.css') ? filemtime(__DIR__ . '/design-system/scrollbars.css') : time() ?>" rel="stylesheet">
     <!-- Shared modal kit (center + animate + drag affordance) — after design-system so it wins -->
     <link href="/app/Views/layouts/modal-kit.css?v=<?= file_exists(__DIR__ . '/modal-kit.css') ? filemtime(__DIR__ . '/modal-kit.css') : time() ?>" rel="stylesheet">
 
@@ -691,9 +692,18 @@
 
             const defaultMode = () => window.innerWidth < TABLET_BP ? 'mini' : 'wide';
             const readSaved = () => { try { return localStorage.getItem(SIDEBAR_MODE_KEY); } catch (e) { return null; } };
-            // Effective mode: a cramped viewport ALWAYS forces mini, even if the
-            // user previously chose wide on a larger screen.
-            const effectiveMode = () => isCramped() ? 'mini' : (readSaved() || defaultMode());
+            // Effective mode: the zoom/cramped floor (FORCE_MINI_BP) applies only
+            // on true desktop (≥TABLET_BP). On the tablet band (768–1365) we
+            // honor the saved mini/wide toggle — otherwise portrait tablets
+            // (<1100px) could never expand and the toggle felt dead.
+            const effectiveMode = () => {
+                const w = window.innerWidth;
+                if (w >= MOBILE_BP && w < TABLET_BP) {
+                    return readSaved() || 'mini';
+                }
+                if (isCramped()) return 'mini';
+                return readSaved() || defaultMode();
+            };
 
             applyMode(effectiveMode());
 

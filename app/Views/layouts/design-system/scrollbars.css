@@ -1,0 +1,93 @@
+/**
+ * v11 — Themed scrollbars (doctor + secretary + shared chrome).
+ * Colors derive from design tokens (--accent, --muted, --bg-alt) and adapt
+ * to light / dark via html.dark. Sidebar uses a slightly wider thumb + track
+ * tinted to match the glass panel.
+ */
+
+:root {
+    --ds-scrollbar-size: 6px;
+    --ds-scrollbar-size-sidebar: 8px;
+    --ds-scrollbar-track: transparent;
+    --ds-scrollbar-thumb: color-mix(in srgb, var(--accent) 32%, var(--muted));
+    --ds-scrollbar-thumb-hover: color-mix(in srgb, var(--accent) 52%, var(--muted));
+    --ds-scrollbar-sidebar-track: color-mix(in srgb, var(--accent) 6%, var(--bg-alt));
+    --ds-scrollbar-sidebar-thumb: color-mix(in srgb, var(--accent) 40%, var(--muted));
+}
+
+html.dark {
+    --ds-scrollbar-track: transparent;
+    --ds-scrollbar-thumb: color-mix(in srgb, var(--accent) 48%, rgba(148, 163, 184, 0.5));
+    --ds-scrollbar-thumb-hover: color-mix(in srgb, var(--accent) 68%, rgba(148, 163, 184, 0.72));
+    --ds-scrollbar-sidebar-track: rgba(7, 11, 20, 0.55);
+    --ds-scrollbar-sidebar-thumb: color-mix(in srgb, var(--accent) 55%, rgba(100, 116, 139, 0.7));
+}
+
+/* Firefox */
+html {
+    scrollbar-width: thin;
+    scrollbar-color: var(--ds-scrollbar-thumb) var(--ds-scrollbar-track);
+}
+
+.sidebar {
+    scrollbar-width: thin;
+    scrollbar-color: var(--ds-scrollbar-sidebar-thumb) var(--ds-scrollbar-sidebar-track);
+}
+
+/* WebKit — project-wide (components that hide scrollbars keep their own rules) */
+*::-webkit-scrollbar {
+    width: var(--ds-scrollbar-size);
+    height: var(--ds-scrollbar-size);
+}
+
+*::-webkit-scrollbar-track {
+    background: var(--ds-scrollbar-track);
+    border-radius: var(--r-pill, 999px);
+}
+
+*::-webkit-scrollbar-thumb {
+    background-color: var(--ds-scrollbar-thumb);
+    border-radius: var(--r-pill, 999px);
+    border: 2px solid transparent;
+    background-clip: padding-box;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+    background-color: var(--ds-scrollbar-thumb-hover);
+}
+
+*::-webkit-scrollbar-corner {
+    background: transparent;
+}
+
+/* Sidebar — wider thumb, track matches glass rail */
+.sidebar::-webkit-scrollbar {
+    width: var(--ds-scrollbar-size-sidebar);
+}
+
+.sidebar::-webkit-scrollbar-track {
+    background: var(--ds-scrollbar-sidebar-track);
+    margin-block: 6px;
+    border-radius: var(--r-pill, 999px);
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+    background-color: var(--ds-scrollbar-sidebar-thumb);
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+    background-color: var(--ds-scrollbar-thumb-hover);
+}
+
+/* Opt-out helper for intentional hidden scrollbars */
+.ds-scrollbar-none,
+.ds-scrollbar-none * {
+    scrollbar-width: none !important;
+}
+
+.ds-scrollbar-none::-webkit-scrollbar,
+.ds-scrollbar-none *::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+}

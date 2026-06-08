@@ -227,3 +227,63 @@ html[dir="rtl"] .chat-msg.theirs .chat-bubble { border-bottom-left-radius: 14px;
 .chat-roster-row { display: flex; align-items: center; gap: .6rem; padding: .55rem .9rem; cursor: pointer; border-bottom: 1px solid var(--border, rgba(148,163,184,.12)); }
 .chat-roster-row:hover { background: var(--bg-alt, rgba(0,0,0,.04)); }
 .chat-role-tag { font-size: .64rem; color: var(--muted, #94a3b8); }
+
+/* ===== Phase 2: foot row · reply/quote · chips · ticks · reactions picker · typeahead · inline edit ===== */
+.chat-msg-foot { display: flex; align-items: center; gap: 4px; }
+
+/* reply preview bar (above the input) */
+.chat-reply-bar { display: flex; align-items: center; gap: .5rem; padding: .4rem .7rem; border-top: 1px solid var(--border, rgba(148,163,184,.2)); background: var(--bg-alt, #f1f5f9); }
+.chat-reply-info { flex: 1; min-width: 0; border-inline-start: 3px solid var(--accent, #4f46e5); padding-inline-start: .5rem; display: flex; flex-direction: column; }
+.chat-reply-name { font-size: .72rem; font-weight: 700; color: var(--accent, #4f46e5); display: inline-flex; align-items: center; gap: 4px; }
+.chat-reply-text { font-size: .74rem; color: var(--muted, #64748b); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.chat-reply-x { background: transparent; border: none; color: var(--muted, #94a3b8); cursor: pointer; font-size: .85rem; padding: 2px; flex: 0 0 auto; }
+
+/* quoted block inside a reply bubble */
+.chat-quote { display: flex; flex-direction: column; gap: 1px; border-inline-start: 3px solid currentColor; padding: 2px 6px; margin-bottom: 4px; border-radius: 6px; background: rgba(0,0,0,.06); cursor: pointer; }
+.chat-msg.mine .chat-quote { background: rgba(255,255,255,.18); }
+.chat-quote-name { font-size: .68rem; font-weight: 700; }
+.chat-quote-text { font-size: .72rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 220px; opacity: .85; }
+
+/* @patient / #appointment / #date chips */
+.chat-chip { display: inline-flex; align-items: center; gap: 3px; padding: 0 6px; border-radius: 8px; font-size: .82rem; font-weight: 600; text-decoration: none; line-height: 1.55; vertical-align: baseline; }
+.chat-chip i { font-size: .8em; }
+.chat-chip-patient { background: color-mix(in srgb, #4f46e5 16%, transparent); color: #4f46e5; }
+.chat-chip-appt { background: color-mix(in srgb, #0ea5e9 18%, transparent); color: #0284c7; }
+.chat-chip-date { background: color-mix(in srgb, #10b981 16%, transparent); color: #059669; }
+.chat-msg.mine .chat-chip { background: rgba(255,255,255,.22); color: #fff; }
+
+/* read receipts ✓ / ✓✓ — sit on the panel bg (below the bubble), so muted/blue, not white */
+.chat-tick { font-size: .66rem; color: var(--muted, #94a3b8); letter-spacing: -1px; }
+.chat-tick.read { color: #0ea5e9; }
+
+/* reactions picker popover */
+.chat-react-pop { position: absolute; z-index: 30; display: flex; gap: 2px; padding: 4px 6px; border-radius: 20px; background: var(--card, #fff); border: 1px solid var(--border, rgba(148,163,184,.3)); box-shadow: 0 8px 24px rgba(0,0,0,.18); }
+.chat-react-pop button { background: transparent; border: none; cursor: pointer; font-size: 1.1rem; padding: 2px 4px; border-radius: 8px; transition: transform .12s; line-height: 1; }
+.chat-react-pop button:hover { transform: scale(1.3); background: var(--bg-alt, #f1f5f9); }
+
+/* @ / # autocomplete dropdown */
+.chat-typeahead { position: absolute; z-index: 31; max-height: 220px; overflow-y: auto; background: var(--card, #fff); border: 1px solid var(--border, rgba(148,163,184,.3)); border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,.18); }
+.chat-ta-item { display: flex; align-items: center; gap: .5rem; padding: .45rem .7rem; cursor: pointer; font-size: .82rem; }
+.chat-ta-item:hover { background: var(--bg-alt, #f1f5f9); }
+.chat-ta-item i { color: var(--muted, #94a3b8); }
+.chat-ta-name { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text, #0f172a); }
+.chat-ta-sub { font-size: .72rem; color: var(--muted, #94a3b8); flex: 0 0 auto; }
+
+/* inline edit */
+.chat-edit { display: flex; flex-direction: column; gap: 4px; min-width: 190px; }
+.chat-edit-input { resize: none; min-height: 36px; max-height: 110px; padding: .4rem .6rem; border-radius: 10px; border: 1px solid var(--accent, #4f46e5); background: var(--bg-alt, #f8fafc); color: var(--text, #0f172a); font-family: inherit; font-size: .85rem; }
+.chat-edit-actions { display: flex; gap: 6px; justify-content: flex-end; }
+.chat-edit-actions button { border: none; border-radius: 8px; padding: 3px 12px; font-size: .76rem; cursor: pointer; }
+.chat-edit-save { background: var(--accent, #4f46e5); color: #fff; }
+.chat-edit-cancel { background: var(--bg-alt, #e2e8f0); color: var(--text, #334155); }
+
+/* quote-jump flash */
+.chat-msg-flash .chat-bubble { animation: chatFlash 1.2s ease; }
+@keyframes chatFlash { 0%, 100% { box-shadow: 0 0 0 0 transparent; } 30% { box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent, #4f46e5) 55%, transparent); } }
+
+/* typing dots */
+.chat-typing-dots { display: inline-flex; gap: 2px; margin-inline-start: 4px; }
+.chat-typing-dots i { width: 4px; height: 4px; border-radius: 50%; background: currentColor; display: inline-block; animation: chatDot 1s infinite ease-in-out; }
+.chat-typing-dots i:nth-child(2) { animation-delay: .15s; }
+.chat-typing-dots i:nth-child(3) { animation-delay: .3s; }
+@keyframes chatDot { 0%, 60%, 100% { opacity: .3; transform: translateY(0); } 30% { opacity: 1; transform: translateY(-2px); } }
