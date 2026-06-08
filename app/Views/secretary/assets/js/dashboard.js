@@ -2,6 +2,13 @@
 // Mini Sparkline Charts — secretary dashboard stats
 // ============================================
 
+function secDashIconHtml(key, size) {
+    if (typeof window.SecDashIcons !== 'undefined' && window.SecDashIcons.html) {
+        return window.SecDashIcons.html(key, size || 'sm');
+    }
+    return '';
+}
+
 function secGenerateSparklineSVG(data) {
     var width = 100;
     var height = 35;
@@ -33,13 +40,20 @@ var SEC_STATS_TREND_MAP = {
     missed: 'missed'
 };
 
+function secDashTrendIconHtml(iconKey) {
+    if (typeof window.SecDashIcons !== 'undefined' && window.SecDashIcons.trendHtml) {
+        return window.SecDashIcons.trendHtml(iconKey);
+    }
+    return '';
+}
+
 function secFormatTrendBadge(series, invert, todayValue, deltaOverride) {
     var diff;
     var hasDelta = deltaOverride !== undefined && deltaOverride !== null && !isNaN(Number(deltaOverride));
     if (hasDelta) {
         diff = Number(deltaOverride);
     } else if (!series || series.length < 2) {
-        return { cls: 'trend-neutral', icon: 'bi-calendar-day', html: '<span class="arabic-text">اليوم</span>' };
+        return { cls: 'trend-neutral', iconKey: 'calendar-day', html: '<span class="arabic-text">اليوم</span>' };
     } else {
         var yesterday = Number(series[series.length - 2]) || 0;
         var today = todayValue !== undefined && todayValue !== null
@@ -48,14 +62,14 @@ function secFormatTrendBadge(series, invert, todayValue, deltaOverride) {
         diff = today - yesterday;
     }
     if (diff === 0) {
-        return { cls: 'trend-neutral', icon: 'bi-dash-lg', html: '<span class="arabic-text">مثل أمس</span>' };
+        return { cls: 'trend-neutral', iconKey: 'trend-flat', html: '<span class="arabic-text">مثل أمس</span>' };
     }
     var up = diff > 0;
     if (invert) up = !up;
     var sign = diff > 0 ? '+' : '';
     return {
         cls: up ? 'trend-up' : 'trend-down',
-        icon: up ? 'bi-graph-up-arrow' : 'bi-graph-down-arrow',
+        iconKey: up ? 'trend-up' : 'trend-down',
         html: '<span dir="ltr" class="trend-diff-value">' + sign + diff + '</span> <span class="arabic-text">عن أمس</span>'
     };
 }
@@ -65,7 +79,7 @@ function secApplyTrendBadge(elId, series, invert, todayValue, deltaOverride) {
     if (!el) return;
     var b = secFormatTrendBadge(series, invert, todayValue, deltaOverride);
     el.className = 'mini-stat-trend ' + b.cls;
-    el.innerHTML = '<i class="bi ' + b.icon + '"></i>' + b.html;
+    el.innerHTML = secDashTrendIconHtml(b.iconKey) + b.html;
 }
 
 function secInitDashboardCharts(trends, stats, deltas) {
@@ -528,7 +542,7 @@ function updateWeatherCard(weatherData) {
     }
 
     if (locationElement) {
-        locationElement.innerHTML = `<i class="bi bi-geo-alt-fill"></i> <span>${weatherData.location || 'كفر الشيخ'}</span>`;
+        locationElement.innerHTML = secDashIconHtml('location', 'sm') + ` <span>${weatherData.location || 'كفر الشيخ'}</span>`;
     }
 }
 
@@ -564,7 +578,7 @@ async function fetchWeatherData(latitude, longitude, saveToStorage = true) {
         // Show user-friendly error message in Arabic
         const locationElement = document.getElementById('weatherLocation');
         if (locationElement) {
-            locationElement.innerHTML = `<i class="bi bi-exclamation-triangle-fill"></i><span>تعذر جلب بيانات الطقس</span>`;
+            locationElement.innerHTML = secDashIconHtml('exclamation', 'sm') + '<span>تعذر جلب بيانات الطقس</span>';
         }
 
         // Show error in weather card
@@ -620,7 +634,7 @@ function initWeatherCard(useCached = true) {
             // Show cached data immediately
             updateWeatherCard(cachedData.data);
             if (locationElement) {
-                locationElement.innerHTML = `<i class="bi bi-geo-alt-fill"></i><span>${cachedData.data.location || DEFAULT_LOCATION_NAME}</span>`;
+                locationElement.innerHTML = secDashIconHtml('location', 'sm') + `<span>${cachedData.data.location || DEFAULT_LOCATION_NAME}</span>`;
             }
             // Update in background (don't wait for it)
             setTimeout(() => initWeatherCard(false), 100);
@@ -630,7 +644,7 @@ function initWeatherCard(useCached = true) {
 
     // Show default location immediately
     if (locationElement) {
-        locationElement.innerHTML = `<i class="bi bi-geo-alt-fill"></i><span>${DEFAULT_LOCATION_NAME}</span>`;
+        locationElement.innerHTML = secDashIconHtml('location', 'sm') + `<span>${DEFAULT_LOCATION_NAME}</span>`;
     }
 
     // Site Permissions-Policy blocks geolocation — use clinic default coords.
@@ -669,7 +683,7 @@ function showWeatherForecastPopover() {
             <div class="weather-forecast-popover-header">
                 <h5>توقعات الـ ٤ أيام القادمة</h5>
                 <button class="weather-forecast-close" id="weatherForecastClose">
-                    <i class="bi bi-x-lg"></i>
+                    ${secDashIconHtml('close', 'sm')}
                 </button>
             </div>
             <div class="weather-forecast-popover-body" id="weatherForecastBody">
@@ -735,7 +749,7 @@ async function fetchWeatherForecast(latitude, longitude) {
         if (body) {
             body.innerHTML = `
                 <div class="weather-forecast-error">
-                    <i class="bi bi-exclamation-triangle-fill"></i>
+                    ${secDashIconHtml('exclamation', 'sm')}
                     <span>تعذر تحميل التوقعات</span>
                 </div>
             `;
@@ -750,7 +764,7 @@ function renderWeatherForecast(forecast) {
     if (!forecast || forecast.length === 0) {
         body.innerHTML = `
             <div class="weather-forecast-error">
-                <i class="bi bi-info-circle-fill"></i>
+                ${secDashIconHtml('info', 'sm')}
                 <span>لا توجد بيانات توقعات متاحة</span>
             </div>
         `;

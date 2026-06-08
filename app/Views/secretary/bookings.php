@@ -30,13 +30,14 @@
 <link href="/app/Views/secretary/assets/css/bookings.css?v=<?= file_exists(__DIR__ . '/assets/css/bookings.css') ? filemtime(__DIR__ . '/assets/css/bookings.css') : time() ?>" rel="stylesheet">
 <link href="/app/Views/secretary/assets/css/dashboard.css?v=<?= file_exists(__DIR__ . '/assets/css/dashboard.css') ? filemtime(__DIR__ . '/assets/css/dashboard.css') : time() ?>" rel="stylesheet">
 <link href="/app/Views/doctor/assets/css/dashboard.css?v=<?= file_exists(__DIR__ . '/../doctor/assets/css/dashboard.css') ? filemtime(__DIR__ . '/../doctor/assets/css/dashboard.css') : time() ?>" rel="stylesheet">
+<?php require __DIR__ . '/partials/sec-icons-bundle.php'; ?>
 
 <!-- Bookings Header -->
 <div class="row mb-4">
     <div class="col-md-6">
         <div class="d-flex align-items-center">
             <h4 class="mb-0 me-3 arabic-text">
-                <i class="bi bi-calendar-check me-2"></i>
+                <?= sec_dash_icon_inline('calendar-check', 'page') ?>
                 إدارة الحجوزات
             </h4>
             <div class="d-flex align-items-center ms-3" style="padding-bottom: 10px !important;">
@@ -68,11 +69,11 @@
                     data-bs-html="true"
                     data-bs-content="<div class='date-picker-tooltip'><label class='form-label mb-2 arabic-text'>اختر التاريخ:</label><input type='date' id='tooltipDatePicker' class='form-control'><button type='button' class='btn btn-sm btn-outline-info w-100 mt-2 arabic-text' onclick='goToSelectedDate()'>انتقل للتاريخ</button></div>"
                     data-bs-trigger="click">
-                <i class="bi bi-calendar-event me-1"></i>
+                <?= sec_dash_icon_inline('calendar-event', 'md') ?>
                 انتقل لتاريخ
             </button>
             <button type="button" class="btn btn-success" id="addBookingBtn">
-                <i class="bi bi-calendar-plus me-2"></i>
+                <?= sec_dash_icon_inline('calendar-plus', 'md') ?>
                 حجز جديد
                 <span class="ms-2">
                     <kbd>N</kbd>
@@ -83,10 +84,10 @@
             <div class="btn-group" role="group">
                 <button type="button" class="btn btn-outline-primary" id="todayBtn">اليوم</button>
                 <button type="button" class="btn btn-outline-primary" id="prevDayBtn">
-                    <i class="bi bi-chevron-right"></i>
+                    <?= sec_dash_icon('chevron-right', 'md') ?>
                 </button>
                 <button type="button" class="btn btn-outline-primary" id="nextDayBtn">
-                    <i class="bi bi-chevron-left"></i>
+                    <?= sec_dash_icon('chevron-left', 'md') ?>
                 </button>
             </div>
         </div>
@@ -114,14 +115,14 @@ $bookingTrendDates = $bookingTrendDates ?? [];
     <div class="col-xl col-lg-4 col-md-6 mb-4 px-2">
         <div class="stats-card-wrapper">
             <div class="mini-stat-card mini-stat-primary">
-                <div class="mini-stat-icon"><i class="bi bi-calendar-check-fill"></i></div>
+                <div class="mini-stat-icon"><?= sec_dash_icon('calendar-check', 'stat') ?></div>
                 <div class="mini-stat-content">
                     <span class="mini-stat-value arabic-text" id="totalBookings"><?= (int)($bookingStats['total_appointments'] ?? 0) ?></span>
                     <span class="mini-stat-label arabic-text">إجمالي الحجوزات</span>
                 </div>
                 <div class="mini-stat-chart" id="chartBkTotal"></div>
                 <div class="mini-stat-trend trend-neutral" id="trendBkTotal">
-                    <i class="bi bi-calendar-day"></i><span class="arabic-text">اليوم</span>
+                    <?= sec_dash_icon('calendar-day', 'sm') ?><span class="arabic-text">اليوم</span>
                 </div>
             </div>
         </div>
@@ -129,7 +130,7 @@ $bookingTrendDates = $bookingTrendDates ?? [];
     <div class="col-xl col-lg-4 col-md-6 mb-4 px-2">
         <div class="stats-card-wrapper">
             <div class="mini-stat-card mini-stat-warning">
-                <div class="mini-stat-icon"><i class="bi bi-hourglass-split"></i></div>
+                <div class="mini-stat-icon"><?= sec_dash_icon('hourglass', 'stat') ?></div>
                 <div class="mini-stat-content">
                     <span class="mini-stat-value arabic-text" id="pendingBookings"><?= (int)($bookingStats['booked'] ?? 0) ?></span>
                     <span class="mini-stat-label arabic-text">في الانتظار</span>
@@ -142,7 +143,7 @@ $bookingTrendDates = $bookingTrendDates ?? [];
     <div class="col-xl col-lg-4 col-md-6 mb-4 px-2">
         <div class="stats-card-wrapper">
             <div class="mini-stat-card mini-stat-info">
-                <div class="mini-stat-icon"><i class="bi bi-person-check-fill"></i></div>
+                <div class="mini-stat-icon"><?= sec_dash_icon('user-check', 'stat') ?></div>
                 <div class="mini-stat-content">
                     <span class="mini-stat-value arabic-text" id="checkedInBookings"><?= (int)($bookingStats['checked_in'] ?? 0) ?></span>
                     <span class="mini-stat-label arabic-text">تم الحضور</span>
@@ -155,7 +156,7 @@ $bookingTrendDates = $bookingTrendDates ?? [];
     <div class="col-xl col-lg-4 col-md-6 mb-4 px-2">
         <div class="stats-card-wrapper">
             <div class="mini-stat-card mini-stat-success">
-                <div class="mini-stat-icon"><i class="bi bi-check-circle-fill"></i></div>
+                <div class="mini-stat-icon"><?= sec_dash_icon('check-circle', 'stat') ?></div>
                 <div class="mini-stat-content">
                     <span class="mini-stat-value arabic-text" id="completedBookings"><?= (int)($bookingStats['completed'] ?? 0) ?></span>
                     <span class="mini-stat-label arabic-text">مكتملة</span>
@@ -171,28 +172,28 @@ $bookingTrendDates = $bookingTrendDates ?? [];
 <div class="row mb-3">
     <div class="col-12">
         <div class="d-none d-md-flex gap-2 flex-wrap align-items-center">
-            <span class="text-muted me-2 arabic-text"><i class="bi bi-funnel me-1"></i>تصفية الأوقات:</span>
+            <span class="text-muted me-2 arabic-text d-inline-flex align-items-center gap-1"><?= sec_dash_icon('funnel', 'sm') ?>تصفية الأوقات:</span>
             <button type="button" class="btn btn-sm btn-outline-info filter-time-btn arabic-text" data-filter="2pm-6pm" id="filter2pm6pm">
-                <i class="bi bi-clock me-1"></i>٢:٠٠ م – ٦:٠٠ م
+                <?= sec_dash_icon_inline('clock', 'sm') ?>٢:٠٠ م – ٦:٠٠ م
             </button>
             <button type="button" class="btn btn-sm btn-outline-success filter-time-btn arabic-text" data-filter="6pm-1045pm" id="filter6pm1045pm">
-                <i class="bi bi-clock me-1"></i>٦:٠٠ م – ١٠:٤٥ م
+                <?= sec_dash_icon_inline('clock', 'sm') ?>٦:٠٠ م – ١٠:٤٥ م
             </button>
             <button type="button" class="btn btn-sm btn-outline-primary filter-time-btn arabic-text" data-filter="available" id="filterAvailable">
-                <i class="bi bi-check-circle me-1"></i>المتاح فقط
+                <?= sec_dash_icon_inline('check-circle', 'sm') ?>المتاح فقط
             </button>
             <button type="button" class="btn btn-sm btn-outline-warning filter-time-btn arabic-text" data-filter="unavailable" id="filterUnavailable">
-                <i class="bi bi-x-circle me-1"></i>الحجوزات فقط
+                <?= sec_dash_icon_inline('x-circle', 'sm') ?>الحجوزات فقط
             </button>
             <button type="button" class="btn btn-sm btn-secondary filter-time-btn arabic-text" data-filter="none" id="filterNone">
-                <i class="bi bi-x-lg me-1"></i>إلغاء التصفية
+                <?= sec_dash_icon_inline('close', 'sm') ?>إلغاء التصفية
             </button>
         </div>
         <div class="d-md-none">
             <button type="button" class="btn btn-sm btn-outline-primary w-100 arabic-text" id="mobileFilterBtn"
                     data-bs-toggle="popover" data-bs-placement="bottom" data-bs-html="true"
                     data-bs-trigger="click" data-bs-content="">
-                <i class="bi bi-funnel me-2"></i>تصفية الأوقات
+                <?= sec_dash_icon_inline('funnel', 'md') ?>تصفية الأوقات
             </button>
         </div>
     </div>
@@ -204,7 +205,7 @@ $bookingTrendDates = $bookingTrendDates ?? [];
         <div class="card">
             <div class="card-header">
                 <h5 class="mb-0 arabic-text">
-                    <i class="bi bi-calendar3 me-2"></i>
+                    <?= sec_dash_icon_inline('calendar', 'page') ?>
                     تقويم الحجوزات
                 </h5>
             </div>
@@ -970,6 +971,7 @@ window.BOOKINGS_CONFIG = {
 };
 window.__SHOW_CROSS_CLINIC_MODAL = <?= !empty($showCrossClinicModal) ? 'true' : 'false' ?>;
 </script>
+<?php require __DIR__ . '/partials/sec-icons-scripts.php'; ?>
 <script src="/app/Views/secretary/assets/js/sec-mini-stats.js?v=<?= file_exists(__DIR__ . '/assets/js/sec-mini-stats.js') ? filemtime(__DIR__ . '/assets/js/sec-mini-stats.js') : time() ?>"></script>
 <script src="/app/Views/secretary/assets/js/sec-clinic-chip.js?v=<?= file_exists(__DIR__ . '/assets/js/sec-clinic-chip.js') ? filemtime(__DIR__ . '/assets/js/sec-clinic-chip.js') : time() ?>"></script>
 <script src="/app/Views/secretary/assets/js/bookings.js?v=<?= file_exists(__DIR__ . '/assets/js/bookings.js') ? filemtime(__DIR__ . '/assets/js/bookings.js') : time() ?>"></script>

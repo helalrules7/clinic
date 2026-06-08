@@ -35,6 +35,7 @@
 
     <!-- v11.0.0 feature CSS bundle -->
     <link href="/app/Views/doctor/assets/css/notification-center.css?v=<?= file_exists(__DIR__ . '/../doctor/assets/css/notification-center.css') ? filemtime(__DIR__ . '/../doctor/assets/css/notification-center.css') : time() ?>" rel="stylesheet">
+    <link href="/app/Views/doctor/assets/css/chat-widget.css?v=<?= file_exists(__DIR__ . '/../doctor/assets/css/chat-widget.css') ? filemtime(__DIR__ . '/../doctor/assets/css/chat-widget.css') : time() ?>" rel="stylesheet">
     <link href="/app/Views/doctor/assets/css/todo-drawer.css?v=<?= file_exists(__DIR__ . '/../doctor/assets/css/todo-drawer.css') ? filemtime(__DIR__ . '/../doctor/assets/css/todo-drawer.css') : time() ?>" rel="stylesheet">
     <link href="/app/Views/doctor/assets/css/cmdk.css?v=<?= file_exists(__DIR__ . '/../doctor/assets/css/cmdk.css') ? filemtime(__DIR__ . '/../doctor/assets/css/cmdk.css') : time() ?>" rel="stylesheet">
     <link href="/app/Views/doctor/assets/css/patient-hover.css?v=<?= file_exists(__DIR__ . '/../doctor/assets/css/patient-hover.css') ? filemtime(__DIR__ . '/../doctor/assets/css/patient-hover.css') : time() ?>" rel="stylesheet">
@@ -49,6 +50,8 @@
     <link href="/app/Views/layouts/push-toast-center.css?v=<?= file_exists(__DIR__ . '/push-toast-center.css') ? filemtime(__DIR__ . '/push-toast-center.css') : time() ?>" rel="stylesheet">
     <!-- v11: notice-bar clock/calendar + appointments popovers (ported from doctor style.css) -->
     <link href="/app/Views/layouts/secretary-notice-bar.css?v=<?= file_exists(__DIR__ . '/secretary-notice-bar.css') ? filemtime(__DIR__ . '/secretary-notice-bar.css') : time() ?>" rel="stylesheet">
+    <link href="/app/Views/secretary/assets/css/sec-sidebar-icons.css?v=<?= file_exists(__DIR__ . '/../secretary/assets/css/sec-sidebar-icons.css') ? filemtime(__DIR__ . '/../secretary/assets/css/sec-sidebar-icons.css') : time() ?>" rel="stylesheet">
+    <link href="/app/Views/secretary/assets/css/sec-chat-fab-icon.css?v=<?= file_exists(__DIR__ . '/../secretary/assets/css/sec-chat-fab-icon.css') ? filemtime(__DIR__ . '/../secretary/assets/css/sec-chat-fab-icon.css') : time() ?>" rel="stylesheet">
 
     <!-- Theme + logo + favicon pre-paint. Runs synchronously in <head> so
          #clinicLogo and the favicon <link>s are rendered with the right
@@ -220,6 +223,7 @@
         } catch (e) { /* ignore */ }
     })();
     </script>
+    <?php require __DIR__ . '/../secretary/partials/sec-nav-icons.php'; ?>
     <!-- Sidebar -->
     <div class="sidebar" id="sidebar">
         <div class="sidebar-header">
@@ -262,37 +266,37 @@
         <nav class="nav-menu">
             <div class="nav-item">
                 <a href="/secretary/dashboard" class="nav-link <?= $this->isActiveRoute('/secretary/dashboard') ? 'active' : '' ?>">
-                    <i class="bi bi-speedometer2"></i>
+                    <?= sec_nav_icon('dashboard') ?>
                     لوحة التحكم
                 </a>
             </div>
             <div class="nav-item">
                 <a href="/secretary/bookings" class="nav-link <?= $this->isActiveRoute('/secretary/bookings') ? 'active' : '' ?>">
-                    <i class="bi bi-calendar-check"></i>
+                    <?= sec_nav_icon('bookings') ?>
                     الحجوزات
                 </a>
             </div>
             <div class="nav-item">
                 <a href="/secretary/payments" class="nav-link <?= $this->isActiveRoute('/secretary/payments') ? 'active' : '' ?>">
-                    <i class="bi bi-credit-card"></i>
+                    <?= sec_nav_icon('payments') ?>
                     المدفوعات
                 </a>
             </div>
             <div class="nav-item">
                 <a href="/secretary/patients" class="nav-link <?= $this->isActiveRoute('/secretary/patients') ? 'active' : '' ?>">
-                    <i class="bi bi-people"></i>
+                    <?= sec_nav_icon('patients') ?>
                     المرضى
                 </a>
             </div>
             <div class="nav-item">
                 <a href="/secretary/settings" class="nav-link <?= $this->isActiveRoute('/secretary/settings') ? 'active' : '' ?>">
-                    <i class="bi bi-sliders"></i>
+                    <?= sec_nav_icon('settings') ?>
                     الإعدادات
                 </a>
             </div>
             <div class="nav-item">
                 <a href="/secretary/profile" class="nav-link <?= $this->isActiveRoute('/secretary/profile') ? 'active' : '' ?>">
-                    <i class="bi bi-person-circle"></i>
+                    <?= sec_nav_icon('profile') ?>
                     الملف الشخصي
                 </a>
             </div>
@@ -311,7 +315,7 @@
             
             <div class="nav-item mt-auto">
                 <a href="/logout" class="nav-link text-danger">
-                    <i class="bi bi-box-arrow-right"></i>
+                    <?= sec_nav_icon('logout') ?>
                     تسجيل الخروج
                 </a>
             </div>
@@ -821,6 +825,7 @@
                     const ringP = Math.min(1, Math.max(0, y / max));
                     const wantShow = y > 300;
                     scrollToTopBtn.classList.toggle('show', wantShow);
+                    document.documentElement.classList.toggle('sec-backtotop-visible', wantShow);
                     if (sttRingBar) {
                         sttRingBar.style.strokeDashoffset = (STT_RING_C * (1 - ringP)).toFixed(2);
                     }
@@ -845,6 +850,7 @@
                     }
                     scrollToTopBtn.classList.remove('show');
                     scrollToTopBtn.style.display = 'none';
+                    document.documentElement.classList.remove('sec-backtotop-visible');
                     return;
                 }
                 scrollToTopBtn.style.display = '';
@@ -1344,6 +1350,13 @@
     <!-- Shared action registry — single source of truth for palette + dock (load before both) -->
     <script defer src="/app/Views/doctor/assets/js/actions-registry.js?v=<?= file_exists(__DIR__ . '/../doctor/assets/js/actions-registry.js') ? filemtime(__DIR__ . '/../doctor/assets/js/actions-registry.js') : time() ?>"></script>
     <script defer src="/app/Views/doctor/assets/js/notification-center.js?v=<?= file_exists(__DIR__ . '/../doctor/assets/js/notification-center.js') ? filemtime(__DIR__ . '/../doctor/assets/js/notification-center.js') : time() ?>"></script>
+    <?php
+        require_once __DIR__ . '/../secretary/partials/sec-chat-fab-icon.php';
+    ?>
+    <script>
+        window.__SEC_CHAT_FAB_ICON_HTML__ = <?= json_encode(sec_chat_fab_icon(), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
+    </script>
+    <script defer src="/app/Views/doctor/assets/js/chat-widget.js?v=<?= file_exists(__DIR__ . '/../doctor/assets/js/chat-widget.js') ? filemtime(__DIR__ . '/../doctor/assets/js/chat-widget.js') : time() ?>"></script>
     <script defer src="/app/Views/doctor/assets/js/todo-drawer.js?v=<?= file_exists(__DIR__ . '/../doctor/assets/js/todo-drawer.js') ? filemtime(__DIR__ . '/../doctor/assets/js/todo-drawer.js') : time() ?>"></script>
     <script defer src="/app/Views/doctor/assets/js/cmdk.js?v=<?= file_exists(__DIR__ . '/../doctor/assets/js/cmdk.js') ? filemtime(__DIR__ . '/../doctor/assets/js/cmdk.js') : time() ?>"></script>
     <script defer src="/app/Views/doctor/assets/js/patient-hover.js?v=<?= file_exists(__DIR__ . '/../doctor/assets/js/patient-hover.js') ? filemtime(__DIR__ . '/../doctor/assets/js/patient-hover.js') : time() ?>"></script>

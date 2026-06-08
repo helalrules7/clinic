@@ -1,0 +1,189 @@
+/**
+ * Secretary sidebar — animated nav icons (SVG + CSS).
+ * Motion ported from Its Hover (MIT): https://www.itshover.com/icons
+ */
+
+html[data-layout="secretary"] {
+    --sec-nav-icon-size: 24px;
+    --sec-nav-icon-size-mini: 1.55rem;
+}
+
+.sec-nav-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--sec-nav-icon-size);
+    height: var(--sec-nav-icon-size);
+    flex-shrink: 0;
+    margin-left: 0.75rem;
+    pointer-events: none;
+    color: inherit;
+}
+
+/* Isolate from sidebar .user-avatar photo styles */
+.sidebar .nav-link .sec-nav-icon,
+.sidebar .nav-link .sec-nav-icon * {
+    background: none !important;
+    box-shadow: none !important;
+    border-radius: 0;
+    overflow: visible;
+}
+
+.sec-nav-icon svg {
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    stroke: currentColor;
+    fill: none;
+}
+
+.sec-nav-icon [class] {
+    transition: transform 0.25s ease-in-out, opacity 0.25s ease-in-out;
+    transform-box: fill-box;
+    transform-origin: center;
+}
+
+/* —— Dashboard (layout-dashboard) —— */
+.nav-link:hover .sec-nav-icon--dashboard .rect-1 { transform: translate(10px, 0); }
+.nav-link:hover .sec-nav-icon--dashboard .rect-2 { transform: translate(-1px, 12px); }
+.nav-link:hover .sec-nav-icon--dashboard .rect-3 { transform: translate(-10px, 0); }
+.nav-link:hover .sec-nav-icon--dashboard .rect-4 { transform: translate(1px, -12px); }
+
+/* —— Bookings (calendar — same as doctor §33) —— */
+.sec-nav-icon--bookings .cal-dot {
+    opacity: 0.35;
+    transform: scale(0.6);
+}
+.nav-link:hover .sec-nav-icon--bookings .cal-header {
+    transform: translateY(-1px);
+}
+.nav-link:hover .sec-nav-icon--bookings .cal-dot {
+    animation: sec-icon-cal-dot 0.35s ease-out forwards;
+}
+.nav-link:hover .sec-nav-icon--bookings .cal-dot-2 {
+    animation-delay: 0.08s;
+}
+.nav-link:hover .sec-nav-icon--bookings .cal-dot-3 {
+    animation-delay: 0.16s;
+}
+
+@keyframes sec-icon-cal-dot {
+    to { opacity: 1; transform: scale(1.4); }
+}
+
+/* —— Payments (credit-card) —— */
+.sec-nav-icon--payments .card-stripe {
+    opacity: 0;
+}
+.nav-link:hover .sec-nav-icon--payments .card-body {
+    animation: sec-icon-card-wiggle 0.4s ease-in-out;
+}
+.nav-link:hover .sec-nav-icon--payments .card-stripe {
+    animation: sec-icon-card-stripe 0.5s ease-in-out;
+}
+.nav-link:hover .sec-nav-icon--payments .card-chip {
+    animation: sec-icon-card-chip 0.25s ease-out;
+}
+
+@keyframes sec-icon-card-wiggle {
+    0%, 100% { transform: rotate(0) scale(1); }
+    25% { transform: rotate(-3deg) scale(1.02); }
+    75% { transform: rotate(3deg) scale(1.02); }
+}
+
+@keyframes sec-icon-card-stripe {
+    0% { opacity: 0; transform: translateX(-18px); }
+    50% { opacity: 1; }
+    100% { opacity: 0; transform: translateX(18px); }
+}
+
+@keyframes sec-icon-card-chip {
+    0%, 100% { transform: scale(1); opacity: 0.6; }
+    50% { transform: scale(1.6); opacity: 1; }
+}
+
+/* —— Patients (users) —— */
+.nav-link:hover .sec-nav-icon--patients .user-primary {
+    transform: translateY(-2px) scale(1.05);
+}
+.nav-link:hover .sec-nav-icon--patients .user-secondary {
+    transform: translateX(1px);
+    opacity: 0.8;
+}
+
+/* —— Settings (sliders-horizontal) —— */
+.nav-link:hover .sec-nav-icon--settings .slider-1 {
+    animation: sec-icon-slider-1 2s ease-in-out infinite;
+}
+.nav-link:hover .sec-nav-icon--settings .slider-2 {
+    animation: sec-icon-slider-2 2s ease-in-out 0.2s infinite;
+}
+.nav-link:hover .sec-nav-icon--settings .slider-3 {
+    animation: sec-icon-slider-3 2s ease-in-out 0.4s infinite;
+}
+
+@keyframes sec-icon-slider-1 {
+    0%, 100% { transform: translateX(0); }
+    50% { transform: translateX(-4px); }
+}
+
+@keyframes sec-icon-slider-2 {
+    0%, 100% { transform: translateX(0); }
+    50% { transform: translateX(4px); }
+}
+
+@keyframes sec-icon-slider-3 {
+    0%, 100% { transform: translateX(0); }
+    50% { transform: translateX(-4px); }
+}
+
+/* —— Profile (user) —— */
+.sec-nav-icon--profile .sec-icon-profile-figure {
+    color: inherit;
+}
+.nav-link:hover .sec-nav-icon--profile .sec-icon-profile-figure {
+    transform: translateY(-1px) scale(1.05);
+}
+
+/* —— Logout (mirror for RTL exit direction) —— */
+[dir="rtl"] .sec-nav-icon--logout svg {
+    transform: scaleX(-1);
+}
+
+/* —— Logout —— */
+.nav-link:hover .sec-nav-icon--logout .logout-arrow,
+.nav-link:hover .sec-nav-icon--logout .logout-arrow-bottom {
+    animation: sec-icon-logout-arrow 0.3s ease-in-out;
+}
+.nav-link:hover .sec-nav-icon--logout .logout-door {
+    animation: sec-icon-logout-door 0.25s ease-out;
+}
+
+@keyframes sec-icon-logout-arrow {
+    50% { transform: translateX(6px); }
+}
+
+@keyframes sec-icon-logout-door {
+    50% { transform: translateX(-2px); }
+}
+
+/* —— Mini rail —— */
+body.sidebar-mini .sidebar .nav-link .sec-nav-icon {
+    width: var(--sec-nav-icon-size-mini);
+    height: var(--sec-nav-icon-size-mini);
+    margin: 0 !important;
+}
+
+/* —— Accessibility —— */
+@media (prefers-reduced-motion: reduce) {
+    .sec-nav-icon [class],
+    .sec-nav-icon path,
+    .sec-nav-icon g,
+    .sec-nav-icon line,
+    .sec-nav-icon rect {
+        animation: none !important;
+        transition: none !important;
+        transform: none !important;
+        opacity: inherit;
+    }
+}

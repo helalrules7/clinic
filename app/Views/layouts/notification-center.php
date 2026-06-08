@@ -27,6 +27,7 @@ $notifT = $notifIsAr ? [
     'act_pin'     => 'تثبيت',
     'act_read'    => 'تعليم كمقروء',
     'act_delete'  => 'حذف',
+    'clear_all'   => 'مسح الكل',
     'stack_tap'   => 'اضغط للتوسيع',
     'stack_expand'=> 'توسيع المجموعة',
 ] : [
@@ -48,6 +49,7 @@ $notifT = $notifIsAr ? [
     'act_pin'     => 'Pin',
     'act_read'    => 'Mark as read',
     'act_delete'  => 'Delete',
+    'clear_all'   => 'Clear all',
     'stack_tap'   => 'Tap to expand',
     'stack_expand'=> 'Expand stack',
 ];
@@ -60,9 +62,16 @@ $notifT = $notifIsAr ? [
         <header class="notif-header">
             <div class="notif-header__row">
                 <h2 class="notif-title" id="notifPanelTitle"><?= $notifT['title'] ?></h2>
-                <button type="button" class="notif-close" id="notifCloseBtn" aria-label="<?= $notifT['close'] ?>">
-                    <i class="bi bi-x-lg" aria-hidden="true"></i>
-                </button>
+                <div class="notif-header__actions">
+                    <button type="button" class="notif-clear-all" id="notifClearAllBtn" hidden
+                            aria-label="<?= $notifT['clear_all'] ?>" title="<?= $notifT['clear_all'] ?>">
+                        <i class="bi bi-trash3" aria-hidden="true"></i>
+                        <span class="notif-clear-all__label"><?= $notifT['clear_all'] ?></span>
+                    </button>
+                    <button type="button" class="notif-close" id="notifCloseBtn" aria-label="<?= $notifT['close'] ?>">
+                        <i class="bi bi-x-lg" aria-hidden="true"></i>
+                    </button>
+                </div>
             </div>
             <div class="notif-tabs" role="tablist" aria-label="<?= $notifT['tab_view'] ?>">
                 <button type="button" class="notif-tab is-active" data-tab="notifications" role="tab" aria-selected="true" id="notifTabNotifications">

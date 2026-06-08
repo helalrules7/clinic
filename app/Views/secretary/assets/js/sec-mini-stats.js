@@ -38,6 +38,13 @@
         return sign + diff;
     }
 
+    function dashTrendIconHtml(iconKey) {
+        if (typeof global.SecDashIcons !== 'undefined' && global.SecDashIcons.trendHtml) {
+            return global.SecDashIcons.trendHtml(iconKey);
+        }
+        return '';
+    }
+
     function formatTrendBadge(series, invert, todayValue, deltaOverride, neutralLabel, format) {
         neutralLabel = neutralLabel || 'اليوم';
         var diff;
@@ -45,7 +52,7 @@
         if (hasDelta) {
             diff = Number(deltaOverride);
         } else if (!series || series.length < 2) {
-            return { cls: 'trend-neutral', icon: 'bi-calendar-day', html: '<span class="arabic-text">' + neutralLabel + '</span>' };
+            return { cls: 'trend-neutral', iconKey: 'calendar-day', html: '<span class="arabic-text">' + neutralLabel + '</span>' };
         } else {
             var yesterday = Number(series[series.length - 2]) || 0;
             var today = todayValue !== undefined && todayValue !== null
@@ -57,13 +64,13 @@
             diff = 0;
         }
         if (diff === 0) {
-            return { cls: 'trend-neutral', icon: 'bi-dash-lg', html: '<span class="arabic-text">مثل أمس</span>' };
+            return { cls: 'trend-neutral', iconKey: 'trend-flat', html: '<span class="arabic-text">مثل أمس</span>' };
         }
         var up = diff > 0;
         if (invert) up = !up;
         return {
             cls: up ? 'trend-up' : 'trend-down',
-            icon: up ? 'bi-graph-up-arrow' : 'bi-graph-down-arrow',
+            iconKey: up ? 'trend-up' : 'trend-down',
             html: '<span dir="ltr" class="trend-diff-value">' + formatDiffValue(diff, format) + '</span> <span class="arabic-text">عن أمس</span>'
         };
     }
@@ -73,7 +80,7 @@
         if (!el) return;
         var b = formatTrendBadge(series, invert, todayValue, deltaOverride, neutralLabel, format);
         el.className = 'mini-stat-trend ' + b.cls;
-        el.innerHTML = '<i class="bi ' + b.icon + '"></i>' + b.html;
+        el.innerHTML = dashTrendIconHtml(b.iconKey) + b.html;
     }
 
     function readJsonScript(id) {
@@ -122,7 +129,7 @@
                 var trendEl = document.getElementById(cfg.trendId);
                 if (trendEl) {
                     trendEl.className = 'mini-stat-trend trend-neutral';
-                    trendEl.innerHTML = '<i class="bi bi-calendar-day"></i><span class="arabic-text">' + neutralLabel + '</span>';
+                    trendEl.innerHTML = dashTrendIconHtml('calendar-day') + '<span class="arabic-text">' + neutralLabel + '</span>';
                 }
                 return;
             }

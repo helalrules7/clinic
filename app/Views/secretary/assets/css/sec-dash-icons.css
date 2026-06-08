@@ -1,0 +1,452 @@
+/**
+ * Secretary dashboard — animated icons (SVG + CSS).
+ */
+
+html[data-layout="secretary"] {
+    --sec-dash-icon-sm: 18px;
+    --sec-dash-icon-md: 22px;
+    --sec-dash-icon-lg: 26px;
+    --sec-dash-icon-stat: 28px;
+    --sec-dash-icon-tile: 30px;
+    --sec-dash-icon-head: 20px;
+    --sec-dash-icon-empty: 64px;
+    --sec-dash-icon-page: 24px;
+}
+
+.sec-dash-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    pointer-events: none;
+    color: inherit;
+    line-height: 0;
+}
+
+.sec-dash-icon--size-sm   { width: var(--sec-dash-icon-sm);   height: var(--sec-dash-icon-sm); }
+.sec-dash-icon--size-md   { width: var(--sec-dash-icon-md);   height: var(--sec-dash-icon-md); }
+.sec-dash-icon--size-lg   { width: var(--sec-dash-icon-lg);   height: var(--sec-dash-icon-lg); }
+.sec-dash-icon--size-stat { width: var(--sec-dash-icon-stat); height: var(--sec-dash-icon-stat); }
+.sec-dash-icon--size-tile { width: var(--sec-dash-icon-tile); height: var(--sec-dash-icon-tile); }
+.sec-dash-icon--size-head { width: var(--sec-dash-icon-head); height: var(--sec-dash-icon-head); }
+.sec-dash-icon--size-empty { width: var(--sec-dash-icon-empty); height: var(--sec-dash-icon-empty); }
+.sec-dash-icon--size-page { width: var(--sec-dash-icon-page); height: var(--sec-dash-icon-page); }
+
+.sec-dash-icon--inline {
+    margin-inline-end: 0.35rem;
+    vertical-align: -0.12em;
+}
+
+.sec-dash-icon svg {
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    stroke: currentColor;
+    fill: none;
+}
+
+.sec-dash-icon [class] {
+    transition: transform 0.25s ease-in-out, opacity 0.25s ease-in-out;
+    transform-box: fill-box;
+    transform-origin: center;
+}
+
+.stats-cards-wrapper .mini-stat-icon .sec-dash-icon,
+.mini-stat-trend .sec-dash-icon {
+    width: 16px;
+    height: 16px;
+    margin: 0;
+    margin-inline-end: 4px;
+}
+
+.stats-cards-wrapper .mini-stat-trend {
+    gap: 4px;
+}
+
+.dash-rev-foot span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.dash-rev-foot .sec-dash-icon {
+    color: var(--accent, #6366f1);
+}
+
+.dash-mini-empty .sec-dash-icon {
+    margin-bottom: 0.35rem;
+}
+
+#secRecentPaymentsEmpty .sec-dash-icon,
+.appt-empty .sec-dash-icon--size-empty {
+    opacity: 0.5;
+    color: var(--muted, #94a3b8);
+}
+
+.card-header h6 .sec-dash-icon--inline {
+    vertical-align: -0.2em;
+}
+
+/* Larger mini-stat icon boxes on secretary pages */
+html[data-layout="secretary"] .sec-mini-stats .mini-stat-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+}
+
+html[data-layout="secretary"] .sec-tip-icon .sec-dash-icon {
+    width: 28px;
+    height: 28px;
+}
+
+html[data-layout="secretary"] .dash-mini-head .sec-dash-icon {
+    width: var(--sec-dash-icon-md);
+    height: var(--sec-dash-icon-md);
+}
+
+html[data-layout="secretary"] .btn .sec-dash-icon--inline {
+    width: var(--sec-dash-icon-md);
+    height: var(--sec-dash-icon-md);
+}
+
+html[data-layout="secretary"] h4 .sec-dash-icon--inline,
+html[data-layout="secretary"] h5 .sec-dash-icon--inline {
+    width: var(--sec-dash-icon-page);
+    height: var(--sec-dash-icon-page);
+}
+
+html[data-layout="secretary"] .btn-sm .sec-dash-icon--inline {
+    width: var(--sec-dash-icon-sm);
+    height: var(--sec-dash-icon-sm);
+}
+
+.weather-location .sec-dash-icon,
+#weatherLocation .sec-dash-icon {
+    margin-inline-end: 0.2rem;
+    vertical-align: -0.1em;
+}
+
+.weather-forecast-close .sec-dash-icon {
+    pointer-events: none;
+}
+
+.weather-forecast-error .sec-dash-icon,
+.weather-forecast-error .sec-dash-icon {
+    margin-inline-end: 0.35rem;
+}
+
+.dash-quick-tile .sec-dash-icon {
+    margin-bottom: 0.05rem;
+}
+
+.dash-mini-head .sec-dash-icon {
+    margin-inline-end: 0.35rem;
+}
+
+.appt-empty .sec-dash-icon,
+.dash-mini-empty .sec-dash-icon {
+    display: block;
+    margin: 0 auto 0.5rem;
+    opacity: 0.55;
+}
+
+.whatsnew-notice-pill .sec-dash-icon,
+.whatsnew-notice-cta .sec-dash-icon {
+    margin-inline-end: 0.25rem;
+}
+
+/* —— Shared hover hosts —— */
+.sec-dash-hover:hover .sec-dash-icon [class],
+.mini-stat-card:hover .sec-dash-icon [class],
+.dash-quick-tile:hover .sec-dash-icon [class],
+.dash-mini-card:hover .sec-dash-icon [class],
+.sec-tip-banner:hover .sec-dash-icon [class],
+.btn:hover .sec-dash-icon [class],
+.whatsnew-notice:hover .sec-dash-icon [class],
+.whatsnew-notice-cta:hover .sec-dash-icon [class],
+.card-header:hover .sec-dash-icon [class],
+.appt-actions .btn:hover .sec-dash-icon [class] {
+    transition-duration: 0.25s;
+}
+
+/* —— Calendar / bookings —— */
+.sec-dash-icon--bookings .cal-dot {
+    opacity: 0.35;
+    transform: scale(0.6);
+}
+
+.mini-stat-card:hover .sec-dash-icon--bookings .cal-header,
+.dash-quick-tile:hover .sec-dash-icon--bookings .cal-header,
+.btn:hover .sec-dash-icon--bookings .cal-header {
+    transform: translateY(-1px);
+}
+
+.mini-stat-card:hover .sec-dash-icon--bookings .cal-dot,
+.dash-quick-tile:hover .sec-dash-icon--bookings .cal-dot,
+.btn:hover .sec-dash-icon--bookings .cal-dot {
+    animation: sec-dash-cal-dot 0.35s ease-out forwards;
+}
+
+.mini-stat-card:hover .sec-dash-icon--bookings .cal-dot-2,
+.dash-quick-tile:hover .sec-dash-icon--bookings .cal-dot-2,
+.btn:hover .sec-dash-icon--bookings .cal-dot-2 { animation-delay: 0.08s; }
+
+.mini-stat-card:hover .sec-dash-icon--bookings .cal-dot-3,
+.dash-quick-tile:hover .sec-dash-icon--bookings .cal-dot-3,
+.btn:hover .sec-dash-icon--bookings .cal-dot-3 { animation-delay: 0.16s; }
+
+@keyframes sec-dash-cal-dot {
+    to { opacity: 1; transform: scale(1.4); }
+}
+
+/* —— Payments —— */
+.sec-dash-icon--payments .card-stripe { opacity: 0; }
+
+.mini-stat-card:hover .sec-dash-icon--payments .card-body,
+.dash-quick-tile:hover .sec-dash-icon--payments .card-body,
+.btn:hover .sec-dash-icon--payments .card-body,
+.card-header:hover .sec-dash-icon--payments .card-body {
+    animation: sec-dash-card-wiggle 0.4s ease-in-out;
+}
+
+.mini-stat-card:hover .sec-dash-icon--payments .card-stripe,
+.dash-quick-tile:hover .sec-dash-icon--payments .card-stripe,
+.btn:hover .sec-dash-icon--payments .card-stripe {
+    animation: sec-dash-card-stripe 0.5s ease-in-out;
+}
+
+.mini-stat-card:hover .sec-dash-icon--payments .card-chip,
+.dash-quick-tile:hover .sec-dash-icon--payments .card-chip,
+.btn:hover .sec-dash-icon--payments .card-chip {
+    animation: sec-dash-card-chip 0.25s ease-out;
+}
+
+@keyframes sec-dash-card-wiggle {
+    0%, 100% { transform: rotate(0) scale(1); }
+    25% { transform: rotate(-3deg) scale(1.02); }
+    75% { transform: rotate(3deg) scale(1.02); }
+}
+
+@keyframes sec-dash-card-stripe {
+    0% { opacity: 0; transform: translateX(-18px); }
+    50% { opacity: 1; }
+    100% { opacity: 0; transform: translateX(18px); }
+}
+
+@keyframes sec-dash-card-chip {
+    0%, 100% { transform: scale(1); opacity: 0.6; }
+    50% { transform: scale(1.6); opacity: 1; }
+}
+
+/* —— Hourglass —— */
+.mini-stat-card:hover .sec-dash-icon--hourglass .hg-glass {
+    animation: sec-dash-hg-flip 0.6s ease-in-out;
+}
+
+@keyframes sec-dash-hg-flip {
+    50% { transform: rotate(180deg); opacity: 0.7; }
+}
+
+/* —— User check —— */
+.mini-stat-card:hover .sec-dash-icon--user-check .uc-user {
+    transform: translateY(-1px) scale(1.04);
+}
+
+.mini-stat-card:hover .sec-dash-icon--user-check .uc-check {
+    animation: sec-dash-pop 0.35s ease-out;
+}
+
+/* —— Check / X circles —— */
+.mini-stat-card:hover .sec-dash-icon--check-circle .cc-check,
+.btn:hover .sec-dash-icon--check-circle .cc-check,
+.btn:hover .sec-dash-icon--check .chk-mark {
+    animation: sec-dash-pop 0.35s ease-out;
+}
+
+.mini-stat-card:hover .sec-dash-icon--x-circle .xc-x {
+    animation: sec-dash-pop 0.35s ease-out;
+}
+
+@keyframes sec-dash-pop {
+    50% { transform: scale(1.2); }
+}
+
+/* —— Calendar plus —— */
+.btn:hover .sec-dash-icon--calendar-plus .cp-plus-v,
+.dash-quick-tile:hover .sec-dash-icon--calendar-plus .cp-plus-v {
+    transform: scaleY(1.2);
+}
+
+.btn:hover .sec-dash-icon--calendar-plus .cp-plus-h,
+.dash-quick-tile:hover .sec-dash-icon--calendar-plus .cp-plus-h {
+    transform: scaleX(1.2);
+}
+
+/* —— Patient plus —— */
+.dash-quick-tile:hover .sec-dash-icon--patient-plus .pp-user {
+    transform: translateX(-1px);
+}
+
+.dash-quick-tile:hover .sec-dash-icon--patient-plus .pp-plus-v,
+.dash-quick-tile:hover .sec-dash-icon--patient-plus .pp-plus-h {
+    animation: sec-dash-pop 0.35s ease-out;
+}
+
+/* —— Lightbulb —— */
+.sec-tip-banner:hover .sec-dash-icon--lightbulb .lb-bulb {
+    transform: translateY(-1px);
+    filter: drop-shadow(0 0 4px currentColor);
+}
+
+/* —— Calendar event / x / check / day —— */
+.card-header:hover .sec-dash-icon--calendar-event .ce-event,
+.btn:hover .sec-dash-icon--calendar-event .ce-event {
+    transform: scaleY(1.15);
+}
+
+.appt-empty:hover .sec-dash-icon--calendar-x .cx-x,
+.btn:hover .sec-dash-icon--calendar-x .cx-x {
+    animation: sec-dash-pop 0.35s ease-out;
+}
+
+.dash-mini-card:hover .sec-dash-icon--calendar-check .ck-check {
+    animation: sec-dash-pop 0.35s ease-out;
+}
+
+.mini-stat-trend:hover .sec-dash-icon--calendar-day .cd-day {
+    animation: sec-dash-cal-dot 0.35s ease-out forwards;
+}
+
+/* —— Pie / cash / lightning / wallet —— */
+.dash-mini-card:hover .sec-dash-icon--pie-chart .pc-slice {
+    transform: rotate(12deg);
+}
+
+.dash-mini-card:hover .sec-dash-icon--cash-coin .cc-coin {
+    animation: sec-dash-card-wiggle 0.4s ease-in-out;
+}
+
+.dash-mini-card:hover .sec-dash-icon--lightning .lt-bolt {
+    animation: sec-dash-pop 0.3s ease-out;
+}
+
+.dash-mini-card:hover .sec-dash-icon--wallet .wl-flap,
+.dash-mini-card:hover .sec-dash-icon--wallet .wl-body {
+    transform: translateX(1px);
+}
+
+/* —— Trends —— */
+.mini-stat-trend:hover .sec-dash-icon--trend-up .tu-arrow {
+    transform: translate(2px, -2px);
+}
+
+.mini-stat-trend:hover .sec-dash-icon--trend-down .td-arrow {
+    transform: translate(2px, 2px);
+}
+
+/* —— Eye / stars / arrow / close —— */
+.appt-actions .btn:hover .sec-dash-icon--eye .ey-pupil {
+    transform: scale(1.2);
+}
+
+.appt-list-item:hover .sec-dash-icon--stars .st-main {
+    animation: sec-dash-pop 0.4s ease-out;
+}
+
+.whatsnew-notice-cta:hover .sec-dash-icon--arrow-left .al-shaft,
+.whatsnew-notice-cta:hover .sec-dash-icon--arrow-left .al-head {
+    transform: translateX(-3px);
+}
+
+.whatsnew-notice-close:hover .sec-dash-icon--close .cl-x {
+    animation: sec-dash-pop 0.3s ease-out;
+}
+
+/* —— Receipt / clock / badge / exclamation —— */
+.dash-mini-card:hover .sec-dash-icon--receipt .rc-line {
+    transform: translateX(1px);
+}
+
+.appt-list-item:hover .sec-dash-icon--clock .cl-hand {
+    transform: rotate(12deg);
+}
+
+.appt-list-item:hover .sec-dash-icon--person-badge .pb-card {
+    transform: translateX(1px);
+}
+
+.appt-empty:hover .sec-dash-icon--exclamation .ex-mark {
+    animation: sec-dash-pop 0.35s ease-out;
+}
+
+/* —— Patients (nav port) —— */
+.dash-quick-tile:hover .sec-dash-icon--patients .user-primary,
+.mini-stat-card:hover .sec-dash-icon--patients .user-primary {
+    transform: translateY(-2px) scale(1.05);
+}
+
+/* —— Payments page stats —— */
+.mini-stat-card:hover .sec-dash-icon--arrow-up-circle .auc-arrow {
+    transform: translateY(-2px);
+}
+
+.mini-stat-card:hover .sec-dash-icon--arrow-down-circle .adc-arrow {
+    transform: translateY(2px);
+}
+
+.mini-stat-card:hover .sec-dash-icon--calculator .calc-key {
+    animation: sec-dash-pop 0.35s ease-out;
+}
+
+.mini-stat-card:hover .sec-dash-icon--receipt .rc-line {
+    transform: translateX(1px);
+}
+
+.mini-stat-card:hover .sec-dash-icon--wallet .wl-flap {
+    transform: translateX(1px);
+}
+
+.btn:hover .sec-dash-icon--search .srch-handle {
+    transform: rotate(12deg);
+}
+
+.btn:hover .sec-dash-icon--plus-circle .pc-plus-v,
+.btn:hover .sec-dash-icon--plus-circle .pc-plus-h {
+    animation: sec-dash-pop 0.3s ease-out;
+}
+
+.btn:hover .sec-dash-icon--minus-circle .mc-minus {
+    transform: scaleX(1.15);
+}
+
+.btn:hover .sec-dash-icon--lock .lk-shackle {
+    transform: translateY(-1px);
+}
+
+.btn:hover .sec-dash-icon--chevron-right .chv,
+.btn:hover .sec-dash-icon--chevron-left .chv {
+    transform: translateX(2px);
+}
+
+[dir="rtl"] .btn:hover .sec-dash-icon--chevron-right .chv {
+    transform: translateX(-2px);
+}
+
+[dir="rtl"] .btn:hover .sec-dash-icon--chevron-left .chv {
+    transform: translateX(2px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .sec-dash-icon [class],
+    .sec-dash-icon path,
+    .sec-dash-icon g,
+    .sec-dash-icon line,
+    .sec-dash-icon rect,
+    .sec-dash-icon circle {
+        animation: none !important;
+        transition: none !important;
+        transform: none !important;
+        opacity: inherit;
+        filter: none !important;
+    }
+}

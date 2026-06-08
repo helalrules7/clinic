@@ -53,6 +53,7 @@
 
     <!-- Doctor Pages Consolidated CSS -->
     <link href="/app/Views/layouts/style.css?v=<?= filemtime(__DIR__ . '/style.css') ?>" rel="stylesheet">
+    <link href="/app/Views/doctor/assets/css/doc-sidebar-icons.css?v=<?= file_exists(__DIR__ . '/../doctor/assets/css/doc-sidebar-icons.css') ? filemtime(__DIR__ . '/../doctor/assets/css/doc-sidebar-icons.css') : time() ?>" rel="stylesheet">
     <!-- Unified Glass / Indigo design system (loaded AFTER style.css so its tokens win) -->
     <link href="/app/Views/layouts/design-system/tokens.css?v=<?= file_exists(__DIR__ . '/design-system/tokens.css') ? filemtime(__DIR__ . '/design-system/tokens.css') : time() ?>" rel="stylesheet">
     <link href="/app/Views/layouts/design-system/design-system.css?v=<?= file_exists(__DIR__ . '/design-system/design-system.css') ? filemtime(__DIR__ . '/design-system/design-system.css') : time() ?>" rel="stylesheet">
@@ -63,6 +64,7 @@
 
     <!-- v11.0.0 feature CSS bundle -->
     <link href="/app/Views/doctor/assets/css/notification-center.css?v=<?= file_exists(__DIR__ . '/../doctor/assets/css/notification-center.css') ? filemtime(__DIR__ . '/../doctor/assets/css/notification-center.css') : time() ?>" rel="stylesheet">
+    <link href="/app/Views/doctor/assets/css/chat-widget.css?v=<?= file_exists(__DIR__ . '/../doctor/assets/css/chat-widget.css') ? filemtime(__DIR__ . '/../doctor/assets/css/chat-widget.css') : time() ?>" rel="stylesheet">
     <link href="/app/Views/doctor/assets/css/todo-drawer.css?v=<?= file_exists(__DIR__ . '/../doctor/assets/css/todo-drawer.css') ? filemtime(__DIR__ . '/../doctor/assets/css/todo-drawer.css') : time() ?>" rel="stylesheet">
     <link href="/app/Views/doctor/assets/css/cmdk.css?v=<?= file_exists(__DIR__ . '/../doctor/assets/css/cmdk.css') ? filemtime(__DIR__ . '/../doctor/assets/css/cmdk.css') : time() ?>" rel="stylesheet">
     <link href="/app/Views/doctor/assets/css/patient-hover.css?v=<?= file_exists(__DIR__ . '/../doctor/assets/css/patient-hover.css') ? filemtime(__DIR__ . '/../doctor/assets/css/patient-hover.css') : time() ?>" rel="stylesheet">
@@ -188,6 +190,7 @@
         } catch (e) { /* ignore */ }
     })();
     </script>
+    <?php require __DIR__ . '/../doctor/partials/doc-nav-icons.php'; ?>
     <!-- Sidebar -->
     <div class="sidebar" id="sidebar">
         <div class="sidebar-header">
@@ -245,49 +248,49 @@
             <?php if ($this->getCurrentUser()['role'] === 'doctor'): ?>
                 <div class="nav-item">
                     <a href="/doctor/dashboard" class="nav-link <?= $this->isActiveRoute('/doctor/dashboard') ? 'active' : '' ?>">
-                        <i class="bi bi-speedometer2"></i>
+                        <?= doc_nav_icon('dashboard') ?>
                         Dashboard
                     </a>
                 </div>
                 <div class="nav-item">
                     <a href="/doctor/calendar" class="nav-link <?= $this->isActiveRoute('/doctor/calendar') ? 'active' : '' ?>">
-                        <i class="bi bi-calendar3"></i>
+                        <?= doc_nav_icon('calendar') ?>
                         Calendar
                     </a>
                 </div>
                 <div class="nav-item">
                     <a href="/doctor/patients" class="nav-link <?= $this->isActiveRoute('/doctor/patients') ? 'active' : '' ?>">
-                        <i class="bi bi-people"></i>
+                        <?= doc_nav_icon('patients') ?>
                         Patients
                     </a>
                 </div>
                 <div class="nav-item">
                     <a href="/doctor/board" class="nav-link <?= $this->isActiveRoute('/doctor/board') ? 'active' : '' ?>">
-                        <i class="bi bi-kanban"></i>
+                        <?= doc_nav_icon('board') ?>
                         Patients Board
                     </a>
                 </div>
                 <div class="nav-item">
                     <a href="/doctor/drugs" class="nav-link <?= $this->isActiveRoute('/doctor/drugs') ? 'active' : '' ?>">
-                        <i class="bi bi-capsule"></i>
+                        <?= doc_nav_icon('drugs') ?>
                         Drugs Database
                     </a>
                 </div>
                 <div class="nav-item">
                     <a href="/doctor/instruction-templates" class="nav-link <?= $this->isActiveRoute('/doctor/instruction-templates') ? 'active' : '' ?>">
-                        <i class="bi bi-tags"></i>
+                        <?= doc_nav_icon('tags') ?>
                         Tags and Templates
                     </a>
                 </div>
                 <div class="nav-item">
                     <a href="/doctor/payments" class="nav-link <?= $this->isActiveRoute('/doctor/payments') ? 'active' : '' ?>">
-                        <i class="bi bi-credit-card"></i>
+                        <?= doc_nav_icon('payments') ?>
                         Financial Management
                     </a>
                 </div>
                 <div class="nav-item">
                     <a href="/doctor/reports" class="nav-link <?= $this->isActiveRoute('/doctor/reports') ? 'active' : '' ?>">
-                        <i class="bi bi-graph-up"></i>
+                        <?= doc_nav_icon('reports') ?>
                         Reports
                     </a>
                 </div>
@@ -314,25 +317,25 @@
                 </div>
                 <div class="nav-item">
                     <a href="/doctor/alerts" class="nav-link <?= $this->isActiveRoute('/doctor/alerts') ? 'active' : '' ?>">
-                        <i class="bi bi-bell"></i>
+                        <?= doc_nav_icon('alerts') ?>
                         Alerts
                     </a>
                 </div>
                 <div class="nav-item">
                     <a href="/doctor/notes" class="nav-link <?= $this->isActiveRoute('/doctor/notes') ? 'active' : '' ?>">
-                        <i class="bi bi-sticky"></i>
+                        <?= doc_nav_icon('notes') ?>
                         Notes
                     </a>
                 </div>
                 <div class="nav-item">
                     <a href="/doctor/settings" class="nav-link <?= $this->isActiveRoute('/doctor/settings') ? 'active' : '' ?>">
-                        <i class="bi bi-gear"></i>
+                        <?= doc_nav_icon('settings') ?>
                         Settings
                     </a>
                 </div>
                 <div class="nav-item">
                     <a href="/doctor/profile" class="nav-link <?= $this->isActiveRoute('/doctor/profile') ? 'active' : '' ?>">
-                        <i class="bi bi-person-circle"></i>
+                        <?= doc_nav_icon('profile') ?>
                         Profile
                     </a>
                 </div>
@@ -414,7 +417,11 @@
             
             <div class="nav-item mt-auto">
                 <a href="/logout" class="nav-link text-danger">
-                    <i class="bi bi-box-arrow-right"></i>
+                    <?php if ($this->getCurrentUser()['role'] === 'doctor'): ?>
+                        <?= doc_nav_icon('logout') ?>
+                    <?php else: ?>
+                        <i class="bi bi-box-arrow-right"></i>
+                    <?php endif; ?>
                     Logout
                 </a>
             </div>
@@ -1065,6 +1072,10 @@
                 <span class="htooltip">Settings</span>
             </a>
             <div class="dock-divider"></div>
+            <button class="dock-chat-btn" id="dockChatBtn" title="Chat" aria-label="Chat">
+                <i class="bi bi-chat-dots"></i>
+                <span class="chat-unread-badge" id="chatUnreadBadge" hidden>0</span>
+            </button>
             <button class="dock-autohide-btn" id="dockAutohideBtn" title="Auto Hide Dock">
                 <i class="bi bi-eye-slash" id="dockAutohideIcon"></i>
                 <span class="htooltip" id="dockAutohideTooltip">Auto Hide Dock</span>
@@ -1343,6 +1354,7 @@
     <!-- Shared action registry — single source of truth for palette + dock (load before both) -->
     <script defer src="/app/Views/doctor/assets/js/actions-registry.js?v=<?= file_exists(__DIR__ . '/../doctor/assets/js/actions-registry.js') ? filemtime(__DIR__ . '/../doctor/assets/js/actions-registry.js') : time() ?>"></script>
     <script defer src="/app/Views/doctor/assets/js/notification-center.js?v=<?= file_exists(__DIR__ . '/../doctor/assets/js/notification-center.js') ? filemtime(__DIR__ . '/../doctor/assets/js/notification-center.js') : time() ?>"></script>
+    <script defer src="/app/Views/doctor/assets/js/chat-widget.js?v=<?= file_exists(__DIR__ . '/../doctor/assets/js/chat-widget.js') ? filemtime(__DIR__ . '/../doctor/assets/js/chat-widget.js') : time() ?>"></script>
     <script defer src="/app/Views/doctor/assets/js/todo-drawer.js?v=<?= file_exists(__DIR__ . '/../doctor/assets/js/todo-drawer.js') ? filemtime(__DIR__ . '/../doctor/assets/js/todo-drawer.js') : time() ?>"></script>
     <script defer src="/app/Views/doctor/assets/js/cmdk.js?v=<?= file_exists(__DIR__ . '/../doctor/assets/js/cmdk.js') ? filemtime(__DIR__ . '/../doctor/assets/js/cmdk.js') : time() ?>"></script>
     <script defer src="/app/Views/doctor/assets/js/patient-hover.js?v=<?= file_exists(__DIR__ . '/../doctor/assets/js/patient-hover.js') ? filemtime(__DIR__ . '/../doctor/assets/js/patient-hover.js') : time() ?>"></script>

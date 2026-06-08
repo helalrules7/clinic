@@ -31,6 +31,7 @@ require_once __DIR__ . '/app/Controllers/AlertController.php';
 require_once __DIR__ . '/app/Controllers/BoardController.php';
 require_once __DIR__ . '/app/Controllers/CommentsController.php';
 require_once __DIR__ . '/app/Controllers/PatientSummaryController.php';
+require_once __DIR__ . '/app/Controllers/ChatController.php';
 // require_once __DIR__ . '/app/Controllers/NotesController.php';
 
 // Load environment variables
@@ -346,6 +347,23 @@ try {
     $router->get('/api/clinics', 'ApiController@getClinics');
     $router->get('/api/calendar', 'ApiController@getCalendar');
     $router->get('/api/calendar/version', 'ApiController@calendarVersion');
+    // --- Chat (doctor<->secretary) — see ChatController + CHAT_FEATURE_PLAN.md ---
+    $router->get('/api/chat/version',                   'ChatController@version');
+    $router->get('/api/chat/roster',                    'ChatController@roster');
+    $router->get('/api/chat/conversations',             'ChatController@conversations');
+    $router->post('/api/chat/conversations',            'ChatController@startConversation');
+    $router->get('/api/chat/contacts',                  'ChatController@contacts');
+    $router->post('/api/chat/contacts',                 'ChatController@addContact');
+    $router->delete('/api/chat/contacts/{id}',          'ChatController@removeContact');
+    $router->post('/api/chat/attachments',              'ChatController@uploadAttachment');
+    $router->get('/api/chat/attachments/{id}',          'ChatController@viewAttachment');
+    $router->patch('/api/chat/messages/{id}',           'ChatController@editMessage');
+    $router->delete('/api/chat/messages/{id}',          'ChatController@deleteMessage');
+    $router->post('/api/chat/messages/{id}/reactions',  'ChatController@react');
+    $router->get('/api/chat/{id}/messages',             'ChatController@messages');
+    $router->post('/api/chat/{id}/messages',            'ChatController@send');
+    $router->put('/api/chat/{id}/read',                 'ChatController@markRead');
+    $router->post('/api/chat/{id}/typing',              'ChatController@typing');
     $router->get('/api/organizer/month', 'ApiController@getOrganizerMonth');
     // More specific routes first
     // More specific routes first - search must come before {id}

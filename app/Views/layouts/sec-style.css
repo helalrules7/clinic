@@ -543,6 +543,18 @@ body {
         [dir="rtl"] .top-bar .top-bar-cluster {
             direction: rtl;
         }
+
+        /* §40 — صف الثيم في شبكة الشرائح (≤1199): header-chips يستخدم justify-self:end
+           + justify-content:flex-end (مصمم لـ LTR). في RTL نُبقي الخلية عند inline-end
+           (اليسار البصري) ونحاذي محتوى المفتاح من الحافة الداخلية قرب الجرس. */
+        @media (max-width: 1199.98px) {
+            html[data-layout="secretary"] .top-bar .top-actions-theme {
+                justify-self: end;
+                justify-content: flex-start;
+                direction: rtl;
+                width: 100%;
+            }
+        }
         
         .top-bar-cluster {
             display: flex;
@@ -1704,6 +1716,11 @@ body {
         margin-left: 0;
     }
 
+    /* Mobile: icon-only search — parity with doctor style.css ≤768 */
+    .top-bar .global-search-toggle {
+        display: flex;
+    }
+
     .page-title h1 {
         font-size: 1.28rem;
         font-weight: 600;
@@ -1818,6 +1835,18 @@ body {
 
     .top-bar .global-search-wrapper {
         margin-left: 0;
+    }
+
+    /* Icon-only search on tablet: hide inline field, keep #globalSearchToggle.
+       Mirrors doctor style.css tablet block; expanded overlay unchanged (v11 palette). */
+    .top-bar .global-search-wrapper > .global-search-container:not(.expanded):not(.collapsing):not(.show) {
+        position: absolute;
+        width: 0;
+        height: 0;
+        overflow: hidden;
+        opacity: 0;
+        pointer-events: none;
+        visibility: hidden;
     }
 }
 
@@ -4334,6 +4363,40 @@ body > .global-search-container.expanded {
 }
 .global-search-container.collapsing { pointer-events: none !important; }
 
+/* Collapse animation — parity with doctor style.css (3D close) */
+.global-search-container.expanded.collapsing .global-search-input-wrapper,
+.global-search-container.collapsing .global-search-input-wrapper {
+    opacity: 0 !important;
+    transform: scale(0) rotateX(25deg) translateY(-80px) !important;
+    transform-style: preserve-3d !important;
+    transform-origin: center center !important;
+    transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+                transform 0.5s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.global-search-container.expanded.collapsing .global-search-backdrop,
+.global-search-container.collapsing .global-search-backdrop {
+    opacity: 0 !important;
+    backdrop-filter: blur(0px) !important;
+    -webkit-backdrop-filter: blur(0px) !important;
+    transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+                backdrop-filter 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+                -webkit-backdrop-filter 0.5s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.global-search-container.collapsing:not(.expanded) .global-search-backdrop {
+    display: none !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    z-index: -1 !important;
+    visibility: hidden !important;
+}
+
+body > .global-search-container:not(.expanded) .global-search-input-wrapper {
+    opacity: 0;
+    transform: scale(0) rotateX(25deg) translateY(-80px);
+}
+
 /* Backdrop — fixed full-viewport dimmer (tint/blur come from global-search-panel.css). */
 .global-search-backdrop {
     position: fixed !important;
@@ -4387,14 +4450,15 @@ body > .global-search-container.expanded {
 /* RTL: search icon sits on the RIGHT of the field (doctor LTR: left). */
 .global-search-icon {
     position: absolute;
-    right: 12px;
+    inset-inline-end: 12px;
+    inset-inline-start: auto;
     color: var(--muted);
     pointer-events: none;
     z-index: 1;
     transition: all 0.3s ease;
 }
 .global-search-container.expanded .global-search-icon {
-    right: 1.25rem;
+    inset-inline-end: 1.25rem;
     font-size: 1.25rem;
     color: var(--accent);
 }
@@ -4402,7 +4466,9 @@ body > .global-search-container.expanded {
 /* RTL: icon-side (right) padding larger; clear-side (left) padding smaller. */
 .global-search-input {
     width: 100%;
-    padding: 0.5rem 2.75rem 0.5rem 2.5rem;
+    padding-block: 0.5rem;
+    padding-inline-start: 3rem;
+    padding-inline-end: 2.5rem;
     border: 1px solid var(--border);
     border-radius: 8px;
     background: var(--card);
@@ -4410,13 +4476,28 @@ body > .global-search-container.expanded {
     font-size: 0.9rem;
     transition: all 0.3s ease, opacity 0.3s ease;
 }
+
+/* §34.6 — header search: icon/text gap survives page-level .form-control rules */
+html[data-layout="secretary"] .top-bar .form-control.global-search-input {
+    padding-block: 0.5rem;
+    padding-inline-start: 3rem;
+    padding-inline-end: 2.5rem;
+}
 .global-search-container.expanded .global-search-input {
-    padding: 1rem 3.5rem 1rem 3rem;
+    padding-block: 1rem;
+    padding-inline-start: 3.5rem;
+    padding-inline-end: 3rem;
     border: 1px solid var(--border);
     background: var(--card);
     font-size: 1.2rem;
     border-radius: 12px;
     width: 100%;
+}
+
+html[data-layout="secretary"] .global-search-container.expanded .form-control.global-search-input {
+    padding-block: 1rem;
+    padding-inline-start: 3.5rem;
+    padding-inline-end: 3rem;
 }
 .global-search-input:focus {
     outline: none;
@@ -4490,6 +4571,36 @@ body > .global-search-container.expanded {
     display: none;
 }
 .global-search-results.show { display: block; }
+
+/* Expanded palette — results visibility parity with doctor */
+.global-search-container.expanded .global-search-results {
+    position: absolute !important;
+    top: calc(100% + 0.5rem) !important;
+    left: 0 !important;
+    right: 0 !important;
+    max-height: 450px;
+    background: var(--card) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2) !important;
+    padding: 0.5rem;
+    overflow-y: auto;
+    z-index: 1000001 !important;
+    margin-top: 0.5rem;
+    display: none !important;
+    visibility: hidden;
+}
+
+.global-search-container.expanded .global-search-results.show {
+    display: block !important;
+    visibility: visible !important;
+}
+
+.dark .global-search-container.expanded .global-search-results {
+    background: var(--card) !important;
+    border-color: var(--border) !important;
+}
+
 .global-search-results.empty { padding: 1rem; text-align: center; color: var(--muted); }
 .global-search-results-empty {
     display: flex;
@@ -5195,11 +5306,6 @@ html[data-layout="secretary"] {
         margin-right: var(--chrome-sidebar-mini-w);
     }
 
-    /* style.css ORTHO SIDEBAR PARITY — mini rail keeps top-bar height aligned */
-    html[data-layout="secretary"] body.sidebar-mini .top-bar {
-        min-height: 130px;
-    }
-
     html[data-layout="secretary"] .sidebar-header {
         padding: 1.5rem;
     }
@@ -5207,4 +5313,9 @@ html[data-layout="secretary"] {
     html[data-layout="secretary"] .user-info {
         padding: 1rem 1.5rem;
     }
+}
+
+/* §40 — sidebar-mini: min-height على كل المقاسات (parity style.css ~11642) */
+html[data-layout="secretary"] body.sidebar-mini .top-bar {
+    min-height: 130px;
 }

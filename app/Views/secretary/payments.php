@@ -1,6 +1,7 @@
 <link href="/app/Views/secretary/assets/css/details.css?v=<?= file_exists(__DIR__ . '/assets/css/details.css') ? filemtime(__DIR__ . '/assets/css/details.css') : time() ?>" rel="stylesheet">
 <link href="/app/Views/secretary/assets/css/dashboard.css?v=<?= file_exists(__DIR__ . '/assets/css/dashboard.css') ? filemtime(__DIR__ . '/assets/css/dashboard.css') : time() ?>" rel="stylesheet">
 <link href="/app/Views/doctor/assets/css/dashboard.css?v=<?= file_exists(__DIR__ . '/../../doctor/assets/css/dashboard.css') ? filemtime(__DIR__ . '/../../doctor/assets/css/dashboard.css') : time() ?>" rel="stylesheet">
+<?php require __DIR__ . '/partials/sec-icons-bundle.php'; ?>
 
 <div class="container-fluid">
 <!-- Payments Header -->
@@ -8,7 +9,7 @@
     <div class="col-md-6">
         <div class="d-flex align-items-center">
             <h4 class="mb-0 me-3 arabic-text">
-                <i class="bi bi-credit-card me-2"></i>
+                <?= sec_dash_icon_inline('credit-card', 'page') ?>
                 إدارة المدفوعات والرصيد اليومي
             </h4>
             <div class="d-flex align-items-center ms-3" style="padding-bottom: 10px !important;">
@@ -38,7 +39,7 @@
                     data-bs-toggle="modal" 
                     data-bs-target="#dailyBalanceModal" 
                     title="تسجيل الرصيد اليومي">
-                <i class="bi bi-plus-circle me-2"></i>
+                <?= sec_dash_icon_inline('plus-circle', 'md') ?>
                 تسجيل رصيد
                 <span class="ms-2">
                     <kbd>R</kbd>
@@ -50,7 +51,7 @@
                     data-bs-toggle="modal" 
                     data-bs-target="#expenseModal" 
                     title="تسجيل مصروف">
-                <i class="bi bi-dash-circle me-2"></i>
+                <?= sec_dash_icon_inline('minus-circle', 'md') ?>
                 تسجيل مصروف
                 <span class="ms-2">
                     <kbd>E</kbd>
@@ -62,7 +63,7 @@
                     data-bs-toggle="modal" 
                     data-bs-target="#searchModal" 
                     title="البحث في المدفوعات">
-                <i class="bi bi-search me-2"></i>
+                <?= sec_dash_icon_inline('search', 'md') ?>
                 البحث
                 <span class="ms-2">
                     <kbd>F</kbd>
@@ -75,7 +76,7 @@
                     data-bs-toggle="modal" 
                     data-bs-target="#dailyClosureModal" 
                     title="إغلاق اليوم (للطبيب فقط)">
-                <i class="bi bi-lock me-2"></i>
+                <?= sec_dash_icon_inline('lock', 'md') ?>
                 إغلاق اليوم
             </button>
             <?php endif; ?>
@@ -102,7 +103,7 @@ $paymentTrendDeltas = $paymentTrendDeltas ?? ['opening' => 0, 'received' => 0, '
     <div class="col-xl col-lg-4 col-md-6 mb-4 px-2">
         <div class="stats-card-wrapper">
             <div class="mini-stat-card mini-stat-success">
-                <div class="mini-stat-icon"><i class="bi bi-wallet2"></i></div>
+                <div class="mini-stat-icon"><?= sec_dash_icon('wallet', 'stat') ?></div>
                 <div class="mini-stat-content">
                     <span class="mini-stat-value arabic-text" id="secPayStatOpening"><?= number_format((float)($dailyBalance['opening_balance'] ?? 0), 2) ?></span>
                     <span class="mini-stat-label arabic-text">الرصيد الافتتاحي</span>
@@ -115,7 +116,7 @@ $paymentTrendDeltas = $paymentTrendDeltas ?? ['opening' => 0, 'received' => 0, '
     <div class="col-xl col-lg-4 col-md-6 mb-4 px-2">
         <div class="stats-card-wrapper">
             <div class="mini-stat-card mini-stat-primary">
-                <div class="mini-stat-icon"><i class="bi bi-arrow-up-circle"></i></div>
+                <div class="mini-stat-icon"><?= sec_dash_icon('arrow-up-circle', 'stat') ?></div>
                 <div class="mini-stat-content">
                     <span class="mini-stat-value arabic-text" id="secPayStatReceived"><?= number_format((float)($dailyBalance['total_received'] ?? 0), 2) ?></span>
                     <span class="mini-stat-label arabic-text">إجمالي المستلم</span>
@@ -128,7 +129,7 @@ $paymentTrendDeltas = $paymentTrendDeltas ?? ['opening' => 0, 'received' => 0, '
     <div class="col-xl col-lg-4 col-md-6 mb-4 px-2">
         <div class="stats-card-wrapper">
             <div class="mini-stat-card mini-stat-danger">
-                <div class="mini-stat-icon"><i class="bi bi-arrow-down-circle"></i></div>
+                <div class="mini-stat-icon"><?= sec_dash_icon('arrow-down-circle', 'stat') ?></div>
                 <div class="mini-stat-content">
                     <span class="mini-stat-value arabic-text" id="secPayStatExpenses"><?= number_format((float)($dailyBalance['total_expenses'] ?? 0), 2) ?></span>
                     <span class="mini-stat-label arabic-text">إجمالي المصروفات</span>
@@ -141,7 +142,7 @@ $paymentTrendDeltas = $paymentTrendDeltas ?? ['opening' => 0, 'received' => 0, '
     <div class="col-xl col-lg-4 col-md-6 mb-4 px-2">
         <div class="stats-card-wrapper">
             <div class="mini-stat-card mini-stat-info">
-                <div class="mini-stat-icon"><i class="bi bi-calculator"></i></div>
+                <div class="mini-stat-icon"><?= sec_dash_icon('calculator', 'stat') ?></div>
                 <div class="mini-stat-content">
                     <span class="mini-stat-value arabic-text" id="secPayStatCurrent"><?= number_format((float)($dailyBalance['current_balance'] ?? 0), 2) ?></span>
                     <span class="mini-stat-label arabic-text">الرصيد الحالي</span>
@@ -154,7 +155,7 @@ $paymentTrendDeltas = $paymentTrendDeltas ?? ['opening' => 0, 'received' => 0, '
     <div class="col-xl col-lg-4 col-md-6 mb-4 px-2">
         <div class="stats-card-wrapper">
             <div class="mini-stat-card mini-stat-warning">
-                <div class="mini-stat-icon"><i class="bi bi-receipt"></i></div>
+                <div class="mini-stat-icon"><?= sec_dash_icon('receipt', 'stat') ?></div>
                 <div class="mini-stat-content">
                     <span class="mini-stat-value arabic-text" id="secPayStatTx"><?= (int)($dailyBalance['transactions_count'] ?? 0) ?></span>
                     <span class="mini-stat-label arabic-text">معاملات اليوم</span>
@@ -172,7 +173,7 @@ $paymentTrendDeltas = $paymentTrendDeltas ?? ['opening' => 0, 'received' => 0, '
         <div class="card sec-pay-types-card">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="mb-0 arabic-text">
-                    <i class="bi bi-pie-chart me-2"></i>
+                    <?= sec_dash_icon_inline('pie-chart', 'page') ?>
                     ملخص المدفوعات حسب النوع
                 </h5>
                 <small class="text-muted arabic-text">اليوم</small>
@@ -844,6 +845,7 @@ $paymentTrendDeltas = $paymentTrendDeltas ?? ['opening' => 0, 'received' => 0, '
 </div>
 <?php endif; ?>
 
+<?php require __DIR__ . '/partials/sec-icons-scripts.php'; ?>
 <script src="/app/Views/secretary/assets/js/sec-mini-stats.js?v=<?= file_exists(__DIR__ . '/assets/js/sec-mini-stats.js') ? filemtime(__DIR__ . '/assets/js/sec-mini-stats.js') : time() ?>"></script>
 <script src="/app/Views/secretary/assets/js/sec-payments-page.js?v=<?= file_exists(__DIR__ . '/assets/js/sec-payments-page.js') ? filemtime(__DIR__ . '/assets/js/sec-payments-page.js') : time() ?>"></script>
 

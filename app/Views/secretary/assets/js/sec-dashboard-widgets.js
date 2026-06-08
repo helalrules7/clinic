@@ -24,6 +24,13 @@
         return d.innerHTML;
     }
 
+    function iconHtml(key, size) {
+        if (window.SecDashIcons && typeof window.SecDashIcons.html === 'function') {
+            return window.SecDashIcons.html(key, size || 'md');
+        }
+        return '';
+    }
+
     function fmtMoney(n) {
         return Number(n || 0).toLocaleString('ar-EG', { maximumFractionDigits: 0 });
     }
@@ -70,7 +77,7 @@
         };
         var total = stats.total_appointments || 0;
         if (total === 0) {
-            body.innerHTML = '<div class="dash-mini-empty"><i class="bi bi-calendar-check"></i><span class="arabic-text">لا مواعيد اليوم</span></div>';
+            body.innerHTML = '<div class="dash-mini-empty">' + iconHtml('calendar-check', 'md') + '<span class="arabic-text">لا مواعيد اليوم</span></div>';
             return;
         }
         var segments = order.map(function (s) {
@@ -102,8 +109,8 @@
             '<span class="dash-rev-cur">ج.م</span></div>' +
             '<div class="dash-rev-sub arabic-text">المحصّل اليوم</div>' +
             '<div class="dash-rev-foot arabic-text">' +
-            '<span><i class="bi bi-receipt"></i> ' + tx + ' عملية</span>' +
-            '<span><i class="bi bi-wallet2"></i> ' + fmtMoney(balance) + ' رصيد</span></div>';
+            '<span>' + iconHtml('receipt', 'sm') + ' ' + tx + ' عملية</span>' +
+            '<span>' + iconHtml('wallet', 'sm') + ' ' + fmtMoney(balance) + ' رصيد</span></div>';
     }
 
     function statusBadgeClass(status) {
@@ -132,7 +139,7 @@
         todayPage = meta.page || todayPage;
 
         if (!items || !items.length) {
-            container.innerHTML = '<div class="appt-empty arabic-text"><i class="bi bi-calendar-x"></i><p>لا توجد مواعيد اليوم</p>' +
+            container.innerHTML = '<div class="appt-empty arabic-text">' + iconHtml('calendar-x', 'empty') + '<p>لا توجد مواعيد اليوم</p>' +
                 '<a href="/secretary/bookings" class="btn btn-sm btn-primary">حجز موعد</a></div>';
             if (nav) nav.style.display = 'none';
             return;
@@ -154,18 +161,18 @@
                 '<div class="appt-name-row">' +
                 '<a href="/secretary/patients/' + pid + '" class="appt-name patient-hover-name" data-patient-id="' + pid + '">' +
                 esc(fullName) + '</a>' +
-                (isNext ? '<span class="appt-nextup-chip arabic-text"><i class="bi bi-stars"></i> التالي</span>' : '') +
+                (isNext ? '<span class="appt-nextup-chip arabic-text">' + iconHtml('stars', 'sm') + ' التالي</span>' : '') +
                 '</div>' +
                 '<div class="appt-meta arabic-text">' +
-                '<span class="appt-meta-time"><i class="bi bi-clock"></i> ' + startT + '</span>' +
+                '<span class="appt-meta-time">' + iconHtml('clock', 'sm') + ' ' + startT + '</span>' +
                 '<span class="appt-meta-sep">·</span>' +
-                '<span class="appt-meta-vtype"><i class="bi bi-person-badge"></i> ' + esc(apt.doctor_name || '') + '</span>' +
+                '<span class="appt-meta-vtype">' + iconHtml('person-badge', 'sm') + ' ' + esc(apt.doctor_name || '') + '</span>' +
                 '</div></div>' +
                 '<div class="appt-side">' +
                 '<span class="badge ' + statusBadgeClass(apt.status) + ' arabic-text">' + esc(STATUS_LABELS_AR[apt.status] || apt.status || '') + '</span>' +
                 '<div class="appt-actions">' +
-                '<a href="/secretary/bookings/' + apt.id + '" class="btn btn-sm btn-outline-primary" title="عرض"><i class="bi bi-eye"></i></a>' +
-                (apt.status === 'Booked' ? '<button type="button" class="btn btn-sm btn-outline-success" onclick="checkInPatient(' + apt.id + ')" title="تسجيل حضور"><i class="bi bi-check-circle"></i></button>' : '') +
+                '<a href="/secretary/bookings/' + apt.id + '" class="btn btn-sm btn-outline-primary" title="عرض">' + iconHtml('eye', 'sm') + '</a>' +
+                (apt.status === 'Booked' ? '<button type="button" class="btn btn-sm btn-outline-success" onclick="checkInPatient(' + apt.id + ')" title="تسجيل حضور">' + iconHtml('check', 'sm') + '</button>' : '') +
                 '</div></div></div></div>';
         });
         html += '</div>';
@@ -220,7 +227,7 @@
             })
             .catch(function () {
                 if (container) {
-                    container.innerHTML = '<div class="appt-empty arabic-text text-danger"><i class="bi bi-exclamation-triangle"></i><p>تعذّر تحميل المواعيد</p></div>';
+                    container.innerHTML = '<div class="appt-empty arabic-text text-danger">' + iconHtml('exclamation', 'md') + '<p>تعذّر تحميل المواعيد</p></div>';
                 }
             })
             .finally(function () {

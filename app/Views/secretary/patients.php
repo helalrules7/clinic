@@ -24,12 +24,13 @@
 <!-- Patients Header -->
 <link href="/app/Views/secretary/assets/css/dashboard.css?v=<?= file_exists(__DIR__ . '/assets/css/dashboard.css') ? filemtime(__DIR__ . '/assets/css/dashboard.css') : time() ?>" rel="stylesheet">
 <link href="/app/Views/doctor/assets/css/dashboard.css?v=<?= file_exists(__DIR__ . '/assets/css/dashboard.css') ? filemtime(__DIR__ . '/assets/css/dashboard.css') : time() ?>" rel="stylesheet">
+<?php require __DIR__ . '/partials/sec-icons-bundle.php'; ?>
 
 <div class="row mb-4">
     <div class="col-md-6">
         <div class="d-flex align-items-center">
             <h4 class="mb-0 me-3 arabic-text">
-                <i class="bi bi-people me-2"></i>
+                <?= sec_dash_icon_inline('patients', 'page') ?>
                 إدارة المرضى
             </h4>
             <div class="d-flex align-items-center ms-3" style="padding-bottom: 10px !important;">
@@ -56,7 +57,7 @@
     <div class="col-md-6 text-end">
         <div class="d-flex gap-2 justify-content-end">
             <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addPatientModal">
-                <i class="bi bi-person-plus me-2"></i>
+                <?= sec_dash_icon_inline('patient-plus', 'md') ?>
                 مريض جديد
                 <span class="ms-2">
                     <kbd>N</kbd>
@@ -68,7 +69,7 @@
                     data-bs-toggle="modal" 
                     data-bs-target="#searchModal" 
                     title="استخدم F أو ب للبحث في المرضى">
-                <i class="bi bi-search me-2"></i>
+                <?= sec_dash_icon_inline('search', 'md') ?>
                 البحث
                 <span class="ms-2">
                     <kbd>F</kbd>
@@ -98,7 +99,7 @@ $patientTrendDeltas = $patientTrendDeltas ?? ['total' => 0, 'active' => 0, 'new'
     <div class="col-xl col-lg-4 col-md-6 mb-4 px-2">
         <div class="stats-card-wrapper">
             <div class="mini-stat-card mini-stat-primary">
-                <div class="mini-stat-icon"><i class="bi bi-people-fill"></i></div>
+                <div class="mini-stat-icon"><?= sec_dash_icon('patients', 'stat') ?></div>
                 <div class="mini-stat-content">
                     <span class="mini-stat-value arabic-text" id="secPatStatTotal"><?= (int)($stats['total'] ?? 0) ?></span>
                     <span class="mini-stat-label arabic-text">إجمالي المرضى</span>
@@ -111,7 +112,7 @@ $patientTrendDeltas = $patientTrendDeltas ?? ['total' => 0, 'active' => 0, 'new'
     <div class="col-xl col-lg-4 col-md-6 mb-4 px-2">
         <div class="stats-card-wrapper">
             <div class="mini-stat-card mini-stat-success">
-                <div class="mini-stat-icon"><i class="bi bi-person-check-fill"></i></div>
+                <div class="mini-stat-icon"><?= sec_dash_icon('user-check', 'stat') ?></div>
                 <div class="mini-stat-content">
                     <span class="mini-stat-value arabic-text" id="secPatStatActive"><?= (int)($stats['active'] ?? 0) ?></span>
                     <span class="mini-stat-label arabic-text">مرضى نشطين</span>
@@ -124,7 +125,7 @@ $patientTrendDeltas = $patientTrendDeltas ?? ['total' => 0, 'active' => 0, 'new'
     <div class="col-xl col-lg-4 col-md-6 mb-4 px-2">
         <div class="stats-card-wrapper">
             <div class="mini-stat-card mini-stat-warning">
-                <div class="mini-stat-icon"><i class="bi bi-person-plus-fill"></i></div>
+                <div class="mini-stat-icon"><?= sec_dash_icon('patient-plus', 'stat') ?></div>
                 <div class="mini-stat-content">
                     <span class="mini-stat-value arabic-text" id="secPatStatRecent"><?= (int)($stats['recent'] ?? 0) ?></span>
                     <span class="mini-stat-label arabic-text">جدد (٣٠ يوم)</span>
@@ -137,7 +138,7 @@ $patientTrendDeltas = $patientTrendDeltas ?? ['total' => 0, 'active' => 0, 'new'
     <div class="col-xl col-lg-4 col-md-6 mb-4 px-2">
         <div class="stats-card-wrapper">
             <div class="mini-stat-card mini-stat-info">
-                <div class="mini-stat-icon"><i class="bi bi-credit-card-fill"></i></div>
+                <div class="mini-stat-icon"><?= sec_dash_icon('credit-card', 'stat') ?></div>
                 <div class="mini-stat-content">
                     <span class="mini-stat-value arabic-text" id="secPatStatPaid"><?= number_format((float)($stats['total_paid'] ?? 0), 0) ?></span>
                     <span class="mini-stat-label arabic-text">مدفوعات إجمالية</span>
@@ -153,7 +154,7 @@ $patientTrendDeltas = $patientTrendDeltas ?? ['total' => 0, 'active' => 0, 'new'
 <div class="card mb-4">
     <div class="card-header">
         <h5 class="mb-0 arabic-text">
-            <i class="bi bi-funnel me-2"></i>
+            <?= sec_dash_icon_inline('funnel', 'page') ?>
             فلاتر البحث
         </h5>
     </div>
@@ -223,9 +224,9 @@ $patientTrendDeltas = $patientTrendDeltas ?? ['total' => 0, 'active' => 0, 'new'
 <!-- Patients Table -->
 <!-- v11: view-mode toggle (table = existing server-rendered; cards/folders = API-driven) -->
 <div class="sec-view-toggle mb-3">
-    <button type="button" class="sec-view-btn active" data-view="table"><i class="bi bi-table me-1"></i>جدول</button>
-    <button type="button" class="sec-view-btn" data-view="cards"><i class="bi bi-grid-3x3-gap me-1"></i>كروت</button>
-    <button type="button" class="sec-view-btn" data-view="folders"><i class="bi bi-folder2-open me-1"></i>مجلدات</button>
+    <button type="button" class="sec-view-btn active" data-view="table">جدول</button>
+    <button type="button" class="sec-view-btn" data-view="cards">كروت</button>
+    <button type="button" class="sec-view-btn" data-view="folders">مجلدات</button>
 </div>
 
 <div class="card" id="secTableView">
@@ -437,14 +438,14 @@ $patientTrendDeltas = $patientTrendDeltas ?? ['total' => 0, 'active' => 0, 'new'
                                            data-bs-toggle="tooltip"
                                            data-bs-placement="top"
                                            data-bs-title="عرض تفاصيل المريض">
-                                            <i class="bi bi-eye"></i>
+                                            <?= sec_dash_icon('eye', 'sm') ?>
                                         </a>
                                         <a href="/secretary/payments?patient_id=<?= $patient['id'] ?>"
                                            class="btn btn-sm btn-outline-info"
                                            data-bs-toggle="tooltip"
                                            data-bs-placement="top"
                                            data-bs-title="عرض المدفوعات">
-                                            <i class="bi bi-credit-card"></i>
+                                            <?= sec_dash_icon('credit-card', 'sm') ?>
                                         </a>
                                         <button type="button"
                                                 class="btn btn-sm btn-outline-success"
@@ -452,7 +453,7 @@ $patientTrendDeltas = $patientTrendDeltas ?? ['total' => 0, 'active' => 0, 'new'
                                                 data-bs-placement="top"
                                                 data-bs-title="حجز موعد جديد"
                                                 onclick="openBookingModal(<?= $patient['id'] ?>, '<?= htmlspecialchars($fullName, ENT_QUOTES) ?>')">
-                                            <i class="bi bi-calendar-plus"></i>
+                                            <?= sec_dash_icon('calendar-plus', 'sm') ?>
                                         </button>
                                     </div>
                                 </td>
@@ -468,6 +469,7 @@ $patientTrendDeltas = $patientTrendDeltas ?? ['total' => 0, 'active' => 0, 'new'
 <!-- v11: API-driven Cards + Folders views (rendered by secretary-patients.js) -->
 <div id="secCardsView" class="sec-view-pane" style="display:none"></div>
 <div id="secFoldersView" class="sec-view-pane" style="display:none"></div>
+<?php require __DIR__ . '/partials/sec-icons-scripts.php'; ?>
 <script src="/app/Views/secretary/assets/js/sec-mini-stats.js?v=<?= file_exists(__DIR__ . '/assets/js/sec-mini-stats.js') ? filemtime(__DIR__ . '/assets/js/sec-mini-stats.js') : time() ?>"></script>
 <script src="/app/Views/secretary/assets/js/sec-clinic-chip.js?v=<?= file_exists(__DIR__ . '/assets/js/sec-clinic-chip.js') ? filemtime(__DIR__ . '/assets/js/sec-clinic-chip.js') : time() ?>"></script>
 <script src="/app/Views/secretary/assets/js/secretary-patients.js?v=<?= file_exists(__DIR__ . '/assets/js/secretary-patients.js') ? filemtime(__DIR__ . '/assets/js/secretary-patients.js') : time() ?>"></script>
@@ -842,13 +844,13 @@ function displaySearchResults(patients, searchTerm) {
                     <div class="search-result-actions ms-3">
                         <div class="sec-patient-actions sec-patient-actions--stack">
                             <a href="/secretary/patients/${patient.id}" class="btn btn-sm btn-outline-warning arabic-text">
-                                <i class="bi bi-eye me-1"></i>عرض
+                                <?= sec_dash_icon_inline('eye', 'sm') ?>عرض
                             </a>
                             <a href="/secretary/payments?patient_id=${patient.id}" class="btn btn-sm btn-outline-info arabic-text">
-                                <i class="bi bi-credit-card me-1"></i>دفعات
+                                <?= sec_dash_icon_inline('credit-card', 'sm') ?>دفعات
                             </a>
                             <a href="/secretary/bookings?patient_id=${patient.id}" class="btn btn-sm btn-outline-success arabic-text">
-                                <i class="bi bi-calendar-plus me-1"></i>حجز
+                                <?= sec_dash_icon_inline('calendar-plus', 'sm') ?>حجز
                             </a>
                         </div>
                     </div>
@@ -2026,20 +2028,20 @@ document.addEventListener('DOMContentLoaded', function() {
     border-top-color: var(--border);
 }
 
-.form-control {
+.main-content .form-control {
     background-color: var(--bg);
     border-color: var(--border);
     color: var(--text);
 }
 
-.form-control:focus {
+.main-content .form-control:focus {
     background-color: var(--bg);
     border-color: var(--accent);
     color: var(--text);
     box-shadow: 0 0 0 0.2rem rgba(var(--accent-rgb), 0.25);
 }
 
-.input-group-text {
+.main-content .input-group-text {
     background-color: var(--bg-alt);
     border-color: var(--border);
     color: var(--text);
@@ -2494,20 +2496,20 @@ kbd[lang="ar"] {
     border-top-color: var(--border);
 }
 
-.form-control {
+.main-content .form-control {
     background-color: var(--bg);
     border-color: var(--border);
     color: var(--text);
 }
 
-.form-control:focus {
+.main-content .form-control:focus {
     background-color: var(--bg);
     border-color: var(--accent);
     color: var(--text);
     box-shadow: 0 0 0 0.2rem rgba(var(--accent-rgb), 0.25);
 }
 
-.input-group-text {
+.main-content .input-group-text {
     background-color: var(--bg-alt);
     border-color: var(--border);
     color: var(--text);

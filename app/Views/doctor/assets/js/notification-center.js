@@ -19,6 +19,7 @@
 
     var body = panel.querySelector('#notifBody');
     var closeBtn = panel.querySelector('#notifCloseBtn');
+    var clearAllBtn = panel.querySelector('#notifClearAllBtn');
     var tabsEl = panel.querySelector('.notif-tabs');
     var tabBtns = panel.querySelectorAll('.notif-tab');
     var tabIndicator = panel.querySelector('.notif-tabs__indicator');
@@ -337,7 +338,10 @@
             .catch(function () {
                 if (state.tab === 'notifications') renderError('notifications');
             })
-            .then(function () { state.loading = false; });
+            .then(function () {
+                state.loading = false;
+                updateClearAllBtn();
+            });
     }
 
     /**
@@ -564,6 +568,30 @@
             '</div>';
     }
 
+    function updateClearAllBtn() {
+        if (!clearAllBtn) return;
+        var show = state.tab === 'notifications' && state.notifications && !isStateEmpty();
+        clearAllBtn.hidden = !show;
+        clearAllBtn.disabled = !!state.loading;
+    }
+
+    function handleClearAll() {
+        if (state.tab !== 'notifications' || state.loading) return;
+        if (!state.notifications || isStateEmpty()) return;
+
+        state.loading = true;
+        updateClearAllBtn();
+
+        api('/api/notifications/clear-all', { method: 'DELETE' })
+            .then(function () { return loadNotifications(false); })
+            .then(loadUnreadCount)
+            .catch(function () { renderError('notifications'); })
+            .finally(function () {
+                state.loading = false;
+                updateClearAllBtn();
+            });
+    }
+
     function renderNotifications() {
         if (!state.notifications) return;
         var data = state.notifications;
@@ -572,6 +600,7 @@
             data.buckets.week.length + data.buckets.older.length;
         if (totalItems === 0) {
             renderEmpty(isAr ? 'لا توجد إشعارات جديدة.' : 'You are all caught up.', 'bi-check2-circle');
+            updateClearAllBtn();
             return;
         }
         body.innerHTML = '';
@@ -581,6 +610,7 @@
             if (data.buckets[k].length) frag.appendChild(renderBucket(k, data.buckets[k]));
         });
         body.appendChild(frag);
+        updateClearAllBtn();
     }
 
     function renderBucket(key, items) {
@@ -713,6 +743,7 @@
             if (!state.notifications) loadNotifications(true);
             else renderNotifications();
         }
+        updateClearAllBtn();
     }
 
     function positionTabIndicator() {
@@ -1047,6 +1078,7 @@
             }, true); // capture phase — fires before main.js's bubble listener
         }
         if (closeBtn) closeBtn.addEventListener('click', close);
+        if (clearAllBtn) clearAllBtn.addEventListener('click', handleClearAll);
 
         tabsEl.addEventListener('click', function (e) {
             var t = e.target.closest('.notif-tab');

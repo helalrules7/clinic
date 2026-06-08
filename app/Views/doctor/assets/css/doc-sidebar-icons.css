@@ -1,0 +1,306 @@
+/**
+ * Doctor sidebar — animated nav icons P1 + P2 (SVG + CSS, LTR).
+ * Its Hover (MIT): https://www.itshover.com/icons
+ * Calendar paths: Lucide-style (ISC).
+ */
+
+html[data-layout="doctor"] {
+    --doc-nav-icon-size: 24px;
+    --doc-nav-icon-size-mini: 1.55rem;
+    --doc-nav-icon-size-sub: 18px;
+}
+
+.doc-nav-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--doc-nav-icon-size);
+    height: var(--doc-nav-icon-size);
+    flex-shrink: 0;
+    margin-right: 0.75rem;
+    pointer-events: none;
+    color: inherit;
+}
+
+html[data-layout="doctor"] .sidebar .nav-link .doc-nav-icon,
+html[data-layout="doctor"] .sidebar .nav-link .doc-nav-icon *,
+html[data-layout="doctor"] .sidebar .nav-submenu-link .doc-nav-icon,
+html[data-layout="doctor"] .sidebar .nav-submenu-link .doc-nav-icon * {
+    background: none !important;
+    box-shadow: none !important;
+    border-radius: 0;
+    overflow: visible;
+}
+
+.doc-nav-icon svg {
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    stroke: currentColor;
+    fill: none;
+}
+
+.doc-nav-icon [class] {
+    transition: transform 0.25s ease-in-out, opacity 0.25s ease-in-out;
+    transform-box: fill-box;
+    transform-origin: center;
+}
+
+/* —— Dashboard —— */
+html[data-layout="doctor"] .nav-link:hover .doc-nav-icon--dashboard .rect-1 { transform: translate(10px, 0); }
+html[data-layout="doctor"] .nav-link:hover .doc-nav-icon--dashboard .rect-2 { transform: translate(-1px, 12px); }
+html[data-layout="doctor"] .nav-link:hover .doc-nav-icon--dashboard .rect-3 { transform: translate(-10px, 0); }
+html[data-layout="doctor"] .nav-link:hover .doc-nav-icon--dashboard .rect-4 { transform: translate(1px, -12px); }
+
+/* —— Calendar (Lucide-style) —— */
+.doc-nav-icon--calendar .cal-dot {
+    opacity: 0.35;
+    transform: scale(0.6);
+}
+html[data-layout="doctor"] .nav-link:hover .doc-nav-icon--calendar .cal-header {
+    transform: translateY(-1px);
+}
+html[data-layout="doctor"] .nav-link:hover .doc-nav-icon--calendar .cal-dot {
+    animation: doc-icon-cal-dot 0.35s ease-out forwards;
+}
+html[data-layout="doctor"] .nav-link:hover .doc-nav-icon--calendar .cal-dot-2 {
+    animation-delay: 0.08s;
+}
+html[data-layout="doctor"] .nav-link:hover .doc-nav-icon--calendar .cal-dot-3 {
+    animation-delay: 0.16s;
+}
+
+@keyframes doc-icon-cal-dot {
+    to { opacity: 1; transform: scale(1.4); }
+}
+
+/* —— Patients —— */
+html[data-layout="doctor"] .nav-link:hover .doc-nav-icon--patients .user-primary {
+    transform: translateY(-2px) scale(1.05);
+}
+html[data-layout="doctor"] .nav-link:hover .doc-nav-icon--patients .user-secondary {
+    transform: translateX(1px);
+    opacity: 0.8;
+}
+
+/* —— Payments —— */
+.doc-nav-icon--payments .card-stripe { opacity: 0; }
+html[data-layout="doctor"] .nav-link:hover .doc-nav-icon--payments .card-body {
+    animation: doc-icon-card-wiggle 0.4s ease-in-out;
+}
+html[data-layout="doctor"] .nav-link:hover .doc-nav-icon--payments .card-stripe {
+    animation: doc-icon-card-stripe 0.5s ease-in-out;
+}
+html[data-layout="doctor"] .nav-link:hover .doc-nav-icon--payments .card-chip {
+    animation: doc-icon-card-chip 0.25s ease-out;
+}
+
+@keyframes doc-icon-card-wiggle {
+    0%, 100% { transform: rotate(0) scale(1); }
+    25% { transform: rotate(-3deg) scale(1.02); }
+    75% { transform: rotate(3deg) scale(1.02); }
+}
+
+@keyframes doc-icon-card-stripe {
+    0% { opacity: 0; transform: translateX(-18px); }
+    50% { opacity: 1; }
+    100% { opacity: 0; transform: translateX(18px); }
+}
+
+@keyframes doc-icon-card-chip {
+    0%, 100% { transform: scale(1); opacity: 0.6; }
+    50% { transform: scale(1.6); opacity: 1; }
+}
+
+/* —— Settings (gear — Its Hover) —— */
+.doc-nav-icon--settings .gear-rotator {
+    transform-origin: 16px 16px;
+}
+html[data-layout="doctor"] .nav-link:hover .doc-nav-icon--settings .gear-rotator {
+    animation: doc-icon-gear-spin 0.9s ease-in-out;
+}
+html[data-layout="doctor"] .nav-link:hover .doc-nav-icon--settings .gear-center {
+    animation: doc-icon-gear-pulse 0.3s ease-out;
+}
+
+@keyframes doc-icon-gear-spin {
+    to { transform: rotate(360deg); }
+}
+
+@keyframes doc-icon-gear-pulse {
+    50% { transform: scale(1.1); }
+}
+
+/* —— Profile —— */
+.doc-nav-icon--profile .doc-icon-profile-figure { color: inherit; }
+html[data-layout="doctor"] .nav-link:hover .doc-nav-icon--profile .doc-icon-profile-figure {
+    transform: translateY(-1px) scale(1.05);
+}
+
+/* —— Board (kanban — Lucide-style) —— */
+html[data-layout="doctor"] .nav-link:hover .doc-nav-icon--board .kanban-col-1 {
+    animation: doc-icon-kanban-1 0.4s ease-out;
+}
+html[data-layout="doctor"] .nav-link:hover .doc-nav-icon--board .kanban-col-2 {
+    animation: doc-icon-kanban-2 0.4s ease-out 0.06s;
+}
+html[data-layout="doctor"] .nav-link:hover .doc-nav-icon--board .kanban-col-3 {
+    animation: doc-icon-kanban-3 0.4s ease-out 0.12s;
+}
+
+@keyframes doc-icon-kanban-1 {
+    50% { transform: translateY(-2px) scaleY(1.08); }
+}
+
+@keyframes doc-icon-kanban-2 {
+    50% { transform: translateY(-3px) scaleY(1.12); }
+}
+
+@keyframes doc-icon-kanban-3 {
+    50% { transform: translateY(-1px) scaleY(1.05); }
+}
+
+/* —— Drugs (pill — Lucide-style) —— */
+.doc-nav-icon--drugs .pill-body {
+    transform-origin: center;
+}
+html[data-layout="doctor"] .nav-link:hover .doc-nav-icon--drugs .pill-body {
+    animation: doc-icon-pill-tilt 0.45s ease-in-out;
+}
+
+@keyframes doc-icon-pill-tilt {
+    25% { transform: rotate(-12deg) scale(1.04); }
+    75% { transform: rotate(8deg) scale(1.02); }
+}
+
+/* —— Tags (Lucide-style) —— */
+.doc-nav-icon--tags .tag-shape {
+    transform-origin: 4px 4px;
+}
+html[data-layout="doctor"] .nav-link:hover .doc-nav-icon--tags .tag-shape {
+    animation: doc-icon-tag-swing 0.4s ease-out;
+}
+html[data-layout="doctor"] .nav-link:hover .doc-nav-icon--tags .tag-dot {
+    animation: doc-icon-tag-dot 0.35s ease-out;
+}
+
+@keyframes doc-icon-tag-swing {
+    50% { transform: rotate(-6deg) translateX(1px); }
+}
+
+@keyframes doc-icon-tag-dot {
+    50% { transform: scale(2); }
+}
+
+/* —— Reports (chart-line — Its Hover) —— */
+.doc-nav-icon--reports .chart-line {
+    stroke-dasharray: 24;
+    stroke-dashoffset: 0;
+}
+html[data-layout="doctor"] .nav-link:hover .doc-nav-icon--reports .chart-line {
+    animation: doc-icon-chart-draw 0.6s ease-in-out;
+}
+html[data-layout="doctor"] .nav-link:hover .doc-nav-icon--reports .chart-base {
+    transform: scaleX(1.02);
+    transform-origin: left center;
+}
+
+@keyframes doc-icon-chart-draw {
+    0% { stroke-dashoffset: 24; opacity: 0.5; }
+    100% { stroke-dashoffset: 0; opacity: 1; }
+}
+
+/* —— Alerts (filled-bell — Its Hover) —— */
+.doc-nav-icon--alerts svg {
+    fill: currentColor;
+    stroke: none;
+}
+.doc-nav-icon--alerts .bell-body {
+    transform-origin: 12px 4px;
+}
+.doc-nav-icon--alerts .bell-clapper {
+    transform-origin: 12px 19px;
+}
+html[data-layout="doctor"] .nav-link:hover .doc-nav-icon--alerts .bell-body {
+    animation: doc-icon-bell-ring 0.6s ease-in-out;
+}
+html[data-layout="doctor"] .nav-link:hover .doc-nav-icon--alerts .bell-clapper {
+    animation: doc-icon-bell-clapper 0.6s ease-in-out 0.05s;
+}
+
+@keyframes doc-icon-bell-ring {
+    0%, 100% { transform: rotate(0); }
+    20% { transform: rotate(-8deg); }
+    40% { transform: rotate(6deg); }
+    60% { transform: rotate(-4deg); }
+    80% { transform: rotate(2deg); }
+}
+
+@keyframes doc-icon-bell-clapper {
+    0%, 100% { transform: rotate(0); }
+    25% { transform: rotate(12deg); }
+    50% { transform: rotate(-10deg); }
+    75% { transform: rotate(6deg); }
+}
+
+/* —— Notes (sticky-note — Lucide-style) —— */
+.doc-nav-icon--notes .note-sheet {
+    transform-origin: 12px 12px;
+}
+html[data-layout="doctor"] .nav-link:hover .doc-nav-icon--notes .note-fold {
+    animation: doc-icon-note-fold 0.35s ease-out;
+}
+html[data-layout="doctor"] .nav-link:hover .doc-nav-icon--notes .note-sheet {
+    transform: translateY(-1px) scale(1.02);
+}
+
+@keyframes doc-icon-note-fold {
+    50% { transform: translate(1px, -1px); opacity: 0.7; }
+}
+
+/* —— Logout (LTR — arrow exits right) —— */
+html[data-layout="doctor"] .nav-link:hover .doc-nav-icon--logout .logout-arrow,
+html[data-layout="doctor"] .nav-link:hover .doc-nav-icon--logout .logout-arrow-bottom {
+    animation: doc-icon-logout-arrow 0.3s ease-in-out;
+}
+html[data-layout="doctor"] .nav-link:hover .doc-nav-icon--logout .logout-door {
+    animation: doc-icon-logout-door 0.25s ease-out;
+}
+
+@keyframes doc-icon-logout-arrow {
+    50% { transform: translateX(6px); }
+}
+
+@keyframes doc-icon-logout-door {
+    50% { transform: translateX(-2px); }
+}
+
+/* —— Mini rail —— */
+html[data-layout="doctor"] body.sidebar-mini .sidebar .nav-link .doc-nav-icon {
+    width: var(--doc-nav-icon-size-mini);
+    height: var(--doc-nav-icon-size-mini);
+    margin: 0 !important;
+}
+
+/* Expanded submenu in mini rail shows labels — keep icon sizing */
+html[data-layout="doctor"] body.sidebar-mini .sidebar.has-expanded-submenu .nav-link .doc-nav-icon,
+html[data-layout="doctor"] body.sidebar-mini .sidebar:has(.nav-item.has-submenu.expanded) .nav-link .doc-nav-icon {
+    width: var(--doc-nav-icon-size);
+    height: var(--doc-nav-icon-size);
+    margin-right: 0.75rem !important;
+}
+
+/* —— Accessibility —— */
+@media (prefers-reduced-motion: reduce) {
+    html[data-layout="doctor"] .doc-nav-icon [class],
+    html[data-layout="doctor"] .doc-nav-icon path,
+    html[data-layout="doctor"] .doc-nav-icon g,
+    html[data-layout="doctor"] .doc-nav-icon line,
+    html[data-layout="doctor"] .doc-nav-icon rect,
+    html[data-layout="doctor"] .doc-nav-icon circle {
+        animation: none !important;
+        transition: none !important;
+        transform: none !important;
+        opacity: inherit;
+    }
+}

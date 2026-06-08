@@ -9507,6 +9507,12 @@
                             if (e.target.closest('.dock-minimize-btn')) {
                                 return;
                             }
+                            // Don't trigger when tapping the chat button — it
+                            // opens the chat panel via its own handler; the
+                            // radial menu must stay closed.
+                            if (e.target.closest('.dock-chat-btn')) {
+                                return;
+                            }
                             dock.classList.toggle('active');
                             updateMobileDockScrollState();
                         });

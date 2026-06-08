@@ -87,6 +87,46 @@
     color: var(--text);
     letter-spacing: -0.01em;
 }
+.notif-header__actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+}
+.notif-clear-all {
+    appearance: none;
+    background: transparent;
+    border: 0;
+    min-height: 32px;
+    padding: 0 10px;
+    border-radius: var(--r-pill, 999px);
+    color: var(--muted);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    line-height: 1;
+    white-space: nowrap;
+    transition: background 160ms ease, color 160ms ease, transform 160ms ease;
+}
+.notif-clear-all__label { pointer-events: none; }
+.notif-clear-all:hover {
+    background: rgba(var(--palette-rose-rgb, 244, 63, 94), 0.10);
+    color: var(--palette-rose, #f43f5e);
+}
+.notif-clear-all:active { transform: scale(0.96); }
+.notif-clear-all:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+.notif-clear-all:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    transform: none;
+}
 .notif-close {
     appearance: none;
     background: transparent;

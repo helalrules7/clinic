@@ -1,5 +1,6 @@
 <link href="/app/Views/secretary/assets/css/dashboard.css?v=<?= file_exists(__DIR__ . '/assets/css/dashboard.css') ? filemtime(__DIR__ . '/assets/css/dashboard.css') : time() ?>" rel="stylesheet">
 <link href="/app/Views/doctor/assets/css/dashboard.css?v=<?= file_exists(__DIR__ . '/assets/css/dashboard.css') ? filemtime(__DIR__ . '/assets/css/dashboard.css') : time() ?>" rel="stylesheet">
+<?php require __DIR__ . '/partials/sec-icons-bundle.php'; ?>
 
 <?php
     $secWhatsNewLaunchTs   = strtotime('2026-06-06 12:00:00');
@@ -13,7 +14,7 @@
      data-version="<?= htmlspecialchars($secWhatsNewVersion) ?>">
     <span class="whatsnew-notice-glow" aria-hidden="true"></span>
     <span class="whatsnew-notice-pill">
-        <i class="bi bi-stars" aria-hidden="true"></i>
+        <?= sec_dash_icon('stars', 'sm') ?>
         <span>v11.0.3</span>
     </span>
     <span class="whatsnew-notice-text">
@@ -22,11 +23,11 @@
     </span>
     <button type="button" class="whatsnew-notice-cta"
             data-bs-toggle="modal" data-bs-target="#secWhatsNewModal">
-        استكشف الجديد <i class="bi bi-arrow-left ms-1" aria-hidden="true"></i>
+        استكشف الجديد <?= sec_dash_icon_inline('arrow-left', 'sm') ?>
     </button>
     <button type="button" class="whatsnew-notice-close" id="secWhatsNewNoticeClose"
             aria-label="إخفاء إشعار التحديث">
-        <i class="bi bi-x-lg"></i>
+        <?= sec_dash_icon('close', 'sm') ?>
     </button>
 </div>
 <script>
@@ -53,8 +54,8 @@
     <h1 class="arabic-text"><?= $heroGreet ?>، <?= htmlspecialchars($_SESSION['user']['name'] ?? 'المستخدم') ?> 👋</h1>
     <p class="arabic-text">نظرة على اليوم — <strong><?= $stats['total_appointments'] ?? 0 ?></strong> موعد اليوم، منها <strong><?= $stats['completed'] ?? 0 ?></strong> مكتمل.</p>
     <div class="ds-hero-actions">
-        <a href="/secretary/bookings" class="btn btn-light arabic-text"><i class="bi bi-calendar3 me-1"></i> عرض المواعيد</a>
-        <button type="button" class="btn btn-outline-light arabic-text" onclick="quickActionAddBooking()"><i class="bi bi-calendar-plus me-1"></i> حجز جديد</button>
+        <a href="/secretary/bookings" class="btn btn-light arabic-text"><?= sec_dash_icon_inline('calendar', 'sm') ?> عرض المواعيد</a>
+        <button type="button" class="btn btn-outline-light arabic-text" onclick="quickActionAddBooking()"><?= sec_dash_icon_inline('calendar-plus', 'sm') ?> حجز جديد</button>
     </div>
 </div>
 
@@ -69,14 +70,14 @@ $trendDeltas = $trendDeltas ?? ['total' => 0, 'booked' => 0, 'checked_in' => 0, 
     <div class="col-xl col-lg-4 col-md-6 mb-4 px-2">
         <div class="stats-card-wrapper">
             <div class="mini-stat-card mini-stat-primary">
-                <div class="mini-stat-icon"><i class="bi bi-calendar3-fill"></i></div>
+                <div class="mini-stat-icon"><?= sec_dash_icon('calendar', 'stat') ?></div>
                 <div class="mini-stat-content">
                     <span class="mini-stat-value arabic-text" id="secStatTotal"><?= (int)($stats['total_appointments'] ?? 0) ?></span>
                     <span class="mini-stat-label arabic-text">إجمالي المواعيد اليوم</span>
                 </div>
                 <div class="mini-stat-chart" id="chartSecTotal" data-trend-key="total"></div>
                 <div class="mini-stat-trend trend-neutral" id="trendSecTotal">
-                    <i class="bi bi-calendar-day"></i><span class="arabic-text">اليوم</span>
+                    <?= sec_dash_icon('calendar-day', 'sm') ?><span class="arabic-text">اليوم</span>
                 </div>
             </div>
         </div>
@@ -85,14 +86,14 @@ $trendDeltas = $trendDeltas ?? ['total' => 0, 'booked' => 0, 'checked_in' => 0, 
     <div class="col-xl col-lg-4 col-md-6 mb-4 px-2">
         <div class="stats-card-wrapper">
             <div class="mini-stat-card mini-stat-warning">
-                <div class="mini-stat-icon"><i class="bi bi-hourglass-split"></i></div>
+                <div class="mini-stat-icon"><?= sec_dash_icon('hourglass', 'stat') ?></div>
                 <div class="mini-stat-content">
                     <span class="mini-stat-value arabic-text" id="secStatBooked"><?= (int)($stats['booked'] ?? 0) ?></span>
                     <span class="mini-stat-label arabic-text">في الانتظار</span>
                 </div>
                 <div class="mini-stat-chart" id="chartSecBooked" data-trend-key="booked"></div>
                 <div class="mini-stat-trend trend-neutral" id="trendSecBooked">
-                    <i class="bi bi-graph-up-arrow"></i><span>--</span>
+                    <?= sec_dash_icon('trend-up', 'sm') ?><span>--</span>
                 </div>
             </div>
         </div>
@@ -101,14 +102,14 @@ $trendDeltas = $trendDeltas ?? ['total' => 0, 'booked' => 0, 'checked_in' => 0, 
     <div class="col-xl col-lg-4 col-md-6 mb-4 px-2">
         <div class="stats-card-wrapper">
             <div class="mini-stat-card mini-stat-info">
-                <div class="mini-stat-icon"><i class="bi bi-person-check-fill"></i></div>
+                <div class="mini-stat-icon"><?= sec_dash_icon('user-check', 'stat') ?></div>
                 <div class="mini-stat-content">
                     <span class="mini-stat-value arabic-text" id="secStatCheckedIn"><?= (int)($stats['checked_in'] ?? 0) ?></span>
                     <span class="mini-stat-label arabic-text">تم الحضور</span>
                 </div>
                 <div class="mini-stat-chart" id="chartSecCheckedIn" data-trend-key="checked_in"></div>
                 <div class="mini-stat-trend trend-neutral" id="trendSecCheckedIn">
-                    <i class="bi bi-graph-up-arrow"></i><span>--</span>
+                    <?= sec_dash_icon('trend-up', 'sm') ?><span>--</span>
                 </div>
             </div>
         </div>
@@ -117,14 +118,14 @@ $trendDeltas = $trendDeltas ?? ['total' => 0, 'booked' => 0, 'checked_in' => 0, 
     <div class="col-xl col-lg-4 col-md-6 mb-4 px-2">
         <div class="stats-card-wrapper">
             <div class="mini-stat-card mini-stat-success">
-                <div class="mini-stat-icon"><i class="bi bi-check-circle-fill"></i></div>
+                <div class="mini-stat-icon"><?= sec_dash_icon('check-circle', 'stat') ?></div>
                 <div class="mini-stat-content">
                     <span class="mini-stat-value arabic-text" id="secStatCompleted"><?= (int)($stats['completed'] ?? 0) ?></span>
                     <span class="mini-stat-label arabic-text">مواعيد مكتملة</span>
                 </div>
                 <div class="mini-stat-chart" id="chartSecCompleted" data-trend-key="completed"></div>
                 <div class="mini-stat-trend trend-neutral" id="trendSecCompleted">
-                    <i class="bi bi-graph-up-arrow"></i><span>--</span>
+                    <?= sec_dash_icon('trend-up', 'sm') ?><span>--</span>
                 </div>
             </div>
         </div>
@@ -133,14 +134,14 @@ $trendDeltas = $trendDeltas ?? ['total' => 0, 'booked' => 0, 'checked_in' => 0, 
     <div class="col-xl col-lg-4 col-md-6 mb-4 px-2">
         <div class="stats-card-wrapper">
             <div class="mini-stat-card mini-stat-danger">
-                <div class="mini-stat-icon"><i class="bi bi-x-circle-fill"></i></div>
+                <div class="mini-stat-icon"><?= sec_dash_icon('x-circle', 'stat') ?></div>
                 <div class="mini-stat-content">
                     <span class="mini-stat-value arabic-text" id="secStatMissed"><?= (int)($stats['missed'] ?? 0) ?></span>
                     <span class="mini-stat-label arabic-text">لم يحضر</span>
                 </div>
                 <div class="mini-stat-chart" id="chartSecMissed" data-trend-key="missed"></div>
                 <div class="mini-stat-trend trend-down" id="trendSecMissed">
-                    <i class="bi bi-graph-down-arrow"></i><span>--</span>
+                    <?= sec_dash_icon('trend-down', 'sm') ?><span>--</span>
                 </div>
             </div>
         </div>
@@ -163,7 +164,7 @@ $trendDeltas = $trendDeltas ?? ['total' => 0, 'booked' => 0, 'checked_in' => 0, 
                                 <div class="weather-widget-meta">
                                     <div class="weather-date arabic-text" id="weatherDate">—</div>
                                     <div class="weather-location arabic-text" id="weatherLocation">
-                                        <i class="bi bi-geo-alt-fill"></i>
+                                        <?= sec_dash_icon('location', 'sm') ?>
                                         <span>كفر الشيخ</span>
                                     </div>
                                 </div>
@@ -221,7 +222,7 @@ $secTipToday = $secDailyTips[$secTipIndex];
 <!-- نصيحة اليوم — بديل خفيف لشريط الأخبار -->
 <div class="sec-tip-banner sec-tip-banner--ready mb-3" id="secTipOfDay" role="note" aria-live="polite">
     <div class="sec-tip-glow" aria-hidden="true"></div>
-    <div class="sec-tip-icon" aria-hidden="true"><i class="bi bi-lightbulb-fill"></i></div>
+    <div class="sec-tip-icon" aria-hidden="true"><?= sec_dash_icon('lightbulb', 'lg') ?></div>
     <div class="sec-tip-body">
         <span class="sec-tip-label arabic-text">نصيحة اليوم</span>
         <p class="sec-tip-text arabic-text" id="secTipText"><?= htmlspecialchars($secTipToday, ENT_QUOTES, 'UTF-8') ?></p>
@@ -233,16 +234,16 @@ $secTipToday = $secDailyTips[$secTipIndex];
         <div class="card shadow dashboard-card h-100">
             <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
                 <h6 class="m-0 font-weight-bold text-primary arabic-text">
-                    <i class="bi bi-calendar-event me-2"></i>مواعيد اليوم
+                    <?= sec_dash_icon_inline('calendar-event', 'head') ?>مواعيد اليوم
                 </h6>
                 <a href="/secretary/bookings" class="btn btn-sm btn-primary arabic-text">
-                    <i class="bi bi-calendar3 me-1"></i>عرض الكل
+                    <?= sec_dash_icon_inline('calendar', 'sm') ?>عرض الكل
                 </a>
             </div>
             <div class="card-body" id="secTodayApptContainer">
                 <?php if (empty($todayAppointments)): ?>
                     <div class="appt-empty arabic-text text-center py-4">
-                        <i class="bi bi-calendar-x display-6 text-muted"></i>
+                        <?= sec_dash_icon('calendar-x', 'empty') ?>
                         <p class="text-muted mt-2">لا توجد مواعيد اليوم</p>
                         <a href="/secretary/bookings" class="btn btn-primary btn-sm">حجز موعد</a>
                     </div>
@@ -257,28 +258,28 @@ $secTipToday = $secDailyTips[$secTipIndex];
     <div class="col-xl-6 col-lg-6 col-md-12 mb-4">
         <div class="dash-mini-grid h-100">
             <div class="dash-mini-card" id="secDashStatusCard">
-                <div class="dash-mini-head arabic-text"><i class="bi bi-pie-chart-fill"></i><span>حالة اليوم</span></div>
+                <div class="dash-mini-head arabic-text"><?= sec_dash_icon('pie-chart', 'md') ?><span>حالة اليوم</span></div>
                 <div class="dash-mini-body" id="secDashStatusBody">
                     <div class="dash-mini-spinner"><div class="spinner-border spinner-border-sm text-primary"></div></div>
                 </div>
             </div>
             <div class="dash-mini-card" id="secDashRevenueCard">
-                <div class="dash-mini-head arabic-text"><i class="bi bi-cash-coin"></i><span>إيرادات اليوم</span></div>
+                <div class="dash-mini-head arabic-text"><?= sec_dash_icon('cash-coin', 'md') ?><span>إيرادات اليوم</span></div>
                 <div class="dash-mini-body" id="secDashRevenueBody">
                     <div class="dash-mini-spinner"><div class="spinner-border spinner-border-sm text-primary"></div></div>
                 </div>
             </div>
             <div class="dash-mini-card" id="secDashQuickCard">
-                <div class="dash-mini-head arabic-text"><i class="bi bi-lightning-charge-fill"></i><span>إجراءات سريعة</span></div>
+                <div class="dash-mini-head arabic-text"><?= sec_dash_icon('lightning', 'md') ?><span>إجراءات سريعة</span></div>
                 <div class="dash-mini-body dash-quick-actions">
-                    <a href="/secretary/bookings?openModal=addBooking" class="dash-quick-tile dqt-indigo arabic-text"><i class="bi bi-calendar-plus"></i><span>حجز جديد</span></a>
-                    <a href="/secretary/patients?openModal=addPatient" class="dash-quick-tile dqt-teal arabic-text"><i class="bi bi-person-plus"></i><span>مريض جديد</span></a>
-                    <a href="/secretary/payments" class="dash-quick-tile dqt-violet arabic-text"><i class="bi bi-credit-card"></i><span>المدفوعات</span></a>
-                    <a href="/secretary/bookings" class="dash-quick-tile dqt-amber arabic-text"><i class="bi bi-calendar3"></i><span>التقويم</span></a>
+                    <a href="/secretary/bookings?openModal=addBooking" class="dash-quick-tile dqt-indigo arabic-text"><?= sec_dash_icon('calendar-plus', 'tile') ?><span>حجز جديد</span></a>
+                    <a href="/secretary/patients?openModal=addPatient" class="dash-quick-tile dqt-teal arabic-text"><?= sec_dash_icon('patient-plus', 'tile') ?><span>مريض جديد</span></a>
+                    <a href="/secretary/payments" class="dash-quick-tile dqt-violet arabic-text"><?= sec_dash_icon('payments', 'tile') ?><span>المدفوعات</span></a>
+                    <a href="/secretary/bookings" class="dash-quick-tile dqt-amber arabic-text"><?= sec_dash_icon('calendar', 'tile') ?><span>التقويم</span></a>
                 </div>
             </div>
             <div class="dash-mini-card dash-mini-clickable" onclick="window.location.href='/secretary/payments'" role="button" tabindex="0">
-                <div class="dash-mini-head arabic-text"><i class="bi bi-wallet2"></i><span>ملخص مالي</span></div>
+                <div class="dash-mini-head arabic-text"><?= sec_dash_icon('wallet', 'md') ?><span>ملخص مالي</span></div>
                 <div class="dash-mini-body arabic-text" style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--muted);font-size:.85rem;">
                     <span>عرض التحصيل والرصيد اليومي ←</span>
                 </div>
@@ -293,17 +294,17 @@ $secTipToday = $secDailyTips[$secTipIndex];
         <div class="card shadow dashboard-card h-100">
             <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
                 <h6 class="m-0 font-weight-bold text-primary arabic-text">
-                    <i class="bi bi-credit-card me-2">&nbsp;</i>
+                    <?= sec_dash_icon_inline('credit-card', 'head') ?>
                     المدفوعات الأخيرة
                 </h6>
                 <a href="/secretary/payments" class="btn btn-sm btn-primary arabic-text">
-                    <i class="bi bi-credit-card me-1">&nbsp;</i>عرض الكل
+                    <?= sec_dash_icon_inline('credit-card', 'sm') ?>عرض الكل
                 </a>
             </div>
             <div class="card-body p-0" id="secRecentPaymentsBody">
                 <?php if (empty($recentPayments)): ?>
                     <div class="text-center py-4" id="secRecentPaymentsEmpty">
-                        <i class="bi bi-credit-card text-muted"></i>
+                        <?= sec_dash_icon('credit-card', 'empty') ?>
                         <p class="text-muted mt-2 arabic-text">لا توجد مدفوعات حديثة</p>
                     </div>
                 <?php else: ?>
@@ -329,6 +330,7 @@ $secTipToday = $secDailyTips[$secTipIndex];
 
 
 
+<?php require __DIR__ . '/partials/sec-icons-scripts.php'; ?>
 <script src="/app/Views/secretary/assets/js/sec-mini-stats.js?v=<?= file_exists(__DIR__ . '/assets/js/sec-mini-stats.js') ? filemtime(__DIR__ . '/assets/js/sec-mini-stats.js') : time() ?>"></script>
 <script src="/app/Views/secretary/assets/js/dashboard.js?v=<?= file_exists(__DIR__ . '/assets/js/dashboard.js') ? filemtime(__DIR__ . '/assets/js/dashboard.js') : time() ?>"></script>
 <script src="/app/Views/secretary/assets/js/sec-dashboard-widgets.js?v=<?= file_exists(__DIR__ . '/assets/js/sec-dashboard-widgets.js') ? filemtime(__DIR__ . '/assets/js/sec-dashboard-widgets.js') : time() ?>"></script>
@@ -389,7 +391,7 @@ $secTipToday = $secDailyTips[$secTipIndex];
         if (!payments || payments.length === 0) {
             body.innerHTML = `
                 <div class="text-center py-4" id="secRecentPaymentsEmpty">
-                    <i class="bi bi-credit-card text-muted"></i>
+                    ${(window.SecDashIcons && SecDashIcons.html('credit-card', 'empty')) || ''}
                     <p class="text-muted mt-2 arabic-text">لا توجد مدفوعات حديثة</p>
                 </div>`;
             return;
