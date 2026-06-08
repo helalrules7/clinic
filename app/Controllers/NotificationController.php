@@ -295,17 +295,26 @@ class NotificationController
      * actor who performed it (never self-notify). Collapsed in the bell by
      * group_key = "appt:{id}" so a busy day on one appointment is one stack.
      *
+     * Also writes the action to activity_log with the REAL actor (drives the
+     * activity feed: correct "You" for whoever acted, and an audit row that
+     * survives a hard delete).
+     *
      * @param array    $appointment  needs at least: id, doctor_id, clinic_id, patient_id
-     * @param int      $actorUserId  the user who performed the action (excluded)
+     * @param int      $actorUserId  the user who performed the action (excluded from notifs)
+     * @param string   $action       activity verb: booked|status_changed|deleted|rescheduled|edited|checked_in
+     * @param string   $detail       optional activity detail (e.g. new status, "to <date> <time>")
      * @return int[]   created notification ids
      */
-    public static function notifyAppointmentCounterparties(array $appointment, $actorUserId, $type, $title, $message)
+    public static function notifyAppointmentCounterparties(array $appointment, $actorUserId, $action, $title, $message, $detail = null)
     {
         $apptId   = (int)($appointment['id'] ?? 0);
         $doctorId = $appointment['doctor_id'] ?? null;
         $clinicId = $appointment['clinic_id'] ?? null;
         $patientId = isset($appointment['patient_id']) ? (int)$appointment['patient_id'] : null;
         $groupKey = $apptId ? ('appt:' . $apptId) : null;
+
+        // Audit log first (real actor) — drives the activity feed.
+        \App\Lib\Helpers::logActivity($actorUserId, $action, $apptId ?: null, $patientId, $doctorId, $clinicId, $detail);
 
         $recipients = [];
         if ($doctorId) {
@@ -327,7 +336,7 @@ class NotificationController
             if (self::userSkipsNotification($uid, 'dont_create_notification_for_appointments')) {
                 continue;
             }
-            $nid = self::create($uid, $type, $title, $message, 'appointment', $apptId ?: null, $patientId, $groupKey);
+            $nid = self::create($uid, 'appointment', $title, $message, 'appointment', $apptId ?: null, $patientId, $groupKey);
             if ($nid) {
                 $created[] = (int)$nid;
             }

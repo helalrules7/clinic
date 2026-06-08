@@ -126,11 +126,11 @@ class ActivityController
             error_log("ActivityController::feed consultation_notes skipped: " . $e->getMessage());
         }
 
-        // -- Source 2: appointments (status changes, clinic-scoped) ---------
+        // -- Source 2: appointment actions from activity_log (REAL actor) ---
         try {
-            $events = array_merge($events, $this->fetchAppointmentEvents($clinicId, $limit));
+            $events = array_merge($events, $this->fetchActivityLogEvents($clinicId, $limit));
         } catch (\Throwable $e) {
-            error_log("ActivityController::feed appointments skipped: " . $e->getMessage());
+            error_log("ActivityController::feed activity_log skipped: " . $e->getMessage());
         }
 
         // -- Source 3: alerts (actor-pool scoped — alerts.doctor_id = users.id) --
@@ -245,6 +245,74 @@ class ActivityController
     /**
      * appointments — recently status-changed
      */
+    /**
+     * Appointment actions from activity_log — the REAL actor (so a secretary's
+     * own cancel shows as "You"), and a row that survives a hard delete. Replaces
+     * the old derive-from-appointments source (which attributed everything to the
+     * assigned doctor and showed noisy "status Booked" rows for every appointment).
+     */
+    private function fetchActivityLogEvents($clinicId, $limit)
+    {
+        if (!$this->tableExists('activity_log')) {
+            return [];
+        }
+
+        $sql = "SELECT al.id          AS row_id,
+                       al.actor_user_id AS actor_id,
+                       al.action        AS action_code,
+                       al.detail        AS detail,
+                       al.entity_id     AS entity_id,
+                       al.patient_id    AS patient_id,
+                       al.created_at    AS ts,
+                       u.name           AS actor_name,
+                       u.username       AS actor_username,
+                       p.first_name     AS p_first,
+                       p.last_name      AS p_last
+                FROM activity_log al
+                LEFT JOIN users u    ON u.id = al.actor_user_id
+                LEFT JOIN patients p ON p.id = al.patient_id
+                WHERE al.entity_type = 'appointment'";
+        $params = [];
+        if ($clinicId !== null) {
+            $sql .= " AND al.clinic_id = ?";
+            $params[] = (int)$clinicId;
+        }
+        $sql .= " ORDER BY al.created_at DESC LIMIT " . (int)$limit;
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
+        $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        $out = [];
+        foreach ($rows as $r) {
+            $patientLabel = trim(($r['p_first'] ?? '') . ' ' . ($r['p_last'] ?? ''));
+            $out[] = [
+                'id'           => 'act-' . $r['row_id'],
+                'type'         => 'appointment',
+                'actor_id'     => $r['actor_id'] !== null ? (int)$r['actor_id'] : null,
+                'actor_name'   => $r['actor_name'] ?: ($r['actor_username'] ?: 'Someone'),
+                'action'       => $this->describeActivityAction($r['action_code'], $r['detail']),
+                'target_label' => $patientLabel !== '' ? $patientLabel : ($r['patient_id'] ? ('Patient #' . $r['patient_id']) : ''),
+                'target_link'  => $r['entity_id'] ? ('/appointment/' . (int)$r['entity_id']) : '',
+                'ts'           => $r['ts'],
+            ];
+        }
+        return $out;
+    }
+
+    private function describeActivityAction($action, $detail)
+    {
+        switch ($action) {
+            case 'booked':         return 'booked an appointment';
+            case 'status_changed': return 'updated appointment status to "' . ($detail ?? '') . '"';
+            case 'deleted':        return 'deleted an appointment';
+            case 'rescheduled':    return 'rescheduled an appointment' . ($detail ? ' ' . $detail : '');
+            case 'edited':         return 'edited an appointment' . ($detail ? ' ' . $detail : '');
+            case 'checked_in':     return 'checked in the patient';
+            default:               return (string)$action;
+        }
+    }
+
     private function fetchAppointmentEvents($clinicId, $limit)
     {
         if (!$this->tableExists('appointments')) {

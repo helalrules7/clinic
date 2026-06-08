@@ -310,7 +310,7 @@ class SecretaryController
                         'patient_id' => (int)$input['patient_id'],
                     ],
                     $currentUser['id'],
-                    'appointment',
+                    'booked',
                     'New Appointment',
                     "Appointment booked for {$patientName} on {$input['date']} at {$startTime} by {$actorLabel}"
                 );
@@ -435,17 +435,20 @@ class SecretaryController
                 ], 422);
             }
 
-            // No payments → SOFT CANCEL (status='Cancelled'): the row survives for
-            // audit + the activity feed and the time slot is freed. Secretaries
-            // never hard-delete (that is admin-only via the doctor API).
-            $stmt = $this->pdo->prepare("
-                UPDATE appointments
-                   SET status = 'Cancelled', cancellation_reason = 'Cancelled by secretary', updated_at = NOW()
-                 WHERE id = ?
-            ");
-            $stmt->execute([$id]);
+            // HARD DELETE: a deleted booking must disappear from BOTH calendars
+            // (soft-cancel left it lingering as "Cancelled" on the secretary side).
+            // The payment-lock above blocks deleting a booking that carries money;
+            // the deletion is recorded in activity_log so the audit survives.
+            foreach (['prescriptions', 'glasses_prescriptions', 'lab_tests', 'radiology_tests', 'consultation_notes', 'timeline_events'] as $tbl) {
+                try {
+                    $this->pdo->prepare("DELETE FROM {$tbl} WHERE appointment_id = ?")->execute([$id]);
+                } catch (\PDOException $e) {
+                    // table may not exist — ignore
+                }
+            }
+            $this->pdo->prepare("DELETE FROM appointments WHERE id = ?")->execute([$id]);
 
-            // Notify the assigned doctor (+ co-secretaries) of the cancellation.
+            // Record the deletion (real actor → activity_log) + notify the doctor.
             try {
                 $patientName = trim(($appointment['first_name'] ?? '') . ' ' . ($appointment['last_name'] ?? ''));
                 if ($patientName === '') {
@@ -454,9 +457,9 @@ class SecretaryController
                 \App\Controllers\NotificationController::notifyAppointmentCounterparties(
                     $appointment,
                     $this->auth->user()['id'],
-                    'appointment',
-                    'Appointment Cancelled',
-                    "Cancelled appointment for {$patientName} on {$appointment['date']} at {$appointment['start_time']}"
+                    'deleted',
+                    'Appointment Deleted',
+                    "Deleted appointment for {$patientName} on {$appointment['date']} at {$appointment['start_time']}"
                 );
             } catch (\Exception $e) {
                 // non-fatal
@@ -464,8 +467,7 @@ class SecretaryController
 
             return $this->jsonResponse([
                 'ok'      => true,
-                'soft'    => true,
-                'message' => 'Booking cancelled successfully'
+                'message' => 'Booking deleted successfully'
             ]);
 
         } catch (Exception $e) {
@@ -576,7 +578,7 @@ class SecretaryController
                         \App\Controllers\NotificationController::notifyAppointmentCounterparties(
                             $appointment,
                             $this->auth->user()['id'],
-                            'appointment',
+                            'checked_in',
                             'Patient Checked In',
                             "Patient {$appointment['patient_name']} checked in on {$appointment['date']} at {$appointment['start_time']}"
                         );
@@ -2377,9 +2379,10 @@ class SecretaryController
                             'patient_id' => $input['patient_id'] ?? ($existing['patient_id'] ?? null),
                         ],
                         $this->auth->user()['id'],
-                        'appointment',
+                        'edited',
                         'Appointment Updated',
-                        "Appointment for {$pName} updated to {$input['date']} at {$input['start_time']}"
+                        "Appointment for {$pName} updated to {$input['date']} at {$input['start_time']}",
+                        "to {$input['date']} {$input['start_time']}"
                     );
                 } catch (\Exception $e) {
                     // non-fatal

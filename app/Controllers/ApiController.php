@@ -247,62 +247,35 @@ class ApiController
                     ], 422);
                 }
 
-                // Default (incl. the calendar's delete button) is a SOFT CANCEL:
-                // status='Cancelled' so the row survives for audit, shows in the
-                // activity feed, and frees its time slot. A true hard-delete
-                // (cascading prescriptions/notes/timeline) is admin-only and must be
-                // explicitly requested with ?hard=1.
-                $body = json_decode(file_get_contents('php://input'), true) ?: [];
-                $reason = trim((string)($body['reason'] ?? ($_GET['reason'] ?? '')));
-                if ($reason === '') {
-                    $reason = 'Cancelled';
-                }
-                $hardDelete = ($user['role'] === 'admin')
-                    && ((string)($_GET['hard'] ?? ($body['hard'] ?? '')) === '1');
-
-                if ($hardDelete) {
-                    foreach (['prescriptions', 'glasses_prescriptions', 'lab_tests', 'radiology_tests', 'consultation_notes', 'payments', 'timeline_events'] as $tbl) {
-                        try {
-                            $this->pdo->prepare("DELETE FROM {$tbl} WHERE appointment_id = ?")->execute([$id]);
-                        } catch (\PDOException $e) {
-                            // table may not exist — ignore
-                        }
+                // HARD DELETE (per product): a deleted appointment must disappear
+                // from BOTH the doctor and secretary calendars — soft-cancel left it
+                // lingering as "Cancelled" on the secretary side. The payment-lock
+                // above already blocks deleting a booking that carries money; the
+                // deletion is recorded in activity_log (below) so the audit survives
+                // even though the row is gone.
+                foreach (['prescriptions', 'glasses_prescriptions', 'lab_tests', 'radiology_tests', 'consultation_notes', 'timeline_events'] as $tbl) {
+                    try {
+                        $this->pdo->prepare("DELETE FROM {$tbl} WHERE appointment_id = ?")->execute([$id]);
+                    } catch (\PDOException $e) {
+                        // table may not exist — ignore
                     }
-                    $this->pdo->prepare("DELETE FROM appointments WHERE id = ?")->execute([$id]);
-                } else {
-                    $this->pdo->prepare("
-                        UPDATE appointments
-                           SET status = 'Cancelled', cancellation_reason = ?, updated_at = NOW()
-                         WHERE id = ?
-                    ")->execute([$reason, $id]);
                 }
+                $this->pdo->prepare("DELETE FROM appointments WHERE id = ?")->execute([$id]);
 
                 $this->pdo->commit();
 
                 $patientName = trim($appointment['first_name'] . ' ' . $appointment['last_name']);
 
-                // Timeline event for the cancellation / deletion.
-                try {
-                    $this->createTimelineEvent(
-                        $appointment['patient_id'],
-                        $id,
-                        $hardDelete ? 'Deletion' : 'StatusChange',
-                        $hardDelete
-                            ? 'Appointment deleted'
-                            : ('Appointment cancelled' . ($reason !== 'Cancelled' ? " - {$reason}" : ''))
-                    );
-                } catch (\Exception $e) {
-                    // non-fatal
-                }
-
-                // Notify the OTHER party (assigned doctor + clinic secretaries, minus actor).
+                // Record the deletion (real actor → activity_log) + notify the other
+                // party. We still hold $appointment in memory, so the log row is
+                // populated even though the appointment row no longer exists.
                 try {
                     \App\Controllers\NotificationController::notifyAppointmentCounterparties(
                         $appointment,
                         $user['id'],
-                        'appointment',
-                        $hardDelete ? 'Appointment Deleted' : 'Appointment Cancelled',
-                        ($hardDelete ? 'Deleted' : 'Cancelled') . " appointment for {$patientName} on {$appointment['date']} at {$appointment['start_time']}"
+                        'deleted',
+                        'Appointment Deleted',
+                        "Deleted appointment for {$patientName} on {$appointment['date']} at {$appointment['start_time']}"
                     );
                 } catch (\Exception $e) {
                     // Continue even if notification creation fails
@@ -310,8 +283,7 @@ class ApiController
 
                 return $this->jsonResponse([
                     'ok' => true,
-                    'soft' => !$hardDelete,
-                    'message' => $hardDelete ? 'Appointment deleted successfully' : 'Appointment cancelled successfully',
+                    'message' => 'Appointment deleted successfully',
                     'data' => [
                         'deleted_appointment' => [
                             'id' => $id,
@@ -516,7 +488,7 @@ class ApiController
                                 'patient_id' => (int)$data['patient_id'],
                             ],
                             $user['id'],
-                            'appointment',
+                            'booked',
                             'New Appointment',
                             "Appointment booked for {$patientName} on {$data['date']} at {$data['start_time']}{$by}"
                         );
@@ -700,9 +672,10 @@ class ApiController
                         \App\Controllers\NotificationController::notifyAppointmentCounterparties(
                             $appointment,
                             $user['id'],
-                            'appointment',
+                            'status_changed',
                             'Appointment Status Updated',
-                            "{$statusMessage} for {$patientName} on {$appointment['date']} at {$appointment['start_time']}" . ($reason ? " - {$reason}" : '')
+                            "{$statusMessage} for {$patientName} on {$appointment['date']} at {$appointment['start_time']}" . ($reason ? " - {$reason}" : ''),
+                            $newStatus
                         );
                     } catch (\Exception $e) {
                         // Continue even if notification creation fails
@@ -2715,9 +2688,10 @@ class ApiController
                         'patient_id' => $appointment['patient_id'] ?? null,
                     ],
                     $user['id'],
-                    'appointment',
+                    'rescheduled',
                     'Appointment Rescheduled',
-                    "Appointment for {$patientName} rescheduled from {$appointment['date']} {$appointment['start_time']} to {$newDate} at {$newTime}"
+                    "Appointment for {$patientName} rescheduled from {$appointment['date']} {$appointment['start_time']} to {$newDate} at {$newTime}",
+                    "to {$newDate} {$newTime}"
                 );
             } catch (\Exception $e) {
                 // Continue even if notification creation fails
@@ -2917,9 +2891,10 @@ class ApiController
                         'patient_id' => $appointment['patient_id'] ?? null,
                     ],
                     $user['id'],
-                    'appointment',
+                    'rescheduled',
                     'Follow-up Appointment Rescheduled',
-                    "Follow-up appointment for {$patientName} rescheduled to {$newDate} at {$newTime}"
+                    "Follow-up appointment for {$patientName} rescheduled to {$newDate} at {$newTime}",
+                    "to {$newDate} {$newTime}"
                 );
             } catch (\Exception $e) {
                 // Continue even if notification creation fails
@@ -3549,9 +3524,10 @@ class ApiController
                         'patient_id' => $data['patient_id'] ?? ($appt['patient_id'] ?? null),
                     ],
                     $user['id'],
-                    'appointment',
+                    'edited',
                     'Appointment Updated',
-                    "Appointment for {$pName} updated to {$newDate} at {$data['start_time']}"
+                    "Appointment for {$pName} updated to {$newDate} at {$data['start_time']}",
+                    "to {$newDate} {$data['start_time']}"
                 );
             } catch (\Exception $e) {
                 // non-fatal

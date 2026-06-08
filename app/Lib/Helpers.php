@@ -285,6 +285,36 @@ class Helpers
     }
 
     /**
+     * Append an appointment action to activity_log with the REAL actor (the user
+     * who performed it). Drives the activity feed: correct "You" attribution for
+     * whoever acted (incl. secretaries), and a surviving audit row for hard-deletes.
+     * Best-effort — never throws (logging must not break the underlying action).
+     */
+    public static function logActivity($actorUserId, $action, $entityId, $patientId, $doctorId, $clinicId, $detail = null)
+    {
+        try {
+            $db = \App\Config\Database::getInstance()->getConnection();
+            $stmt = $db->prepare("
+                INSERT INTO activity_log
+                    (actor_user_id, action, entity_type, entity_id, patient_id, doctor_id, clinic_id, detail)
+                VALUES (?, ?, 'appointment', ?, ?, ?, ?, ?)
+            ");
+            $stmt->execute([
+                $actorUserId ? (int)$actorUserId : null,
+                (string)$action,
+                $entityId  ? (int)$entityId  : null,
+                $patientId ? (int)$patientId : null,
+                $doctorId  ? (int)$doctorId  : null,
+                $clinicId  ? (int)$clinicId  : null,
+                $detail !== null ? (string)$detail : null,
+            ]);
+            return $db->lastInsertId();
+        } catch (\Throwable $e) {
+            return null;
+        }
+    }
+
+    /**
      * Generate invoice number
      */
     public static function generateInvoiceNumber()
