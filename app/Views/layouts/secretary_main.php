@@ -37,6 +37,7 @@
     <!-- v11.0.0 feature CSS bundle -->
     <link href="/app/Views/doctor/assets/css/notification-center.css?v=<?= file_exists(__DIR__ . '/../doctor/assets/css/notification-center.css') ? filemtime(__DIR__ . '/../doctor/assets/css/notification-center.css') : time() ?>" rel="stylesheet">
     <link href="/app/Views/doctor/assets/css/chat-widget.css?v=<?= file_exists(__DIR__ . '/../doctor/assets/css/chat-widget.css') ? filemtime(__DIR__ . '/../doctor/assets/css/chat-widget.css') : time() ?>" rel="stylesheet">
+    <link href="/app/Views/doctor/assets/css/image-viewer-modal.css?v=<?= file_exists(__DIR__ . '/../doctor/assets/css/image-viewer-modal.css') ? filemtime(__DIR__ . '/../doctor/assets/css/image-viewer-modal.css') : time() ?>" rel="stylesheet">
     <link href="/app/Views/doctor/assets/css/todo-drawer.css?v=<?= file_exists(__DIR__ . '/../doctor/assets/css/todo-drawer.css') ? filemtime(__DIR__ . '/../doctor/assets/css/todo-drawer.css') : time() ?>" rel="stylesheet">
     <link href="/app/Views/doctor/assets/css/cmdk.css?v=<?= file_exists(__DIR__ . '/../doctor/assets/css/cmdk.css') ? filemtime(__DIR__ . '/../doctor/assets/css/cmdk.css') : time() ?>" rel="stylesheet">
     <link href="/app/Views/doctor/assets/css/patient-hover.css?v=<?= file_exists(__DIR__ . '/../doctor/assets/css/patient-hover.css') ? filemtime(__DIR__ . '/../doctor/assets/css/patient-hover.css') : time() ?>" rel="stylesheet">
@@ -1366,6 +1367,7 @@
     <script>
         window.__SEC_CHAT_FAB_ICON_HTML__ = <?= json_encode(sec_chat_fab_icon(), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
     </script>
+    <script src="/app/Views/doctor/assets/js/image-viewer-modal.js?v=<?= file_exists(__DIR__ . '/../doctor/assets/js/image-viewer-modal.js') ? filemtime(__DIR__ . '/../doctor/assets/js/image-viewer-modal.js') : time() ?>"></script>
     <script defer src="/app/Views/doctor/assets/js/chat-widget.js?v=<?= file_exists(__DIR__ . '/../doctor/assets/js/chat-widget.js') ? filemtime(__DIR__ . '/../doctor/assets/js/chat-widget.js') : time() ?>"></script>
     <script defer src="/app/Views/doctor/assets/js/todo-drawer.js?v=<?= file_exists(__DIR__ . '/../doctor/assets/js/todo-drawer.js') ? filemtime(__DIR__ . '/../doctor/assets/js/todo-drawer.js') : time() ?>"></script>
     <script defer src="/app/Views/doctor/assets/js/cmdk.js?v=<?= file_exists(__DIR__ . '/../doctor/assets/js/cmdk.js') ? filemtime(__DIR__ . '/../doctor/assets/js/cmdk.js') : time() ?>"></script>

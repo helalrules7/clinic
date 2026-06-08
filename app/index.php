@@ -363,10 +363,19 @@ try {
     $router->patch('/api/chat/messages/{id}',           'ChatController@editMessage');
     $router->delete('/api/chat/messages/{id}',          'ChatController@deleteMessage');
     $router->post('/api/chat/messages/{id}/reactions',  'ChatController@react');
+    $router->post('/api/chat/messages/{id}/pin',        'ChatController@pinMessage');
     $router->get('/api/chat/{id}/messages',             'ChatController@messages');
     $router->post('/api/chat/{id}/messages',            'ChatController@send');
     $router->put('/api/chat/{id}/read',                 'ChatController@markRead');
     $router->post('/api/chat/{id}/typing',              'ChatController@typing');
+    $router->post('/api/chat/{id}/group',               'ChatController@updateGroup');
+    $router->post('/api/chat/{id}/add-member',          'ChatController@addMember');
+    $router->post('/api/chat/{id}/remove-member',       'ChatController@removeMember');
+    $router->post('/api/chat/{id}/leave',               'ChatController@leaveGroup');
+    $router->put('/api/chat/{id}/mute',                 'ChatController@toggleMute');
+    $router->get('/api/chat/{id}/pins',                 'ChatController@pins');
+    $router->get('/api/chat/{id}/search',               'ChatController@searchMessages');
+    $router->post('/api/chat/{id}/forward',             'ChatController@forwardMessage');
     $router->get('/api/organizer/month', 'ApiController@getOrganizerMonth');
     // More specific routes first
     // More specific routes first - search must come before {id}

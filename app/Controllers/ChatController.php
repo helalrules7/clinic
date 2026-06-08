@@ -77,6 +77,18 @@ class ChatController
         return (bool) $stmt->fetchColumn();
     }
 
+    /** True iff the user is an ACTIVE admin of a GROUP conversation. */
+    private function isGroupAdmin(int $conversationId, int $userId): bool
+    {
+        $stmt = $this->pdo->prepare(
+            "SELECT 1 FROM chat_participants p JOIN chat_conversations c ON c.id = p.conversation_id
+              WHERE p.conversation_id = ? AND p.user_id = ? AND p.left_at IS NULL
+                AND p.role = 'admin' AND c.type = 'group' LIMIT 1"
+        );
+        $stmt->execute([$conversationId, $userId]);
+        return (bool) $stmt->fetchColumn();
+    }
+
     /**
      * User ids the current user is allowed to start a chat with (admins excluded).
      * @return int[]
@@ -86,38 +98,22 @@ class ChatController
         $uid  = (int) $me['id'];
         $role = $me['role'] ?? '';
 
+        // Role-based reach (user decision 2026-06-08), NOT clinic/appointment-scoped:
+        //   doctor    → ANY doctor + ANY secretary (all clinics)
+        //   secretary → ALL doctors only (no other secretaries)
+        //   admin/other → not a chat participant
         if ($role === 'doctor') {
-            $did = (int) ($this->pdo->query("SELECT id FROM doctors WHERE user_id = " . $uid . " LIMIT 1")->fetchColumn() ?: 0);
-            $clinics = [];
-            if ($did) {
-                $clinics = $this->pdo->query(
-                    "SELECT DISTINCT clinic_id FROM appointments WHERE doctor_id = " . $did . " AND clinic_id IS NOT NULL"
-                )->fetchAll(PDO::FETCH_COLUMN);
-            }
-            $ids = $this->pdo->query("SELECT id FROM users WHERE role = 'doctor' AND id <> " . $uid)->fetchAll(PDO::FETCH_COLUMN);
-            if ($clinics) {
-                $ph = implode(',', array_map('intval', $clinics));
-                $secs = $this->pdo->query("SELECT id FROM users WHERE role = 'secretary' AND clinic_id IN ($ph)")->fetchAll(PDO::FETCH_COLUMN);
-                $ids = array_merge($ids, $secs);
-            }
-            return array_values(array_unique(array_map('intval', $ids)));
-        }
-
-        if ($role === 'secretary') {
-            $clinic = (int) ($me['clinic_id'] ?? 0);
-            if (!$clinic) { return []; }
-            $docs = $this->pdo->query(
-                "SELECT DISTINCT d.user_id
-                   FROM appointments a JOIN doctors d ON d.id = a.doctor_id
-                  WHERE a.clinic_id = " . $clinic . " AND d.user_id IS NOT NULL"
+            $ids = $this->pdo->query(
+                "SELECT id FROM users WHERE role IN ('doctor','secretary') AND is_active = 1 AND id <> " . $uid
             )->fetchAll(PDO::FETCH_COLUMN);
-            $secs = $this->pdo->query(
-                "SELECT id FROM users WHERE role = 'secretary' AND clinic_id = " . $clinic . " AND id <> " . $uid
+        } elseif ($role === 'secretary') {
+            $ids = $this->pdo->query(
+                "SELECT id FROM users WHERE role = 'doctor' AND is_active = 1 AND id <> " . $uid
             )->fetchAll(PDO::FETCH_COLUMN);
-            return array_values(array_unique(array_map('intval', array_merge($docs, $secs))));
+        } else {
+            return []; // admins / others: no chat
         }
-
-        return []; // admins / others: no chat
+        return array_values(array_unique(array_map('intval', $ids)));
     }
 
     private function dmKey(int $a, int $b): string
@@ -172,7 +168,8 @@ class ChatController
                 $qDeleted = $q['deleted_at'] !== null;
                 $replies[$qid] = [
                     'id' => $qid,
-                    'sender_name' => $q['sender_name'] ?? '',
+                    // silent-delete: a deleted quote shows "message removed" with no author
+                    'sender_name' => $qDeleted ? '' : ($q['sender_name'] ?? ''),
                     'snippet' => $qDeleted ? null
                         : ($q['body'] !== null ? mb_substr($q['body'], 0, 120) : ((int) $q['att'] > 0 ? '📎' : '')),
                     'deleted' => $qDeleted,
@@ -196,6 +193,7 @@ class ChatController
                 'rev'         => (int) $r['rev'],
                 'edited'      => $r['edited_at'] !== null && !$deleted,
                 'deleted'     => $deleted,
+                'pinned'      => !$deleted && ($r['pinned_at'] ?? null) !== null,
                 'created_at'  => $r['created_at'],
                 'attachments' => $deleted ? [] : array_values($att[$mid] ?? []),
                 'reactions'   => $deleted ? [] : array_values($rx[$mid] ?? []),
@@ -228,19 +226,29 @@ class ChatController
     {
         $me  = $this->requireAuth();
         $uid = (int) $me['id']; // safe int → inlined (native PDO prepares forbid reusing a named param)
+        // rev spans ALL my conversations (so the list stays live even for muted
+        // ones); unread_total EXCLUDES muted conversations (no badge / no desktop
+        // notif for muted), via the CASE guard.
         $r = $this->pdo->query(
             "SELECT COALESCE(MAX(c.rev_counter),0) AS rev,
-                    COALESCE(SUM((
+                    COALESCE(SUM(CASE WHEN p.muted = 0 THEN (
                        SELECT COUNT(*) FROM chat_messages m
                         WHERE m.conversation_id = c.id
                           AND m.sender_id <> $uid AND m.deleted_at IS NULL
                           AND m.id > COALESCE(p.last_read_message_id, 0)
-                    )),0) AS unread
+                    ) ELSE 0 END),0) AS unread
                FROM chat_participants p
                JOIN chat_conversations c ON c.id = p.conversation_id
               WHERE p.user_id = $uid AND p.left_at IS NULL"
         )->fetch(PDO::FETCH_ASSOC) ?: ['rev' => 0, 'unread' => 0];
-        $this->json(['ok' => true, 'me' => $uid, 'conversations_rev' => (int) $r['rev'], 'unread_total' => (int) $r['unread']]);
+        // newest reaction OTHERS placed on MY messages — the client compares it to its
+        // last-seen value to glow the chat button (reactions don't bump unread_total).
+        $reactCursor = (int) ($this->pdo->query(
+            "SELECT COALESCE(MAX(rx.id),0) FROM chat_reactions rx
+               JOIN chat_messages m ON m.id = rx.message_id
+              WHERE m.sender_id = $uid AND rx.user_id <> $uid AND m.deleted_at IS NULL"
+        )->fetchColumn() ?: 0);
+        $this->json(['ok' => true, 'me' => $uid, 'conversations_rev' => (int) $r['rev'], 'unread_total' => (int) $r['unread'], 'react_cursor' => $reactCursor]);
     }
 
     /** GET /api/chat/conversations — my conversations with preview + unread. */
@@ -249,11 +257,14 @@ class ChatController
         $me  = $this->requireAuth();
         $uid = (int) $me['id']; // safe int → inlined (native PDO prepares forbid reusing a named param)
         $rows = $this->pdo->query(
-            "SELECT c.id, c.type, c.title, c.last_activity_at, c.rev_counter,
+            "SELECT c.id, c.type, c.title, c.last_activity_at, c.rev_counter, c.created_by,
+                    p.muted, p.role AS my_role,
                     (SELECT COUNT(*) FROM chat_messages m
                        WHERE m.conversation_id = c.id AND m.sender_id <> $uid
-                         AND m.deleted_at IS NULL AND m.id > COALESCE(p.last_read_message_id,0)) AS unread,
-                    lm.body AS last_body, lm.sender_id AS last_sender, lm.created_at AS last_at, lm.deleted_at AS last_deleted
+                         AND m.deleted_at IS NULL AND m.id > COALESCE(p.last_read_message_id,0)
+                         AND p.muted = 0) AS unread,
+                    lm.body AS last_body, lm.sender_id AS last_sender, lm.created_at AS last_at, lm.deleted_at AS last_deleted,
+                    (SELECT kind FROM chat_attachments WHERE chat_message_id = lm.id ORDER BY id LIMIT 1) AS last_kind
                FROM chat_participants p
                JOIN chat_conversations c ON c.id = p.conversation_id
           LEFT JOIN chat_messages lm ON lm.id = c.last_message_id
@@ -266,7 +277,7 @@ class ChatController
             $cid = (int) $c['id'];
             // other participants (for dm title/avatar + group member list)
             $parts = $this->pdo->prepare(
-                "SELECT u.id, u.name, u.username, u.role, u.profile_image
+                "SELECT u.id, u.name, u.username, u.role, u.profile_image, pp.role AS group_role
                    FROM chat_participants pp JOIN users u ON u.id = pp.user_id
                   WHERE pp.conversation_id = ? AND pp.left_at IS NULL"
             );
@@ -274,10 +285,40 @@ class ChatController
             $members = array_map(fn($u) => [
                 'id' => (int) $u['id'], 'name' => $u['name'] ?: $u['username'],
                 'role' => $u['role'], 'avatar' => $u['profile_image'] ?: null,
+                'group_role' => $u['group_role'],
             ], $parts->fetchAll(PDO::FETCH_ASSOC));
             $other = null;
             if ($c['type'] === 'dm') {
                 foreach ($members as $m) { if ($m['id'] !== $uid) { $other = $m; break; } }
+            }
+            // The list preview reflects the latest ACTIVITY — a message (text /
+            // image / audio / file) OR a reaction that is newer than the last
+            // message (reactions don't change last_message_id). The client
+            // localizes from {type, kind, emoji, mine, on_mine}.
+            $lastKind = $c['last_deleted'] !== null ? null : ($c['last_kind'] ?? null);
+            $last = [
+                'type'      => $lastKind ?: 'text',
+                'body'      => $c['last_deleted'] !== null ? null : $c['last_body'],
+                'kind'      => $lastKind,
+                'emoji'     => null,
+                'mine'      => ($c['last_sender'] !== null && (int) $c['last_sender'] === $uid),
+                'on_mine'   => false,
+                'sender_id' => $c['last_sender'] !== null ? (int) $c['last_sender'] : null,
+                'at'        => $c['last_at'],
+            ];
+            $rxStmt = $this->pdo->prepare(
+                "SELECT rx.emoji, rx.user_id AS reactor, rx.created_at AS rat, m.sender_id AS author
+                   FROM chat_reactions rx JOIN chat_messages m ON m.id = rx.message_id
+                  WHERE m.conversation_id = ? AND m.deleted_at IS NULL ORDER BY rx.id DESC LIMIT 1"
+            );
+            $rxStmt->execute([$cid]);
+            $rx = $rxStmt->fetch(PDO::FETCH_ASSOC);
+            if ($rx && (string) $rx['rat'] >= (string) ($c['last_at'] ?? '')) {
+                $last = [
+                    'type' => 'reaction', 'emoji' => $rx['emoji'], 'body' => null, 'kind' => null,
+                    'mine' => ((int) $rx['reactor'] === $uid), 'on_mine' => ((int) $rx['author'] === $uid),
+                    'sender_id' => (int) $rx['reactor'], 'at' => $rx['rat'],
+                ];
             }
             $convos[] = [
                 'id' => $cid, 'type' => $c['type'],
@@ -285,13 +326,13 @@ class ChatController
                 'avatar' => $c['type'] === 'dm' ? ($other['avatar'] ?? null) : null,
                 'other' => $other,
                 'members' => $members,
+                'muted' => ((int) $c['muted']) === 1,
+                'my_role' => $c['my_role'],
+                'is_admin' => $c['type'] === 'group' && $c['my_role'] === 'admin',
+                'created_by' => (int) $c['created_by'],
                 'unread' => (int) $c['unread'],
                 'rev' => (int) $c['rev_counter'],
-                'last' => [
-                    'body' => $c['last_deleted'] !== null ? null : $c['last_body'],
-                    'sender_id' => $c['last_sender'] !== null ? (int) $c['last_sender'] : null,
-                    'at' => $c['last_at'],
-                ],
+                'last' => $last,
                 'last_activity_at' => $c['last_activity_at'],
             ];
         }
@@ -438,16 +479,18 @@ class ChatController
         $mid = (int) $this->pdo->lastInsertId();
 
         // link staged attachments owned by me
+        $attachKind = '';
         if ($attIds) {
             $ph = implode(',', $attIds);
             $this->pdo->prepare(
                 "UPDATE chat_attachments SET chat_message_id = ? WHERE id IN ($ph) AND user_id = ? AND chat_message_id IS NULL"
             )->execute([$mid, $uid]);
+            $attachKind = (string) ($this->pdo->query("SELECT kind FROM chat_attachments WHERE chat_message_id = " . $mid . " ORDER BY id LIMIT 1")->fetchColumn() ?: 'file');
         }
 
         $this->pdo->prepare("UPDATE chat_conversations SET last_message_id = ? WHERE id = ?")->execute([$mid, $cid]);
 
-        $this->notifyParticipants($cid, $uid, $me, $body, $attIds ? true : false);
+        $this->notifyParticipants($cid, $uid, $me, $body, $attachKind);
 
         $stmt = $this->pdo->prepare("SELECT m.*, u.name AS sender_name FROM chat_messages m JOIN users u ON u.id=m.sender_id WHERE m.id = ?");
         $stmt->execute([$mid]);
@@ -462,6 +505,7 @@ class ChatController
         $uid = (int) $me['id'];
         $mid = (int) $id;
         $m = $this->ownEditableMessage($mid, $me);
+        if (!$this->isParticipant((int) $m['conversation_id'], $uid)) { $this->json(['ok' => false, 'error' => 'not a participant'], 403); }
         $data = $this->readBody();
         $body = mb_substr(trim((string) ($data['body'] ?? '')), 0, 8000);
         if ($body === '') { $this->json(['ok' => false, 'error' => 'empty'], 422); }
@@ -474,8 +518,10 @@ class ChatController
     public function deleteMessage($id)
     {
         $me  = $this->requireAuth();
+        $uid = (int) $me['id'];
         $mid = (int) $id;
         $m = $this->ownEditableMessage($mid, $me);
+        if (!$this->isParticipant((int) $m['conversation_id'], $uid)) { $this->json(['ok' => false, 'error' => 'not a participant'], 403); }
         $rev = $this->bumpRev((int) $m['conversation_id']);
         $this->pdo->prepare("UPDATE chat_messages SET deleted_at = NOW(), body = NULL, rev = ? WHERE id = ?")->execute([$rev, $mid]);
         $this->json(['ok' => true, 'cursor' => $rev]);
@@ -501,9 +547,12 @@ class ChatController
         $mid  = (int) $id;
         $emoji = mb_substr(trim((string) ($this->readBody()['emoji'] ?? '')), 0, 16);
         if ($emoji === '') { $this->json(['ok' => false, 'error' => 'no emoji'], 422); }
-        $m = $this->pdo->prepare("SELECT conversation_id FROM chat_messages WHERE id = ? AND deleted_at IS NULL");
+        $m = $this->pdo->prepare("SELECT m.conversation_id, m.sender_id, m.body, u.role AS author_role
+                                    FROM chat_messages m JOIN users u ON u.id = m.sender_id
+                                   WHERE m.id = ? AND m.deleted_at IS NULL");
         $m->execute([$mid]);
-        $conv = (int) ($m->fetchColumn() ?: 0);
+        $row  = $m->fetch(PDO::FETCH_ASSOC);
+        $conv = (int) ($row['conversation_id'] ?? 0);
         if (!$conv || !$this->isParticipant($conv, $uid)) { $this->json(['ok' => false, 'error' => 'forbidden'], 403); }
 
         $exists = $this->pdo->prepare("SELECT id FROM chat_reactions WHERE message_id=? AND user_id=? AND emoji=?");
@@ -512,6 +561,22 @@ class ChatController
             $this->pdo->prepare("DELETE FROM chat_reactions WHERE id = ?")->execute([$rid]);
         } else {
             $this->pdo->prepare("INSERT INTO chat_reactions (message_id, user_id, emoji) VALUES (?,?,?)")->execute([$mid, $uid, $emoji]);
+            // notify the message AUTHOR that their message got a reaction (only on add,
+            // never on un-react, never to yourself) — drives the bell + the FAB glow.
+            $author = (int) ($row['sender_id'] ?? 0);
+            if ($author && $author !== $uid) {
+                try {
+                    $ar   = (($row['author_role'] ?? '') === 'secretary'); // notify in the AUTHOR's language
+                    $snip = trim($this->stripChatTokens((string) ($row['body'] ?? '')));
+                    $snip = $snip !== '' ? mb_substr($snip, 0, 60) : '';
+                    $verb = $ar ? 'تفاعل مع رسالتك' : 'reacted to your message';
+                    $msg  = $emoji . ' ' . $verb . ($snip !== '' ? ' «' . $snip . '»' : '');
+                    \App\Controllers\NotificationController::create(
+                        $author, 'chat_reaction', trim($me['name'] ?? $me['username'] ?? 'User'),
+                        $msg, 'chat', $conv, null
+                    );
+                } catch (\Throwable $e) { /* non-fatal */ }
+            }
         }
         $rev = $this->bumpRev($conv);
         $this->pdo->prepare("UPDATE chat_messages SET rev = ? WHERE id = ?")->execute([$rev, $mid]);
@@ -549,21 +614,257 @@ class ChatController
         $this->json(['ok' => true]);
     }
 
-    private function notifyParticipants(int $cid, int $senderId, array $sender, string $body, bool $hasAttachment): void
+    // ---------- Phase 3: group management + mute ----------------------------
+
+    /** POST /api/chat/{id}/group {title} — rename a group (admin only). */
+    public function updateGroup($id)
+    {
+        $me  = $this->requireAuth();
+        $uid = (int) $me['id'];
+        $cid = (int) $id;
+        if (!$this->isGroupAdmin($cid, $uid)) { $this->json(['ok' => false, 'error' => 'not a group admin'], 403); }
+        $title = mb_substr(trim((string) ($this->readBody()['title'] ?? '')), 0, 120);
+        if ($title === '') { $this->json(['ok' => false, 'error' => 'empty title'], 422); }
+        $this->pdo->prepare("UPDATE chat_conversations SET title = ? WHERE id = ?")->execute([$title, $cid]);
+        $this->bumpRev($cid);
+        $this->json(['ok' => true, 'title' => $title]);
+    }
+
+    /** POST /api/chat/{id}/add-member {user_id} — add a member (admin only, roster-checked). */
+    public function addMember($id)
+    {
+        $me  = $this->requireAuth();
+        $uid = (int) $me['id'];
+        $cid = (int) $id;
+        if (!$this->isGroupAdmin($cid, $uid)) { $this->json(['ok' => false, 'error' => 'not a group admin'], 403); }
+        $newUid = (int) ($this->readBody()['user_id'] ?? 0);
+        if ($newUid <= 0 || !in_array($newUid, $this->rosterUserIds($me), true)) {
+            $this->json(['ok' => false, 'error' => 'user not allowed'], 403);
+        }
+        // re-activate a prior leaver, or insert fresh (idempotent on the unique key)
+        $this->pdo->prepare(
+            "INSERT INTO chat_participants (conversation_id, user_id, role, joined_at, left_at)
+             VALUES (?, ?, 'member', NOW(), NULL)
+             ON DUPLICATE KEY UPDATE left_at = NULL"
+        )->execute([$cid, $newUid]);
+        $this->bumpRev($cid);
+        $this->json(['ok' => true]);
+    }
+
+    /** POST /api/chat/{id}/remove-member {user_id} — remove a member (admin only). */
+    public function removeMember($id)
+    {
+        $me  = $this->requireAuth();
+        $uid = (int) $me['id'];
+        $cid = (int) $id;
+        if (!$this->isGroupAdmin($cid, $uid)) { $this->json(['ok' => false, 'error' => 'not a group admin'], 403); }
+        $target = (int) ($this->readBody()['user_id'] ?? 0);
+        if ($target <= 0 || $target === $uid) { $this->json(['ok' => false, 'error' => 'invalid target (use leave for yourself)'], 422); }
+        $this->pdo->prepare(
+            "UPDATE chat_participants SET left_at = NOW() WHERE conversation_id = ? AND user_id = ? AND left_at IS NULL"
+        )->execute([$cid, $target]);
+        $this->ensureGroupHasAdmin($cid);
+        $this->bumpRev($cid);
+        $this->json(['ok' => true]);
+    }
+
+    /** POST /api/chat/{id}/leave — leave a group (self). */
+    public function leaveGroup($id)
+    {
+        $me  = $this->requireAuth();
+        $uid = (int) $me['id'];
+        $cid = (int) $id;
+        if (!$this->isParticipant($cid, $uid)) { $this->json(['ok' => false, 'error' => 'not a participant'], 403); }
+        $type = (string) ($this->pdo->query("SELECT type FROM chat_conversations WHERE id = " . $cid)->fetchColumn() ?: '');
+        if ($type !== 'group') { $this->json(['ok' => false, 'error' => 'cannot leave a direct chat'], 422); }
+        $this->pdo->prepare("UPDATE chat_participants SET left_at = NOW() WHERE conversation_id = ? AND user_id = ?")->execute([$cid, $uid]);
+        $this->ensureGroupHasAdmin($cid);
+        $this->bumpRev($cid);
+        $this->json(['ok' => true]);
+    }
+
+    /** If a group lost its last admin, promote the earliest-joined active member. */
+    private function ensureGroupHasAdmin(int $cid): void
+    {
+        $hasAdmin = (bool) $this->pdo->query(
+            "SELECT 1 FROM chat_participants WHERE conversation_id = " . $cid . " AND role = 'admin' AND left_at IS NULL LIMIT 1"
+        )->fetchColumn();
+        if ($hasAdmin) { return; }
+        $next = (int) ($this->pdo->query(
+            "SELECT user_id FROM chat_participants WHERE conversation_id = " . $cid . " AND left_at IS NULL ORDER BY joined_at ASC, id ASC LIMIT 1"
+        )->fetchColumn() ?: 0);
+        if ($next) {
+            $this->pdo->prepare("UPDATE chat_participants SET role = 'admin' WHERE conversation_id = ? AND user_id = ?")->execute([$cid, $next]);
+        }
+    }
+
+    /** PUT /api/chat/{id}/mute {muted?} — toggle (or set) mute for me. */
+    public function toggleMute($id)
+    {
+        $me  = $this->requireAuth();
+        $uid = (int) $me['id'];
+        $cid = (int) $id;
+        if (!$this->isParticipant($cid, $uid)) { $this->json(['ok' => false, 'error' => 'not a participant'], 403); }
+        $body = $this->readBody();
+        if (is_array($body) && array_key_exists('muted', $body)) {
+            $val = $body['muted'] ? 1 : 0;
+            $this->pdo->prepare("UPDATE chat_participants SET muted = ? WHERE conversation_id = ? AND user_id = ?")->execute([$val, $cid, $uid]);
+        } else {
+            $this->pdo->prepare("UPDATE chat_participants SET muted = 1 - muted WHERE conversation_id = ? AND user_id = ?")->execute([$cid, $uid]);
+            $val = (int) $this->pdo->query("SELECT muted FROM chat_participants WHERE conversation_id = " . $cid . " AND user_id = " . $uid)->fetchColumn();
+        }
+        $this->json(['ok' => true, 'muted' => ((int) $val) === 1]);
+    }
+
+    // ---------- Phase 3b: pin · search · forward ----------------------------
+
+    /** POST /api/chat/messages/{id}/pin — toggle pin (any participant). */
+    public function pinMessage($id)
+    {
+        $me  = $this->requireAuth();
+        $uid = (int) $me['id'];
+        $mid = (int) $id;
+        $stmt = $this->pdo->prepare("SELECT conversation_id, pinned_at FROM chat_messages WHERE id = ? AND deleted_at IS NULL");
+        $stmt->execute([$mid]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        if (!$row) { $this->json(['ok' => false, 'error' => 'not found'], 404); }
+        $cid = (int) $row['conversation_id'];
+        if (!$this->isParticipant($cid, $uid)) { $this->json(['ok' => false, 'error' => 'forbidden'], 403); }
+        // Atomic toggle — the pin/unpin decision is evaluated INSIDE the UPDATE (no
+        // SELECT-then-UPDATE TOCTOU race). pinned_by is assigned BEFORE pinned_at so
+        // both CASEs read the OLD pinned_at (MySQL assigns left-to-right).
+        $rev = $this->bumpRev($cid);
+        $this->pdo->prepare(
+            "UPDATE chat_messages
+                SET pinned_by = CASE WHEN pinned_at IS NULL THEN ? ELSE NULL END,
+                    pinned_at = CASE WHEN pinned_at IS NULL THEN NOW() ELSE NULL END,
+                    rev = ?
+              WHERE id = ?"
+        )->execute([$uid, $rev, $mid]);
+        $pinned = (bool) $this->pdo->query("SELECT pinned_at IS NOT NULL FROM chat_messages WHERE id = " . $mid)->fetchColumn();
+        $this->json(['ok' => true, 'pinned' => $pinned, 'cursor' => $rev]);
+    }
+
+    /** GET /api/chat/{id}/pins — pinned messages of a conversation. */
+    public function pins($id)
+    {
+        $me  = $this->requireAuth();
+        $uid = (int) $me['id'];
+        $cid = (int) $id;
+        if (!$this->isParticipant($cid, $uid)) { $this->json(['ok' => false, 'error' => 'forbidden'], 403); }
+        $stmt = $this->pdo->prepare(
+            "SELECT m.*, u.name AS sender_name FROM chat_messages m JOIN users u ON u.id = m.sender_id
+              WHERE m.conversation_id = ? AND m.pinned_at IS NOT NULL AND m.deleted_at IS NULL
+              ORDER BY m.pinned_at DESC LIMIT 50"
+        );
+        $stmt->execute([$cid]);
+        $this->json(['ok' => true, 'pins' => $this->hydrateMessages($stmt->fetchAll(PDO::FETCH_ASSOC))]);
+    }
+
+    /** GET /api/chat/{id}/search?q= — text search within a conversation. */
+    public function searchMessages($id)
+    {
+        $me  = $this->requireAuth();
+        $uid = (int) $me['id'];
+        $cid = (int) $id;
+        if (!$this->isParticipant($cid, $uid)) { $this->json(['ok' => false, 'error' => 'forbidden'], 403); }
+        $q = trim((string) ($_GET['q'] ?? ''));
+        if (mb_strlen($q) < 2) { $this->json(['ok' => true, 'results' => []]); }
+        // body LIKE ? with a bound param is fine in a prepared stmt (only SHOW…LIKE? fails)
+        $stmt = $this->pdo->prepare(
+            "SELECT m.*, u.name AS sender_name FROM chat_messages m JOIN users u ON u.id = m.sender_id
+              WHERE m.conversation_id = ? AND m.deleted_at IS NULL AND m.body LIKE ? ORDER BY m.id DESC LIMIT 40"
+        );
+        $stmt->execute([$cid, '%' . $q . '%']);
+        $this->json(['ok' => true, 'results' => $this->hydrateMessages($stmt->fetchAll(PDO::FETCH_ASSOC))]);
+    }
+
+    /** POST /api/chat/{id}/forward {message_id} — forward a message into conversation {id}. */
+    public function forwardMessage($id)
+    {
+        $me  = $this->requireAuth();
+        $uid = (int) $me['id'];
+        $targetCid = (int) $id;
+        if (!$this->isParticipant($targetCid, $uid)) { $this->json(['ok' => false, 'error' => 'not a participant of the target'], 403); }
+        $srcMid = (int) ($this->readBody()['message_id'] ?? 0);
+        $src = $this->pdo->prepare("SELECT * FROM chat_messages WHERE id = ? AND deleted_at IS NULL");
+        $src->execute([$srcMid]);
+        $sm = $src->fetch(PDO::FETCH_ASSOC);
+        if (!$sm) { $this->json(['ok' => false, 'error' => 'source not found'], 404); }
+        // you can only forward what you can see
+        if (!$this->isParticipant((int) $sm['conversation_id'], $uid)) { $this->json(['ok' => false, 'error' => 'forbidden source'], 403); }
+
+        $rev = $this->bumpRev($targetCid);
+        $this->pdo->prepare(
+            "INSERT INTO chat_messages (conversation_id, sender_id, body, rev, created_at) VALUES (?, ?, ?, ?, NOW())"
+        )->execute([$targetCid, $uid, $sm['body'], $rev]);
+        $newMid = (int) $this->pdo->lastInsertId();
+
+        // duplicate attachment rows (point at the SAME file_path, now linked to the copy)
+        $atts = $this->pdo->prepare("SELECT user_id, kind, file_path, original_name, mime_type, file_size, duration_ms FROM chat_attachments WHERE chat_message_id = ?");
+        $atts->execute([$srcMid]);
+        $attRows = $atts->fetchAll(PDO::FETCH_ASSOC);
+        if ($attRows) {
+            $insAtt = $this->pdo->prepare(
+                "INSERT INTO chat_attachments (chat_message_id, user_id, kind, file_path, original_name, mime_type, file_size, duration_ms)
+                 VALUES (?,?,?,?,?,?,?,?)"
+            );
+            foreach ($attRows as $a) {
+                $insAtt->execute([$newMid, $uid, $a['kind'], $a['file_path'], $a['original_name'], $a['mime_type'],
+                    $a['file_size'] !== null ? (int) $a['file_size'] : null,
+                    $a['duration_ms'] !== null ? (int) $a['duration_ms'] : null]);
+            }
+        }
+        $this->pdo->prepare("UPDATE chat_conversations SET last_message_id = ? WHERE id = ?")->execute([$newMid, $targetCid]);
+        $this->notifyParticipants($targetCid, $uid, $me, (string) $sm['body'], !empty($attRows) ? ((string) ($attRows[0]['kind'] ?? 'file')) : '');
+        $this->json(['ok' => true, 'conversation_id' => $targetCid, 'cursor' => $rev]);
+    }
+
+    /**
+     * Render the human form of an inline chat token for notifications/previews:
+     * `@[Ahmed](p:8)` → `@Ahmed`, `#[Appt 12](appt:12)` → `#Appt 12`. Mirrors the
+     * client-side stripTokens() so bell snippets never show the raw `](p:8)` markup.
+     */
+    private function stripChatTokens(string $body): string
+    {
+        return (string) preg_replace_callback(
+            '/([@#])\[([^\]]{1,80})\]\((?:p|appt|date):[^)]{1,40}\)/u',
+            fn($m) => $m[1] . $m[2],
+            $body
+        );
+    }
+
+    /**
+     * Bell-notify the other participants. The message is localized PER RECIPIENT
+     * role (doctor → English, secretary → Arabic) and clearly labels an
+     * attachment-only message ("sent you an image/voice/file").
+     */
+    private function notifyParticipants(int $cid, int $senderId, array $sender, string $body, string $attachKind = ''): void
     {
         try {
             $others = $this->pdo->prepare(
-                "SELECT user_id FROM chat_participants WHERE conversation_id = ? AND user_id <> ? AND left_at IS NULL AND muted = 0"
+                "SELECT cp.user_id, u.role FROM chat_participants cp JOIN users u ON u.id = cp.user_id
+                  WHERE cp.conversation_id = ? AND cp.user_id <> ? AND cp.left_at IS NULL AND cp.muted = 0"
             );
             $others->execute([$cid, $senderId]);
-            $name = trim($sender['name'] ?? $sender['username'] ?? 'User');
-            $snippet = $body !== '' ? mb_substr($body, 0, 120) : ($hasAttachment ? '📎' : '');
-            foreach ($others->fetchAll(PDO::FETCH_COLUMN) as $rid) {
-                \App\Controllers\NotificationController::create(
-                    (int) $rid, 'chat_message', $name, $snippet, 'chat', $cid, null
-                );
+            $name  = trim($sender['name'] ?? $sender['username'] ?? 'User');
+            $clean = trim($this->stripChatTokens($body));
+            foreach ($others->fetchAll(PDO::FETCH_ASSOC) as $row) {
+                $ar = (($row['role'] ?? '') === 'secretary');
+                if ($clean !== '')        { $message = mb_substr($clean, 0, 120); }
+                elseif ($attachKind !== '') { $message = $this->attachLabel($ar, $attachKind); }
+                else                       { $message = ''; }
+                \App\Controllers\NotificationController::create((int) $row['user_id'], 'chat_message', $name, $message, 'chat', $cid, null);
             }
         } catch (\Throwable $e) { /* non-fatal */ }
+    }
+
+    /** Localized "sent you an image / voice message / file" label. */
+    private function attachLabel(bool $ar, string $kind): string
+    {
+        if ($kind === 'image') { return $ar ? 'أرسل لك صورة 📷' : 'sent you an image 📷'; }
+        if ($kind === 'audio') { return $ar ? 'أرسل لك تسجيلاً صوتياً 🎤' : 'sent you a voice message 🎤'; }
+        return $ar ? 'أرسل لك ملفاً 📎' : 'sent you a file 📎';
     }
 
     // ---------- attachments (clone of CommentsController) -------------------
