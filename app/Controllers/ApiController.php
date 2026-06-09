@@ -7422,19 +7422,53 @@ class ApiController
         }
 
         $user = $this->auth->user();
+
+        // Report mode: GET /api/drug-defaults?orphans=1 — the doctor's templates
+        // whose drug vanished from the DB after an import (flagged, never deleted).
+        if (!empty($_GET['orphans'])) {
+            try {
+                $stmt = $this->pdo->prepare(
+                    "SELECT drug_name, dose, frequency, duration, route, instructions, srde, orphaned_at
+                       FROM drug_defaults WHERE doctor_id = ? AND orphaned_at IS NOT NULL ORDER BY drug_name"
+                );
+                $stmt->execute([$user['id']]);
+                return $this->jsonResponse(['success' => true, 'orphans' => $stmt->fetchAll(\PDO::FETCH_ASSOC)]);
+            } catch (\Exception $e) {
+                return $this->jsonResponse(['success' => false, 'orphans' => []], 500);
+            }
+        }
+
         $drugName = trim((string) ($_GET['drug_name'] ?? ''));
         if ($drugName === '') {
             return $this->jsonResponse(['success' => true, 'default' => null]);
         }
 
         try {
-            $stmt = $this->pdo->prepare(
-                "SELECT dose, frequency, duration, route, instructions
-                 FROM drug_defaults WHERE doctor_id = ? AND drug_name = ? LIMIT 1"
-            );
-            $stmt->execute([$user['id'], $drugName]);
-            $row = $stmt->fetch(\PDO::FETCH_ASSOC);
+            // Resolve the (current) drug → its stable SRDE, so we match the template
+            // by SRDE first (survives a name change at the next import), then by name.
+            $srde = null;
+            try { $hit = $this->drugLookup($this->getDrugsDatabaseConnection(), $drugName); if ($hit) $srde = ($hit['srde'] !== '' ? $hit['srde'] : null); } catch (\Throwable $e) {}
 
+            $row = null;
+            if ($srde !== null) {
+                $s = $this->pdo->prepare("SELECT id, dose, frequency, duration, route, instructions FROM drug_defaults WHERE doctor_id = ? AND srde = ? LIMIT 1");
+                $s->execute([$user['id'], $srde]);
+                $row = $s->fetch(\PDO::FETCH_ASSOC) ?: null;
+            }
+            if (!$row) {
+                $s = $this->pdo->prepare("SELECT id, dose, frequency, duration, route, instructions FROM drug_defaults WHERE doctor_id = ? AND (drug_name = ? OR LOWER(TRIM(drug_name)) = LOWER(?)) LIMIT 1");
+                $s->execute([$user['id'], $drugName, $this->normDrugName($drugName)]);
+                $row = $s->fetch(\PDO::FETCH_ASSOC) ?: null;
+            }
+
+            if ($row) {
+                $id = $row['id']; unset($row['id']);
+                // Self-heal: anchor a legacy/renamed row to the current SRDE + name.
+                try {
+                    $this->pdo->prepare("UPDATE drug_defaults SET srde = COALESCE(?, srde), drug_name = ?, orphaned_at = NULL WHERE id = ?")
+                        ->execute([$srde, mb_substr($drugName, 0, 120), $id]);
+                } catch (\Throwable $e) { /* unique-name collision on a duplicate — leave as-is */ }
+            }
             return $this->jsonResponse(['success' => true, 'default' => $row ?: null]);
         } catch (\Exception $e) {
             return $this->jsonResponse(['success' => false, 'message' => 'Failed to load drug default'], 500);
@@ -7480,19 +7514,36 @@ class ApiController
             return $this->deleteDrugDefault();
         }
 
+        // Anchor the template to the drug's stable SRDE (+ store the DB's canonical
+        // name) so it survives the next import even if the free-text name drifts.
+        $srde = null; $canonical = $drugName;
         try {
+            $hit = $this->drugLookup($this->getDrugsDatabaseConnection(), $drugName);
+            if ($hit) { $srde = ($hit['srde'] !== '' ? $hit['srde'] : null); if ($hit['name'] !== '') $canonical = $hit['name']; }
+        } catch (\Throwable $e) {}
+        $canonical = mb_substr($canonical, 0, 120);
+
+        try {
+            // Dedup: if this product already has a template under a different (old)
+            // name for this doctor, drop it so we keep ONE template per product.
+            if ($srde !== null) {
+                $this->pdo->prepare("DELETE FROM drug_defaults WHERE doctor_id = ? AND srde = ? AND drug_name <> ?")
+                    ->execute([$user['id'], $srde, $canonical]);
+            }
             $stmt = $this->pdo->prepare("
-                INSERT INTO drug_defaults (doctor_id, drug_name, dose, frequency, duration, route, instructions)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO drug_defaults (doctor_id, drug_name, srde, dose, frequency, duration, route, instructions, orphaned_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL)
                 ON DUPLICATE KEY UPDATE
+                    srde = VALUES(srde),
                     dose = VALUES(dose),
                     frequency = VALUES(frequency),
                     duration = VALUES(duration),
                     route = VALUES(route),
                     instructions = VALUES(instructions),
+                    orphaned_at = NULL,
                     updated_at = CURRENT_TIMESTAMP
             ");
-            $stmt->execute([$user['id'], $drugName, $dose, $frequency, $duration, $route, $instructions]);
+            $stmt->execute([$user['id'], $canonical, $srde, $dose, $frequency, $duration, $route, $instructions]);
 
             return $this->jsonResponse([
                 'success' => true,
@@ -7534,14 +7585,108 @@ class ApiController
             return $this->jsonResponse(['success' => false, 'message' => 'Invalid drug name'], 400);
         }
 
-        try {
-            $stmt = $this->pdo->prepare("DELETE FROM drug_defaults WHERE doctor_id = ? AND drug_name = ?");
-            $stmt->execute([$user['id'], $drugName]);
+        // Resolve SRDE so the template is removable even after a name change.
+        $srde = null;
+        try { $hit = $this->drugLookup($this->getDrugsDatabaseConnection(), $drugName); if ($hit && $hit['srde'] !== '') $srde = $hit['srde']; } catch (\Throwable $e) {}
 
+        try {
+            if ($srde !== null) {
+                $stmt = $this->pdo->prepare("DELETE FROM drug_defaults WHERE doctor_id = ? AND (srde = ? OR drug_name = ?)");
+                $stmt->execute([$user['id'], $srde, $drugName]);
+            } else {
+                $stmt = $this->pdo->prepare("DELETE FROM drug_defaults WHERE doctor_id = ? AND drug_name = ?");
+                $stmt->execute([$user['id'], $drugName]);
+            }
             return $this->jsonResponse(['success' => true]);
         } catch (\Exception $e) {
             return $this->jsonResponse(['success' => false, 'message' => 'Failed to delete drug default'], 500);
         }
+    }
+
+    // ---- drug-template ↔ drug-DB linkage helpers (SRDE-anchored) -----------
+    // The drugs table is fully DELETE+reINSERTed on each external import, so the
+    // ID reshuffles and the free-text name can drift. Templates/tag-links anchor on
+    // the stable SRDE with the name as a tolerant fallback. See
+    // FIX_drug_template_srde_anchor.md.
+
+    /** Collapse internal whitespace + trim (case preserved for display). */
+    private function normDrugName($n) { return preg_replace('/\s+/', ' ', trim((string) $n)); }
+    /** Lower-cased normalized key for tolerant name matching. */
+    private function reconKey($n) { return mb_strtolower($this->normDrugName($n)); }
+
+    /**
+     * Resolve a drug's current SRDE + canonical name from the drugs DB.
+     * Tries SRDE (stable), then exact name (indexed), then case/trim-normalized.
+     * Returns ['srde'=>string,'name'=>string] or null (drugs DB unreachable).
+     */
+    private function drugLookup($drugsPdo, $name, $srde = null)
+    {
+        try {
+            if ($srde !== null && $srde !== '') {
+                $s = $drugsPdo->prepare("SELECT FirstName, SRDE FROM drugs WHERE SRDE = ? LIMIT 1");
+                $s->execute([$srde]);
+                if ($r = $s->fetch(\PDO::FETCH_ASSOC)) return ['srde' => (string) $r['SRDE'], 'name' => (string) $r['FirstName']];
+            }
+            if ($name !== null && $name !== '') {
+                $s = $drugsPdo->prepare("SELECT FirstName, SRDE FROM drugs WHERE FirstName = ? LIMIT 1");
+                $s->execute([$name]);
+                if ($r = $s->fetch(\PDO::FETCH_ASSOC)) return ['srde' => (string) $r['SRDE'], 'name' => (string) $r['FirstName']];
+                $s = $drugsPdo->prepare("SELECT FirstName, SRDE FROM drugs WHERE LOWER(TRIM(FirstName)) = LOWER(?) LIMIT 1");
+                $s->execute([$this->normDrugName($name)]);
+                if ($r = $s->fetch(\PDO::FETCH_ASSOC)) return ['srde' => (string) $r['SRDE'], 'name' => (string) $r['FirstName']];
+            }
+        } catch (\Throwable $e) { /* degrade gracefully */ }
+        return null;
+    }
+
+    /** SRDE-first then name match against the rebuilt drugs maps. */
+    private function reconMatch($row, $bySrde, $byName)
+    {
+        $sr = (string) ($row['srde'] ?? '');
+        if ($sr !== '' && isset($bySrde[$sr])) return ['srde' => $sr, 'name' => $bySrde[$sr]];
+        $k = $this->reconKey($row['drug_name']);
+        return $byName[$k] ?? null;
+    }
+
+    /**
+     * After a drug-DB import: re-link templates + tag-links to the rebuilt drugs.
+     * SRDE match → update drug_name to the current name; name match → backfill SRDE;
+     * no match → flag orphaned_at (drug_defaults) and LEAVE the row. NEVER auto-delete
+     * (saved values are kept; the source may be transiently missing a drug). Best-effort:
+     * wrapped so it can never break the import.
+     */
+    private function reconcileDrugTemplates($drugsPdo)
+    {
+        try {
+            $bySrde = []; $byName = [];
+            foreach ($drugsPdo->query("SELECT FirstName, SRDE FROM drugs") as $d) {
+                $nm = (string) $d['FirstName']; $sr = (string) $d['SRDE'];
+                if ($sr !== '') $bySrde[$sr] = $nm;
+                if ($nm !== '') $byName[$this->reconKey($nm)] = ['srde' => $sr, 'name' => $nm];
+            }
+            // drug_defaults — has orphaned_at
+            foreach ($this->pdo->query("SELECT id, drug_name, srde FROM drug_defaults")->fetchAll(\PDO::FETCH_ASSOC) as $r) {
+                $hit = $this->reconMatch($r, $bySrde, $byName);
+                try {
+                    if ($hit) {
+                        $this->pdo->prepare("UPDATE drug_defaults SET drug_name = ?, srde = ?, orphaned_at = NULL WHERE id = ?")
+                            ->execute([mb_substr($hit['name'], 0, 120), ($hit['srde'] !== '' ? $hit['srde'] : null), $r['id']]);
+                    } else {
+                        $this->pdo->prepare("UPDATE drug_defaults SET orphaned_at = COALESCE(orphaned_at, NOW()) WHERE id = ?")->execute([$r['id']]);
+                    }
+                } catch (\Throwable $e) { /* unique-name collision on a dup — skip this row */ }
+            }
+            // drug_patient_tag_links — no orphaned_at; re-link / backfill SRDE only
+            foreach ($this->pdo->query("SELECT id, drug_name, srde FROM drug_patient_tag_links")->fetchAll(\PDO::FETCH_ASSOC) as $r) {
+                $hit = $this->reconMatch($r, $bySrde, $byName);
+                if ($hit) {
+                    try {
+                        $this->pdo->prepare("UPDATE drug_patient_tag_links SET drug_name = ?, srde = ? WHERE id = ?")
+                            ->execute([mb_substr($hit['name'], 0, 255), ($hit['srde'] !== '' ? $hit['srde'] : null), $r['id']]);
+                    } catch (\Throwable $e) {}
+                }
+            }
+        } catch (\Throwable $e) { /* reconcile is best-effort — never fail the import */ }
     }
 
     public function getMostUsedDrugs()
@@ -10807,6 +10952,10 @@ class ApiController
 
                 // Commit transaction
                 $pdo->commit();
+
+                // Re-link drug templates + patient drug-tag links to the rebuilt
+                // drugs (SRDE-anchored). Best-effort — never fails the import.
+                $this->reconcileDrugTemplates($pdo);
             } catch (\Exception $e) {
                 // Rollback transaction if started
                 if ($pdo->inTransaction()) {

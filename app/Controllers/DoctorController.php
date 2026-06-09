@@ -3088,7 +3088,10 @@ class DoctorController
 
     private function handleLogoUploads()
     {
-        $uploadDir = '/var/www/html/clinic/public/uploads/logos/';
+        // Portable docroot — the hardcoded /var/www/html/clinic/public broke on prod
+        // (open_basedir) and never matched the current local docroot either.
+        $uploadDir = rtrim($_SERVER['DOCUMENT_ROOT'] ?? '', '/') . '/uploads/logos/';
+        if (!is_dir($uploadDir)) { @mkdir($uploadDir, 0775, true); }
         $allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/svg+xml'];
         $maxSize = 5 * 1024 * 1024; // 5MB
         
@@ -3126,7 +3129,7 @@ class DoctorController
             elseif (isset($_POST[$field . '_path']) && !empty($_POST[$field . '_path'])) {
                 $path = $_POST[$field . '_path'];
                 // Validate that it's a valid path
-                if (filter_var($path, FILTER_VALIDATE_URL) || (strpos($path, '/') === 0 && file_exists('/var/www/html/clinic/public' . $path))) {
+                if (filter_var($path, FILTER_VALIDATE_URL) || (strpos($path, '/') === 0 && @file_exists(rtrim($_SERVER['DOCUMENT_ROOT'] ?? '', '/') . $path))) {
                     $this->updateSetting($field, $path);
                 }
             }

@@ -1,3 +1,11 @@
+<?php
+    // Eye-tools gate — the ophthalmology calculators (header markup AND the ~5.3k-line
+    // ophthalmology-tools.js bundle) load ONLY on the Appointment + Patient-profile
+    // detail pages, cutting header clutter and JS payload off every other doctor page.
+    // Detail pages only (numeric id) — not the /doctor/appointments or /doctor/patients lists.
+    $__obPath = parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH) ?? '';
+    $__showEyeTools = (bool) preg_match('#^/doctor/(appointments|patients)/\d+#', $__obPath);
+?>
 <!DOCTYPE html>
 <html lang="en" dir="ltr" data-layout="doctor">
 <head>
@@ -475,6 +483,7 @@
             <div class="notice-bar">
                 <div class="notice-bar-content">
                     <?php if ($this->getCurrentUser()['role'] === 'doctor'): ?>
+                    <?php if ($__showEyeTools): /* eye tools only on appointment/patient pages — see top of file */ ?>
                     <div class="notice-bar-column notice-bar-column-4">
                         <div class="notice-bar-column-4-inner">
                             <!-- Mobile/Tablet Tools Button -->
@@ -763,7 +772,8 @@
                             </div>
                         </div>
                     </div>
-                    
+                    <?php endif; /* $__showEyeTools — eye tools only on appointment/patient detail pages */ ?>
+
                     <div class="notice-bar-column notice-bar-column-3">
                         <i class="bi bi-calendar3"></i>
                         <span class="notice-bar-appointment-label">Next Appointment:</span>
@@ -1151,6 +1161,10 @@
     <script src="/app/Views/layouts/weather-fx.js?v=<?= filemtime(__DIR__ . '/weather-fx.js') ?>"></script>
     <script src="/app/Views/layouts/digit-normalizer.js?v=<?= file_exists(__DIR__ . '/digit-normalizer.js') ? filemtime(__DIR__ . '/digit-normalizer.js') : time() ?>"></script>
     <script src="/app/Views/layouts/main.js?v=<?= filemtime(__DIR__ . '/main.js') ?>"></script>
+    <?php if ($__showEyeTools): ?>
+    <!-- Ophthalmology calculators/tools — extracted from main.js, loaded ONLY on Appointment + Patient-profile pages (must follow main.js + the page content above). -->
+    <script src="/app/Views/layouts/ophthalmology-tools.js?v=<?= filemtime(__DIR__ . '/ophthalmology-tools.js') ?>"></script>
+    <?php endif; ?>
     <script src="/app/Views/layouts/clinics-loader.js?v=<?= filemtime(__DIR__ . '/clinics-loader.js') ?>"></script>
     
     <!-- Session Expiry Warning Script -->
