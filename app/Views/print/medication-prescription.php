@@ -431,8 +431,27 @@
                 <div class="drug-name"><?= $prescription['drug_name'] ?></div>
                 <div class="rx-symbol">℞</div>
             </div>
-            
-            <?php if ($prescription['notes']): ?>
+
+            <?php
+                // Dose / Frequency / Duration — render each only when it has a value
+                // (gracefully accepts missing keys via the null-coalescing in trim()).
+                $rxDetails = [];
+                if (trim((string)($prescription['dose'] ?? '')) !== '')      $rxDetails[] = ['الجرعة - Dose', $prescription['dose']];
+                if (trim((string)($prescription['frequency'] ?? '')) !== '') $rxDetails[] = ['التكرار - Frequency', $prescription['frequency']];
+                if (trim((string)($prescription['duration'] ?? '')) !== '')  $rxDetails[] = ['المدة - Duration', $prescription['duration']];
+            ?>
+            <?php if (!empty($rxDetails)): ?>
+            <div class="medication-details">
+                <?php foreach ($rxDetails as $rd): ?>
+                <div class="detail-group">
+                    <span class="detail-label"><?= htmlspecialchars($rd[0]) ?>:</span>
+                    <span class="detail-value"><?= htmlspecialchars($rd[1]) ?></span>
+                </div>
+                <?php endforeach; ?>
+            </div>
+            <?php endif; ?>
+
+            <?php if (!empty($prescription['notes'])): ?>
                 <div class="notes-section">
                     <div class="notes-label">ملاحظات خاصة - Special Instructions:</div>
                     <div class="notes-text"><?= $prescription['notes'] ?></div>

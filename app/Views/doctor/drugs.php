@@ -240,7 +240,7 @@
                 <div id="tplStatus" class="small"></div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-outline-danger" id="tplClearBtn" onclick="clearDrugTemplateFromModal()" style="display: none;">
+                <button type="button" class="btn btn-outline-danger" id="tplClearBtn" onclick="confirmDeleteDrugTemplate()" style="display: none;">
                     <i class="bi bi-trash me-1"></i>Delete template
                 </button>
                 <button type="button" class="btn btn-outline-secondary me-auto" id="tplClearFieldsBtn" onclick="clearDrugTemplateFields()" title="Clear dose, frequency, duration, route and instructions">
@@ -249,6 +249,27 @@
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                 <button type="button" class="btn btn-primary" onclick="saveDrugTemplateFromModal()">
                     <i class="bi bi-save me-1"></i>Save template
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Drug Instruction Template — confirmation -->
+<div class="modal fade" id="drugTplDeleteModal" tabindex="-1" aria-labelledby="drugTplDeleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="drugTplDeleteModalLabel"><i class="bi bi-trash me-2 text-danger"></i>Delete template?</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-0">Delete the saved instruction template for <strong id="drugTplDeleteName"></strong>? This can't be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="drugTplDeleteConfirmBtn" onclick="doDeleteDrugTemplate()">
+                    <i class="bi bi-trash me-1"></i>Delete
                 </button>
             </div>
         </div>

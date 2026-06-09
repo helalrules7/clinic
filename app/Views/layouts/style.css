@@ -8118,7 +8118,7 @@
             bottom: 20px;
             left: 50%;
             transform: translateX(-50%);
-            z-index: 1000002 !important; /* Higher than sidebar (1000001) */
+            z-index: 1040 !important; /* chat-FAB band — BELOW overlays (modals/drawers/cmdk) so any Drawer/Modal renders on top of the minimized dock. Off-canvas sidebar (transformed off-screen when closed) still covers the dock when opened. */
             display: none; /* Hidden by default */
         }
         
@@ -8135,7 +8135,7 @@
             border-radius: 20px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
             transition: all 0.3s ease;
-            z-index: 1000002 !important; /* Higher than sidebar (1000001) */
+            z-index: 1040 !important; /* chat-FAB band — BELOW overlays (modals/drawers/cmdk) so any Drawer/Modal renders on top of the minimized dock. Off-canvas sidebar (transformed off-screen when closed) still covers the dock when opened. */
             position: relative;
         }
         

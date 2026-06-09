@@ -28,7 +28,7 @@ storage.zip
 .idea/
 .vscode/
 *.swp
-*.swo
+*.swoy
 *~
 
 # Local-only generated artifacts

@@ -2019,6 +2019,8 @@ body {
 
 .scroll-to-top.show {
     display: flex;
+    /* Above page chrome; chat FAB lifts via sec-backtotop-visible (§36). */
+    z-index: 1055;
 }
 
 .scroll-to-top i {

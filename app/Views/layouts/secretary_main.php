@@ -830,7 +830,10 @@
                 window._secSttScrollScheduled = true;
                 requestAnimationFrame(() => {
                     window._secSttScrollScheduled = false;
-                    const y = window.pageYOffset;
+                    const y = window.pageYOffset
+                        || document.documentElement.scrollTop
+                        || document.body.scrollTop
+                        || 0;
                     const el = document.documentElement;
                     const max = (el.scrollHeight - el.clientHeight) || 1;
                     const ringP = Math.min(1, Math.max(0, y / max));

@@ -635,9 +635,11 @@ function escapeHtmlDrugs(str) {
 // Renders the saved-template box shown inside the drug-details modal.
 function renderDrugSavedTemplateHtml(tpl) {
     const hasAny = tpl && (tpl.dose || tpl.frequency || tpl.duration || tpl.route || tpl.instructions);
+    // dark-mode aware via the app tokens (Bootstrap's --bs-tertiary-bg / .alert-light stay light under .dark)
     if (!hasAny) {
         return `
-            <div class="alert alert-light border d-flex align-items-center mb-0 py-2">
+            <div class="drug-tpl-box d-flex align-items-center mb-0 py-2 px-3 rounded"
+                 style="background: var(--bg-alt, #f1f5f9); border: 1px solid var(--border, #dee2e6);">
                 <i class="bi bi-bookmark me-2 text-muted"></i>
                 <span class="text-muted small">No saved instruction template for this drug yet — use "Add drug instruction template" below.</span>
             </div>`;
@@ -646,8 +648,19 @@ function renderDrugSavedTemplateHtml(tpl) {
         ? `<span class="badge rounded-pill text-bg-info me-1 mb-1"><i class="bi ${icon} me-1"></i>${label}: ${escapeHtmlDrugs(val)}</span>`
         : '';
     return `
-        <div class="border rounded p-3" style="background: var(--bs-tertiary-bg, rgba(13,202,240,.06));">
-            <h6 class="text-info mb-2"><i class="bi bi-bookmark-star-fill me-1"></i>Saved instruction template</h6>
+        <div class="drug-tpl-box p-3 rounded"
+             style="background: color-mix(in srgb, #0dcaf0 8%, var(--card, #fff)); border: 1px solid color-mix(in srgb, #0dcaf0 25%, var(--border, #dee2e6)); color: var(--text, #212529);">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
+                <h6 class="text-info mb-0"><i class="bi bi-bookmark-star-fill me-1"></i>Saved instruction template</h6>
+                <div class="btn-group btn-group-sm flex-shrink-0" role="group">
+                    <button type="button" class="btn btn-outline-primary" onclick="openDrugTemplateModal()" title="Edit template">
+                        <i class="bi bi-pencil-square me-1"></i>Edit
+                    </button>
+                    <button type="button" class="btn btn-outline-danger" onclick="confirmDeleteDrugTemplate()" title="Delete template">
+                        <i class="bi bi-trash me-1"></i>Delete
+                    </button>
+                </div>
+            </div>
             <div class="mb-1">
                 ${chip('bi-capsule', 'Dose', tpl.dose)}
                 ${chip('bi-arrow-repeat', 'Frequency', tpl.frequency)}
@@ -661,16 +674,63 @@ function renderDrugSavedTemplateHtml(tpl) {
 async function loadDrugSavedTemplateDisplay(drugName) {
     const el = document.getElementById('drugSavedTemplate');
     if (!el || !drugName) return;
+    __drugTemplateName = drugName; // remembered for Edit/Delete from the box
     try {
         const res = await fetch(`/api/drug-defaults?drug_name=${encodeURIComponent(drugName)}`, {
             credentials: 'same-origin',
             headers: { 'X-Requested-With': 'XMLHttpRequest' }
         });
         const data = await res.json();
-        el.innerHTML = renderDrugSavedTemplateHtml(data && data.success ? data.default : null);
+        const tpl = data && data.success ? data.default : null;
+        el.innerHTML = renderDrugSavedTemplateHtml(tpl);
+        setAddDrugTemplateBtnState(!!(tpl && (tpl.dose || tpl.frequency || tpl.duration || tpl.route || tpl.instructions)));
     } catch (e) {
         el.innerHTML = '';
+        setAddDrugTemplateBtnState(false);
     }
+}
+
+// "Add drug instruction template" is disabled once a template exists for this
+// drug (it's unique per doctor+drug — use Edit/Delete on the box instead).
+function setAddDrugTemplateBtnState(hasTpl) {
+    const btn = document.getElementById('addDrugTemplateBtn');
+    if (!btn) return;
+    btn.disabled = !!hasTpl;
+    btn.classList.toggle('disabled', !!hasTpl);
+    btn.setAttribute('title', hasTpl ? 'A template already exists for this drug — use Edit or Delete' : '');
+}
+
+// Delete confirmation modal (opened from the box's Delete button or the editor).
+function confirmDeleteDrugTemplate() {
+    const titleEl = document.getElementById('modalDrugName');
+    const drugName = ((titleEl ? titleEl.textContent : '') || __drugTemplateName || '').trim();
+    if (!drugName) return;
+    __drugTemplateName = drugName;
+    const nameEl = document.getElementById('drugTplDeleteName');
+    if (nameEl) nameEl.textContent = drugName;
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('drugTplDeleteModal')).show();
+}
+
+async function doDeleteDrugTemplate() {
+    const drugName = (__drugTemplateName || '').trim();
+    if (!drugName) return;
+    const btn = document.getElementById('drugTplDeleteConfirmBtn');
+    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Deleting...'; }
+    try {
+        const res = await fetch(`/api/drug-defaults?drug_name=${encodeURIComponent(drugName)}`, {
+            method: 'DELETE',
+            credentials: 'same-origin',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+        const data = await res.json();
+        if (data && data.success) {
+            bootstrap.Modal.getInstance(document.getElementById('drugTplDeleteModal'))?.hide();
+            const editor = bootstrap.Modal.getInstance(document.getElementById('drugTemplateModal'));
+            if (editor) editor.hide();
+            loadDrugSavedTemplateDisplay(drugName); // refresh box + re-enable Add
+        }
+    } catch (e) { /* silent */ }
+    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-trash me-1"></i>Delete'; }
 }
 
 // Clears the template-editor inputs without deleting the saved row.
