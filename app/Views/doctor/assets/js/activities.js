@@ -12,6 +12,13 @@
 
     var isAr = (document.documentElement.getAttribute('lang') === 'ar') ||
                !!(window.V11I18n && window.V11I18n.isAr && window.V11I18n.isAr());
+    var isSecretary = (document.documentElement.getAttribute('data-layout') === 'secretary');
+
+    // ---- clickable entity links (role-aware: doctor vs secretary) ------------
+    function patientHref(id) { return id ? (isSecretary ? '/secretary/patients/' : '/doctor/patients/') + id : null; }
+    function apptHref(id)    { return id ? (isSecretary ? '/secretary/bookings/'  : '/doctor/appointments/') + id : null; }
+    function patientLink(a, text) { var h = patientHref(a.patient_id);  return h ? '<a href="' + h + '" class="act-link">' + text + '</a>' : text; }
+    function apptLink(a, text)    { var h = apptHref(a.appointment_id); return h ? '<a href="' + h + '" class="act-link">' + text + '</a>' : text; }
 
     // ---- rendering (mirror of notification-center.js, Arabic-aware) ----------
     function escHtml(s) {
@@ -27,25 +34,41 @@
     function arForPatient(a) {
         var n = a.patient_name ? escHtml(a.patient_name) : ''; if (!n) return '';
         var w = a.patient_gender === 'Female' ? 'للمريضة' : (a.patient_gender === 'Male' ? 'للمريض' : 'للمريض/ة');
-        return ' ' + w + ' ' + n;
+        return ' ' + w + ' ' + patientLink(a, n);
     }
     function arBarePatient(a) {
         var n = a.patient_name ? escHtml(a.patient_name) : ''; if (!n) return '';
         var w = a.patient_gender === 'Female' ? 'المريضة' : (a.patient_gender === 'Male' ? 'المريض' : 'المريض/ة');
-        return ' ' + w + ' ' + n;
+        return ' ' + w + ' ' + patientLink(a, n);
     }
     function arActivityVerb(a) {
         var self = !!a.actor_is_self, did = self ? 'قمت ب' : 'قام ب';
         switch (a.action_code) {
-            case 'booked':         return did + 'حجز موعد' + arForPatient(a);
-            case 'status_changed': return did + 'تغيير حالة الموعد إلى «' + escHtml(STATUS_AR[a.detail] || a.detail || '') + '»' + arForPatient(a);
-            case 'deleted':        return did + 'حذف موعد' + arForPatient(a);
-            case 'rescheduled':    return did + 'إعادة جدولة الموعد' + arForPatient(a);
-            case 'edited':         return did + 'تعديل الموعد' + arForPatient(a);
+            case 'booked':         return did + 'حجز ' + apptLink(a, 'موعد') + arForPatient(a);
+            case 'status_changed': return did + 'تغيير حالة ' + apptLink(a, 'الموعد') + ' إلى «' + escHtml(STATUS_AR[a.detail] || a.detail || '') + '»' + arForPatient(a);
+            case 'deleted':        return did + 'حذف ' + apptLink(a, 'موعد') + arForPatient(a);
+            case 'rescheduled':    return did + 'إعادة جدولة ' + apptLink(a, 'الموعد') + arForPatient(a);
+            case 'edited':         return did + 'تعديل ' + apptLink(a, 'الموعد') + arForPatient(a);
             case 'checked_in':     return (self ? 'سجّلت' : 'سجّل') + ' حضور' + (arBarePatient(a) || ' المريض');
             case 'note_added':     return did + 'إضافة ملاحظة طبية' + arForPatient(a);
             case 'alert_created':  return did + 'إنشاء تنبيه' + arForPatient(a);
             case 'todo_created':   return (self ? 'أضفت' : 'أضاف') + ' مهمة' + (a.detail ? ' «' + escHtml(a.detail) + '»' : '');
+            default:               return null;
+        }
+    }
+    // English verb phrase with the "appointment" keyword linked; the patient name is
+    // appended (also linked) by formatActivityLine.
+    function enActivityVerb(a) {
+        switch (a.action_code) {
+            case 'booked':         return 'booked an ' + apptLink(a, 'appointment');
+            case 'status_changed': return 'updated ' + apptLink(a, 'appointment') + ' status to "' + escHtml(a.detail || '') + '"';
+            case 'deleted':        return 'deleted an ' + apptLink(a, 'appointment');
+            case 'rescheduled':    return 'rescheduled an ' + apptLink(a, 'appointment') + (a.detail ? ' ' + escHtml(a.detail) : '');
+            case 'edited':         return 'edited an ' + apptLink(a, 'appointment') + (a.detail ? ' ' + escHtml(a.detail) : '');
+            case 'checked_in':     return 'checked in the patient';
+            case 'note_added':     return 'added a consultation note';
+            case 'alert_created':  return 'created an alert';
+            case 'todo_created':   return 'created a task' + (a.detail ? ' "' + escHtml(a.detail) + '"' : '');
             default:               return null;
         }
     }
@@ -56,6 +79,17 @@
             ? '<strong>' + (isAr ? 'أنت' : 'You') + '</strong>'
             : (a.actor_name ? escHtml(a.actor_name) : (isAr ? 'مستخدم' : 'Someone'));
         if (isAr && a.action_code) { var verb = arActivityVerb(a); if (verb) return actorPart + ' ' + verb; }
+        if (!isAr && a.action_code) {
+            var ev = enActivityVerb(a);
+            if (ev) {
+                var line = actorPart + ' ' + ev;
+                // Append the (linked) patient for phrases that don't already include it.
+                if (a.patient_name && a.patient_id && a.action_code !== 'todo_created') {
+                    line += ' ' + patientLink(a, escHtml(a.patient_name));
+                }
+                return line;
+            }
+        }
         var parts = [actorPart];
         if (a.action) parts.push(escHtml(a.action));
         if (a.target_label) parts.push(escHtml(a.target_label));
