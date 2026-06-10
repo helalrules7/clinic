@@ -3932,8 +3932,20 @@ document.addEventListener('DOMContentLoaded', function() {
     // Refresh weather every 15 minutes
     setInterval(refreshWeather, 15 * 60 * 1000);
 
-    // Load Unified Clinical Dashboard
-    loadUnifiedClinicalDashboard();
+    // LAZY-LOAD the Unified Clinical Dashboard. Its /api/clinical-dashboard/snapshot
+    // is a heavy aggregation (IOP/VA/cataract/dry-eye) and the card sits well below
+    // the fold, so defer the fetch until it nears the viewport — keeping that heavy
+    // query off the initial-load critical path. (Mirrors lazyMissedAppointments.)
+    (function lazyUnifiedClinicalDashboard() {
+        const card = document.querySelector('[data-card-id="unified-clinical-dashboard"]');
+        let loaded = false;
+        const trigger = () => { if (loaded) return; loaded = true; loadUnifiedClinicalDashboard(); };
+        if (!card || typeof IntersectionObserver === 'undefined') { trigger(); return; }
+        const io = new IntersectionObserver((entries) => {
+            for (const e of entries) { if (e.isIntersecting) { trigger(); io.disconnect(); break; } }
+        }, { rootMargin: '400px 0px' });
+        io.observe(card);
+    })();
 });
 
 // ============================================
