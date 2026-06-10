@@ -845,4 +845,7 @@
      that only ever powered a gender pie chart whose container (#genderPieChart) lives on
      the Reports page, NOT the dashboard — so on both dashboards they loaded for nothing
      (and triggered a 2s retry-poll). Reports renders that chart with its own Chart.js. -->
-<script src="/app/Views/doctor/assets/js/dashboard.js?v=<?= file_exists(__DIR__ . '/assets/js/dashboard.js') ? filemtime(__DIR__ . '/assets/js/dashboard.js') : time() ?>"></script>
+<!-- deferred (v12_perf): ~205KB — let the server-rendered cards paint first; dashboard.js
+     runs all its work on DOMContentLoaded, so deferring doesn't change behavior (no inline
+     script depends on it). -->
+<script defer src="/app/Views/doctor/assets/js/dashboard.js?v=<?= file_exists(__DIR__ . '/assets/js/dashboard.js') ? filemtime(__DIR__ . '/assets/js/dashboard.js') : time() ?>"></script>

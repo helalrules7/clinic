@@ -34,12 +34,17 @@ upcoming appointments, the at-a-glance mini-widgets) and need eager loading, or 
 widget (the charts' `/api/dashboard-charts` is also consumed by the above-the-fold stat-card sparklines). The two
 genuinely heavy, below-the-fold, own-fetch widgets are Missed Appointments (already lazy) and this one — now both lazy.
 
-## Not done (deliberate, for a future focused task)
-- **Defer/split `dashboard.js` (~205KB, still non-deferred).** It sits *before* `main.js` in the document, so simply
-  adding `defer` flips their execution order and changes its `readyState`-gated branches — too risky in this
-  TDZ-fragile, single-giant-DOMContentLoaded-handler file (see CARD_ORDER_localstorage_cache.md). The right move is
-  to *split* the below-the-fold widget code into a separate deferred file (like the ophthalmology-tools extraction),
-  which is a larger, focused refactor.
+## Also done — deferred `dashboard.js` (~205KB)
+Added `defer` to the `dashboard.js` `<script>` so the server-rendered cards paint before the 205KB bundle loads.
+The order-flip with `main.js` (which now runs first) and the `readyState`-gated branches turned out benign — all of
+dashboard.js's work runs on DOMContentLoaded (deferred scripts execute before DCL), and no inline script in
+dashboard.php calls a dashboard.js function. **CDP-verified comprehensively** (1280×900): dashboard.js executes
+(its globals defined), Chart.js charts render, status donut + weather + the 6 cards + reorder handles all present,
+the cache-first **card order still applies** correctly, lazy clinical/missed still fire, **0 console errors**.
+
+## Not done (for a future focused task)
+- **Split** dashboard.js further (move below-the-fold widget code into its own deferred file, eye-tools style) — a
+  larger refactor, only worth it if the single deferred bundle proves too heavy.
 - **Batch the snapshot/summary endpoints** server-side (fewer Cloudflare round-trips) — a backend change.
 
 ## Apply on ortho
