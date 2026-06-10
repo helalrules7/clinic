@@ -64,6 +64,15 @@ payload drops from ≤50 to ≤10 rows per 60s poll.
   wasn't run locally (no secretary creds); the secretary path reuses the verified shared `resolveClinicScope` +
   `formatActivityLine`(Arabic). Recommend a quick secretary-login check on prod.
 
+## Clickable entities (follow-up, 2026-06-10)
+Each activity line links the **patient name** → patient profile and the **"appointment"** keyword → the
+appointment. Role-aware: doctor `/doctor/patients/{id}` + `/doctor/appointments/{id}`; secretary
+`/secretary/patients/{id}` + `/secretary/bookings/{id}` (note: secretary appointments are "bookings"). Both EN/AR.
+- Backend: `ActivityController` now exposes `patient_id` (all events) + `appointment_id` (activity_log appointment
+  events) in the feed output.
+- Frontend: `activities.js` `patientHref/apptHref/patientLink/apptLink` (role from `<html data-layout>`);
+  `en/arActivityVerb` wrap the appointment keyword; the patient name renders as a link. `.act-link` in `activities.css`.
+
 ## Apply on ortho
 1. `ActivityController`: add `page()` + `resolveClinicScope()` + optional `$from/$to` on the 4 fetchers.
 2. Add the routes (both routers), the two controller methods, and the shared view/JS/CSS
