@@ -387,7 +387,7 @@
     </div>
 </div>
 
-<!-- Notes Dashboard -->
+<!-- Notes Dashboard (embeds the canonical /doctor/notes board — single source of truth) -->
 <div class="row mb-4 dashboard-card-row" data-card-id="notes-dashboard">
     <div class="col-12">
         <div class="card shadow dashboard-card" id="notesDashboardCard" data-card-id="notes-dashboard">
@@ -397,12 +397,11 @@
                     Notes Board
                 </h6>
                 <div class="d-flex align-items-center gap-2">
-
-                    <button class="btn btn-sm btn-success" id="dashboardAddNoteBtnHeader" onclick="dashboardAddNote()">
+                    <button class="btn btn-sm btn-success" onclick="document.getElementById('addNoteBtn')?.click()">
                         <i class="bi bi-plus-circle me-1"></i>Add Note
                     </button>
                     <a href="/doctor/notes" class="btn btn-sm btn-primary">
-                        <i class="bi bi-arrow-right-circle me-1"></i>Notes Board
+                        <i class="bi bi-box-arrow-up-right me-1"></i>Open full page
                     </a>
                     <div class="d-flex align-items-center gap-1 me-2">
                         <button class="btn btn-sm btn-outline-secondary dashboard-card-move-btn" onclick="moveCardUp('notes-dashboard')" title="Move up">
@@ -417,19 +416,8 @@
                     </div>
                 </div>
             </div>
-            <div class="card-body" id="notesDashboardCardBody" style="position: relative; overflow: hidden;">
-                <div id="dashboardNotesContainer" class="dashboard-notes-container">
-                    <div class="text-center py-3" id="dashboardNotesLoading">
-                        <div class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden">Loading...</span>
-                        </div>
-                    </div>
-                    <div class="text-center py-4" id="dashboardNotesEmpty" style="display: none;">
-                        <i class="bi bi-sticky text-muted" style="font-size: 3rem;"></i>
-                        <p class="text-muted mt-3 mb-0">No notes yet. Click "Add Note" to create your first note.</p>
-                    </div>
-                </div>
-                <div class="dashboard-notes-resize-handle" id="notesDashboardResizeHandle" title="Drag to resize"></div>
+            <div class="card-body">
+                <?php $notesEmbedded = true; $user = $user ?? $this->getCurrentUser(); include __DIR__ . '/notes/index.php'; ?>
             </div>
         </div>
     </div>
@@ -658,7 +646,7 @@
     </div>
 </div>
 
-<!-- Today's Alerts -->
+<!-- Today's Alerts (embeds the canonical /doctor/alerts page in compact "today" mode) -->
 <div class="row mb-4 dashboard-card-row" data-card-id="today-alerts">
     <div class="col-12">
         <div class="card shadow dashboard-card" data-card-id="today-alerts">
@@ -669,7 +657,7 @@
                 </h6>
                 <div class="d-flex align-items-center gap-2">
                     <a href="/doctor/alerts" class="btn btn-sm btn-outline-warning manage-alerts-btn">
-                        <i class="bi bi-gear me-1"></i>Manage Alerts
+                        <i class="bi bi-box-arrow-up-right me-1"></i>Manage Alerts
                     </a>
                     <div class="d-flex align-items-center gap-1 me-2">
                         <button class="btn btn-sm btn-outline-secondary dashboard-card-move-btn" onclick="moveCardUp('today-alerts')" title="Move up">
@@ -685,13 +673,7 @@
                 </div>
             </div>
             <div class="card-body">
-                <div id="todayAlertsContainer">
-                    <div class="text-center py-3">
-                        <div class="spinner-border text-warning" role="status">
-                            <span class="visually-hidden">Loading...</span>
-                        </div>
-                    </div>
-                </div>
+                <?php $alertsEmbedded = true; include __DIR__ . '/alerts/index.php'; ?>
             </div>
         </div>
     </div>

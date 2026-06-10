@@ -401,3 +401,18 @@
     .alert-card-side { width: 100%; flex-direction: row; justify-content: space-between; align-items: center; }
     .alerts-create-btn { width: 100%; }
 }
+
+/* ============================================================================
+ * Embedded mode (dashboard) — added 2026-06-10.
+ * When alerts/index.php is included into the dashboard ($alertsEmbedded), show a
+ * compact "today" list only: hide the page header, the stats grid, the list-card's
+ * own header (bulk actions + per-page select) and pagination. loadAlerts() detects
+ * .alerts-page--embedded and fetches /api/alerts/today (see alerts-page.js).
+ * ========================================================================== */
+.alerts-page--embedded { padding: 0 !important; }
+.alerts-page--embedded .alerts-header,
+.alerts-page--embedded #alertsStatsGrid,
+.alerts-page--embedded .alerts-list-card > .card-header,
+.alerts-page--embedded #alertsPaginationNav { display: none !important; }
+.alerts-page--embedded .alerts-list-card { border: 0; box-shadow: none; background: transparent; }
+.alerts-page--embedded .alerts-list-card > .card-body { padding: 0; }

@@ -1510,3 +1510,14 @@
 .notes-embed .notes-container {
     min-height: 320px; border-radius: var(--r-lg) !important; padding: 1rem;
 }
+
+/* ============================================================================
+ * Embedded mode (dashboard) — added 2026-06-10.
+ * When notes/index.php is included into the dashboard ($notesEmbedded), hide the
+ * page toolbar (title + color picker + Add/Delete-All); the dashboard card header
+ * supplies an "Add note" button that proxies a click to #addNoteBtn (still in DOM).
+ * The full canvas board stays — matches the patient-boards embed behaviour.
+ * ========================================================================== */
+.notes-page--embedded { padding: 0 !important; }
+.notes-page--embedded .notes-toolbar { display: none !important; }
+.notes-page--embedded #notesContainer { min-height: 420px; }
