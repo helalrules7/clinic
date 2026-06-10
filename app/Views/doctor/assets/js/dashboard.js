@@ -219,14 +219,16 @@ function quickActionEditProfile() {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-    loadDoctorSettings().then(() => {
-        // Load and apply card order
-        loadDashboardCardOrder().then(() => {
-            // Update buttons after loading order
-            updateCardButtons();
-        });
-    });
-    
+    // Cache-first dashboard card order: applies the last order from localStorage
+    // instantly (no network wait, no reorder jump), then revalidates against the DB
+    // in the background. (The old loadDoctorSettings() pre-fetch was dead weight
+    // after v12_perf removed the notes-height setting — dropped, saving one XHR.)
+    // Deferred to a microtask so the consts declared LATER in this handler
+    // (DEFAULT_CARD_ORDER, the cache key) are initialized before it runs — TDZ-safe,
+    // and microtasks still run before paint so the cache apply stays instant. This
+    // mirrors the original deferral via loadDoctorSettings().then(...).
+    Promise.resolve().then(loadDashboardCardOrder);
+
     // Initial button update (in case loadDashboardCardOrder hasn't finished)
     setTimeout(() => {
         updateCardButtons();
@@ -932,30 +934,10 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     
-    // Load doctor settings
-    async function loadDoctorSettings() {
-        try {
-            const response = await fetch('/api/doctor/settings', {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            });
-            
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            
-            await response.json();
-            // (notes-dashboard height handling removed — the Notes widget is now a
-            //  direct embed of /doctor/notes, so there is no settings-driven height
-            //  to apply here. This call is kept only to chain card-order init below.)
-        } catch (error) {
-            // settings load is non-critical (only chains card-order init)
-        }
-    }
-    
+    // (loadDoctorSettings removed — it was a dead pre-fetch of /api/doctor/settings.
+    //  Card order now loads cache-first via loadDashboardCardOrder; no other setting
+    //  was read here. Saves one XHR per dashboard load.)
+
     // Save doctor settings
     async function saveDoctorSettings(settings) {
         try {
@@ -1185,163 +1167,156 @@ document.addEventListener('DOMContentLoaded', function() {
     window.moveCardDown = moveCardDown;
     
     // Toggle dashboard rearrange buttons visibility on mobile
-    async function toggleDashboardRearrangeButtons() {
+    // Mobile "rearrange" toggle — cache-first like the card order. The setting is
+    // fetched ONCE on load (localStorage-cached for instant apply); a window resize
+    // only re-applies visibility from the cached value — NO network on resize.
+    // (Previously this fetched /api/doctor/settings on EVERY resize event.)
+    const REARRANGE_LS_KEY = 'dashboard_rearrange_mobile';
+    let dashRearrangeEnabled = (function () {
+        try { return localStorage.getItem(REARRANGE_LS_KEY) === '1'; } catch (e) { return false; }
+    })();
+
+    function applyRearrangeVisibility() {
+        // Desktop (>768): controls always visible. Mobile: per the saved setting.
+        const show = (window.innerWidth > 768) || dashRearrangeEnabled;
+        document.querySelectorAll('.dashboard-card-move-btn').forEach(btn => { btn.style.display = show ? 'flex' : 'none'; });
+        document.querySelectorAll('.dashboard-card-drag-handle').forEach(h => { h.style.display = show ? 'flex' : 'none'; });
+    }
+
+    async function loadRearrangeSetting() {
+        applyRearrangeVisibility(); // instant, from the cached value
         try {
-            const response = await fetch('/api/doctor/settings', {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            });
-            
-            if (response.ok) {
-                const data = await response.json();
-                if (data.success && data.settings) {
-                    const rearrangeEnabled = data.settings.dashboard_rearrange_mobile || false;
-                    const isMobile = window.innerWidth <= 768;
-                    
-                    // Get all rearrange buttons and drag handles
-                    const moveButtons = document.querySelectorAll('.dashboard-card-move-btn');
-                    const dragHandles = document.querySelectorAll('.dashboard-card-drag-handle');
-                    
-                    if (isMobile) {
-                        // On mobile: show/hide based on setting
-                        moveButtons.forEach(btn => {
-                            btn.style.display = rearrangeEnabled ? 'flex' : 'none';
-                        });
-                        dragHandles.forEach(handle => {
-                            handle.style.display = rearrangeEnabled ? 'flex' : 'none';
-                        });
-                    } else {
-                        // On desktop: always show
-                        moveButtons.forEach(btn => {
-                            btn.style.display = 'flex';
-                        });
-                        dragHandles.forEach(handle => {
-                            handle.style.display = 'flex';
-                        });
-                    }
-                }
+            const data = await fetchDoctorSettingsOnce();
+            if (data && data.success && data.settings) {
+                const enabled = !!data.settings.dashboard_rearrange_mobile;
+                try { localStorage.setItem(REARRANGE_LS_KEY, enabled ? '1' : '0'); } catch (e) {}
+                if (enabled !== dashRearrangeEnabled) { dashRearrangeEnabled = enabled; applyRearrangeVisibility(); }
             }
         } catch (error) {
-            console.error('Error loading dashboard rearrange setting:', error);
+            // non-critical — the cached value is already applied
         }
     }
-    
-    // Call on page load and window resize
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', function() {
-            toggleDashboardRearrangeButtons();
-        });
-    } else {
-        toggleDashboardRearrangeButtons();
-    }
-    
-    // Update on window resize
-    window.addEventListener('resize', toggleDashboardRearrangeButtons);
+
+    // On load: fetch the setting once (cache-first). On resize: re-apply only (no fetch).
+    // Deferred to a microtask (we're already in a DOMContentLoaded handler so the DOM
+    // is ready) — TDZ-safe like the card-order boot above.
+    Promise.resolve().then(loadRearrangeSetting);
+    window.addEventListener('resize', applyRearrangeVisibility);
     
     // Save card order to database
+    // --- Card-order cache (localStorage) — the fast path; DB stays source of truth ---
+    const CARD_ORDER_LS_KEY = 'dashboard_cards_order';
+    function readCachedCardOrder() {
+        try { const c = localStorage.getItem(CARD_ORDER_LS_KEY); return c ? JSON.parse(c) : null; }
+        catch (e) { return null; }
+    }
+    function writeCachedCardOrder(order) {
+        try { localStorage.setItem(CARD_ORDER_LS_KEY, JSON.stringify(order)); } catch (e) {}
+    }
+
+    // Single shared fetch of /api/doctor/settings per page load — the card-order and
+    // rearrange loaders both read from it, so there is exactly ONE network request
+    // (instead of one each). Returns the parsed JSON or null on any failure.
+    // Memoized on the function itself (not a separate `let`) so it is TDZ-safe when
+    // called from code that runs earlier in this DOMContentLoaded handler.
+    function fetchDoctorSettingsOnce() {
+        if (!fetchDoctorSettingsOnce._p) {
+            fetchDoctorSettingsOnce._p = fetch('/api/doctor/settings', {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+            }).then(r => r.ok ? r.json() : null).catch(() => null);
+        }
+        return fetchDoctorSettingsOnce._p;
+    }
+
     async function saveDashboardCardOrder() {
         try {
             const cards = Array.from(document.querySelectorAll('.dashboard-card-row'));
             const order = cards.map(card => card.getAttribute('data-card-id'));
-            
-            await saveDoctorSettings({
+
+            writeCachedCardOrder(order);            // instant local cache (next load = no jump)
+            await saveDoctorSettings({              // DB = source of truth (cross-device, first load)
                 dashboard_cards_order: JSON.stringify(order)
             });
         } catch (error) {
             // Silently handle error
         }
     }
-    
-    // Load and apply card order from database
-    async function loadDashboardCardOrder() {
-        try {
-            const response = await fetch('/api/doctor/settings', {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
+
+    // Validate an order against DEFAULT_CARD_ORDER, backfill any missing/new cards at
+    // their default positions, reorder the DOM, refresh the move buttons. Pure apply —
+    // returns the final (backfilled) order, or null if there are no cards yet.
+    function applyCardOrder(order) {
+        if (!Array.isArray(order) || order.length === 0) return null;
+        const validOrder = order.filter(id => DEFAULT_CARD_ORDER.includes(id));
+        const missingCards = DEFAULT_CARD_ORDER.filter(id => !validOrder.includes(id));
+        const finalOrder = [...validOrder];
+        missingCards.forEach(id => {
+            const defIdx = DEFAULT_CARD_ORDER.indexOf(id);
+            let insertAt = -1;
+            for (let i = defIdx - 1; i >= 0; i--) {
+                const pos = finalOrder.indexOf(DEFAULT_CARD_ORDER[i]);
+                if (pos !== -1) { insertAt = pos + 1; break; }
+            }
+            if (insertAt === -1) {
+                for (let i = defIdx + 1; i < DEFAULT_CARD_ORDER.length; i++) {
+                    const pos = finalOrder.indexOf(DEFAULT_CARD_ORDER[i]);
+                    if (pos !== -1) { insertAt = pos; break; }
                 }
-            });
-            
-            if (!response.ok) return;
-            
-            const data = await response.json();
-            
-            if (data.success && data.settings && data.settings.dashboard_cards_order) {
-                let order;
+            }
+            if (insertAt === -1) insertAt = finalOrder.length;
+            finalOrder.splice(insertAt, 0, id);
+        });
+
+        const cards = Array.from(document.querySelectorAll('.dashboard-card-row'));
+        if (cards.length === 0) return null;
+        const cardMap = new Map(cards.map(card => [card.getAttribute('data-card-id'), card]));
+        const mainContainer = cards[0].parentElement;
+        if (!mainContainer) return null;
+        finalOrder.forEach(cardId => {
+            const card = cardMap.get(cardId);
+            if (card && card.parentElement === mainContainer) mainContainer.appendChild(card);
+        });
+        updateCardButtons();
+        return finalOrder;
+    }
+
+    // Cache-first load: apply the cached order instantly (no network), then revalidate
+    // against the DB in the background and re-apply only if it differs (cross-device).
+    async function loadDashboardCardOrder() {
+        const cached = readCachedCardOrder();
+        if (cached) applyCardOrder(cached);
+        else updateCardButtons();
+
+        try {
+            const data = await fetchDoctorSettingsOnce();
+
+            if (data && data.success && data.settings && data.settings.dashboard_cards_order) {
+                let dbOrder;
                 try {
-                    order = typeof data.settings.dashboard_cards_order === 'string' 
+                    dbOrder = typeof data.settings.dashboard_cards_order === 'string'
                         ? JSON.parse(data.settings.dashboard_cards_order)
                         : data.settings.dashboard_cards_order;
-                } catch (e) {
-                    order = DEFAULT_CARD_ORDER;
-                }
-                
-                // Validate order - filter out invalid IDs and ensure all default cards are included
-                const validOrder = order.filter(id => DEFAULT_CARD_ORDER.includes(id));
-                const missingCards = DEFAULT_CARD_ORDER.filter(id => !validOrder.includes(id));
-                // Insert any missing/new card (e.g. a newly added card for existing users)
-                // at its DEFAULT position — right after its default predecessor — instead
-                // of dumping it at the end, so the intended order is preserved.
-                const finalOrder = [...validOrder];
-                missingCards.forEach(id => {
-                    const defIdx = DEFAULT_CARD_ORDER.indexOf(id);
-                    let insertAt = -1;
-                    // Place after the nearest preceding default card that's already placed…
-                    for (let i = defIdx - 1; i >= 0; i--) {
-                        const pos = finalOrder.indexOf(DEFAULT_CARD_ORDER[i]);
-                        if (pos !== -1) { insertAt = pos + 1; break; }
-                    }
-                    // …otherwise before the nearest following default card (so e.g.
-                    // patient-boards lands right before notes-dashboard instead of at the end).
-                    if (insertAt === -1) {
-                        for (let i = defIdx + 1; i < DEFAULT_CARD_ORDER.length; i++) {
-                            const pos = finalOrder.indexOf(DEFAULT_CARD_ORDER[i]);
-                            if (pos !== -1) { insertAt = pos; break; }
-                        }
-                    }
-                    if (insertAt === -1) insertAt = finalOrder.length;
-                    finalOrder.splice(insertAt, 0, id);
-                });
+                } catch (e) { dbOrder = null; }
 
-                // Apply order - find the container that holds all cards
-                const cards = Array.from(document.querySelectorAll('.dashboard-card-row'));
-                if (cards.length === 0) return;
-                
-                const cardMap = new Map(cards.map(card => [card.getAttribute('data-card-id'), card]));
-                
-                // Get the parent container (should be the main content area)
-                const firstCard = cards[0];
-                if (!firstCard) return;
-                
-                const mainContainer = firstCard.parentElement;
-                if (!mainContainer) return;
-                
-                // Reorder cards based on finalOrder
-                // Only reorder cards that exist in the DOM
-                finalOrder.forEach(cardId => {
-                    const card = cardMap.get(cardId);
-                    if (card && card.parentElement === mainContainer) {
-                        // Remove card from current position and append to end (will be reordered)
-                        mainContainer.appendChild(card);
+                if (Array.isArray(dbOrder)) {
+                    // Re-apply only if the DB differs from what we already showed from the
+                    // cache (e.g. reordered on another device); otherwise the cached apply stands.
+                    if (JSON.stringify(dbOrder) !== JSON.stringify(cached)) {
+                        const applied = applyCardOrder(dbOrder);
+                        if (applied) {
+                            writeCachedCardOrder(applied);
+                            // One-time migration: if backfilling a new card changed the order,
+                            // persist it so the DB matches what we render.
+                            if (JSON.stringify(applied) !== JSON.stringify(dbOrder)) {
+                                saveDoctorSettings({ dashboard_cards_order: JSON.stringify(applied) });
+                            }
+                        }
+                    } else if (!cached) {
+                        // First load on this device — seed the cache from the DB.
+                        writeCachedCardOrder(dbOrder);
                     }
-                });
-                
-                // Ensure unified-clinical-dashboard is included in saved order if it exists
-                // This handles migration for existing users
-                const unifiedCard = cardMap.get('unified-clinical-dashboard');
-                if (unifiedCard && !validOrder.includes('unified-clinical-dashboard')) {
-                    // Card exists but wasn't in saved order, save updated order
-                    setTimeout(() => {
-                        saveDashboardCardOrder();
-                    }, 100);
                 }
-                
-                // Update buttons after loading order
-                updateCardButtons();
             }
         } catch (error) {
             // Silently handle error
