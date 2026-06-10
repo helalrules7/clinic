@@ -1553,11 +1553,21 @@ document.addEventListener('DOMContentLoaded', function() {
             };
         };
 
+        // Memoized so loadChartsData() + loadStatsCardsData() share ONE
+        // /api/dashboard-charts request per page load (was fetched twice). The chart
+        // data is static for the session; theme changes redraw from the cached data.
+        let __dashChartsPromise = null;
+        window.fetchDashboardChartsOnce = function () {
+            if (!__dashChartsPromise) {
+                __dashChartsPromise = fetch('/api/dashboard-charts').then(r => r.json()).catch(() => null);
+            }
+            return __dashChartsPromise;
+        };
+
         window.loadChartsData = function() {
-            fetch('/api/dashboard-charts')
-                .then(response => response.json())
+            fetchDashboardChartsOnce()
                 .then(data => {
-                    if (data.ok) {
+                    if (data && data.ok) {
                         renderAppointmentsChart(data.data.trend);
                         
                         // Render New Patients Trend Chart
@@ -1565,22 +1575,9 @@ document.addEventListener('DOMContentLoaded', function() {
                             renderNewPatientsTrendChart(data.data.patients);
                         }
                         
-                        // Wait for amCharts to load before rendering gender chart with multiple retries
-                        let retryCount = 0;
-                        const maxRetries = 10;
-                        const checkAmCharts = setInterval(() => {
-                            if (typeof am4core !== 'undefined' && typeof am4charts !== 'undefined' && typeof am4themes_animated !== 'undefined') {
-                                clearInterval(checkAmCharts);
-                                renderGenderPieChart(data.data.gender);
-                            } else {
-                                retryCount++;
-                                if (retryCount >= maxRetries) {
-                                    clearInterval(checkAmCharts);
-                                    console.error('amCharts library failed to load after multiple retries');
-                                }
-                            }
-                        }, 200);
-                        
+                        // (amCharts gender pie removed — its container lives on the Reports
+                        //  page, not the dashboard. The 2s amCharts retry-poll is gone.)
+
                         renderLiquidCircles(data.data.status);
                     } else {
                         console.error('Error loading charts data:', data.error);
@@ -2408,10 +2405,9 @@ function initStatsCardsCharts() {
 
 // Load real data for stats cards
 function loadStatsCardsData() {
-    fetch('/api/dashboard-charts')
-        .then(response => response.json())
+    fetchDashboardChartsOnce()
         .then(data => {
-            if (data.ok && data.data && data.data.trend) {
+            if (data && data.ok && data.data && data.data.trend) {
                 const trendData = data.data.trend;
                 const statusData = data.data.status;
                 const patientsData = data.data.patients || [];

@@ -837,10 +837,12 @@
     }
 </style>
 
-<!-- Chart.js -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<!-- amCharts 4 -->
-<script src="https://www.amcharts.com/lib/4/core.js"></script>
-<script src="https://www.amcharts.com/lib/4/charts.js"></script>
-<script src="https://www.amcharts.com/lib/4/themes/animated.js"></script>
+<!-- Chart.js (the only charting lib the dashboard needs). Deferred so it doesn't
+     block paint — dashboard.js already polls `typeof Chart` and its chart renderers
+     run on DOMContentLoaded (after deferred scripts execute), so Chart is ready by then. -->
+<script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<!-- amCharts 4 removed (v12_perf): ~500KB of deprecated, render-blocking CDN scripts
+     that only ever powered a gender pie chart whose container (#genderPieChart) lives on
+     the Reports page, NOT the dashboard — so on both dashboards they loaded for nothing
+     (and triggered a 2s retry-poll). Reports renders that chart with its own Chart.js. -->
 <script src="/app/Views/doctor/assets/js/dashboard.js?v=<?= file_exists(__DIR__ . '/assets/js/dashboard.js') ? filemtime(__DIR__ . '/assets/js/dashboard.js') : time() ?>"></script>
