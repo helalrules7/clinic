@@ -3631,6 +3631,24 @@ class DoctorController
     }
 
     /**
+     * Activities page — dedicated, filterable feed (reads /api/activity/page).
+     */
+    public function activities()
+    {
+        $user = $this->auth->user();
+        $content = $this->view->render('doctor/activities', [
+            'user' => $user,
+            'activitiesLang' => 'en',
+        ]);
+        echo $this->view->render('layouts/main', [
+            'title' => 'Activity Log - Roaya Clinic',
+            'pageTitle' => 'Activity Log',
+            'pageSubtitle' => 'All clinic activity in one place',
+            'content' => $content
+        ]);
+    }
+
+    /**
      * Get all notes for current doctor (API endpoint)
      */
     public function getNotes()

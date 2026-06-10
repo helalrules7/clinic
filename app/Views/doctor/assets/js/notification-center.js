@@ -429,7 +429,9 @@
     function loadActivity(showSpinner) {
         if (showSpinner) showSkeleton();
         state.loading = true;
-        return api('/api/activity')
+        // Cap the panel's Activity tab to 10 — the dedicated Activities page
+        // (link in the tab footer) is the home for full, filterable browsing.
+        return api('/api/activity?limit=10')
             .then(function (data) {
                 state.activity = parseActivityPayload(data);
                 if (state.tab === 'activity') renderActivity();
@@ -680,24 +682,37 @@
         var items = state.activity || [];
         if (!items.length) {
             renderEmpty(isAr ? 'لا يوجد نشاط حديث.' : 'No recent activity.', 'bi-activity');
-            return;
+        } else {
+            body.innerHTML = '';
+            var wrap = document.createElement('div');
+            wrap.className = 'notif-activity-list';
+            wrap.setAttribute('role', 'list');
+            items.forEach(function (a) {
+                var node = tplActivity.content.firstElementChild.cloneNode(true);
+                var type = a.type || a.event_type || 'system';
+                node.dataset.type = type;
+                var dot = node.querySelector('[data-dot]');
+                dot.style.background = colorFor(type);
+                node.querySelector('[data-text]').innerHTML = formatActivityLine(a);
+                // Prefer the client's localized timeAgo (the server's time_ago is English).
+                node.querySelector('[data-time]').textContent = timeAgo(a.ts || a.created_at || a.time) || a.time_ago;
+                wrap.appendChild(node);
+            });
+            body.appendChild(wrap);
         }
-        body.innerHTML = '';
-        var wrap = document.createElement('div');
-        wrap.className = 'notif-activity-list';
-        wrap.setAttribute('role', 'list');
-        items.forEach(function (a) {
-            var node = tplActivity.content.firstElementChild.cloneNode(true);
-            var type = a.type || a.event_type || 'system';
-            node.dataset.type = type;
-            var dot = node.querySelector('[data-dot]');
-            dot.style.background = colorFor(type);
-            node.querySelector('[data-text]').innerHTML = formatActivityLine(a);
-            // Prefer the client's localized timeAgo (the server's time_ago is English).
-            node.querySelector('[data-time]').textContent = timeAgo(a.ts || a.created_at || a.time) || a.time_ago;
-            wrap.appendChild(node);
-        });
-        body.appendChild(wrap);
+        appendActivityViewAll();
+    }
+
+    // The Activity tab is capped at 10 — offer a link to the full, filterable
+    // Activities page (context-aware: doctor vs secretary).
+    function appendActivityViewAll() {
+        var ctx = (panel.getAttribute('data-notif-context') === 'secretary') ? '/secretary/activities' : '/doctor/activities';
+        var foot = document.createElement('a');
+        foot.className = 'notif-activity-viewall';
+        foot.href = ctx;
+        foot.setAttribute('style', 'display:block;text-align:center;padding:.7rem;margin-top:.4rem;font-size:.85rem;font-weight:600;color:var(--accent,#6366F1);text-decoration:none;border-top:1px solid var(--glass-border,rgba(0,0,0,.06));');
+        foot.textContent = (isAr ? 'عرض كل النشاط ←' : 'View all activity →');
+        body.appendChild(foot);
     }
 
     function updateBadge() {

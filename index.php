@@ -106,6 +106,7 @@ try {
     
     // Secretary routes
     $router->get('/secretary/dashboard', 'SecretaryController@dashboard');
+    $router->get('/secretary/activities', 'SecretaryController@activities');
     $router->get('/api/secretary/dashboard', 'SecretaryController@getDashboardData');
     $router->get('/api/secretary/today-appointments', 'SecretaryController@getTodayAppointmentsApi');
     $router->get('/secretary/bookings', 'SecretaryController@bookings');
@@ -203,6 +204,7 @@ try {
     
     // Notes routes - moved to DoctorController
     $router->get('/doctor/notes', 'DoctorController@notes');
+    $router->get('/doctor/activities', 'DoctorController@activities');
     $router->get('/api/notes', 'NotesController@getNotes');
     $router->post('/api/notes', 'NotesController@createNote');
     $router->delete('/api/notes/delete-all', 'NotesController@deleteAllNotes'); // Must be before {id} route
@@ -287,6 +289,7 @@ try {
 
     // v11.0.0 — Activity, Cmd+K, hover-card, settings extensions
     $router->get('/api/activity',                       'ActivityController@feed');
+    $router->get('/api/activity/page',                  'ActivityController@page');
     $router->get('/api/search/palette',                 'SearchController@palette');
     $router->get('/api/patients/{id}/summary',          'PatientSummaryController@summary');
     $router->get('/api/settings/appearance',            'SettingsControllerV11@getAppearance');

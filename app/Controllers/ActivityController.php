@@ -76,46 +76,8 @@ class ActivityController
         // user has a clinic_id, restrict actor pool to same clinic. Otherwise
         // fall back to "all users in the system".
         // ------------------------------------------------------------------
-        // Resolve the viewer's clinic. Two scopes are derived from it:
-        //  - $clinicId       → used to scope APPOINTMENTS (and the notes/consults
-        //                       hung off them) by appointments.clinic_id, because
-        //                       doctors are NOT pinned to a clinic (users.clinic_id
-        //                       is null for them) so an actor-pool filter misses
-        //                       every doctor-owned row.
-        //  - $allowedActorIds → the clinic's user ids, still used to scope ALERTS
-        //                       (alerts.doctor_id stores a users.id).
-        // A viewer with no clinic (most doctors) → both null → sees everything.
-        $clinicId = null;
-        $allowedActorIds = null; // null => no filter
-        try {
-            $hasClinicCol = $this->columnExists('users', 'clinic_id');
-            if ($hasClinicCol) {
-                if (array_key_exists('clinic_id', $user) && $user['clinic_id'] !== null) {
-                    $clinicId = (int)$user['clinic_id'];
-                } else {
-                    $stmt = $this->pdo->prepare("SELECT clinic_id FROM users WHERE id = ? LIMIT 1");
-                    $stmt->execute([$user['id']]);
-                    $row = $stmt->fetch(\PDO::FETCH_ASSOC);
-                    if ($row && $row['clinic_id'] !== null) {
-                        $clinicId = (int)$row['clinic_id'];
-                    }
-                }
-
-                if ($clinicId !== null) {
-                    $stmt = $this->pdo->prepare("SELECT id FROM users WHERE clinic_id = ?");
-                    $stmt->execute([$clinicId]);
-                    $ids = $stmt->fetchAll(\PDO::FETCH_COLUMN);
-                    if (is_array($ids) && count($ids) > 0) {
-                        $allowedActorIds = array_map('intval', $ids);
-                    }
-                }
-            }
-        } catch (\Throwable $e) {
-            // Schema check / clinic lookup failed — fall back to no filter
-            error_log("ActivityController::feed clinic-scope fallback: " . $e->getMessage());
-            $clinicId = null;
-            $allowedActorIds = null;
-        }
+        // Resolve the viewer's clinic scope (shared with page()).
+        list($clinicId, $allowedActorIds) = $this->resolveClinicScope($user);
 
         $events = [];
 
@@ -177,6 +139,140 @@ class ActivityController
         ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     }
 
+    /**
+     * GET /api/activity/page?page=1&per_page=20&type=all&from=YYYY-MM-DD&to=YYYY-MM-DD&q=...
+     *
+     * Paginated + filtered variant of feed() for the dedicated Activities page.
+     * Same clinic scope, same source fetchers, plus:
+     *   - type   : all | appointment | consultation_note | alert | todo
+     *   - from/to: inclusive date range (applied per-source in SQL)
+     *   - q      : optional case-insensitive substring match on actor/patient/action
+     * Pagination is windowed across the merged 4-source feed: each selected source
+     * is fetched up to (page*per_page) rows, merged, sorted DESC, then sliced.
+     *
+     * Response: { success, events:[...], page, per_page, has_more }
+     */
+    public function page()
+    {
+        while (ob_get_level()) { ob_end_clean(); }
+        header('Content-Type: application/json; charset=utf-8');
+
+        $user = $this->auth->user();
+        if (!$user) {
+            http_response_code(401);
+            echo json_encode(['success' => false, 'message' => 'Unauthorized'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            return;
+        }
+
+        $page    = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
+        $perPage = isset($_GET['per_page']) ? (int)$_GET['per_page'] : 20;
+        if ($perPage < 1)  $perPage = 1;
+        if ($perPage > 50) $perPage = 50;
+
+        $type = isset($_GET['type']) ? strtolower(trim((string)$_GET['type'])) : 'all';
+        $validTypes = ['all', 'appointment', 'consultation_note', 'alert', 'todo'];
+        if (!in_array($type, $validTypes, true)) $type = 'all';
+
+        // Date filters — accept YYYY-MM-DD only (defensive).
+        $from = (isset($_GET['from']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $_GET['from'])) ? $_GET['from'] : null;
+        $to   = (isset($_GET['to'])   && preg_match('/^\d{4}-\d{2}-\d{2}$/', $_GET['to']))   ? $_GET['to']   : null;
+        $q    = isset($_GET['q']) ? trim((string)$_GET['q']) : '';
+
+        // Window: fetch enough from each source to cover up to the requested page,
+        // capped so a deep page can't run away. +1 row lets us detect has_more.
+        $window = min($page * $perPage + 1, 600);
+
+        list($clinicId, $allowedActorIds) = $this->resolveClinicScope($user);
+
+        $events = [];
+        $want = function ($t) use ($type) { return $type === 'all' || $type === $t; };
+        try {
+            if ($want('consultation_note')) $events = array_merge($events, $this->fetchConsultationNoteEvents($clinicId, $window, $from, $to));
+            if ($want('appointment'))       $events = array_merge($events, $this->fetchActivityLogEvents($clinicId, $window, $from, $to));
+            if ($want('alert'))             $events = array_merge($events, $this->fetchAlertEvents($allowedActorIds, $window, $from, $to));
+            if ($want('todo'))              $events = array_merge($events, $this->fetchTodoEvents((int)$user['id'], $window, $from, $to));
+        } catch (\Throwable $e) {
+            error_log('ActivityController::page source error: ' . $e->getMessage());
+        }
+
+        // Optional text search (post-merge — the sources don't share a searchable column).
+        if ($q !== '') {
+            $needle = mb_strtolower($q);
+            $events = array_values(array_filter($events, function ($ev) use ($needle) {
+                $hay = mb_strtolower(($ev['actor_name'] ?? '') . ' ' . ($ev['patient_name'] ?? '') . ' ' . ($ev['action'] ?? '') . ' ' . ($ev['target_label'] ?? ''));
+                return mb_strpos($hay, $needle) !== false;
+            }));
+        }
+
+        usort($events, function ($a, $b) {
+            $ta = isset($a['ts']) ? strtotime($a['ts']) : 0;
+            $tb = isset($b['ts']) ? strtotime($b['ts']) : 0;
+            if ($ta === $tb) return 0;
+            return ($ta < $tb) ? 1 : -1;
+        });
+
+        $hasMore = count($events) > $page * $perPage;
+        $slice   = array_slice($events, ($page - 1) * $perPage, $perPage);
+
+        $meId = (int)($user['id'] ?? 0);
+        foreach ($slice as &$ev) {
+            $ev['ts']            = $this->toIso($ev['ts'] ?? null);
+            $ev['time_ago']      = $this->timeAgo($ev['ts']);
+            $ev['actor_is_self'] = ($meId > 0 && isset($ev['actor_id']) && (int)$ev['actor_id'] === $meId);
+        }
+        unset($ev);
+
+        echo json_encode([
+            'success'  => true,
+            'events'   => $slice,
+            'page'     => $page,
+            'per_page' => $perPage,
+            'has_more' => $hasMore
+        ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    }
+
+    /**
+     * Resolve the viewer's clinic scope. Returns [clinicId, allowedActorIds]:
+     *  - clinicId       → scopes APPOINTMENTS/activity_log/notes by clinic_id
+     *                     (doctors aren't pinned to a clinic, so an actor-pool
+     *                     filter would miss every doctor-owned row).
+     *  - allowedActorIds → the clinic's user ids, used to scope ALERTS
+     *                     (alerts.doctor_id stores a users.id).
+     * A viewer with no clinic (most doctors) → both null → sees everything.
+     */
+    private function resolveClinicScope($user)
+    {
+        $clinicId = null;
+        $allowedActorIds = null;
+        try {
+            if ($this->columnExists('users', 'clinic_id')) {
+                if (array_key_exists('clinic_id', $user) && $user['clinic_id'] !== null) {
+                    $clinicId = (int)$user['clinic_id'];
+                } else {
+                    $stmt = $this->pdo->prepare("SELECT clinic_id FROM users WHERE id = ? LIMIT 1");
+                    $stmt->execute([$user['id']]);
+                    $row = $stmt->fetch(\PDO::FETCH_ASSOC);
+                    if ($row && $row['clinic_id'] !== null) {
+                        $clinicId = (int)$row['clinic_id'];
+                    }
+                }
+                if ($clinicId !== null) {
+                    $stmt = $this->pdo->prepare("SELECT id FROM users WHERE clinic_id = ?");
+                    $stmt->execute([$clinicId]);
+                    $ids = $stmt->fetchAll(\PDO::FETCH_COLUMN);
+                    if (is_array($ids) && count($ids) > 0) {
+                        $allowedActorIds = array_map('intval', $ids);
+                    }
+                }
+            }
+        } catch (\Throwable $e) {
+            error_log("ActivityController::resolveClinicScope fallback: " . $e->getMessage());
+            $clinicId = null;
+            $allowedActorIds = null;
+        }
+        return [$clinicId, $allowedActorIds];
+    }
+
     // ======================================================================
     //  Source fetchers
     // ======================================================================
@@ -184,7 +280,7 @@ class ActivityController
     /**
      * consultation_notes — "Dr. X added a consultation note for {patient}"
      */
-    private function fetchConsultationNoteEvents($clinicId, $limit)
+    private function fetchConsultationNoteEvents($clinicId, $limit, $from = null, $to = null)
     {
         if (!$this->tableExists('consultation_notes')) {
             return [];
@@ -220,6 +316,8 @@ class ActivityController
             $sql .= " AND a.clinic_id = ?";
             $params[] = (int)$clinicId;
         }
+        if ($from !== null) { $sql .= " AND cn.created_at >= ?"; $params[] = $from . ' 00:00:00'; }
+        if ($to   !== null) { $sql .= " AND cn.created_at <= ?"; $params[] = $to   . ' 23:59:59'; }
         $sql .= " ORDER BY cn.created_at DESC LIMIT " . (int)$limit;
 
         $stmt = $this->pdo->prepare($sql);
@@ -256,7 +354,7 @@ class ActivityController
      * the old derive-from-appointments source (which attributed everything to the
      * assigned doctor and showed noisy "status Booked" rows for every appointment).
      */
-    private function fetchActivityLogEvents($clinicId, $limit)
+    private function fetchActivityLogEvents($clinicId, $limit, $from = null, $to = null)
     {
         if (!$this->tableExists('activity_log')) {
             return [];
@@ -283,6 +381,8 @@ class ActivityController
             $sql .= " AND al.clinic_id = ?";
             $params[] = (int)$clinicId;
         }
+        if ($from !== null) { $sql .= " AND al.created_at >= ?"; $params[] = $from . ' 00:00:00'; }
+        if ($to   !== null) { $sql .= " AND al.created_at <= ?"; $params[] = $to   . ' 23:59:59'; }
         $sql .= " ORDER BY al.created_at DESC LIMIT " . (int)$limit;
 
         $stmt = $this->pdo->prepare($sql);
@@ -406,7 +506,7 @@ class ActivityController
     /**
      * alerts — "Dr. X created an alert for {patient}"
      */
-    private function fetchAlertEvents($allowedActorIds, $limit)
+    private function fetchAlertEvents($allowedActorIds, $limit, $from = null, $to = null)
     {
         if (!$this->tableExists('alerts')) {
             return [];
@@ -446,6 +546,8 @@ class ActivityController
             $sql .= " AND al.doctor_id IN ($ph)";
             $params = array_merge($params, $allowedActorIds);
         }
+        if ($from !== null) { $sql .= " AND al.created_at >= ?"; $params[] = $from . ' 00:00:00'; }
+        if ($to   !== null) { $sql .= " AND al.created_at <= ?"; $params[] = $to   . ' 23:59:59'; }
         $sql .= " ORDER BY al.created_at DESC LIMIT " . (int)$limit;
 
         $stmt = $this->pdo->prepare($sql);
@@ -476,7 +578,7 @@ class ActivityController
     /**
      * todos — current user only
      */
-    private function fetchTodoEvents($userId, $limit)
+    private function fetchTodoEvents($userId, $limit, $from = null, $to = null)
     {
         if (!$this->tableExists('todos')) {
             return [];
@@ -506,12 +608,14 @@ class ActivityController
                 FROM todos t
                 LEFT JOIN users u    ON u.id = t.user_id
                 LEFT JOIN patients p ON p.id = {$patientCol}
-                WHERE t.user_id = ?
-                ORDER BY t.created_at DESC
-                LIMIT " . (int)$limit;
+                WHERE t.user_id = ?";
+        $params = [(int)$userId];
+        if ($from !== null) { $sql .= " AND t.created_at >= ?"; $params[] = $from . ' 00:00:00'; }
+        if ($to   !== null) { $sql .= " AND t.created_at <= ?"; $params[] = $to   . ' 23:59:59'; }
+        $sql .= " ORDER BY t.created_at DESC LIMIT " . (int)$limit;
 
         $stmt = $this->pdo->prepare($sql);
-        $stmt->execute([$userId]);
+        $stmt->execute($params);
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         $out = [];

@@ -66,6 +66,27 @@ class SecretaryController
     }
 
     /**
+     * Activities page (Arabic, clinic-scoped) — dedicated, filterable feed.
+     * Same view as the doctor, rendered in the secretary layout; the feed is
+     * clinic-scoped server-side (ActivityController::page → resolveClinicScope),
+     * so the secretary sees her own actions + the doctor's actions in her clinic.
+     */
+    public function activities()
+    {
+        $user = $this->auth->user();
+        $content = $this->view->render('doctor/activities', [
+            'user' => $user,
+            'activitiesLang' => 'ar',
+        ]);
+        echo $this->view->render('layouts/secretary_main', [
+            'title' => 'عيادة رؤية - سجل النشاط',
+            'pageTitle' => 'سجل النشاط',
+            'content' => $content,
+            'viewHelper' => $this->view
+        ]);
+    }
+
+    /**
      * API endpoint to get dashboard data for polling
      */
     public function getDashboardData()

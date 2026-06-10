@@ -680,44 +680,9 @@
 </div>
 
 
-<!-- Recent Activities (full width, reorderable) -->
-<div class="row mb-4 dashboard-card-row" data-card-id="recent-activity">
-    <div class="col-12">
-        <div class="card shadow dashboard-card" data-card-id="recent-activity">
-            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                <h6 class="m-0 font-weight-bold text-primary">
-                    <i class="bi bi-activity me-2"></i>
-                    Recent Activities
-                </h6>
-                <div class="d-flex align-items-center gap-2">
-                    <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#allActivitiesModal">
-                        <i class="bi bi-list-ul me-1"></i>View All
-                    </button>
-                    <div class="d-flex align-items-center gap-1 me-2">
-                        <button class="btn btn-sm btn-outline-secondary dashboard-card-move-btn" onclick="moveCardUp('recent-activity')" title="Move up">
-                            <i class="bi bi-arrow-up"></i>
-                        </button>
-                        <button class="btn btn-sm btn-outline-secondary dashboard-card-move-btn" onclick="moveCardDown('recent-activity')" title="Move down">
-                            <i class="bi bi-arrow-down"></i>
-                        </button>
-                        <div class="dashboard-card-drag-handle" title="Drag to reorder">
-                            <i class="bi bi-grip-vertical text-muted"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="card-body">
-                <div id="recentActivityContainer">
-                    <div class="text-center py-3">
-                        <div class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden">Loading...</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+<!-- Recent Activities card removed (v12_perf): moved to the dedicated, clinic-scoped
+     Activities page (/doctor/activities). The Notification Center "Activity" tab (capped
+     at 10) links to it. This retires the old unscoped /api/recent-activity + 1000-row modal. -->
 
 <div class="row mb-4 dashboard-card-row" data-card-id="missed-appointments">
     <!-- Missed Appointments -->
@@ -777,69 +742,6 @@
 </div>
 
 
-<!-- All Activities Modal - Extra Large -->
-<div class="modal fade" id="allActivitiesModal" tabindex="-1" aria-labelledby="allActivitiesModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-xl">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="allActivitiesModalLabel">
-                    <i class="bi bi-activity me-2"></i>
-                    All Activities
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div class="row mb-3">
-                    <div class="col-md-6">
-                        <div class="input-group">
-                            <span class="input-group-text">
-                                <i class="bi bi-funnel"></i>
-                            </span>
-                            <input type="text" class="form-control" id="activitiesFilterInput" placeholder="Filter activities...">
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <section class="field menu" style="min-width: 150px;">
-                            <div class="control">
-                                <select class="form-select d-none" id="modalPerPageSelect">
-                                    <option value="5" selected>5 per page</option>
-                                    <option value="10">10 per page</option>
-                                    <option value="20">20 per page</option>
-                                    <option value="50">50 per page</option>
-                                    <option value="100">100 per page</option>
-                                </select>
-                                <button type="button" class="custom-select-toggle" aria-expanded="false">5 per page</button>
-                                <menu>
-                                    <li data-option="5" tabindex="0" role="button" class="selected"><h3>5 per page</h3></li>
-                                    <li data-option="10" tabindex="0" role="button"><h3>10 per page</h3></li>
-                                    <li data-option="20" tabindex="0" role="button"><h3>20 per page</h3></li>
-                                    <li data-option="50" tabindex="0" role="button"><h3>50 per page</h3></li>
-                                    <li data-option="100" tabindex="0" role="button"><h3>100 per page</h3></li>
-                                </menu>
-                            </div>
-                        </section>
-                    </div>
-                    <div class="col-md-3 text-end">
-                        <button type="button" class="btn btn-outline-secondary" id="clearActivitiesFilter">
-                            <i class="bi bi-x-circle me-1"></i>Clear Filter
-                        </button>
-                    </div>
-                </div>
-                <div id="allActivitiesContainer">
-                    <div class="text-center py-5">
-                        <div class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden">Loading...</span>
-                        </div>
-                    </div>
-                </div>
-                <nav aria-label="All Activities Pagination" id="modalPaginationNav" style="display: none; margin-top: 1.5rem;">
-                    <ul class="pagination justify-content-center mb-0" id="modalPaginationList">
-                    </ul>
-                </nav>
-            </div>
-        </div>
-    </div>
-</div>
 
 <style>
     .btn-group-sm .btn{
