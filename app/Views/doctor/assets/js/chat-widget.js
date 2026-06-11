@@ -241,8 +241,15 @@
     var cp = emojiCp(emoji);
     // data-anim/data-poster let us REPLAY the 3-loop animation on hover/tap (files are
     // baked with loop=3 → they auto-play 3× then freeze on the last frame).
-    var poster = EMOJI_LOCAL[cp] ? (' data-poster="' + esc(emojiPosterSrc(cp)) + '"') : '';
-    return '<img class="chat-emoji-anim' + (extra ? ' ' + extra : '') + '" src="' + esc(emojiSrc(cp)) +
+    // v12_perf: initial src is the TINY poster first-frame (~1-2KB) for our locally
+    // hosted set, not the full animated webp (70-310KB). The animation plays on hover
+    // via replayEmoji (data-anim), already wired for reactions/big-emoji/the react-pop.
+    // This stops the eager reaction emoji (built into the chat dock on every page) from
+    // pulling hundreds of KB of animated webp on load. CDN-fallback emoji keep emojiSrc.
+    var hasLocal = !!EMOJI_LOCAL[cp];
+    var poster = hasLocal ? (' data-poster="' + esc(emojiPosterSrc(cp)) + '"') : '';
+    var initialSrc = hasLocal ? emojiPosterSrc(cp) : emojiSrc(cp);
+    return '<img class="chat-emoji-anim' + (extra ? ' ' + extra : '') + '" src="' + esc(initialSrc) +
       '" alt="' + esc(emoji) + '" data-emoji="' + esc(emoji) + '" data-anim="' + esc(emojiSrc(cp)) + '"' + poster + ' draggable="false">';
   }
   // re-trigger a frozen 3-loop emoji. Bridge through the poster (a real file) instead of
