@@ -50,6 +50,8 @@
     <link href="/app/Views/layouts/header-chips.css?v=<?= file_exists(__DIR__ . '/header-chips.css') ? filemtime(__DIR__ . '/header-chips.css') : time() ?>" rel="stylesheet">
     <link href="/app/Views/layouts/global-search-panel.css?v=<?= file_exists(__DIR__ . '/global-search-panel.css') ? filemtime(__DIR__ . '/global-search-panel.css') : time() ?>" rel="stylesheet">
     <link href="/app/Views/layouts/push-toast-center.css?v=<?= file_exists(__DIR__ . '/push-toast-center.css') ? filemtime(__DIR__ . '/push-toast-center.css') : time() ?>" rel="stylesheet">
+    <!-- v12: secretary "enable notifications" toast (Arabic) — visual styling; positioning from push-toast-center.css -->
+    <link href="/app/Views/secretary/assets/css/secretary-push-notifications.css?v=<?= file_exists(__DIR__ . '/../secretary/assets/css/secretary-push-notifications.css') ? filemtime(__DIR__ . '/../secretary/assets/css/secretary-push-notifications.css') : time() ?>" rel="stylesheet">
     <!-- v11: notice-bar clock/calendar + appointments popovers (ported from doctor style.css) -->
     <link href="/app/Views/layouts/secretary-notice-bar.css?v=<?= file_exists(__DIR__ . '/secretary-notice-bar.css') ? filemtime(__DIR__ . '/secretary-notice-bar.css') : time() ?>" rel="stylesheet">
     <link href="/app/Views/secretary/assets/css/sec-sidebar-icons.css?v=<?= file_exists(__DIR__ . '/../secretary/assets/css/sec-sidebar-icons.css') ? filemtime(__DIR__ . '/../secretary/assets/css/sec-sidebar-icons.css') : time() ?>" rel="stylesheet">
@@ -506,6 +508,8 @@
     <!-- Shared modal kit: unified pointer-drag + center + showConfirm/AlertModal (after Bootstrap) -->
     <script src="/app/Views/layouts/modal-kit.js?v=<?= file_exists(__DIR__ . '/modal-kit.js') ? filemtime(__DIR__ . '/modal-kit.js') : time() ?>"></script>
     <script src="/app/Views/layouts/clinics-loader.js?v=<?= filemtime(__DIR__ . '/clinics-loader.js') ?>"></script>
+    <!-- v12: secretary "enable push notifications" toast (Arabic) + weekly reminder -->
+    <script defer src="/app/Views/secretary/assets/js/secretary-push-notifications.js?v=<?= file_exists(__DIR__ . '/../secretary/assets/js/secretary-push-notifications.js') ? filemtime(__DIR__ . '/../secretary/assets/js/secretary-push-notifications.js') : time() ?>"></script>
 
     <script>
         // Theme toggle functionality - synced with main layout using appTheme

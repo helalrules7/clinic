@@ -3730,10 +3730,12 @@
                             const currentBrowserId = getBrowserIdentifier();
                             const isDeclined = declinedBrowsers.includes(currentBrowserId);
                             
-                            // Check if remind later is still active (24 hours)
+                            // v12: weekly reminder cadence — the prompt re-surfaces at
+                            // most once every 7 days (was 24h). The timestamp is recorded
+                            // whenever the toast is shown, so closing it still snoozes a week.
                             const now = Date.now();
-                            const oneDayInMs = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
-                            const shouldRemind = !remindLaterTimestamp || (now - remindLaterTimestamp) >= oneDayInMs;
+                            const oneWeekInMs = 7 * 24 * 60 * 60 * 1000; // 7 days
+                            const shouldRemind = !remindLaterTimestamp || (now - remindLaterTimestamp) >= oneWeekInMs;
                             
                             return { 
                                 enabled: isPushEnabled, 
@@ -3909,12 +3911,17 @@
                 if (settings.isDeclined) {
                     return; // Don't show toast if this browser declined
                 }
-                
-                // Check if remind later is still active (24 hours)
+
+                // v12: already subscribed → never remind
+                if (settings.enabled) {
+                    return;
+                }
+
+                // v12: weekly cadence — skip if shown within the last 7 days
                 if (!settings.shouldRemind) {
                     return; // Don't show toast if remind later is still active
                 }
-                
+
                 // Create separate toast container in the center of screen for push notifications
                 let pushToastContainer = document.getElementById('pushToastContainer');
                 if (!pushToastContainer) {
@@ -4071,7 +4078,11 @@
                         delay: 0
                     });
                     toast.show();
-                    
+
+                    // v12: record that the prompt was shown → the weekly cadence holds
+                    // even if the user just closes it (next prompt is +7 days out).
+                    saveRemindLater();
+
                     // Add exit animation when toast is being hidden
                     toastElement.addEventListener('hide.bs.toast', function() {
                         if (!toastElement.classList.contains('hiding')) {
@@ -4158,12 +4169,17 @@
                 if (settings.isDeclined) {
                     return; // Don't show toast if this browser declined
                 }
-                
-                // Check if remind later is still active (24 hours)
+
+                // v12: if the user is already subscribed to notifications, never remind.
+                if (settings.enabled) {
+                    return;
+                }
+
+                // v12: weekly cadence — skip if shown within the last 7 days
                 if (!settings.shouldRemind) {
                     return; // Don't show toast if remind later is still active
                 }
-                
+
                 // Register service worker
                 const registration = await registerServiceWorker();
                 if (!registration) {
