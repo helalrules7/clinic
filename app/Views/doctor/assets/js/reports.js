@@ -1165,7 +1165,7 @@ if (reportType === 'drugs') {
                     return d.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
                 }),
                 datasets: trendData.datasets.map((ds, i) => ({
-                    label: (ds.drug_name || '').length > 22 ? ds.drug_name.substring(0, 22) + '…' : (ds.drug_name || ''),
+                    label: (ds.drug_name || '').length > 40 ? ds.drug_name.substring(0, 40) + '…' : (ds.drug_name || ''),
                     data: ds.data || [],
                     borderColor: trendColors[i % trendColors.length],
                     backgroundColor: trendColors[i % trendColors.length] + '20',

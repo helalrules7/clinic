@@ -1213,6 +1213,18 @@
    stay inside the rounded card visual. */
 .reports-page .card-body .table-responsive {
     border-radius: var(--r-xl);
-    overflow: hidden;
+    /* v12: was overflow:hidden, which clipped wide tables with NO horizontal
+       scroll (columns unreachable on mobile/tablet). Allow horizontal scroll;
+       still clip vertically so the rounded corners / solid thead stay inside. */
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+}
+@media (max-width: 991.98px) {
+    /* keep columns readable instead of squishing to fit → the table overflows
+       its wrapper → the user can scroll horizontally to see every column. */
+    .reports-page .card-body .table-responsive > table {
+        min-width: 560px;
+    }
 }
 .reports-page .table td { background-color: var(--card); border-color: var(--glass-border); color: var(--text); vertical-align: middle; }

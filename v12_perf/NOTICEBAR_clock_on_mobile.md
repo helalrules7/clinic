@@ -51,3 +51,12 @@ it dismisses the popover.
 
 **Deploy:** `main.js` + `style.css` (doctor) + `secretary-notice-bar.js` + `secretary-notice-bar.css` (secretary) —
 static assets, versioned, no fpm reload.
+
+---
+
+## Follow-up (2026-06-12) — appointments popover empty state full-width centered (both roles)
+In the "Upcoming Appointments" popover, the empty/error message (`.appointments-empty` / `.appointments-error`:
+icon + `<span>`) was a centered flex column, but the `<span>` shrank to its content so a wrapped second line
+("No upcoming / appointments") looked left-shifted. Fixed in `style.css` (doctor) + `secretary-notice-bar.css`
+(secretary): the container gets `width:100%; text-align:center` and the `span` gets `width:100%; text-align:center`
+— so the message spans the full popover width and centers under the icon. CSS only.

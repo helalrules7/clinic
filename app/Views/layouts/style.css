@@ -2408,6 +2408,15 @@
             padding: 2rem;
             color: var(--text);
             gap: 0.75rem;
+            width: 100%;          /* v12: take the full popover width */
+            text-align: center;
+        }
+        /* v12: the empty/error message spans the full width + centers (so it no
+           longer shrinks to content and left-aligns its wrapped second line). */
+        .appointments-empty span,
+        .appointments-error span {
+            width: 100%;
+            text-align: center;
         }
 
         .appointments-empty i,
