@@ -107,6 +107,7 @@
         const weekdayLis = AR_WEEK_SHORT.map(d => `<li>${d}</li>`).join('');
 
         popover.innerHTML = `
+            <button type="button" class="clock-popover-close" aria-label="Close"><i class="bi bi-x-lg"></i></button>
             <div class="clock-calendar-popover-content">
                 <div class="clock-calendar-column clock-column">
                     <div class="clock">
@@ -160,6 +161,10 @@
         document.body.appendChild(popover);
         clockCalendarPopover = popover;
         clockCalendarPopover._intervals = [];
+
+        // Close button (esp. for mobile, where the popover is tall and the
+        // backdrop is hard to tap).
+        popover.querySelector('.clock-popover-close')?.addEventListener('click', closeClockCalendarPopover);
 
         initAnalogClock(popover);
         initDigitalClock(popover);
