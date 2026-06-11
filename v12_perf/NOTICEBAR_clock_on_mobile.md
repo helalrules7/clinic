@@ -60,3 +60,15 @@ icon + `<span>`) was a centered flex column, but the `<span>` shrank to its cont
 ("No upcoming / appointments") looked left-shifted. Fixed in `style.css` (doctor) + `secretary-notice-bar.css`
 (secretary): the container gets `width:100%; text-align:center` and the `span` gets `width:100%; text-align:center`
 — so the message spans the full popover width and centers under the icon. CSS only.
+
+---
+
+## Follow-up (2026-06-12) — secretary next-appointment slider now shows on mobile (doctor parity)
+The secretary notice-bar (`secretary_main.php`: `.notice-bar-clock` + `.notice-bar-next`) was **hiding the
+next-appointment slider entirely** on mobile via `sec-style.css`:
+`@media (max-width: 575.98px) { .notice-bar .notice-bar-next { display: none; } }`. The doctor instead keeps it
+visible and lets it shrink. Mirrored that: at ≤575.98px the clock stays full (`flex-shrink:0`) and
+`.notice-bar-next` becomes `display:inline-flex; flex-shrink:1; min-width:0; overflow:hidden` — so both the live
+clock and the next-appointment line fit the 20px strip (the appointment text clips instead of pushing the clock
+off-screen). CSS only (`sec-style.css`). CDP-verified at 390/360/540px: both clock and next-appointment visible,
+no overlap.

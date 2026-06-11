@@ -502,7 +502,18 @@ body {
         .notice-bar .nb-next-item { height: 17px; line-height: 17px; display: inline-flex; align-items: center; gap: 0.35rem; white-space: nowrap; }
         /* Notice bar stays visible on scroll (doctor parity) — only the clock/next
            remain interactive; the empty strip keeps passing clicks through. */
-        @media (max-width: 575.98px) { .notice-bar .notice-bar-next { display: none; } }
+        /* v12: surface the next-appointment slider on mobile too (doctor parity —
+           previously hidden ≤575.98px). The clock stays full (flex-shrink:0); the
+           next-appointment line shrinks and clips so both fit the 20px strip. */
+        @media (max-width: 575.98px) {
+            .notice-bar .notice-bar-clock { flex-shrink: 0; }
+            .notice-bar .notice-bar-next {
+                display: inline-flex;
+                flex-shrink: 1;
+                min-width: 0;
+                overflow: hidden;
+            }
+        }
 
         .dark .top-bar {
             background: rgba(11, 18, 32, 0.85);
