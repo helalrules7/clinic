@@ -1546,7 +1546,7 @@
         doctors: <?= json_encode($doctors, JSON_UNESCAPED_UNICODE | JSON_PARTIAL_OUTPUT_ON_ERROR) ?>,
     };
 </script>
-<script src="/app/Views/doctor/assets/js/patients.js?v=<?= file_exists(__DIR__ . '/assets/js/patients.js') ? filemtime(__DIR__ . '/assets/js/patients.js') : time() ?>"></script>
+<script defer src="/app/Views/doctor/assets/js/patients.js?v=<?= file_exists(__DIR__ . '/assets/js/patients.js') ? filemtime(__DIR__ . '/assets/js/patients.js') : time() ?>"></script>
 <!-- Clinic dropdown is server-rendered now; no populate() needed. We just
      auto-lock the single-option case (secretary view) below. -->
 <script>
