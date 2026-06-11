@@ -18,7 +18,23 @@
         #ec4899 68%,
         #f43f5e 82%,
         #6366f1 100%);
-    background-size: 320% 320%;
+    /* v12_perf: show the FULL gradient statically (was 320% + a panning animation).
+       At 100% the banner displays its whole indigo→purple→pink→rose range at once —
+       the most faithful static representation of the multi-colour identity. */
+    background-size: 100% 100%;
+    /* v12_perf (2026-06-11): frozen at the animations' resting frame (0% keyframe).
+       The two PERPETUAL paint-animations here were the dashboard's #1 jank source —
+       CDP-proven ~37% scroll / ~32% idle dropped frames:
+         · wnNoticeShadowPulse animated box-shadow with a 60-72px blur HALO that
+           renders outside the banner over the glass stat-cards below → forced them
+           to re-blur every frame.
+         · wnCelebrateBgSweep animated background-position → full-banner repaint
+           every frame.
+       Frozen here (background-position = the 0%/100% keyframe value; box-shadow
+       above = that same resting frame), so the banner looks identical at rest.
+       The cheap transform/opacity FX (aurora, orbs, sparkles, shimmer, border-beam)
+       are untouched and keep the banner lively. */
+    background-position: 0% 50%;
     color: #fff;
     box-shadow:
         0 0 0 1px rgba(255, 255, 255, 0.08) inset,
@@ -29,9 +45,6 @@
     opacity: 0;
     transform: translateY(-14px) scale(0.97);
     filter: blur(4px);
-    animation:
-        wnCelebrateBgSweep 14s ease-in-out infinite,
-        wnNoticeShadowPulse 6s ease-in-out infinite;
     transition: opacity 0.45s cubic-bezier(0.22, 1, 0.36, 1),
                 transform 0.45s cubic-bezier(0.22, 1, 0.36, 1),
                 filter 0.45s ease;
