@@ -1161,21 +1161,6 @@
     <script src="/app/Views/layouts/weather-fx.js?v=<?= filemtime(__DIR__ . '/weather-fx.js') ?>"></script>
     <script src="/app/Views/layouts/digit-normalizer.js?v=<?= file_exists(__DIR__ . '/digit-normalizer.js') ? filemtime(__DIR__ . '/digit-normalizer.js') : time() ?>"></script>
     <script src="/app/Views/layouts/main.js?v=<?= filemtime(__DIR__ . '/main.js') ?>"></script>
-    <script>
-        /* v12_perf: drop backdrop-filter blur during active scroll (see style.css
-           body.is-scrolling). Added once at scroll-start, cleared ~140ms after it
-           stops — scrolling past glass otherwise re-blurs every surface each frame.
-           Capture phase so inner scroll containers count too; passive = no scroll delay. */
-        (function () {
-            var t = null;
-            window.addEventListener('scroll', function () {
-                var b = document.body; if (!b) return;
-                if (!b.classList.contains('is-scrolling')) b.classList.add('is-scrolling');
-                if (t) clearTimeout(t);
-                t = setTimeout(function () { document.body.classList.remove('is-scrolling'); }, 140);
-            }, { passive: true, capture: true });
-        })();
-    </script>
     <?php if ($__showEyeTools): ?>
     <!-- Ophthalmology calculators/tools — extracted from main.js, loaded ONLY on Appointment + Patient-profile pages (must follow main.js + the page content above). -->
     <script src="/app/Views/layouts/ophthalmology-tools.js?v=<?= filemtime(__DIR__ . '/ophthalmology-tools.js') ?>"></script>

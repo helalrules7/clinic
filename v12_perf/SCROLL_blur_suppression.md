@@ -1,6 +1,12 @@
-# v12_perf — Scroll jank: suppress backdrop-filter blur during active scroll
+# v12_perf — Scroll jank: suppress backdrop-filter blur during active scroll  ❌ REVERTED
 
-**Date:** 2026-06-11 · **Branch:** v_12_perf · **Shipped to prod:** yes (2026-06-11) · **Ortho:** pending
+> **REVERTED 2026-06-11 (same day).** Shipped then rolled back at the user's request: dropping the glass blur
+> **while scrolling looks bad** (the glass visibly "flattens" on every scroll and re-blurs when it stops), and the
+> smoothness gain wasn't perceptible enough to justify it. **Do NOT re-try this** — the banner freeze already
+> handled the dashboard's actual scroll jank; perpetual-glass-on-scroll re-blur is not worth a visible trade-off.
+> Reverted files restored to pre-change; prod redeployed. Kept for the record / so it isn't re-attempted.
+
+**Date:** 2026-06-11 · **Branch:** v_12_perf · **Shipped to prod:** REVERTED (was live ~minutes) · **Ortho:** do NOT port
 
 ## Why
 Load-weight fixes (avatar/emoji) do **not** touch scroll jank — that's a per-frame *render* cost. The dashboard's

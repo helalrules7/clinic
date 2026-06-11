@@ -11265,19 +11265,6 @@ body.sidebar-animating *::after {
     -webkit-backdrop-filter: none !important;
 }
 
-/* PERF (v12_perf): same idea, during ACTIVE SCROLL. body.is-scrolling is toggled
-   by a passive scroll listener (added at scroll-start, removed ~140ms after it
-   stops). Scrolling past glass forces every backdrop-filter surface to re-blur
-   its shifting backdrop on EVERY frame; dropping the blur while scrolling keeps
-   it smooth and restores it the moment scrolling stops. Imperceptible in motion,
-   paint-only (no reflow). */
-body.is-scrolling *,
-body.is-scrolling *::before,
-body.is-scrolling *::after {
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-}
-
 @media (min-width: 768px) {
     /* Always-visible toggle on tablet + desktop (was hidden ≥993px). */
     .sidebar-toggle {
