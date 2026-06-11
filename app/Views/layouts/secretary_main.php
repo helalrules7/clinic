@@ -251,7 +251,7 @@
                             ? $currentUser['profile_image']
                             : '/public' . $currentUser['profile_image'];
                     ?>
-                        <img src="<?= htmlspecialchars($sidebarImg) ?>" class="user-avatar-img" alt="الصورة الشخصية">
+                        <img src="<?= htmlspecialchars(avatar_thumb($sidebarImg, 96)) ?>" class="user-avatar-img" alt="الصورة الشخصية">
                     <?php else: ?>
                         <?= strtoupper(mb_substr($currentUser['name'] ?? 'س', 0, 1, 'UTF-8')) ?>
                     <?php endif; ?>

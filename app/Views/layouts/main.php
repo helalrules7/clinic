@@ -227,8 +227,8 @@
                     if (!empty($currentUser['profile_image'])): 
                         $profileImagePath = strpos($currentUser['profile_image'], '/public/') === 0 ? $currentUser['profile_image'] : '/public' . $currentUser['profile_image'];
                     ?>
-                        <img src="<?= htmlspecialchars($profileImagePath) ?>" 
-                             alt="Profile" 
+                        <img src="<?= htmlspecialchars(avatar_thumb($profileImagePath, 96)) ?>"
+                             alt="Profile"
                              class="user-avatar-img"
                              data-profile-image="<?= htmlspecialchars($profileImagePath) ?>"
                              onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
@@ -236,8 +236,8 @@
                             <?= strtoupper(substr($currentUser['name'] ?? 'U', 0, 1)) ?>
                         </div>
                         <span class="htooltip user-avatar-htooltip">
-                            <img src="<?= htmlspecialchars($profileImagePath) ?>" 
-                                 alt="Profile" 
+                            <img src="<?= htmlspecialchars(avatar_thumb($profileImagePath, 256)) ?>"
+                                 alt="Profile"
                                  class="user-avatar-preview-image">
                         </span>
                     <?php else: ?>
@@ -1068,8 +1068,8 @@
                 if (!empty($currentUser['profile_image'])): 
                     $profileImagePath = strpos($currentUser['profile_image'], '/public/') === 0 ? $currentUser['profile_image'] : '/public' . $currentUser['profile_image'];
                 ?>
-                    <img src="<?= htmlspecialchars($profileImagePath) ?>" 
-                         alt="My Profile" 
+                    <img src="<?= htmlspecialchars(avatar_thumb($profileImagePath, 96)) ?>"
+                         alt="My Profile"
                          class="dock-profile-image"
                          onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                     <i class="bi bi-person-circle dock-profile-fallback" style="display: none;"></i>
