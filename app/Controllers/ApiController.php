@@ -1186,6 +1186,241 @@ class ApiController
         }
     }
 
+    /**
+     * v12_perf: server-side paginated + searched + filtered patients list.
+     * Replaces the 1.6 MB inline PATIENTS_CONFIG.patients blob on the doctor
+     * patients page. Returns ONE page of patients + pagination meta. All
+     * filters live in a single WHERE clause (shared by the page query and the
+     * count query) so the two can never diverge; the doctor and last-visit
+     * filters use correlated subqueries (matching the derived columns the old
+     * client filtered on, incl. "patient with no visit is excluded by a date
+     * range"). The per-patient row shape is identical to getAllPatients() so
+     * the existing table/cards renderers need no changes.
+     */
+    public function getPatientsPaginated()
+    {
+        try {
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            }
+
+            // --- pagination ---
+            $page = max(1, (int)($_GET['page'] ?? 1));
+            $perPageRaw = $_GET['per_page'] ?? 20;
+            if ($perPageRaw === 'all') {
+                $perPage = 100000;            // effectively "all" (still capped)
+            } else {
+                $perPage = (int)$perPageRaw;
+                if ($perPage < 1)   $perPage = 20;
+                if ($perPage > 500) $perPage = 500;
+            }
+            $offset = ($page - 1) * $perPage;
+
+            // --- sort (same whitelist as getAllPatients) ---
+            $sortBy = $_GET['sort_by'] ?? 'created_at';
+            $sortOrder = strtoupper($_GET['sort_order'] ?? 'DESC');
+            $allowedSortFields = ['total_appointments', 'last_visit', 'created_at', 'first_name', 'last_name', 'age', 'gender', 'created_by_doctor_name'];
+            $sortBy = in_array($sortBy, $allowedSortFields) ? $sortBy : 'created_at';
+            $sortOrder = in_array($sortOrder, ['ASC', 'DESC']) ? $sortOrder : 'DESC';
+            $orderBy = '';
+            if ($sortBy === 'total_appointments') {
+                $orderBy = "ORDER BY total_appointments $sortOrder";
+            } elseif ($sortBy === 'last_visit') {
+                $orderBy = "ORDER BY last_visit $sortOrder";
+            } elseif ($sortBy === 'created_at') {
+                $orderBy = "ORDER BY p.created_at $sortOrder";
+            } elseif ($sortBy === 'first_name') {
+                $orderBy = "ORDER BY p.first_name $sortOrder, p.last_name $sortOrder";
+            } elseif ($sortBy === 'last_name') {
+                $orderBy = "ORDER BY p.last_name $sortOrder, p.first_name $sortOrder";
+            } elseif ($sortBy === 'age') {
+                $orderBy = ($sortOrder === 'DESC') ? "ORDER BY p.dob ASC" : "ORDER BY p.dob DESC";
+            } elseif ($sortBy === 'gender') {
+                $orderBy = "ORDER BY p.gender $sortOrder";
+            } elseif ($sortBy === 'created_by_doctor_name') {
+                $orderBy = "ORDER BY created_by_doctor_name $sortOrder";
+            } else {
+                $orderBy = "ORDER BY p.created_at DESC";
+            }
+
+            // --- unified WHERE filters (shared by count + page queries) ---
+            $where = [];
+            $params = [];
+
+            $search = trim((string)($_GET['search'] ?? ''));
+            if ($search !== '') {
+                $like = '%' . $search . '%';
+                $where[] = "(p.first_name LIKE ? OR p.last_name LIKE ? OR CONCAT(p.first_name, ' ', p.last_name) LIKE ? OR p.phone LIKE ? OR p.alt_phone LIKE ? OR p.national_id LIKE ?)";
+                array_push($params, $like, $like, $like, $like, $like, $like);
+            }
+
+            $gender = (string)($_GET['gender'] ?? '');
+            if (in_array($gender, ['Male', 'Female', 'Other'], true)) {
+                $where[] = "p.gender = ?";
+                $params[] = $gender;
+            }
+
+            $ageMin = $_GET['age_min'] ?? '';
+            if ($ageMin !== '' && is_numeric($ageMin)) {
+                $where[] = "p.dob IS NOT NULL AND TIMESTAMPDIFF(YEAR, p.dob, CURDATE()) >= ?";
+                $params[] = (int)$ageMin;
+            }
+            $ageMax = $_GET['age_max'] ?? '';
+            if ($ageMax !== '' && is_numeric($ageMax)) {
+                $where[] = "p.dob IS NOT NULL AND TIMESTAMPDIFF(YEAR, p.dob, CURDATE()) <= ?";
+                $params[] = (int)$ageMax;
+            }
+
+            // colors: comma-separated, OR semantics (patient has ANY of the selected colors)
+            $colorRaw = (string)($_GET['color'] ?? '');
+            if ($colorRaw !== '') {
+                $colors = array_values(array_filter(array_map('trim', explode(',', $colorRaw)), fn($c) => $c !== ''));
+                if ($colors) {
+                    $ph = implode(',', array_fill(0, count($colors), '?'));
+                    $where[] = "p.id IN (SELECT patient_id FROM patient_color_markers WHERE color_code IN ($ph))";
+                    foreach ($colors as $c) { $params[] = $c; }
+                }
+            }
+
+            // tags: comma-separated, OR semantics (patient has ANY of the selected tags)
+            $tagRaw = (string)($_GET['tag'] ?? '');
+            if ($tagRaw !== '') {
+                $tags = array_values(array_filter(array_map('intval', explode(',', $tagRaw)), fn($t) => $t > 0));
+                if ($tags) {
+                    $ph = implode(',', array_fill(0, count($tags), '?'));
+                    $where[] = "p.id IN (SELECT patient_id FROM patient_tag_assignments WHERE tag_id IN ($ph))";
+                    foreach ($tags as $t) { $params[] = $t; }
+                }
+            }
+
+            // doctor filter: matches the timeline-derived created_by_doctor_id the
+            // old client filtered on (NOT the stored p.created_by_doctor_id column).
+            $doctorId = $_GET['doctor_id'] ?? '';
+            if ($doctorId !== '' && is_numeric($doctorId)) {
+                $where[] = "(SELECT d.id FROM timeline_events te
+                                LEFT JOIN users u ON te.actor_user_id = u.id
+                                LEFT JOIN doctors d ON u.id = d.user_id
+                                WHERE te.patient_id = p.id
+                                  AND te.event_type = 'Booking'
+                                  AND te.event_summary LIKE '%New patient registered%'
+                                ORDER BY te.created_at ASC LIMIT 1) = ?";
+                $params[] = (int)$doctorId;
+            }
+
+            // last-visit range: MAX appointment date (NULL => excluded by a range, like the old client).
+            $lvFrom = (string)($_GET['last_visit_from'] ?? '');
+            if ($lvFrom !== '') {
+                $where[] = "(SELECT MAX(a2.date) FROM appointments a2 WHERE a2.patient_id = p.id) >= ?";
+                $params[] = $lvFrom;
+            }
+            $lvTo = (string)($_GET['last_visit_to'] ?? '');
+            if ($lvTo !== '') {
+                $where[] = "(SELECT MAX(a2.date) FROM appointments a2 WHERE a2.patient_id = p.id) <= ?";
+                $params[] = $lvTo;
+            }
+
+            $whereSql = $where ? ('WHERE ' . implode(' AND ', $where)) : '';
+
+            // --- total count (same WHERE, no joins/group-by needed) ---
+            $countStmt = $this->pdo->prepare("SELECT COUNT(*) FROM patients p $whereSql");
+            $countStmt->execute($params);
+            $total = (int)$countStmt->fetchColumn();
+
+            // --- one page of fully-shaped patient rows (same SELECT as getAllPatients) ---
+            $stmt = $this->pdo->prepare("
+                SELECT p.*,
+                       COUNT(DISTINCT a.id) as total_appointments,
+                       MAX(a.date) as last_visit,
+                       MAX(CONCAT(a.date, ' ', a.start_time)) as last_appointment_datetime,
+                       COUNT(DISTINCT pr.id) as prescriptions_count,
+                       COUNT(DISTINCT gp.id) as glasses_count,
+                       (SELECT pa.id
+                        FROM patient_attachments pa
+                        LEFT JOIN appointments a ON pa.appointment_id = a.id
+                        WHERE pa.patient_id = p.id
+                        AND pa.mime_type LIKE 'image/%'
+                        ORDER BY
+                            CASE WHEN a.id IS NOT NULL THEN 0 ELSE 1 END ASC,
+                            CASE WHEN a.id IS NOT NULL
+                                THEN CONCAT(a.date, ' ', COALESCE(a.start_time, '00:00:00'))
+                                ELSE '0000-00-00 00:00:00' END DESC,
+                            pa.created_at DESC
+                        LIMIT 1) as latest_attachment_id,
+                       (SELECT te.actor_user_id
+                        FROM timeline_events te
+                        WHERE te.patient_id = p.id
+                        AND te.event_type = 'Booking'
+                        AND te.event_summary LIKE '%New patient registered%'
+                        ORDER BY te.created_at ASC
+                        LIMIT 1) as created_by_user_id,
+                       (SELECT u.name
+                        FROM timeline_events te
+                        LEFT JOIN users u ON te.actor_user_id = u.id
+                        WHERE te.patient_id = p.id
+                        AND te.event_type = 'Booking'
+                        AND te.event_summary LIKE '%New patient registered%'
+                        ORDER BY te.created_at ASC
+                        LIMIT 1) as created_by_name,
+                       (SELECT d.id
+                        FROM timeline_events te
+                        LEFT JOIN users u ON te.actor_user_id = u.id
+                        LEFT JOIN doctors d ON u.id = d.user_id
+                        WHERE te.patient_id = p.id
+                        AND te.event_type = 'Booking'
+                        AND te.event_summary LIKE '%New patient registered%'
+                        ORDER BY te.created_at ASC
+                        LIMIT 1) as created_by_doctor_id,
+                       (SELECT d.display_name FROM doctors d
+                        WHERE d.id = p.created_by_doctor_id LIMIT 1) as created_by_doctor_name,
+                       last_clinic.id   as last_clinic_id,
+                       last_clinic.code as last_clinic_code,
+                       last_clinic.name_ar as last_clinic_name_ar,
+                       last_clinic.name_en as last_clinic_name_en
+                FROM patients p
+                LEFT JOIN appointments a ON p.id = a.patient_id
+                LEFT JOIN prescriptions pr ON a.id = pr.appointment_id
+                LEFT JOIN glasses_prescriptions gp ON a.id = gp.appointment_id
+                LEFT JOIN (
+                    SELECT patient_id, clinic_id,
+                           ROW_NUMBER() OVER (
+                               PARTITION BY patient_id
+                               ORDER BY date DESC, start_time DESC, id DESC
+                           ) AS rn
+                    FROM appointments
+                    WHERE clinic_id IS NOT NULL
+                ) latest_appt ON latest_appt.patient_id = p.id AND latest_appt.rn = 1
+                LEFT JOIN clinics last_clinic ON last_clinic.id = latest_appt.clinic_id
+                $whereSql
+                GROUP BY p.id
+                $orderBy
+                LIMIT $perPage OFFSET $offset
+            ");
+            $stmt->execute($params);
+            $patients = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+            foreach ($patients as &$patient) {
+                if (!isset($patient['latest_attachment_id']) || $patient['latest_attachment_id'] === '') {
+                    $patient['latest_attachment_id'] = null;
+                }
+            }
+            unset($patient);
+
+            return $this->jsonResponse([
+                'ok' => true,
+                'patients' => $patients,
+                'pagination' => [
+                    'total'       => $total,
+                    'page'        => $page,
+                    'per_page'    => ($perPageRaw === 'all') ? 'all' : $perPage,
+                    'total_pages' => ($perPage > 0) ? (int)ceil($total / $perPage) : 1,
+                ],
+            ]);
+
+        } catch (\Exception $e) {
+            return $this->jsonResponse(['error' => $e->getMessage()], 500);
+        }
+    }
+
     public function getPatient($id)
     {
         try {

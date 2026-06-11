@@ -143,20 +143,77 @@ class DoctorController
     public function patients()
     {
         $user = $this->auth->user();
-        $patients = $this->getAllPatients();
+        // v12_perf: the full patient set is no longer inlined (it was a 1.6 MB
+        // JSON blob). The list is now fetched page-by-page from
+        // /api/patients/paginated. We only need the cheap aggregate stats for
+        // the above-the-fold stat cards + the (small) doctors list for filters.
+        $patientStats = $this->getPatientStats();
         $doctors = $this->getAllDoctors();
-        
+
         $content = $this->view->render('doctor/patients', [
-            'patients' => $patients,
+            'patients' => [],            // client loads the first page via the API
+            'patientStats' => $patientStats,
             'doctors' => $doctors
         ]);
-        
+
         echo $this->view->render('layouts/main', [
             'title' => 'HClinic / Roaya | Patients',
             'pageTitle' => 'Patients',
             'pageSubtitle' => 'Manage patient records',
             'content' => $content
         ]);
+    }
+
+    /**
+     * v12_perf: cheap aggregate stats for the patients-page stat cards.
+     * Replaces the per-row PHP array_filter() loops over the full patient set
+     * (which only existed because the whole set used to be loaded for the inline
+     * PATIENTS_CONFIG blob). Date thresholds are computed in PHP (not MySQL
+     * CURDATE) so the values exactly match the previous behaviour.
+     */
+    private function getPatientStats(): array
+    {
+        $d7  = date('Y-m-d', strtotime('-7 days'));
+        $d30 = date('Y-m-d', strtotime('-30 days'));
+        $d90 = date('Y-m-d', strtotime('-90 days'));
+
+        $pStmt = $this->pdo->prepare("
+            SELECT
+                COUNT(*) AS total_patients,
+                SUM(CASE WHEN LOWER(gender) = 'male'   THEN 1 ELSE 0 END) AS male_count,
+                SUM(CASE WHEN LOWER(gender) = 'female' THEN 1 ELSE 0 END) AS female_count,
+                SUM(CASE WHEN DATE(created_at) >= ? THEN 1 ELSE 0 END) AS new_this_week,
+                SUM(CASE WHEN DATE(created_at) >= ? THEN 1 ELSE 0 END) AS new_this_month
+            FROM patients
+        ");
+        $pStmt->execute([$d7, $d30]);
+        $p = $pStmt->fetch(\PDO::FETCH_ASSOC) ?: [];
+
+        $vStmt = $this->pdo->prepare("
+            SELECT
+                COALESCE(SUM(cnt), 0)                                         AS total_visits,
+                COALESCE(SUM(CASE WHEN last_visit >= ? THEN 1 ELSE 0 END), 0) AS recent_visits,
+                COALESCE(SUM(CASE WHEN last_visit >= ? THEN 1 ELSE 0 END), 0) AS active_patients
+            FROM (
+                SELECT patient_id, COUNT(*) AS cnt, MAX(date) AS last_visit
+                FROM appointments
+                WHERE patient_id IS NOT NULL
+                GROUP BY patient_id
+            ) lv
+        ");
+        $vStmt->execute([$d7, $d90]);
+        $v = $vStmt->fetch(\PDO::FETCH_ASSOC) ?: [];
+
+        return [
+            'total_patients'  => (int)($p['total_patients']  ?? 0),
+            'male_count'      => (int)($p['male_count']      ?? 0),
+            'female_count'    => (int)($p['female_count']    ?? 0),
+            'new_this_week'   => (int)($p['new_this_week']   ?? 0),
+            'new_this_month'  => (int)($p['new_this_month']  ?? 0),
+            'total_visits'    => (int)($v['total_visits']    ?? 0),
+            'recent_visits'   => (int)($v['recent_visits']   ?? 0),
+            'active_patients' => (int)($v['active_patients'] ?? 0),
+        ];
     }
 
     // ✅ FIXED: إضافة method showPatient المطلوب

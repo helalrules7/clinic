@@ -1628,6 +1628,17 @@ class UnifiedFilterManager {
         // Update active filters badge first
         this.updateActiveFiltersBadge();
 
+        // v12_perf: table/cards are server-driven — push the chip filters to the
+        // server and refetch page 1. The folders view keeps its client-side logic
+        // (it operates on its own currentFolderPatients set, not the full list).
+        if (paginationState.serverMode && this.currentView !== 'folders') {
+            paginationState.currentDoctorFilter = this.filters.doctor === 'all' ? 'all' : this.filters.doctor;
+            paginationState.currentGenderFilter = this.filters.gender;
+            paginationState.currentPage = 1;
+            if (typeof loadPatientsPage === 'function') loadPatientsPage(1);
+            return;
+        }
+
         // Get base patient data based on view
         let patients;
         if (this.currentView === 'folders' && typeof currentFolderPatients !== 'undefined') {
@@ -2375,19 +2386,113 @@ function openFolderDebounced(folderId) {
 }
 
 // Initialize pagination with PHP data
+// ===================== v12_perf: server-side paginated patient list =====================
+// The full patient set is no longer inlined into the page (it was a 1.6 MB JSON blob).
+// The table/cards list is fetched one page at a time from /api/patients/paginated with all
+// search / filter / sort applied server-side. The folders view is unaffected — it has its
+// own endpoints (/api/patient-folders/*) and its own currentFolderPatients data.
+let __patientsPageSeq = 0; // drop out-of-order responses (latest request wins)
+
+function getActivePatientSearchTerm() {
+    const t = document.getElementById('quickSearch');
+    const c = document.getElementById('quickSearchCards');
+    if (currentViewMode === 'cards' && c) return (c.value || '').trim();
+    if (t) return (t.value || '').trim();
+    return (((t && t.value) || (c && c.value)) || '').trim();
+}
+
+function getActivePatientPerPage() {
+    if (currentViewMode === 'cards') {
+        const el = document.getElementById('paginationLimitCards');
+        const v = el ? el.value : 24;
+        return (v === 'all' || v === 'All') ? 'all' : (parseInt(v) || 24);
+    }
+    const v = paginationState.itemsPerPage;
+    return (v === 'all') ? 'all' : (parseInt(v) || 20);
+}
+
+function buildPatientsPageQuery(page) {
+    const params = new URLSearchParams();
+    const per = getActivePatientPerPage();
+    params.set('page', page);
+    params.set('per_page', per === 'all' ? 'all' : per);
+
+    const term = getActivePatientSearchTerm();
+    if (term) params.set('search', term);
+
+    const f = (typeof unifiedFilterManager !== 'undefined' && unifiedFilterManager) ? unifiedFilterManager.filters : null;
+    if (f) {
+        if (f.doctor && f.doctor !== 'all') params.set('doctor_id', f.doctor);
+        if (f.gender) params.set('gender', f.gender);
+        if (f.age && f.age.min !== null && f.age.min !== '') params.set('age_min', f.age.min);
+        if (f.age && f.age.max !== null && f.age.max !== '') params.set('age_max', f.age.max);
+        if (f.colors && f.colors.length) params.set('color', f.colors.join(','));
+        if (f.tags && f.tags.length) params.set('tag', f.tags.join(','));
+        if (f.lastVisit && f.lastVisit.from) params.set('last_visit_from', f.lastVisit.from);
+        if (f.lastVisit && f.lastVisit.to)   params.set('last_visit_to', f.lastVisit.to);
+    } else {
+        if (paginationState.currentDoctorFilter && paginationState.currentDoctorFilter !== 'all') params.set('doctor_id', paginationState.currentDoctorFilter);
+        if (paginationState.currentGenderFilter) params.set('gender', paginationState.currentGenderFilter);
+    }
+
+    if (paginationState.sortBy)    params.set('sort_by', paginationState.sortBy);
+    if (paginationState.sortOrder) params.set('sort_order', paginationState.sortOrder);
+    return params;
+}
+
+// Fetch + render ONE page of the patient list. The single entry point for the
+// server-driven table/cards list — search, filters, sort, pagination all call this.
+function loadPatientsPage(page = 1) {
+    paginationState.serverMode = true;
+    const targetPage = (page === 'all') ? 1 : Math.max(1, parseInt(page) || 1);
+    const params = buildPatientsPageQuery(targetPage);
+    const seq = ++__patientsPageSeq;
+
+    const tableBody = document.getElementById('patientsTableBody');
+    if (tableBody && tableBody.parentElement) tableBody.parentElement.classList.add('table-loading');
+
+    return fetch('/api/patients/paginated?' + params.toString(), {
+        method: 'GET',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (seq !== __patientsPageSeq) return; // superseded by a newer request
+        if (!data || !data.ok) { console.error('loadPatientsPage failed', data); return; }
+        paginationState.filteredPatients = data.patients || [];
+        paginationState.serverTotal = (data.pagination && data.pagination.total) || 0;
+        paginationState.totalItems = paginationState.serverTotal;
+        paginationState.currentPage = (data.pagination && data.pagination.page) || targetPage;
+
+        if (currentViewMode === 'cards') {
+            renderPatientsCards();
+            if (typeof updatePaginationInfoCards === 'function') updatePaginationInfoCards();
+            if (typeof renderPaginationNavCards === 'function') renderPaginationNavCards();
+        } else {
+            renderPatientsTable();
+            updatePaginationInfo();
+            renderPaginationNav();
+        }
+    })
+    .catch(err => { console.error('loadPatientsPage error', err); })
+    .finally(() => { if (tableBody && tableBody.parentElement) tableBody.parentElement.classList.remove('table-loading'); });
+}
+window.loadPatientsPage = loadPatientsPage;
+
 function initializePagination() {
     // Check if PATIENTS_CONFIG exists (only available on patients.php page)
     if (!window.PATIENTS_CONFIG) {
         return; // Exit early if not on patients page
     }
-    
-    // Get patients data from PHP
-    const patientsData = window.PATIENTS_CONFIG.patients;
-    const doctorsData = window.PATIENTS_CONFIG.doctors;
-    
-    paginationState.allPatients = patientsData;
-    paginationState.filteredPatients = [...patientsData];
-    paginationState.totalItems = patientsData.length;
+
+    // v12_perf: data is no longer inlined — start empty; the first page is
+    // fetched from the server (below + via the filter manager's setView()).
+    const doctorsData = window.PATIENTS_CONFIG.doctors || [];
+    paginationState.serverMode = true;
+    paginationState.allPatients = [];
+    paginationState.filteredPatients = [];
+    paginationState.totalItems = 0;
+    paginationState.serverTotal = 0;
     paginationState.doctors = doctorsData;
 
     // Initialize unified filter manager
@@ -2496,16 +2601,15 @@ function switchViewMode(mode, saveToStorage = true) {
     switch(mode) {
         case 'table':
             document.getElementById('patientsTableCard').style.display = 'block';
-            renderPatientsTable();
-            updatePaginationInfo();
-            renderPaginationNav();
+            // v12_perf: server-driven — fetch this view's first page (per-page differs from cards).
+            if (paginationState.serverMode) { loadPatientsPage(1); }
+            else { renderPatientsTable(); updatePaginationInfo(); renderPaginationNav(); }
             stopFoldersAutoRefresh();
             break;
         case 'cards':
             document.getElementById('patientsCardsCard').style.display = 'block';
-            renderPatientsCards();
-            updatePaginationInfoCards();
-            renderPaginationNavCards();
+            if (paginationState.serverMode) { loadPatientsPage(1); }
+            else { renderPatientsCards(); updatePaginationInfoCards(); renderPaginationNavCards(); }
             stopFoldersAutoRefresh();
             break;
         case 'folders':
@@ -2535,8 +2639,11 @@ function renderPatientsTable() {
     
     // Calculate pagination
     let startIndex, endIndex, patientsToShow;
-    
-    if (itemsPerPage === 'all') {
+
+    if (paginationState.serverMode) {
+        // v12_perf: server already returned exactly this page — render as-is.
+        patientsToShow = filteredPatients;
+    } else if (itemsPerPage === 'all') {
         startIndex = 0;
         endIndex = filteredPatients.length;
         patientsToShow = filteredPatients;
@@ -2545,7 +2652,7 @@ function renderPatientsTable() {
         endIndex = Math.min(startIndex + itemsPerPage, filteredPatients.length);
         patientsToShow = filteredPatients.slice(startIndex, endIndex);
     }
-    
+
     // Clear table
     tableBody.innerHTML = '';
     
@@ -2789,24 +2896,30 @@ function renderPatientsTable() {
 // Update pagination information
 function updatePaginationInfo() {
     const { currentPage, itemsPerPage, filteredPatients } = paginationState;
-    
-    document.getElementById('totalPatientsCount').textContent = filteredPatients.length;
-    document.getElementById('totalPatients').textContent = filteredPatients.length;
-    
+    // v12_perf: in server mode the true total comes from the server, and the
+    // page slice we hold IS the current page (filteredPatients.length rows).
+    const total = paginationState.serverMode ? (paginationState.serverTotal || 0) : filteredPatients.length;
+
+    document.getElementById('totalPatientsCount').textContent = total;
+    document.getElementById('totalPatients').textContent = total;
+
     if (itemsPerPage === 'all') {
-        document.getElementById('showingFrom').textContent = filteredPatients.length > 0 ? '1' : '0';
-        document.getElementById('showingTo').textContent = filteredPatients.length;
-        
+        document.getElementById('showingFrom').textContent = total > 0 ? '1' : '0';
+        document.getElementById('showingTo').textContent = total;
+
         // Hide pagination nav when showing all
         document.getElementById('paginationContainer').style.display = 'block';
         document.getElementById('paginationNav').style.display = 'none';
     } else {
-        const startIndex = (currentPage - 1) * itemsPerPage + 1;
-        const endIndex = Math.min(currentPage * itemsPerPage, filteredPatients.length);
-        
-        document.getElementById('showingFrom').textContent = filteredPatients.length > 0 ? startIndex : '0';
+        const perPage = parseInt(itemsPerPage) || 20;
+        const startIndex = (currentPage - 1) * perPage + 1;
+        const endIndex = paginationState.serverMode
+            ? ((currentPage - 1) * perPage + filteredPatients.length)
+            : Math.min(currentPage * perPage, filteredPatients.length);
+
+        document.getElementById('showingFrom').textContent = total > 0 ? startIndex : '0';
         document.getElementById('showingTo').textContent = endIndex;
-        
+
         // Show pagination nav
         document.getElementById('paginationNav').style.display = 'flex';
     }
@@ -2821,9 +2934,12 @@ function renderPaginationNav() {
         paginationNav.innerHTML = '';
         return;
     }
-    
-    const totalPages = Math.ceil(filteredPatients.length / itemsPerPage);
-    
+
+    const perPage = parseInt(itemsPerPage) || 20;
+    const totalPages = paginationState.serverMode
+        ? Math.ceil((paginationState.serverTotal || 0) / perPage)
+        : Math.ceil(filteredPatients.length / perPage);
+
     if (totalPages <= 1) {
         paginationNav.innerHTML = '';
         return;
@@ -2932,11 +3048,13 @@ function changePage(page) {
 function changeItemsPerPage(newLimit) {
     paginationState.itemsPerPage = newLimit === 'all' ? 'all' : parseInt(newLimit);
     paginationState.currentPage = 1; // Reset to first page
-    
+
+    if (paginationState.serverMode) { loadPatientsPage(1); return; }
+
     renderPatientsTable();
     updatePaginationInfo();
     renderPaginationNav();
-    
+
 }
 
 // Escape HTML function
@@ -2993,6 +3111,8 @@ function filterByDoctor(doctorId) {
 
 // Apply doctor filter to patients
 function applyDoctorFilter() {
+    // v12_perf: filters are applied server-side; refetch page 1.
+    if (paginationState.serverMode) { paginationState.currentPage = 1; loadPatientsPage(1); return; }
     const { currentDoctorFilter, currentGenderFilter, currentAgeFilter, currentLastVisitFilter, allPatients } = paginationState;
     
     let filtered = [...allPatients];
@@ -3193,12 +3313,15 @@ function clearSorting() {
     // Reset sorting
     paginationState.sortBy = null;
     paginationState.sortOrder = null;
-    
+
     // Remove active class from all sort buttons
     document.querySelectorAll('.sort-btn').forEach(btn => {
         btn.classList.remove('active');
     });
-    
+
+    // v12_perf: server-driven — refetch page 1 unsorted.
+    if (paginationState.serverMode) { loadPatientsPage(1); updateClearFiltersVisibility(); return; }
+
     // Reload data without sorting
     fetch('/api/patients', {
         method: 'GET',
@@ -3246,6 +3369,8 @@ function clearSorting() {
 
 // Filter patients locally (for main table pagination)
 function filterPatientsLocally(query) {
+    // v12_perf: server-driven search — refetch page 1 with the current term/filters.
+    if (paginationState.serverMode) { paginationState.currentPage = 1; loadPatientsPage(1); return; }
     // First apply doctor filter
     applyDoctorFilter();
     
@@ -3587,6 +3712,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (paginationLimitCards) {
         paginationLimitCards.addEventListener('change', function() {
             paginationState.currentPage = 1;
+            if (paginationState.serverMode) { if (currentViewMode === 'cards') loadPatientsPage(1); return; }
             if (currentViewMode === 'cards') {
                 renderPatientsCards();
                 updatePaginationInfoCards();
@@ -4015,8 +4141,9 @@ function deletePatient(patientId, patientName) {
         initials = firstChar + '.' + secondChar;
     }
     
-    // Find patient gender for avatar color
-    const patient = paginationState.allPatients.find(p => p.id == patientId);
+    // Find patient gender for avatar color (server mode: it's on the visible page)
+    const patient = (paginationState.filteredPatients || []).find(p => p.id == patientId)
+        || (paginationState.allPatients || []).find(p => p.id == patientId);
     const avatarElement = document.getElementById('deletePatientAvatar');
     avatarElement.textContent = initials;
     
@@ -4415,12 +4542,15 @@ let refreshInterval = setInterval(() => {
 
 // Function to refresh patients data via AJAX
 function refreshPatientsData() {
+    // v12_perf: server-driven — reload the current page (keeps filters/sort/search).
+    if (paginationState.serverMode) { loadPatientsPage(paginationState.currentPage || 1); return; }
+
     // Show subtle loading indicator
     const tableBody = document.getElementById('patientsTableBody');
     if (tableBody) {
         tableBody.parentElement.classList.add('table-loading');
     }
-    
+
     // Build query parameters
     const params = new URLSearchParams();
     if (paginationState.sortBy) {
@@ -5682,7 +5812,10 @@ function sortPatients(sortBy, sortOrder) {
     if (activeBtn) {
         activeBtn.classList.add('active');
     }
-    
+
+    // v12_perf: sort is a server param — refetch page 1.
+    if (paginationState.serverMode) { loadPatientsPage(1); return; }
+
     // Show loading indicator
     const tableBody = document.getElementById('patientsTableBody');
     if (tableBody) {
@@ -5809,11 +5942,14 @@ function renderPatientsCards() {
     let startIndex, endIndex, patientsToShow;
     
     // Use different items per page for cards if available
-    const cardsItemsPerPage = document.getElementById('paginationLimitCards') 
-        ? parseInt(document.getElementById('paginationLimitCards').value) || 24 
+    const cardsItemsPerPage = document.getElementById('paginationLimitCards')
+        ? parseInt(document.getElementById('paginationLimitCards').value) || 24
         : 24;
-    
-    if (cardsItemsPerPage === 'all' || cardsItemsPerPage === 'All') {
+
+    if (paginationState.serverMode) {
+        // v12_perf: server already returned exactly this page — render as-is.
+        patientsToShow = filteredPatients;
+    } else if (cardsItemsPerPage === 'all' || cardsItemsPerPage === 'All') {
         startIndex = 0;
         endIndex = filteredPatients.length;
         patientsToShow = filteredPatients;
@@ -6058,22 +6194,25 @@ function renderPatientsCards() {
 // Update pagination info for cards
 function updatePaginationInfoCards() {
     const { currentPage, filteredPatients } = paginationState;
-    const cardsItemsPerPage = document.getElementById('paginationLimitCards') 
-        ? parseInt(document.getElementById('paginationLimitCards').value) || 24 
+    const cardsItemsPerPage = document.getElementById('paginationLimitCards')
+        ? parseInt(document.getElementById('paginationLimitCards').value) || 24
         : 24;
-    
-    document.getElementById('totalPatientsCountCards').textContent = filteredPatients.length;
-    document.getElementById('totalPatientsCards').textContent = filteredPatients.length;
-    
+    const total = paginationState.serverMode ? (paginationState.serverTotal || 0) : filteredPatients.length;
+
+    document.getElementById('totalPatientsCountCards').textContent = total;
+    document.getElementById('totalPatientsCards').textContent = total;
+
     if (cardsItemsPerPage === 'all' || cardsItemsPerPage === 'All') {
-        document.getElementById('showingFromCards').textContent = filteredPatients.length > 0 ? '1' : '0';
-        document.getElementById('showingToCards').textContent = filteredPatients.length;
+        document.getElementById('showingFromCards').textContent = total > 0 ? '1' : '0';
+        document.getElementById('showingToCards').textContent = total;
         document.getElementById('paginationNavCards').style.display = 'none';
     } else {
         const startIndex = (currentPage - 1) * cardsItemsPerPage + 1;
-        const endIndex = Math.min(currentPage * cardsItemsPerPage, filteredPatients.length);
-        
-        document.getElementById('showingFromCards').textContent = filteredPatients.length > 0 ? startIndex : '0';
+        const endIndex = paginationState.serverMode
+            ? ((currentPage - 1) * cardsItemsPerPage + filteredPatients.length)
+            : Math.min(currentPage * cardsItemsPerPage, filteredPatients.length);
+
+        document.getElementById('showingFromCards').textContent = total > 0 ? startIndex : '0';
         document.getElementById('showingToCards').textContent = endIndex;
         document.getElementById('paginationNavCards').style.display = 'flex';
     }
@@ -6089,8 +6228,10 @@ function renderPaginationNavCards() {
     if (cardsItemsPerPage === 'all' || cardsItemsPerPage === 'All') {
         return;
     }
-    
-    const totalPages = Math.ceil(filteredPatients.length / cardsItemsPerPage);
+
+    const totalPages = paginationState.serverMode
+        ? Math.ceil((paginationState.serverTotal || 0) / cardsItemsPerPage)
+        : Math.ceil(filteredPatients.length / cardsItemsPerPage);
     const nav = document.getElementById('paginationNavCards');
     
     if (totalPages <= 1) {
@@ -6133,7 +6274,15 @@ function renderPaginationNavCards() {
 // Change page (works for both table and cards)
 function changePage(page) {
     paginationState.currentPage = page;
-    
+
+    if (paginationState.serverMode) {
+        // v12_perf: fetch the requested page from the server.
+        if (currentViewMode === 'cards') initCardSizeCards();
+        loadPatientsPage(page);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+    }
+
     if (currentViewMode === 'table') {
         renderPatientsTable();
         updatePaginationInfo();
@@ -6144,7 +6293,7 @@ function changePage(page) {
         updatePaginationInfoCards();
         renderPaginationNavCards();
     }
-    
+
     // Scroll to top
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }

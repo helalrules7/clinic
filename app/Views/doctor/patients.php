@@ -78,15 +78,18 @@
 
 <!-- Patients Statistics Cards - Compact Design with Mini Charts -->
 <?php
-    $totalPatients = count($patients);
-    $totalVisits = array_sum(array_column($patients, 'total_appointments'));
-    $recentVisits = count(array_filter($patients, fn($p) => $p['last_visit'] && date('Y-m-d', strtotime($p['last_visit'])) >= date('Y-m-d', strtotime('-7 days'))));
-    $newThisMonth = count(array_filter($patients, fn($p) => date('Y-m-d', strtotime($p['created_at'])) >= date('Y-m-d', strtotime('-30 days'))));
-    $newThisWeek = count(array_filter($patients, fn($p) => date('Y-m-d', strtotime($p['created_at'])) >= date('Y-m-d', strtotime('-7 days'))));
-    $maleCount = count(array_filter($patients, fn($p) => strtolower($p['gender'] ?? '') === 'male'));
-    $femaleCount = count(array_filter($patients, fn($p) => strtolower($p['gender'] ?? '') === 'female'));
+    // v12_perf: stats now come from a cheap aggregate query (DoctorController::getPatientStats),
+    // not from iterating the full patient set (which is no longer inlined).
+    $patientStats = $patientStats ?? [];
+    $totalPatients = (int)($patientStats['total_patients'] ?? 0);
+    $totalVisits = (int)($patientStats['total_visits'] ?? 0);
+    $recentVisits = (int)($patientStats['recent_visits'] ?? 0);
+    $newThisMonth = (int)($patientStats['new_this_month'] ?? 0);
+    $newThisWeek = (int)($patientStats['new_this_week'] ?? 0);
+    $maleCount = (int)($patientStats['male_count'] ?? 0);
+    $femaleCount = (int)($patientStats['female_count'] ?? 0);
     $avgVisitsPerPatient = $totalPatients > 0 ? round($totalVisits / $totalPatients, 1) : 0;
-    $activePatients = count(array_filter($patients, fn($p) => $p['last_visit'] && date('Y-m-d', strtotime($p['last_visit'])) >= date('Y-m-d', strtotime('-90 days'))));
+    $activePatients = (int)($patientStats['active_patients'] ?? 0);
     $inactivePatients = $totalPatients - $activePatients;
 ?>
 <div class="mini-stats-grid mb-4">
@@ -514,7 +517,7 @@
                             </section>
                         </div>
                         <div class="text-muted total-count-label">
-                            <small>Total: <span id="totalPatientsCount"><?= count($patients) ?></span> patients</small>
+                            <small>Total: <span id="totalPatientsCount"><?= number_format($totalPatients) ?></span> patients</small>
                         </div>
                     </div>
                 </div>
@@ -635,7 +638,7 @@
                 <div class="pagination-info text-muted mb-2">
                     <small>
                         View <span id="showingFrom">1</span> to <span id="showingTo">20</span> 
-                        of <span id="totalPatients"><?= count($patients) ?></span> patients
+                        of <span id="totalPatients"><?= number_format($totalPatients) ?></span> patients
                     </small>
                 </div>
                 <nav aria-label="Patients pagination" class="d-flex justify-content-center">
