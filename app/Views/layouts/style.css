@@ -11045,21 +11045,28 @@
         display: none;
     }
     
-    /* Priority 2: Next Appointment - Always visible */
+    /* Priority 2: Next Appointment - shrinks (was fixed) so the clock always fits */
     .notice-bar-column-3 {
         display: inline-flex !important;
-        flex-shrink: 0;
-        min-width: fit-content;
+        flex-shrink: 1;
+        min-width: 0;
+        overflow: hidden;
     }
-    
+    /* v12: drop the "Next Appointment:" label on mobile — frees the room needed
+       to surface the clock (the appointment itself still shows in the slider). */
+    .notice-bar-appointment-label {
+        display: none !important;
+    }
+
     /* Priority 3: Weather Widget - Hide on mobile to save space */
     .notice-bar-column-weather {
         display: none !important;
     }
-    
-    /* Priority 4: Clock - Always hidden on mobile */
+
+    /* v12: Clock now SHOWS on mobile (room freed by hiding the appointment label) */
     .notice-bar-column-1 {
-        display: none !important;
+        display: inline-flex !important;
+        flex-shrink: 0;
     }
 }
 
@@ -11090,21 +11097,23 @@
         display: none;
     }
     
-    /* Priority 2: Next Appointment - Always visible */
+    /* Priority 2: Next Appointment - shrinks so the clock always fits */
     .notice-bar-column-3 {
         display: inline-flex !important;
-        flex-shrink: 0;
-        min-width: fit-content;
+        flex-shrink: 1;
+        min-width: 0;
+        overflow: hidden;
     }
-    
+
     /* Priority 3: Weather Widget - Always hidden */
     .notice-bar-column-weather {
         display: none !important;
     }
-    
-    /* Priority 4: Clock - Always hidden */
+
+    /* v12: Clock shows here too (label already hidden from the ≤768 rule) */
     .notice-bar-column-1 {
-        display: none !important;
+        display: inline-flex !important;
+        flex-shrink: 0;
     }
 }
 
@@ -11143,10 +11152,11 @@
     .notice-bar-column-weather {
         display: none !important;
     }
-    
-    /* Priority 4: Clock - Always hidden */
+
+    /* v12: Clock shows (Next Appointment is hidden at this size, leaving room) */
     .notice-bar-column-1 {
-        display: none !important;
+        display: inline-flex !important;
+        flex-shrink: 0;
     }
 }
 
