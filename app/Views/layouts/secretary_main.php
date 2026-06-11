@@ -1437,5 +1437,20 @@
         }
     })();
     </script>
+    <script>
+        /* v12_perf: drop backdrop-filter blur during active scroll (see sec-style.css
+           body.is-scrolling). Added once at scroll-start, cleared ~140ms after it stops —
+           scrolling past glass otherwise re-blurs every surface each frame. Capture phase
+           so inner scroll containers count too; passive = no scroll delay. */
+        (function () {
+            var t = null;
+            window.addEventListener('scroll', function () {
+                var b = document.body; if (!b) return;
+                if (!b.classList.contains('is-scrolling')) b.classList.add('is-scrolling');
+                if (t) clearTimeout(t);
+                t = setTimeout(function () { document.body.classList.remove('is-scrolling'); }, 140);
+            }, { passive: true, capture: true });
+        })();
+    </script>
 </body>
 </html>

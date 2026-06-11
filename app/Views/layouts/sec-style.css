@@ -5360,3 +5360,15 @@ html[data-layout="secretary"] {
 html[data-layout="secretary"] body.sidebar-mini .top-bar {
     min-height: 130px;
 }
+
+/* §41 — PERF (v12_perf): drop backdrop-filter blur during ACTIVE SCROLL. parity
+   with style.css body.is-scrolling. A passive scroll listener (inline in
+   secretary_main.php) adds body.is-scrolling at scroll-start, removes it ~140ms
+   after scroll stops. Scrolling past glass otherwise re-blurs every surface each
+   frame; this keeps scroll smooth (blur restored the moment it stops). */
+body.is-scrolling *,
+body.is-scrolling *::before,
+body.is-scrolling *::after {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}
