@@ -345,6 +345,55 @@
         });
     }
 
+    // Clock appointment overlay: paint each of today's 15-min slots on the
+    // working-hours arc, coloured by state — green=Completed, red=Cancelled/
+    // NoShow(missed)/overdue(Due), blue=currently in progress; rest keep base arc.
+    const CLOCK_APPT_COLORS = { done: '#22c55e', bad: '#ef4444', now: '#3b82f6' };
+    function clockApptColor(a, nowMs, todayStr) {
+        const st = a.status;
+        if (st === 'Completed') return CLOCK_APPT_COLORS.done;
+        if (st === 'Cancelled' || st === 'NoShow') return CLOCK_APPT_COLORS.bad;
+        if (a.start_time && (st === 'Booked' || st === 'CheckedIn' || st === 'InProgress')) {
+            const start = new Date(`${todayStr}T${a.start_time}`).getTime();
+            const end = start + 15 * 60000;
+            if (st === 'InProgress') return CLOCK_APPT_COLORS.now;
+            if (nowMs >= start && nowMs < end) return CLOCK_APPT_COLORS.now;
+            if (nowMs >= end) return CLOCK_APPT_COLORS.bad;
+        }
+        return null; // future Booked / Rescheduled / Closed → base arc colour stays
+    }
+    function drawClockApptArcs(popover, appts) {
+        const svg = popover && popover.querySelector('.clock-face');
+        if (!svg) return;
+        svg.querySelectorAll('.clock-appt-arc').forEach(n => n.remove());
+        const now = new Date();
+        const todayStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+        const nowMs = now.getTime();
+        const NS = 'http://www.w3.org/2000/svg';
+        const cx = 160, cy = 160, R = 122; // same radius as the work-arc
+        const pt = (h12) => {
+            const ang = (h12 * 30 - 90) * Math.PI / 180;
+            return [cx + R * Math.cos(ang), cy + R * Math.sin(ang)];
+        };
+        const center = svg.querySelector('.cf-center');
+        (appts || []).forEach(a => {
+            if (!a || !a.start_time) return;
+            const color = clockApptColor(a, nowMs, todayStr);
+            if (!color) return;
+            const parts = String(a.start_time).split(':');
+            const h = parseInt(parts[0], 10), m = parseInt(parts[1], 10) || 0;
+            if (isNaN(h)) return;
+            const startH = (h % 12) + (m / 60);
+            const [sx, sy] = pt(startH);
+            const [ex, ey] = pt(startH + 0.25); // 15 minutes
+            const path = document.createElementNS(NS, 'path');
+            path.setAttribute('class', 'clock-appt-arc');
+            path.setAttribute('d', `M ${sx.toFixed(1)} ${sy.toFixed(1)} A ${R} ${R} 0 0 1 ${ex.toFixed(1)} ${ey.toFixed(1)}`);
+            path.setAttribute('stroke', color);
+            if (center) svg.insertBefore(path, center); else svg.appendChild(path);
+        });
+    }
+
     function initClockData(popover) {
         const now = new Date();
         const todayStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
@@ -357,6 +406,7 @@
             set('secClockStatTotal', total);
             set('secClockStatDone', done);
             set('secClockStatLeft', left);
+            drawClockApptArcs(popover, appts); // paint today's appointment slots on the dial
         });
 
         const nextEl = popover.querySelector('#secClockNext');

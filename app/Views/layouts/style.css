@@ -1281,6 +1281,16 @@
         }
         .dark .clock-face .work-arc { opacity: 0.7; }
 
+        /* Today's appointment slots painted ON the work-arc (same radius + width),
+           coloured by state in JS (green=Completed, red=Cancelled/Missed/Due,
+           blue=Currently). 15-min segments; butt caps so adjacent slots stay crisp. */
+        .clock-face .clock-appt-arc {
+            fill: none;
+            stroke-width: 6;
+            stroke-linecap: butt;
+            opacity: 0.95;
+        }
+
         /* ---- Clock column extras (digital time + stats + next-appt) ---- */
         .clock-column {
             flex-direction: column;

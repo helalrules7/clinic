@@ -1836,6 +1836,58 @@
             });
         }
 
+        // Clock appointment overlay: paint each of today's 15-min slots on the
+        // working-hours arc, coloured by the appointment's state.
+        //   green = Completed · red = Cancelled / NoShow (missed) / overdue (Due)
+        //   blue  = currently in progress · everything else keeps the base arc colour.
+        const CLOCK_APPT_COLORS = { done: '#22c55e', bad: '#ef4444', now: '#3b82f6' };
+        function clockApptColor(a, nowMs, todayStr) {
+            const st = a.status;
+            if (st === 'Completed') return CLOCK_APPT_COLORS.done;                 // green
+            if (st === 'Cancelled' || st === 'NoShow') return CLOCK_APPT_COLORS.bad; // red (cancelled / missed)
+            if (a.start_time && (st === 'Booked' || st === 'CheckedIn' || st === 'InProgress')) {
+                const start = new Date(`${todayStr}T${a.start_time}`).getTime();
+                const end = start + 15 * 60000;
+                if (st === 'InProgress') return CLOCK_APPT_COLORS.now;             // blue (in progress)
+                if (nowMs >= start && nowMs < end) return CLOCK_APPT_COLORS.now;   // blue (currently)
+                if (nowMs >= end) return CLOCK_APPT_COLORS.bad;                    // red (due / overdue)
+            }
+            return null; // future Booked / Rescheduled / Closed → base arc colour stays
+        }
+        function drawClockApptArcs(appts) {
+            const svg = clockCalendarPopover && clockCalendarPopover.querySelector('.clock-face');
+            if (!svg) return;
+            svg.querySelectorAll('.clock-appt-arc').forEach(n => n.remove());
+            const now = new Date();
+            const pad = (n) => String(n).padStart(2, '0');
+            const todayStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+            const nowMs = now.getTime();
+            const NS = 'http://www.w3.org/2000/svg';
+            const cx = 160, cy = 160, R = 122; // same radius as the work-arc, so slots overlay it
+            const pt = (h12) => {
+                const ang = (h12 * 30 - 90) * Math.PI / 180; // 12 at top, clockwise; 1 min = 0.5°
+                return [cx + R * Math.cos(ang), cy + R * Math.sin(ang)];
+            };
+            const center = svg.querySelector('.cf-center'); // keep our arcs under the centre dot
+            (appts || []).forEach(a => {
+                if (!a || !a.start_time) return;
+                const color = clockApptColor(a, nowMs, todayStr);
+                if (!color) return;
+                const parts = String(a.start_time).split(':');
+                const h = parseInt(parts[0], 10), m = parseInt(parts[1], 10) || 0;
+                if (isNaN(h)) return;
+                const startH = (h % 12) + (m / 60);
+                const endH = startH + 0.25; // 15 minutes = a quarter of an hour-tick
+                const [sx, sy] = pt(startH);
+                const [ex, ey] = pt(endH);
+                const path = document.createElementNS(NS, 'path');
+                path.setAttribute('class', 'clock-appt-arc');
+                path.setAttribute('d', `M ${sx.toFixed(1)} ${sy.toFixed(1)} A ${R} ${R} 0 0 1 ${ex.toFixed(1)} ${ey.toFixed(1)}`);
+                path.setAttribute('stroke', color);
+                if (center) svg.insertBefore(path, center); else svg.appendChild(path);
+            });
+        }
+
         // Today's stats (Total / Done / Left) + next-appointment live countdown
         function initClockData() {
             // --- Today's stats from the current month's data ---
@@ -1851,6 +1903,7 @@
                 set('clockStatTotal', total);
                 set('clockStatDone', done);
                 set('clockStatLeft', left);
+                drawClockApptArcs(appts); // paint today's appointment slots on the dial
             });
 
             // --- Next appointment countdown (live) ---
