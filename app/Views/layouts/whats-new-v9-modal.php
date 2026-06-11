@@ -60,10 +60,13 @@
 
     .wn-viewport { position: relative; overflow: hidden; }
     .wn-track { display: flex; transition: transform .4s cubic-bezier(.4,0,.2,1); }
-    .wn-slide { min-width: 100%; padding: 1.6rem 1.8rem 1.2rem; box-sizing: border-box; text-align: center; }
-    .wn-slide h3 { font-size: 1.25rem; font-weight: 800; margin: .9rem 0 .35rem; color: #4338ca; }
+    /* v12: slides flex-center their content so shorter slides fill the shared
+       height (the tallest slide sets it) instead of leaving a bottom gap, and
+       the text is a touch larger with more line-spacing for readability. */
+    .wn-slide { min-width: 100%; padding: 1.8rem 1.8rem 1.4rem; box-sizing: border-box; text-align: center; display: flex; flex-direction: column; justify-content: center; }
+    .wn-slide h3 { font-size: 1.42rem; font-weight: 800; margin: 1.15rem 0 .5rem; color: #4338ca; }
     .dark .wn-slide h3 { color: #a5b4fc; }
-    .wn-slide p { font-size: .92rem; color: #475569; margin: 0 auto; max-width: 460px; line-height: 1.55; }
+    .wn-slide p { font-size: 1.02rem; color: #475569; margin: 0 auto; max-width: 500px; line-height: 1.72; }
     .dark .wn-slide p { color: #94a3b8; }
     /* version codename (Roger Federer) — RF portrait switches with the theme */
     .wn-v11-codename { display: flex; flex-direction: column; align-items: center; gap: .35rem; margin: .55rem 0 .15rem; }
@@ -82,7 +85,7 @@
         padding:3px 10px; border-radius:999px;
     }
     .wn-stage {
-        height: 210px; margin: 1rem auto 0; max-width: 480px;
+        height: 238px; margin: 1rem auto 0; max-width: 480px;
         border-radius: 14px; position: relative; overflow: hidden;
         background: var(--wn-bg-deep); border: 1px solid var(--wn-border);
         box-shadow: var(--wn-stage-shadow);
@@ -137,7 +140,7 @@
     }
     /* Prefetch: mockup stays in fixed stage; enable steps live BELOW it */
     .wn-slide-prefetch .wn-prefetch-stage {
-        height: 128px;
+        height: 152px;
         display: flex;
         align-items: center;
         justify-content: center;
