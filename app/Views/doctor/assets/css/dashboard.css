@@ -1730,8 +1730,13 @@
 }
 
 @media (max-width: 767.98px) {
+    /* v12: the due-since/progress bar is now a full-width row of its own under
+       the appointment row (moved out of .appt-main), so on mobile it spans the
+       whole card — from under the name to under the profile button — and the
+       "Overdue since: …" text is no longer truncated. */
     .appointment-progress-container {
-        max-width: 70%;
+        max-width: 100%;
+        width: 100%;
     }
 }
 

@@ -460,13 +460,6 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <span class="appt-meta-date">${relDate}</span>
                                 <span class="appt-meta-vtype"><i class="bi ${vIcon}"></i> ${escapeHtml(appointment.visit_type || '')}</span>
                             </div>
-                            ${active ? `
-                            <div class="appointment-progress-container mt-2" data-appointment-id="${appointment.id}" data-date="${appointment.date}" data-start-time="${appointment.start_time}" data-end-time="${appointment.end_time}">
-                                <div class="glass-progress-bar">
-                                    <div class="glass-progress-fill" style="width: 0%;"></div>
-                                    <div class="glass-progress-text">00:00</div>
-                                </div>
-                            </div>` : ''}
                         </div>
                         <div class="appt-side">
                             <span class="badge ${statusBadgeClass}">${appointment.status}</span>
@@ -478,6 +471,13 @@ document.addEventListener('DOMContentLoaded', function() {
                             </div>
                         </div>
                     </div>
+                    ${active ? `
+                    <div class="appointment-progress-container mt-2" data-appointment-id="${appointment.id}" data-date="${appointment.date}" data-start-time="${appointment.start_time}" data-end-time="${appointment.end_time}">
+                        <div class="glass-progress-bar">
+                            <div class="glass-progress-fill" style="width: 0%;"></div>
+                            <div class="glass-progress-text">00:00</div>
+                        </div>
+                    </div>` : ''}
                 </div>
             `;
         });

@@ -31,11 +31,11 @@
     <span class="whatsnew-notice-pill">
         <span class="wn-pill-ring" aria-hidden="true"></span>
         <i class="bi bi-stars wn-pill-star" aria-hidden="true"></i>
-        <span class="wn-pill-label">v11.0.0</span>
+        <span class="wn-pill-label">v11.0.0 (RF)</span>
         <span class="wn-pill-spark" aria-hidden="true">NEW</span>
     </span>
     <span class="whatsnew-notice-text">
-        <strong class="wn-headline">Real-time chat is here!</strong>
+        <strong class="wn-headline">v11 Roger Federer Is Here</strong>
         <span class="wn-subcopy">Message your secretary from the dock &mdash; glass panel, groups,
         emoji reactions, voice notes, photos, <strong>@patient</strong> chips, and
         <strong>✓✓</strong> read receipts. Your thread stays open as you move between pages.</span>

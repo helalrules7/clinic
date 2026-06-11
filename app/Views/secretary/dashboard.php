@@ -27,11 +27,11 @@
     <span class="whatsnew-notice-pill">
         <span class="wn-pill-ring" aria-hidden="true"></span>
         <?= sec_dash_icon('stars', 'sm') ?>
-        <span class="wn-pill-label">v11.0.0</span>
+        <span class="wn-pill-label">v11.0.0 (RF)</span>
         <span class="wn-pill-spark" aria-hidden="true">جديد</span>
     </span>
     <span class="whatsnew-notice-text">
-        <strong class="wn-headline">محادثة فورية مع الأطباء! <span class="wn-emoji-pop" aria-hidden="true">🎉</span></strong>
+        <strong class="wn-headline">v11 Roger Federer Is Here <span class="wn-emoji-pop" aria-hidden="true">🎉</span></strong>
         <span class="wn-subcopy">زر شات زجاجي في كل صفحة — مجموعات، تفاعلات، صور ورسائل صوتية، وإيصالات قراءة ✓✓. تبقى المحادثة مفتوحة عند التنقل بين الصفحات.</span>
     </span>
     <button type="button" class="whatsnew-notice-cta"

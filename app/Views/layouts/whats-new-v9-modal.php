@@ -65,6 +65,16 @@
     .dark .wn-slide h3 { color: #a5b4fc; }
     .wn-slide p { font-size: .92rem; color: #475569; margin: 0 auto; max-width: 460px; line-height: 1.55; }
     .dark .wn-slide p { color: #94a3b8; }
+    /* version codename (Roger Federer) — RF portrait switches with the theme */
+    .wn-v11-codename { display: flex; flex-direction: column; align-items: center; gap: .35rem; margin: .55rem 0 .15rem; }
+    .wn-rf-portrait { display: inline-flex; }
+    .wn-rf-img { height: 78px; width: auto; display: block; }
+    .wn-rf-dark { display: none; }
+    .dark .wn-rf-light { display: none; }
+    .dark .wn-rf-dark { display: block; }
+    .wn-rf-name { font-family: Georgia, 'Times New Roman', serif; font-weight: 700; font-size: 1rem; letter-spacing: .01em; color: #4338ca; }
+    .dark .wn-rf-name { color: #a5b4fc; }
+    @media (max-width: 640px) { .wn-rf-img { height: 64px; } }
     .wn-kicker {
         display:inline-block; font-size:.7rem; font-weight:700;
         letter-spacing:.08em; text-transform:uppercase;
@@ -2513,8 +2523,15 @@
                   <span>Major release</span>
                 </div>
               </div>
-              <h3>Welcome to v11.0.0</h3>
-              <p>Our biggest release yet brings a <strong>redesigned notification center</strong>, drug reports, medical instructions, per-doctor Rx templates, notes drawer, theme palettes, Cmd+K, and more.</p>
+              <div class="wn-v11-codename">
+                <span class="wn-rf-portrait">
+                  <img class="wn-rf-img wn-rf-light" src="/app/Views/doctor/assets/svg/rf-light.webp?v=<?= file_exists(__DIR__ . '/../doctor/assets/svg/rf-light.webp') ? filemtime(__DIR__ . '/../doctor/assets/svg/rf-light.webp') : '1' ?>" alt="Roger Federer">
+                  <img class="wn-rf-img wn-rf-dark" src="/app/Views/doctor/assets/svg/rf-dark.webp?v=<?= file_exists(__DIR__ . '/../doctor/assets/svg/rf-dark.webp') ? filemtime(__DIR__ . '/../doctor/assets/svg/rf-dark.webp') : '1' ?>" alt="Roger Federer">
+                </span>
+                <span class="wn-rf-name">Roger Federer</span>
+              </div>
+              <h3>Welcome to v11.0.0 RF</h3>
+              <p>Our biggest release yet brings a <strong>redesigned notification center</strong>, drug reports, medical instructions, per-doctor Rx templates, notes drawer, theme palettes, Cmd+K, CHAT, and more.</p>
             </div>
 
             <!-- v11.0.0 #2 — wn-prefetch (Speculation Rules — safe navigation prefetch) -->
