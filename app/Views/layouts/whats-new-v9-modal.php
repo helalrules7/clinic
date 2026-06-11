@@ -60,10 +60,10 @@
 
     .wn-viewport { position: relative; overflow: hidden; }
     .wn-track { display: flex; transition: transform .4s cubic-bezier(.4,0,.2,1); }
-    /* v12: slides flex-center their content so shorter slides fill the shared
-       height (the tallest slide sets it) instead of leaving a bottom gap, and
-       the text is a touch larger with more line-spacing for readability. */
-    .wn-slide { min-width: 100%; padding: 1.8rem 1.8rem 1.4rem; box-sizing: border-box; text-align: center; display: flex; flex-direction: column; justify-content: center; }
+    /* v12: keep slides TOP-aligned (normal block flow — NOT flex-centered; the
+       flex-column broke the mockups and floated the titles to the middle). Just
+       slightly larger text + line-spacing + stages for readability/fill. */
+    .wn-slide { min-width: 100%; padding: 1.8rem 1.8rem 1.4rem; box-sizing: border-box; text-align: center; }
     .wn-slide h3 { font-size: 1.42rem; font-weight: 800; margin: 1.15rem 0 .5rem; color: #4338ca; }
     .dark .wn-slide h3 { color: #a5b4fc; }
     .wn-slide p { font-size: 1.02rem; color: #475569; margin: 0 auto; max-width: 500px; line-height: 1.72; }

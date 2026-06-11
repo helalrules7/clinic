@@ -36,8 +36,9 @@ height** (the first/version slide, ~613 px on desktop because of its 360 px vers
 Shorter slides (e.g. the prefetch slide, ~210 px stage) were top-aligned → a large empty area at the bottom.
 
 **Fix** (CSS in the modal's `<style>`):
-- `.wn-slide` → `display:flex; flex-direction:column; justify-content:center;` so each slide **centers its content
-  vertically** in the shared height (balanced top/bottom instead of bottom-heavy).
+- **NOTE:** a first attempt used `.wn-slide { display:flex; flex-direction:column; justify-content:center }` to
+  vertically-center content — this **broke the mockups** (collapsed the `.wn-stage` width to a thin line) and floated
+  titles to the middle. **Reverted** — slides stay TOP-aligned (normal block flow), title in its place.
 - Modest enlargement (per request — "a bit bigger mockups / words / line-spacing"):
   - default `.wn-stage` height `210px → 238px`; `.wn-slide-prefetch .wn-prefetch-stage` `128px → 152px`
   - `.wn-slide h3` `1.25rem → 1.42rem` (more margin); `.wn-slide p` `.92rem → 1.02rem`, `line-height 1.55 → 1.72`,
@@ -46,8 +47,8 @@ Shorter slides (e.g. the prefetch slide, ~210 px stage) were top-aligned → a l
   over-enlarging would overflow/clip on small laptops. (The mobile `@media ≤575.98px` already has
   `max-height: calc(100dvh - 9.5rem)` + scroll, untouched.)
 
-**Verified (CDP, desktop 760px):** slide 2 content is now centered (~108 px gap each side, was all at the bottom)
-with the bigger mockup + text filling the slide.
+**Verified (CDP, desktop 760px):** all stages render full-width (472px), titles top-aligned, mockups intact; the
+larger text/stages fill a bit more without centering.
 
 ## Deploy
 `whats-new-v9-modal.php` (+ the two banner views, dashboard.js/css, and the 2 RF webp) scp'd, chown hclinic:hclinic,
