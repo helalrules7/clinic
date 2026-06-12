@@ -33,3 +33,16 @@ The doctor's **direct** print views (`appointment_report.php`, `medication-presc
 `glasses-prescription.php`, `lab-tests*.php`, `single-lab-test.php`) use a different structure (a `.header` div
 + a separate patient-info table) and do **not** repeat their header per page. Applying the same
 table-header-group treatment there is a separate, larger batch — pending product confirmation.
+
+---
+
+## Fix (header was NOT repeating in the PDF / page 2)
+First attempt put the header in a table `<thead class="sheet-head">` (`display: table-header-group`). That repeats
+under **native** `@media print` only — but the "تحميل PDF" button uses **html2pdf (html2canvas)**, which
+rasterises the DOM to one tall canvas and slices it into pages, so a `<thead>` renders **once** and page 2 had no
+header. Fix: dropped the `<table class="sheet">` wrapper and made the header a reusable PHP closure
+(`$renderSheetHeader()`) emitted at the top of **each sheet** — once before the body, and again inside `group-2`
+(the glasses/labs/radiology sheet, which carries `break-before: page`) whenever sheet 1 (`$group1`) exists. So the
+header now appears on every page in **both** html2pdf export and native print. Single-sheet reports render exactly
+one header. `.sheet-header { break-inside: avoid }` keeps it intact across boundaries. Verified by curl: 1 sheet →
+1 header; the table wrapper is gone; colons (`المريض:` / `الطبيب المعالج:`) intact.

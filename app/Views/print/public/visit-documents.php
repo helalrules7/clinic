@@ -81,6 +81,8 @@ $group2 = $hasGlasses || $hasLabs || $hasRad; // sheet 2
         .header .addr .sep { opacity: .5; margin: 0 4px; }
         .report-badge { display: inline-block; margin-top: 10px; background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.25); color: #fff; font-size: 12.5px; font-weight: 700; padding: 4px 15px; border-radius: 30px; }
         .body-cell { padding: 0; }
+        /* v12: the repeating per-sheet header must never split across a page boundary */
+        .sheet-header { break-inside: avoid; page-break-inside: avoid; }
         .meta { display: flex; flex-wrap: wrap; gap: 8px 24px; padding: 15px 18px; border-bottom: 1px solid var(--border); font-size: 14px; background: var(--card-2); }
         .meta b { color: var(--muted); font-weight: 600; }
         .section { padding: 18px; }
@@ -147,37 +149,39 @@ $group2 = $hasGlasses || $hasLabs || $hasRad; // sheet 2
 <body>
     <div class="wrap">
         <div class="card">
-            <table class="sheet">
-                <thead class="sheet-head">
-                    <tr><td class="header-cell" style="padding:0;">
-                        <div class="header">
-                            <?php if (!empty($clinicLogo)): ?>
-                                <div class="logo-chip"><img src="<?= $e($clinicLogo) ?>" alt="" onerror="this.parentElement.style.display='none'"></div>
-                            <?php endif; ?>
-                            <h1><?= $e($clinicName) ?></h1>
-                            <?php if (!empty($clinic['address']) || !empty($clinic['phone'])): ?>
-                                <div class="addr">
-                                    <?php if (!empty($clinic['address'])): ?><?= $e($clinic['address']) ?><?php endif; ?>
-                                    <?php if (!empty($clinic['address']) && !empty($clinic['phone'])): ?><span class="sep">•</span><?php endif; ?>
-                                    <?php if (!empty($clinic['phone'])): ?>📞 <?= $e($clinic['phone']) ?><?php endif; ?>
-                                </div>
-                            <?php endif; ?>
-                            <div class="report-badge">تقرير الزيارة</div>
-                        </div>
-                    </td></tr>
-                    <tr><td style="padding:0;">
-                        <!-- v12: patient + doctor now live INSIDE the repeating thead so they
-                             show at the top of EVERY printed page, like the clinic header. -->
-                        <div class="meta">
-                            <span><b>المريض:</b> <?= $e($dash($patient['full_name'] ?? '')) ?></span>
-                            <?php if (!empty($patient['age'])): ?><span><b>السن:</b> <?= $e($patient['age']) ?> سنة</span><?php endif; ?>
-                            <?php if (!empty($docClean)): ?><span><b>الطبيب المعالج:</b> د. <?= $e($docClean) ?></span><?php endif; ?>
-                            <?php if ($visitDate): ?><span><b>تاريخ الزيارة:</b> <?= $e($visitDate) ?></span><?php endif; ?>
-                        </div>
-                    </td></tr>
-                </thead>
-                <tbody>
-                    <tr><td class="body-cell">
+            <?php
+            // v12: the clinic+patient header is a reusable block rendered at the top of EVERY
+            // sheet. A table <thead> only repeats under native @media print — it does NOT repeat
+            // in the html2pdf (html2canvas) export — so we emit the header per page-broken sheet.
+            $renderSheetHeader = function () use ($e, $dash, $clinicLogo, $clinicName, $clinic, $patient, $docClean, $visitDate) {
+                ob_start(); ?>
+                <div class="sheet-header">
+                    <div class="header">
+                        <?php if (!empty($clinicLogo)): ?>
+                            <div class="logo-chip"><img src="<?= $e($clinicLogo) ?>" alt="" onerror="this.parentElement.style.display='none'"></div>
+                        <?php endif; ?>
+                        <h1><?= $e($clinicName) ?></h1>
+                        <?php if (!empty($clinic['address']) || !empty($clinic['phone'])): ?>
+                            <div class="addr">
+                                <?php if (!empty($clinic['address'])): ?><?= $e($clinic['address']) ?><?php endif; ?>
+                                <?php if (!empty($clinic['address']) && !empty($clinic['phone'])): ?><span class="sep">•</span><?php endif; ?>
+                                <?php if (!empty($clinic['phone'])): ?>📞 <?= $e($clinic['phone']) ?><?php endif; ?>
+                            </div>
+                        <?php endif; ?>
+                        <div class="report-badge">تقرير الزيارة</div>
+                    </div>
+                    <div class="meta">
+                        <span><b>المريض:</b> <?= $e($dash($patient['full_name'] ?? '')) ?></span>
+                        <?php if (!empty($patient['age'])): ?><span><b>السن:</b> <?= $e($patient['age']) ?> سنة</span><?php endif; ?>
+                        <?php if (!empty($docClean)): ?><span><b>الطبيب المعالج:</b> د. <?= $e($docClean) ?></span><?php endif; ?>
+                        <?php if ($visitDate): ?><span><b>تاريخ الزيارة:</b> <?= $e($visitDate) ?></span><?php endif; ?>
+                    </div>
+                </div>
+                <?php return ob_get_clean();
+            };
+            echo $renderSheetHeader();
+            ?>
+            <div class="body-content">
 
                         <!-- ===== Sheet 1: prescription (priority) + instructions ===== -->
                         <?php if ($group1): ?>
@@ -221,6 +225,7 @@ $group2 = $hasGlasses || $hasLabs || $hasRad; // sheet 2
                         <!-- ===== Sheet 2: glasses + labs + radiology ===== -->
                         <?php if ($group2): ?>
                         <div class="group group-2 <?= $group1 ? 'has-prev' : '' ?>">
+                            <?php if ($group1): ?><?= $renderSheetHeader() /* repeat header atop sheet 2 */ ?><?php endif; ?>
                             <?php if ($hasGlasses): ?>
                             <div class="section">
                                 <h2><span class="tag">👓</span> مقاس النظارة الطبية</h2>
@@ -306,9 +311,7 @@ $group2 = $hasGlasses || $hasLabs || $hasRad; // sheet 2
                         </div>
                         <?php endif; ?>
 
-                    </td></tr>
-                </tbody>
-            </table>
+            </div>
         </div>
 
         <div class="foot">هذا التقرير صادر من <?= $e($clinicName) ?> · للاستفسار يُرجى التواصل مع العيادة</div>
