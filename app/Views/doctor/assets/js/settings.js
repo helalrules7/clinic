@@ -298,6 +298,18 @@ async function loadPersonalPreferences() {
         if (data.success && data.settings) {
             personalPreferences = data.settings;
             
+            // Performance Mode — reflect the server value into the toggle and
+            // reconcile localStorage + the <html> class (the pre-paint script reads
+            // localStorage, so keep them in agreement). Default OFF.
+            (function () {
+                var perfOn = personalPreferences.performance_mode === true
+                    || personalPreferences.performance_mode === '1'
+                    || personalPreferences.performance_mode === 1;
+                updateToggleSwitch('performanceMode', perfOn);
+                document.documentElement.classList.toggle('perf-mode', perfOn);
+                try { localStorage.setItem('appPerfMode', perfOn ? '1' : '0'); } catch (e) {}
+            })();
+
             // Update toggle switches
             updateToggleSwitch('dontCreateAlertForAppointments', personalPreferences.dont_create_alert_for_appointments || false, 'dontCreateAlertForAppointmentsStatus');
             updateToggleSwitch('dontCreateNotificationForAppointments', personalPreferences.dont_create_notification_for_appointments || false, 'dontCreateNotificationForAppointmentsStatus');
@@ -337,6 +349,15 @@ function updateToggleSwitch(switchId, checked, statusId, isTheme = false) {
     if (switchElement) {
         switchElement.checked = checked;
     }
+}
+
+// Performance Mode toggle — apply instantly (no reload) by flipping the <html>
+// class + localStorage (so it persists on the next navigation, pre-paint), then
+// persist server-side for cross-device sync.
+function updatePerformanceMode(on) {
+    document.documentElement.classList.toggle('perf-mode', !!on);
+    try { localStorage.setItem('appPerfMode', on ? '1' : '0'); } catch (e) {}
+    updatePersonalPreference('performance_mode', !!on);
 }
 
 async function updatePersonalPreference(key, value) {
@@ -786,6 +807,7 @@ async function loadSidebarItems() {
         { key: 'patients', label: 'Patients', icon: 'bi-people', fixed: true },
         { key: 'board', label: 'Patients Board', icon: 'bi-kanban', fixed: false },
         { key: 'drugs', label: 'Drugs Database', icon: 'bi-capsule', fixed: false },
+        { key: 'tags', label: 'Tags and Templates', icon: 'bi-tags', fixed: false },
         { key: 'payments', label: 'Financial Management', icon: 'bi-credit-card', fixed: false },
         { key: 'reports', label: 'Reports', icon: 'bi-graph-up', fixed: false },
         { key: 'media', label: 'Media', icon: 'bi-images', fixed: false },

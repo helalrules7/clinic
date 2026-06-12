@@ -19,6 +19,23 @@
                     </div>
                 </div>
                 <div class="card-body">
+                    <!-- Performance Mode (top of page — kills glassmorphism system-wide) -->
+                    <div class="settings-section">
+                        <h5 class="arabic-text"><i class="bi bi-lightning-charge-fill me-2"></i>وضع الأداء</h5>
+                        <div class="setting-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <label class="form-label mb-0 arabic-text">وضع الأداء (Performance Mode)</label>
+                                    <div class="form-text arabic-text">يوقف كل تأثيرات الزجاج (الـ blur) في السيستم كله لتسريع الحركة والتنقل. تبقى الأسطح صلبة والمظهر أبسط.</div>
+                                </div>
+                                <div class="toggle-switch-wrapper">
+                                    <input type="checkbox" class="toggle-switch" id="secPerformanceMode"
+                                           onchange="secUpdatePreference('performance_mode', this.checked)" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="settings-section">
                         <h5 class="arabic-text"><i class="bi bi-palette-fill me-2"></i>المظهر</h5>
                         <div class="form-text mb-3 arabic-text" style="margin-top:-6px">

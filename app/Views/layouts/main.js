@@ -3074,6 +3074,7 @@
                 'patients': '/doctor/patients',
                 'board': '/doctor/board',
                 'drugs': '/doctor/drugs',
+                'tags': '/doctor/instruction-templates',
                 'payments': '/doctor/payments',
                 'reports': '/doctor/reports',
                 'media': '/doctor/media',

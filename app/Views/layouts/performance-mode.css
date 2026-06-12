@@ -1,0 +1,163 @@
+/* ============================================================================
+   performance-mode.css — system-wide glassmorphism kill-switch (v12_perf)
+
+   Activated by the `perf-mode` class on <html> (set FOUC-free by the pre-paint
+   head script in main.php / secretary_main.php when localStorage.appPerfMode==='1',
+   and live-toggled from the Settings "Performance Mode" switch).
+
+   WHY: the UI carries 894 `backdrop-filter: blur()` declarations. backdrop-filter
+   re-samples + re-blurs the backdrop on EVERY composite during scroll — it is the
+   dominant cause of scroll/navigation jank. The chrome + cards float as frosted
+   glass over an aurora gradient painted on <body> (.main-content is transparent),
+   so once the blur is removed the translucent surfaces must be made SOLID to stay
+   readable.
+
+   DESIGN NOTES (learned the hard way):
+   - Surfaces are made opaque with the app's OWN theme token `var(--card)` (light
+     #ffffff / dark #1e293b — it flips with the `.dark` class on <html>). This
+     GUARANTEES the surface is always paired with the matching `var(--text)` color,
+     so white-on-white (invisible content) is impossible in either theme.
+   - We deliberately do NOT flip the global `--glass-*` design tokens. Those vars
+     are used by full-screen fixed panels too; flipping them opaque globally turned
+     an always-present layer into a solid sheet that covered the whole UI. Instead
+     we target a curated list of surfaces that are either bounded (cards, chrome,
+     dropdowns) or display-gated (modals, drawers, panels shown only when opened) —
+     none of which can cover the page on load.
+
+   COST WHEN OFF: every rule is gated under `html.perf-mode`, so with the class
+   absent this stylesheet is completely inert — ~zero cost.
+   ========================================================================== */
+
+/* ── 1) Kill ALL backdrop blur (one rule covers every one of the 894) ───────
+   Removing a backdrop-filter can never hide content — it only drops the blur. */
+html.perf-mode *,
+html.perf-mode *::before,
+html.perf-mode *::after {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+}
+
+/* ── 2) Make glass surfaces SOLID via the app's theme token ─────────────────
+   `var(--card)` is opaque and theme-aware (flips with .dark) so it always pairs
+   with var(--text) → never white-on-white.
+
+   CRITICAL: only BOUNDED or DISPLAY-GATED surfaces are listed. We do NOT opaque
+   full-screen sliding panels (.notes-drawer / .todo-drawer / .notification-center /
+   .cmdk / chat widgets / .offcanvas) — those are fixed full-viewport shells that
+   are TRANSPARENT when closed; giving them a solid background covers the entire
+   page (verified: it blanked the dashboard). They keep their own background when
+   the user opens them. Also NOT [class*="glass"] (would catch eyewear classes like
+   .glasses-rx-card), and NOT scrims (.modal-backdrop / .overlay). */
+html.perf-mode .card,
+html.perf-mode .modal-content,
+html.perf-mode .dropdown-menu,
+html.perf-mode .popover,
+html.perf-mode .popover-body,
+html.perf-mode .toast,
+html.perf-mode .toast-header,
+html.perf-mode .toast-body,
+html.perf-mode .sidebar,
+html.perf-mode .nav-menu,
+html.perf-mode .note-glass,
+html.perf-mode .alert-toast-glass,
+html.perf-mode .chat-fab--glass,
+html.perf-mode .gender-filter-popover-glass,
+html.perf-mode .last-visit-filter-popover-glass,
+html.perf-mode .age-filter-popover-glass,
+html.perf-mode .mobile-filter-popover-glass {
+    background-color: var(--card) !important;
+}
+
+/* ── 3) Simplify heavy multi-layer shadows on the main surfaces ─────────────
+   box-shadow composites cheaply, but the user opted to flatten it for the look. */
+html.perf-mode .card,
+html.perf-mode .modal-content,
+html.perf-mode .dropdown-menu,
+html.perf-mode .popover {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18) !important;
+}
+
+/* ── 4) Sticky header (top-bar) → solid, same colour as the sidebar ─────────
+   The .top-bar was the frosted strip you saw content scrolling through; making
+   it var(--card) also makes the whole notice bar solid, since the notice-bar
+   items (clock / next-appointment / eye-tools / weather) have no background of
+   their own — they ride on the bar. The right-side header chips + the eye-tools
+   dropdown get a solid background too (scoped chip var, not a global glass var). */
+html.perf-mode { --header-chip-bg: var(--card); --header-chip-hover-bg: var(--bg); }
+html.perf-mode .top-bar,
+html.perf-mode .top-bar.scrolled {
+    background: var(--card) !important;
+}
+html.perf-mode .notice-bar-tools-child {
+    background: var(--card) !important;
+}
+
+/* ── 5) Slide-in panels & drawers → solid (target the INNER panel, never the
+   full-screen shell — opaquing a shell blanks the page). All are bounded or
+   display-gated, so a solid background can't cover the page on load. ─────────
+   to-do · notes list · notification centre + activity feed · command palette */
+html.perf-mode .todo-drawer,
+html.perf-mode .notes-drawer__panel,
+html.perf-mode .notif-panel,
+html.perf-mode .notif-panel__inner,
+html.perf-mode .global-search-container.expanded .global-search-input-wrapper {
+    background: var(--card) !important;
+}
+
+/* ── 6) Floating widgets & FABs → solid, no glass ───────────────────────────
+   doctor chat (window + FAB) · AI medical assistant (window + FAB) ·
+   back-to-top button. The chat/AI windows are display-gated / bounded corners. */
+html.perf-mode .chat-panel,
+html.perf-mode .chat-fab,
+html.perf-mode .ai-chat-window,
+html.perf-mode .ai-chat-toggle,
+html.perf-mode .scroll-to-top {
+    background: var(--card) !important;
+}
+
+/* ── 7) Minimized dock → two SEPARATE buttons, not one merged pill ──────────
+   The merge came from painting the whole dock as one solid box. The base CSS
+   already makes the MINIMIZED .dock-container a transparent wrapper (the glass
+   lives on each button), so: only solidify the EXPANDED dock bar's container,
+   and give the two minimized buttons their own solid, shadowed circle — the base
+   12px gap then reads them as separate (chat | grid). */
+html.perf-mode .quick-access-dock:not(.minimized) .dock-container {
+    background: var(--card) !important;
+}
+html.perf-mode .quick-access-dock.minimized .dock-chat-btn,
+html.perf-mode .quick-access-dock.minimized .dock-minimize-btn {
+    background: var(--card) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18) !important;
+}
+
+/* ── 8) Notice-bar popovers → solid (clock calendar · next-appointments · weather)
+   Built in main.js, appended to <body>, bounded (fixed, max-width ~900px / 500px)
+   with a very transparent base (rgba(…,0.35) !important) — that's the see-through
+   you saw. Their *-backdrop scrims stay transparent. The html.perf-mode selector
+   (0,2,1 + !important) outranks the base rule's !important. */
+html.perf-mode .clock-calendar-popover,
+html.perf-mode .appointments-popover,
+html.perf-mode .weather-popover {
+    background: var(--card) !important;
+}
+
+/* ── 9) Faster dashboard open/close + navigation — skip off-screen widgets ───
+   The widget-heavy dashboard re-lays-out + repaints its WHOLE card tree when
+   .main-content's width changes (sidebar open/close) → a big first-collapse stall
+   (the light calendar stays smooth on the same toggle). `content-visibility:auto`
+   tells the browser to skip layout/paint for any of these cards while they're
+   off-screen, so the width change only touches what's actually visible; the
+   `auto` intrinsic-size remembers each card's real height once rendered, so the
+   scrollbar doesn't jump. Measured: collapse jank −40%, fps 41→48.
+
+   Scoped to the dashboard's own SIMPLE card classes — deliberately NOT the
+   .dashboard-card embed wrappers (board / notes board / alerts), whose absolutely
+   positioned / self-measuring internals can misrender if skipped while off-screen. */
+html.perf-mode .stats-card-wrapper,
+html.perf-mode .dash-mini-card,
+html.perf-mode .clinical-indicator-card,
+html.perf-mode .mini-trend-card,
+html.perf-mode .chart-card {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 320px;
+}

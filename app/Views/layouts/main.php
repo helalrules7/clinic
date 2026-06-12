@@ -136,6 +136,12 @@
             html.classList.toggle('dark', theme === 'dark');
             html.classList.add('theme-loaded');
 
+            // Performance Mode — kills glassmorphism system-wide. Applied pre-paint
+            // so there's no flash of glass → flat on refresh. localStorage is the
+            // source of truth here; the Settings switch keeps it in sync with the
+            // server (doctor_settings.performance_mode) for cross-device.
+            try { if (localStorage.getItem('appPerfMode') === '1') html.classList.add('perf-mode'); } catch (e) {}
+
             // 3) Pre-resolve the sidebar logo + favicon URLs.
             window.__INITIAL_LOGO_SRC__ = theme === 'dark'
                 ? '/assets/images/Dark.png'
@@ -183,6 +189,11 @@
     </script>
 
     <?php require __DIR__ . '/speculation-rules.php'; ?>
+
+    <!-- Performance Mode override — loaded LAST so its `html.perf-mode` !important
+         rules win the cascade. Inert (no selectors match) unless <html> has the
+         perf-mode class set by the pre-paint script above. -->
+    <link href="/app/Views/layouts/performance-mode.css?v=<?= file_exists(__DIR__ . '/performance-mode.css') ? filemtime(__DIR__ . '/performance-mode.css') : time() ?>" rel="stylesheet">
 </head>
 <body>
     <!-- Pre-paint sidebar mode restore — must run before the sidebar paints,

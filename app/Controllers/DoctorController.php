@@ -4534,6 +4534,7 @@ class DoctorController
             'dont_create_alert_for_appointments',
             'dont_create_notification_for_appointments',
             'back_to_top_display',
+            'performance_mode',
             'desktop_dock_enabled',
             'mobile_dock_enabled',
             'dashboard_rearrange_mobile',

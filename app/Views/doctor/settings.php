@@ -41,7 +41,24 @@
 
                     <form method="POST" action="/doctor/settings" enctype="multipart/form-data">
                         <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf_token) ?>">
-                        
+
+                        <!-- Performance Mode (top of page — kills glassmorphism system-wide) -->
+                        <div class="settings-section">
+                            <h5><i class="fas fa-bolt me-2"></i>Performance Mode</h5>
+                            <div class="setting-item">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <label class="form-label mb-0">Performance Mode</label>
+                                        <div class="form-text">Disables all glassmorphism (frosted-glass blur) across the entire system for faster scrolling and navigation. Surfaces become solid and the look is flatter. <span dir="rtl" class="arabic-text">يوقف كل تأثيرات الزجاج في السيستم كله لتسريع الحركة والتنقل.</span></div>
+                                    </div>
+                                    <div class="toggle-switch-wrapper">
+                                        <input type="checkbox" class="toggle-switch" id="performanceMode"
+                                               onchange="updatePerformanceMode(this.checked)">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Personal Preferences -->
                         <div class="settings-section">
                             <h5><i class="fas fa-user-cog me-2"></i>Personal Preferences</h5>

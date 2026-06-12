@@ -3457,6 +3457,7 @@ class SecretaryController
         $allowedSettings = [
             'theme',
             'back_to_top_display',
+            'performance_mode',
             'theme_palette',
             'theme_auto_schedule',
             'theme_dark_from',

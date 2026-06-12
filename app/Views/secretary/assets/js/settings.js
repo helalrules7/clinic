@@ -56,6 +56,15 @@
 
             setToggle('secBackToTopDisplay', prefs.back_to_top_display !== false);
 
+            // Performance Mode — reflect server value + reconcile localStorage/class
+            // (pre-paint script reads localStorage). Default OFF.
+            var perfOn = prefs.performance_mode === true
+                || prefs.performance_mode === '1'
+                || prefs.performance_mode === 1;
+            setToggle('secPerformanceMode', perfOn);
+            document.documentElement.classList.toggle('perf-mode', perfOn);
+            try { localStorage.setItem('appPerfMode', perfOn ? '1' : '0'); } catch (_) {}
+
             var autoOn = prefs.theme_auto_schedule === true
                 || prefs.theme_auto_schedule === '1'
                 || prefs.theme_auto_schedule === 1;
@@ -177,6 +186,12 @@
 
         if (key === 'back_to_top_display' && typeof window.secApplyBackToTopPreference === 'function') {
             window.secApplyBackToTopPreference(!!value);
+        }
+
+        // Performance Mode — apply instantly + persist for pre-paint on next nav.
+        if (key === 'performance_mode') {
+            document.documentElement.classList.toggle('perf-mode', !!value);
+            try { localStorage.setItem('appPerfMode', value ? '1' : '0'); } catch (_) {}
         }
 
         await putPreference({ [key]: value });

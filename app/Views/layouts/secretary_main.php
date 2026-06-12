@@ -97,6 +97,11 @@
             html.classList.toggle('dark', theme === 'dark');
             html.classList.add('theme-loaded');
 
+            // Performance Mode — kills glassmorphism system-wide, applied pre-paint
+            // (no flash of glass → flat on refresh). Synced with the server via the
+            // secretary Settings switch (secretary_settings.performance_mode).
+            try { if (localStorage.getItem('appPerfMode') === '1') html.classList.add('perf-mode'); } catch (e) {}
+
             // 3) Logo + favicons.
             window.__INITIAL_LOGO_SRC__ = theme === 'dark'
                 ? '/assets/images/Dark.png'
@@ -210,6 +215,10 @@
     </script>
 
     <?php require __DIR__ . '/speculation-rules.php'; ?>
+
+    <!-- Performance Mode override — loaded LAST so its `html.perf-mode` !important
+         rules win. Inert unless <html> has perf-mode (set by the pre-paint script). -->
+    <link href="/app/Views/layouts/performance-mode.css?v=<?= file_exists(__DIR__ . '/performance-mode.css') ? filemtime(__DIR__ . '/performance-mode.css') : time() ?>" rel="stylesheet">
 </head>
 <body>
     <!-- استرجاع حالة sidebar قبل العرض — لازم يشتغل قبل ما الـ sidebar
