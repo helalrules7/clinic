@@ -7,8 +7,10 @@
    Secretary: same drawer band (1070–1200) + inflated modals 1000002+ (sec-style).
    Secretary chat MUST stay in the 1k band (1060) — NOT 1000000, or drawers lose. */
 :root {
-  --chat-z-fab: 1040;
-  --chat-z-panel: 1041;
+  /* Chat sits ABOVE the AI medical-assistant widget (1042/1043) — chat always wins,
+     esp. on mobile where they overlap full-width. Still below modals (1050+)/cam (1048). */
+  --chat-z-fab: 1044;
+  --chat-z-panel: 1044;
   --chat-z-cam: 1048;
   --ai-chat-shift: 416px; /* AI panel 400px + 16px gap — desktop offset */
 }
