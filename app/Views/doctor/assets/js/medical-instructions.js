@@ -411,7 +411,14 @@
     }
 
     async function deleteInstruction(id) {
-        if (!confirm('Remove this instruction from the appointment?')) return;
+        var ok = (typeof window.mkConfirmModal === 'function')
+            ? await window.mkConfirmModal({
+                title: 'Remove instruction?',
+                message: 'This instruction will be removed from the appointment.',
+                confirmText: 'Remove', cancelText: 'Cancel', confirmClass: 'btn-danger', icon: 'bi-trash'
+            })
+            : confirm('Remove this instruction from the appointment?');
+        if (!ok) return;
         try {
             await api('DELETE', `/api/appointments/${apptId()}/medical-instructions/${id}`);
             await loadInstructions();

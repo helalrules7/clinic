@@ -254,11 +254,21 @@
                             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                         </div>
                         <div class="modal-body">
-                            <div class="tags-inline-form mb-3" style="background:var(--card)">
-                                <input type="text" class="form-control form-control-sm" id="apptNewTagName" placeholder="New tag name">
-                                <input type="color" class="form-control form-control-color form-control-sm" id="apptNewTagColor" value="#6366f1">
-                                <button type="button" class="btn btn-primary btn-sm" id="apptCreateTagBtn">Create</button>
+                            <style>
+                                #apptPatientTagsModal .apptTagCreateRow { display:flex; align-items:center; gap:8px; }
+                                #apptPatientTagsModal .apptTagCreateRow .form-control { height:46px; }
+                                #apptPatientTagsModal #apptNewTagName { flex:1 1 auto; }
+                                #apptPatientTagsModal #apptNewTagColor { flex:0 0 auto; width:54px; padding:5px; }
+                                #apptPatientTagsModal #apptCreateTagBtn { flex:0 0 auto; height:46px; white-space:nowrap; padding-inline:18px; }
+                                #apptPatientTagsModal .apptTagDivider { display:flex; align-items:center; gap:10px; margin:8px 0 14px; color:var(--muted,#94a3b8); font-size:.74rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em; }
+                                #apptPatientTagsModal .apptTagDivider::before, #apptPatientTagsModal .apptTagDivider::after { content:""; flex:1; height:1px; background:var(--border,rgba(148,163,184,.3)); }
+                            </style>
+                            <div class="apptTagCreateRow mb-3">
+                                <input type="text" class="form-control" id="apptNewTagName" placeholder="New tag name">
+                                <input type="color" class="form-control form-control-color" id="apptNewTagColor" value="#6366f1">
+                                <button type="button" class="btn btn-primary" id="apptCreateTagBtn">Create</button>
                             </div>
+                            <div class="apptTagDivider"><span>Available Tags</span></div>
                             <div id="apptPatientTagsList"></div>
                         </div>
                         <div class="modal-footer"><button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button></div>
