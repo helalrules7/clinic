@@ -1,0 +1,149 @@
+/**
+ * WhatsApp Integration Modal Styles
+ * Tailored to match the premium Glass/Indigo Design System
+ */
+
+.whatsapp-integration-modal .modal-dialog {
+    max-width: 900px;
+}
+
+.wa-content {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: var(--shadow-lg);
+    overflow: hidden;
+}
+
+.wa-header {
+    border-bottom: 1px solid var(--border);
+    padding: 1rem 1.25rem;
+}
+
+.wa-header .wa-icon {
+    font-size: 1.25rem;
+    color: #25D366; /* WhatsApp Green */
+}
+
+.wa-body {
+    background: var(--bg);
+}
+
+.wa-templates-panel {
+    background: var(--bg-alt);
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+.wa-panel-title {
+    font-size: 0.9rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+}
+
+.wa-templates-list {
+    max-height: 400px;
+    overflow-y: auto;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+}
+
+.wa-templates-list .list-group-item {
+    background: var(--bg);
+    border: none;
+    border-bottom: 1px solid var(--border);
+    padding: 0.75rem 1rem;
+    color: var(--text);
+    font-size: 0.88rem;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.wa-templates-list .list-group-item:last-child {
+    border-bottom: none;
+}
+
+.wa-templates-list .list-group-item:hover {
+    background: var(--bg-hover);
+    color: var(--accent);
+}
+
+.wa-templates-list .list-group-item.active {
+    background: var(--accent-light, rgba(79, 70, 229, 0.1));
+    color: var(--accent);
+    font-weight: 600;
+    border-left: 3px solid var(--accent);
+}
+
+/* RTL active border */
+[dir="rtl"] .wa-templates-list .list-group-item.active {
+    border-left: none;
+    border-right: 3px solid var(--accent);
+}
+
+.wa-editor-panel {
+    background: var(--bg);
+}
+
+.wa-patient-summary {
+    background: var(--bg-alt) !important;
+    border: 1px solid var(--border) !important;
+}
+
+.wa-patient-summary strong {
+    font-family: 'Plus Jakarta Sans', 'Cairo', sans-serif;
+    color: var(--text);
+}
+
+.wa-textarea {
+    resize: none;
+    font-family: 'Cairo', 'Plus Jakarta Sans', sans-serif;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--border);
+}
+
+.wa-textarea:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.25);
+    background: var(--bg);
+    color: var(--text);
+}
+
+.wa-footer {
+    border-top: 1px solid var(--border);
+}
+
+/* Consent Badges */
+.badge-consent-yes {
+    background-color: rgba(37, 211, 102, 0.15);
+    color: #25D366;
+    border: 1px solid rgba(37, 211, 102, 0.3);
+}
+
+.badge-consent-no {
+    background-color: rgba(239, 68, 68, 0.15);
+    color: #EF4444;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+/* Scrollbar styling for templates list */
+.wa-templates-panel::-webkit-scrollbar,
+.wa-templates-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.wa-templates-panel::-webkit-scrollbar-track,
+.wa-templates-list::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.wa-templates-panel::-webkit-scrollbar-thumb,
+.wa-templates-list::-webkit-scrollbar-thumb {
+    background-color: var(--border);
+    border-radius: 3px;
+}

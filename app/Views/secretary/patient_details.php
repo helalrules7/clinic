@@ -135,11 +135,56 @@
                     <div class="col-sm-4">
                         <strong class="arabic-text">الهاتف الرئيسي:</strong>
                     </div>
-                    <div class="col-sm-8 arabic-text">
-                        <i class="bi bi-telephone me-1"></i>
-                        <?= htmlspecialchars($patient['phone']) ?>
+                    <div class="col-sm-8 arabic-text d-flex justify-content-between align-items-center">
+                        <div>
+                            <i class="bi bi-telephone me-1"></i>
+                            <?= htmlspecialchars($patient['phone']) ?>
+                        </div>
+                        <?php
+                        $__db = \App\Config\Database::getInstance()->getConnection();
+                        $__waSettingsStmt = $__db->prepare("SELECT setting_key, setting_value FROM settings WHERE setting_key = 'whatsapp_enabled'");
+                        $__waSettingsStmt->execute();
+                        $__waEnabled = (bool)($__waSettingsStmt->fetchColumn() ?? false);
+                        if ($__waEnabled):
+                        ?>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="badge <?= ($patient['whatsapp_consent'] ?? 1) ? 'bg-success' : 'bg-secondary' ?> arabic-text small" style="cursor: pointer;" onclick="toggleSecWaConsent(<?= $patient['id'] ?>, this)">
+                                <?= ($patient['whatsapp_consent'] ?? 1) ? 'موافق' : 'غير موافق' ?>
+                            </span>
+                            <button type="button" class="btn btn-sm btn-success py-0" onclick="WhatsAppIntegration.openModal(<?= $patient['id'] ?>)">
+                                <i class="bi bi-whatsapp"></i>
+                            </button>
+                        </div>
+                        <?php endif; ?>
                     </div>
                 </div>
+                <script>
+                async function toggleSecWaConsent(patientId, badge) {
+                    const isConsented = badge.classList.contains('bg-success');
+                    const newConsent = isConsented ? 0 : 1;
+                    try {
+                        const res = await fetch('/api/whatsapp/consent', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                            body: JSON.stringify({ patient_id: patientId, consent: newConsent })
+                        });
+                        const data = await res.json();
+                        if (data.success) {
+                            if (newConsent === 1) {
+                                badge.className = 'badge bg-success arabic-text small';
+                                badge.textContent = 'موافق';
+                            } else {
+                                badge.className = 'badge bg-secondary arabic-text small';
+                                badge.textContent = 'غير موافق';
+                            }
+                        } else {
+                            alert('خطأ في تحديث الموافقة: ' + data.message);
+                        }
+                    } catch (e) {
+                        alert('خطأ في الاتصال بالشبكة: ' + e.message);
+                    }
+                }
+                </script>
                 <?php if ($patient['alt_phone']): ?>
                 <hr>
                 <div class="row">

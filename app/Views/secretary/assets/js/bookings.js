@@ -500,6 +500,12 @@ function renderAppointmentSlot(appointment) {
                        data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="ملف المريض">
                         <i class="bi bi-person-circle"></i>
                     </a>
+                    ${window.WHATSAPP_CONFIG && window.WHATSAPP_CONFIG.enabled ? `
+                    <button class="btn btn-sm btn-success send-whatsapp-btn"
+                            onclick="event.stopPropagation(); window.WhatsAppIntegration.openModal(${appointment.patient_id}, ${appointment.id}, 'confirmation')"
+                            data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="تأكيد الحجز عبر الواتساب">
+                        <i class="bi bi-whatsapp"></i>
+                    </button>` : ''}
                     ${appointment.status === 'Booked' && !isMissed ? `
                     <button class="btn btn-sm confirm-attendance-btn"
                             onclick="event.stopPropagation(); confirmAttendance(${appointment.id}, '${safeName}', '${timeShort}', '${safeDoctor}', '${appointment.visit_type}', ${totalPaid}, ${remainingAmount})"
@@ -513,7 +519,7 @@ function renderAppointmentSlot(appointment) {
                         <i class="bi bi-pencil-square"></i>
                     </button>
                     <button class="btn btn-sm btn-outline-danger delete-appointment-btn"
-                            onclick="event.stopPropagation(); deleteBooking(${appointment.id}, '${safeName}', '${timeShort}', '${safeDoctor}', '${safeVisitAr}', ${totalPaid}, ${remainingAmount}, '${safeNotes}')"
+                            onclick="event.stopPropagation(); deleteBooking(${appointment.id}, '${safeName}', '${timeShort}', '${safeDoctor}', '${safeVisitAr}', ${totalPaid}, ${remainingAmount}, '${safeNotes}', ${appointment.patient_id}, '${appointment.date}', ${appointment.clinic_id || 'null'})"
                             data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="حذف الحجز">
                         <i class="bi bi-trash"></i>
                     </button>` : ''}
@@ -982,6 +988,25 @@ async function handleAddBooking(e) {
             
             // Show success message
             showNotification('تم إنشاء الحجز بنجاح!', 'success');
+
+            // WhatsApp confirmation modal trigger
+            if (window.WhatsAppIntegration) {
+                const patientName = document.getElementById('patientSearch').value;
+                const apptDate = document.getElementById('bookingDate').value;
+                const apptTime = document.getElementById('bookingTime').value;
+                const patientId = document.getElementById('selectedPatientId').value;
+                const apptId = data.appointment_id || data.id || null;
+                
+                setTimeout(() => {
+                    window.WhatsAppIntegration.triggerConfirmationModal(
+                        patientId,
+                        apptId,
+                        patientName,
+                        apptDate,
+                        apptTime
+                    );
+                }, 1000);
+            }
             
             // Refresh calendar immediately and then again after a short delay
             loadCalendar();
@@ -999,11 +1024,19 @@ async function handleAddBooking(e) {
     });
 }
 
-let currentDeleteBookingId = null;
+let currentBookingToDelete = null;
 
-function deleteBooking(bookingId, patientName, appointmentTime, doctorName, visitType, totalPaid, remainingAmount, notes) {
-    // Store booking ID for later use
-    currentDeleteBookingId = bookingId;
+function deleteBooking(bookingId, patientName, appointmentTime, doctorName, visitType, totalPaid, remainingAmount, notes, patientId = null, date = '', clinicId = null) {
+    // Store booking data
+    currentBookingToDelete = {
+        id: bookingId,
+        patientName: patientName,
+        time: appointmentTime,
+        doctorName: doctorName,
+        patientId: patientId,
+        date: date,
+        clinicId: clinicId
+    };
     
     // Populate modal with booking details
     document.getElementById('deleteBookingPatientName').textContent = patientName;
@@ -1027,7 +1060,10 @@ function deleteBooking(bookingId, patientName, appointmentTime, doctorName, visi
 }
 
 function confirmDeleteBooking() {
-    if (!currentDeleteBookingId) return;
+    if (!currentBookingToDelete) return;
+    
+    const bookingId = currentBookingToDelete.id;
+    const { patientId, patientName, date, time, doctorName, clinicId } = currentBookingToDelete;
     
     // Show loading state
     const confirmBtn = document.getElementById('confirmDeleteBookingBtn');
@@ -1038,7 +1074,7 @@ function confirmDeleteBooking() {
     spinner.classList.remove('d-none');
     confirmBtn.disabled = true;
     
-    fetch(`/secretary/bookings/${currentDeleteBookingId}`, {
+    fetch(`/secretary/bookings/${bookingId}`, {
         method: 'DELETE',
         headers: {
             'X-Requested-With': 'XMLHttpRequest',
@@ -1051,8 +1087,22 @@ function confirmDeleteBooking() {
             showNotification('تم حذف الحجز بنجاح!', 'success');
             // Close modal
             bootstrap.Modal.getInstance(document.getElementById('deleteBookingModal')).hide();
+            
             // Refresh calendar immediately
             loadCalendar();
+            
+            // Trigger WhatsApp cancellation modal
+            if (window.WhatsAppIntegration && patientId) {
+                window.WhatsAppIntegration.triggerCancellationModal(
+                    patientId,
+                    bookingId,
+                    patientName,
+                    date,
+                    time,
+                    doctorName,
+                    clinicId
+                );
+            }
         } else {
             showNotification('خطأ في حذف الحجز: ' + data.error, 'danger');
         }
@@ -1065,7 +1115,7 @@ function confirmDeleteBooking() {
         btnText.classList.remove('d-none');
         spinner.classList.add('d-none');
         confirmBtn.disabled = false;
-        currentDeleteBookingId = null;
+        currentBookingToDelete = null;
     });
 }
 

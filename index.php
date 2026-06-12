@@ -32,6 +32,8 @@ require_once __DIR__ . '/app/Controllers/BoardController.php';
 require_once __DIR__ . '/app/Controllers/CommentsController.php';
 require_once __DIR__ . '/app/Controllers/PatientSummaryController.php';
 require_once __DIR__ . '/app/Controllers/ChatController.php';
+require_once __DIR__ . '/app/Controllers/WhatsappController.php';
+require_once __DIR__ . '/app/Controllers/PublicShareController.php';
 // require_once __DIR__ . '/app/Controllers/NotesController.php';
 
 // Load environment variables
@@ -347,6 +349,8 @@ try {
     $router->get('/api/medications/prescriptions/patient', 'MedicationsController@getPatientMedicationsPrescriptions');
     
     // API routes
+    $router->get('/api/clinics/all', 'ApiController@getAllClinics');
+    $router->post('/api/clinics/{id}', 'ApiController@updateClinic');
     $router->get('/api/clinics', 'ApiController@getClinics');
     $router->get('/api/calendar', 'ApiController@getCalendar');
     $router->get('/api/calendar/version', 'ApiController@calendarVersion');
@@ -442,6 +446,7 @@ try {
     $router->get('/api/recent-activity', 'ApiController@getRecentActivity');
     $router->get('/api/dashboard-charts', 'ApiController@getDashboardCharts');
     $router->get('/api/patients/search', 'ApiController@searchPatients');
+    $router->get('/api/patients/paginated', 'ApiController@getPatientsPaginated'); // v12_perf: server-side paged list
     $router->get('/api/patients', 'ApiController@getAllPatients');
     // Patient folders routes
     // More specific routes first to avoid conflicts
@@ -576,7 +581,20 @@ try {
     
     // Individual Glasses Prescription API routes
     $router->get('/api/prescriptions/glasses/{id}', 'ApiController@getGlassesPrescription');
-        
+    
+    // WhatsApp Integration API routes
+    $router->get('/api/whatsapp/templates', 'WhatsappController@getTemplates');
+    $router->get('/api/whatsapp/logs/{patientId}', 'WhatsappController@getLogs');
+    $router->post('/api/whatsapp/resolve', 'WhatsappController@resolveMessage');
+    $router->post('/api/whatsapp/consent', 'WhatsappController@updateConsent');
+    $router->post('/api/whatsapp/log', 'WhatsappController@logCommunication');
+    $router->post('/api/whatsapp/templates/{id}', 'WhatsappController@updateTemplate');
+    $router->post('/api/whatsapp/share/revoke/{tokenId}', 'WhatsappController@revokeShare');
+
+    // Public patient-facing visit documents link (NO login — token validated in controller)
+    $router->get('/p/v/{token}', 'PublicShareController@visitDocuments');     // short URL
+    $router->get('/p/visit/{token}', 'PublicShareController@visitDocuments'); // legacy alias
+
     // Print routes
     $router->get('/print/prescription/{id}', 'PrintController@medicationPrescription');
     $router->get('/print/glasses/{id}', 'PrintController@glassesPrescription');

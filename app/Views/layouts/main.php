@@ -1358,6 +1358,7 @@
     <?php include __DIR__ . '/keyboard-help.php'; ?>
     <?php include __DIR__ . '/quick-note-modal.php'; ?>
     <?php include __DIR__ . '/notes-drawer.php'; ?>
+    <?php include __DIR__ . '/whatsapp-modal.php'; ?>
 
     <!-- v11.0.0 feature JS bundle (deferred so it doesn't block paint) -->
     <script defer src="/app/Views/doctor/assets/js/patient-color.js?v=<?= file_exists(__DIR__ . '/../doctor/assets/js/patient-color.js') ? filemtime(__DIR__ . '/../doctor/assets/js/patient-color.js') : time() ?>"></script>
@@ -1379,5 +1380,20 @@
     <script defer src="/app/Views/doctor/assets/js/focus-mode.js?v=<?= file_exists(__DIR__ . '/../doctor/assets/js/focus-mode.js') ? filemtime(__DIR__ . '/../doctor/assets/js/focus-mode.js') : time() ?>"></script>
     <script defer src="/app/Views/doctor/assets/js/notes-drawer.js?v=<?= file_exists(__DIR__ . '/../doctor/assets/js/notes-drawer.js') ? filemtime(__DIR__ . '/../doctor/assets/js/notes-drawer.js') : time() ?>"></script>
     <script defer src="/app/Views/doctor/assets/js/theme-palette.js?v=<?= file_exists(__DIR__ . '/../doctor/assets/js/theme-palette.js') ? filemtime(__DIR__ . '/../doctor/assets/js/theme-palette.js') : time() ?>"></script>
+    <?php
+    $__waDb = \App\Config\Database::getInstance()->getConnection();
+    $__waSettingsStmt = $__waDb->prepare("SELECT setting_key, setting_value FROM settings WHERE setting_key IN ('whatsapp_enabled', 'whatsapp_advanced_features')");
+    $__waSettingsStmt->execute();
+    $__waSettings = $__waSettingsStmt->fetchAll(PDO::FETCH_KEY_PAIR);
+    $__waEnabled = (bool)($__waSettings['whatsapp_enabled'] ?? false);
+    $__waAdvanced = (bool)($__waSettings['whatsapp_advanced_features'] ?? false);
+    ?>
+    <script>
+        window.WHATSAPP_CONFIG = {
+            enabled: <?= json_encode($__waEnabled) ?>,
+            advanced: <?= json_encode($__waAdvanced) ?>
+        };
+    </script>
+    <script defer src="/app/Views/doctor/assets/js/whatsapp.js?v=<?= file_exists(__DIR__ . '/../doctor/assets/js/whatsapp.js') ? filemtime(__DIR__ . '/../doctor/assets/js/whatsapp.js') : time() ?>"></script>
 </body>
 </html>

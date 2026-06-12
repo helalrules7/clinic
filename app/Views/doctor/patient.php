@@ -397,6 +397,169 @@
 })();
 </script>
 
+
+<!-- Patient Communication Module -->
+<?php
+// Check if WhatsApp is enabled in the config
+$__db = \App\Config\Database::getInstance()->getConnection();
+$__waSettingsStmt = $__db->prepare("SELECT setting_key, setting_value FROM settings WHERE setting_key = 'whatsapp_enabled'");
+$__waSettingsStmt->execute();
+$__waEnabled = (bool)($__waSettingsStmt->fetchColumn() ?? false);
+
+if ($__waEnabled):
+?>
+<div class="card mb-4" id="whatsappCommunicationCard">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">
+            <i class="bi bi-whatsapp me-2 text-success"></i>
+            Patient Communication (WhatsApp)
+        </h5>
+        <div class="d-flex align-items-center gap-3">
+            <!-- Consent switch -->
+            <div class="form-check form-switch m-0">
+                <input class="form-check-input" type="checkbox" role="switch" id="patientWaConsentSwitch" <?= ($patient['whatsapp_consent'] ?? 1) ? 'checked' : '' ?> onchange="togglePatientWaConsent(<?= $patient['id'] ?>, this)">
+                <label class="form-check-label small" for="patientWaConsentSwitch">WhatsApp Consent</label>
+            </div>
+            <button class="btn btn-success btn-sm" onclick="WhatsAppIntegration.openModal(<?= $patient['id'] ?>)">
+                <i class="bi bi-whatsapp me-1"></i>Send WhatsApp
+            </button>
+        </div>
+    </div>
+    <div class="card-body">
+        <!-- Quick Actions Panel -->
+        <h6 class="mb-3 text-muted small"><i class="bi bi-lightning-charge-fill me-1"></i>Quick Send Templates</h6>
+        <div class="d-flex flex-wrap gap-2 mb-4">
+            <button class="btn btn-outline-success btn-sm" onclick="WhatsAppIntegration.openModal(<?= $patient['id'] ?>, null, 'confirmation')">
+                <i class="bi bi-check-circle me-1"></i>Confirm Appointment
+            </button>
+            <button class="btn btn-outline-success btn-sm" onclick="WhatsAppIntegration.openModal(<?= $patient['id'] ?>, null, 'reminder')">
+                <i class="bi bi-alarm me-1"></i>Send Reminder
+            </button>
+            <button class="btn btn-outline-success btn-sm" onclick="WhatsAppIntegration.openModal(<?= $patient['id'] ?>, null, 'eye_drops')">
+                <i class="bi bi-droplet-fill me-1"></i>Send Eye Drops Schedule
+            </button>
+            <button class="btn btn-outline-success btn-sm" onclick="WhatsAppIntegration.openModal(<?= $patient['id'] ?>, null, 'summary')">
+                <i class="bi bi-file-earmark-text me-1"></i>Send Visit Summary
+            </button>
+            <button class="btn btn-outline-success btn-sm" onclick="WhatsAppIntegration.openModal(<?= $patient['id'] ?>, null, 'investigation')">
+                <i class="bi bi-clipboard-pulse me-1"></i>Send Investigation Request
+            </button>
+            <button class="btn btn-outline-success btn-sm" onclick="WhatsAppIntegration.openModal(<?= $patient['id'] ?>, null, 'instructions')">
+                <i class="bi bi-info-circle me-1"></i>Send Surgery Instructions
+            </button>
+            <button class="btn btn-outline-success btn-sm" onclick="WhatsAppIntegration.openModal(<?= $patient['id'] ?>, null, 'follow_up')">
+                <i class="bi bi-arrow-repeat me-1"></i>Send Follow-up Reminder
+            </button>
+        </div>
+
+        <!-- Previous Communication Logs -->
+        <h6 class="mb-3 text-muted small"><i class="bi bi-clock-history me-1"></i>Communication Log</h6>
+        <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+            <table class="table table-sm table-hover align-middle" id="waLogsTable">
+                <thead class="table-light sticky-top">
+                    <tr>
+                        <th>Date</th>
+                        <th>User</th>
+                        <th>Phone</th>
+                        <th>Message Summary</th>
+                        <th>Context / Eye</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="waLogsContainer">
+                    <tr>
+                        <td colspan="6" class="text-center text-muted py-3">
+                            <span class="spinner-border spinner-border-sm text-success" role="status"></span> Loading logs...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    // JS functions to toggle consent and load logs
+    async function togglePatientWaConsent(patientId, checkbox) {
+        const consent = checkbox.checked ? 1 : 0;
+        try {
+            const res = await fetch('/api/whatsapp/consent', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                body: JSON.stringify({ patient_id: patientId, consent: consent })
+            });
+            const data = await res.json();
+            if (!data.success) {
+                checkbox.checked = !checkbox.checked;
+                alert('Error updating consent: ' + data.message);
+            }
+        } catch (e) {
+            checkbox.checked = !checkbox.checked;
+            alert('Network error: ' + e.message);
+        }
+    }
+
+    async function loadWaLogs(patientId) {
+        const container = document.getElementById('waLogsContainer');
+        if (!container) return;
+        try {
+            const res = await fetch('/api/whatsapp/logs/' + patientId);
+            const data = await res.json();
+            if (data.success && data.logs && data.logs.length > 0) {
+                container.innerHTML = data.logs.map(log => {
+                    const date = new Date(log.sent_at.replace(' ', 'T')).toLocaleString();
+                    const related = [];
+                    if (log.related_eye && log.related_eye !== 'not_applicable') {
+                        const eyeLabels = { right: 'OD', left: 'OS', both: 'OU' };
+                        related.push(eyeLabels[log.related_eye] || log.related_eye);
+                    }
+                    if (log.related_service) related.push(log.related_service);
+                    if (log.related_test_type) related.push(log.related_test_type);
+                    
+                    const contextText = related.join(' / ') || 'General';
+                    const summary = log.message_body.length > 80 ? log.message_body.substring(0, 80) + '...' : log.message_body;
+
+                    return `
+                        <tr>
+                            <td><small>${date}</small></td>
+                            <td>${log.user_name || 'System'}</td>
+                            <td><small>${log.phone_number}</small></td>
+                            <td title="${log.message_body.replace(/"/g, '&quot;')}">${summary}</td>
+                            <td><span class="badge bg-secondary">${contextText}</span></td>
+                            <td><span class="badge bg-success">${log.status}</span></td>
+                        </tr>
+                    `;
+                }).join('');
+            } else {
+                container.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="text-center text-muted py-3">No communications logged yet.</td>
+                    </tr>
+                `;
+            }
+        } catch (e) {
+            container.innerHTML = `
+                <tr>
+                    <td colspan="6" class="text-danger text-center py-3">Failed to load logs: ${e.message}</td>
+                </tr>
+            `;
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        loadWaLogs(<?= $patient['id'] ?>);
+        
+        // Reload logs when the WhatsApp modal is hidden (since a message might have been sent)
+        const modalEl = document.getElementById('whatsappModal');
+        if (modalEl) {
+            modalEl.addEventListener('hidden.bs.modal', () => {
+                setTimeout(() => loadWaLogs(<?= $patient['id'] ?>), 1000);
+            });
+        }
+    });
+</script>
+<?php endif; ?>
+
 <!-- Prescriptions History -->
 <?php if (!empty($allMedications) || !empty($allGlasses)): ?>
 <div class="card mb-4">

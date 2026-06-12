@@ -4667,11 +4667,10 @@ function confirmMarkCompleted(appointmentId) {
         })
     })
     .then(() => {
-        // Always reload page regardless of response
+        sessionStorage.setItem('wa_just_completed_appt', appointmentId);
         window.location.reload();
     })
     .catch(() => {
-        // Even on error, reload page
         window.location.reload();
     });
 }

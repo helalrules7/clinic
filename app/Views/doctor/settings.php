@@ -729,6 +729,86 @@
                                 </div>
                                 <div class="form-text">Click to update the drugs database from the official source</div>
                             </div>
+                        <!-- WhatsApp Integration Settings -->
+                        <div class="settings-section">
+                            <h5><i class="fab fa-whatsapp me-2"></i>WhatsApp Integration</h5>
+                            <div class="form-text mb-3" style="margin-top:-6px">
+                                Configure the Patient Communication module with WhatsApp deep links.
+                                These settings apply clinic-wide.
+                            </div>
+
+                            <!-- Enable WhatsApp toggle -->
+                            <div class="setting-item">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <label class="form-label mb-0">Enable WhatsApp Module</label>
+                                        <div class="form-text">Enable WhatsApp buttons in patient profile, appointments, and prescriptions</div>
+                                    </div>
+                                    <div class="toggle-switch-wrapper">
+                                        <input type="hidden" name="whatsapp_enabled" value="0">
+                                        <input type="checkbox" class="toggle-switch" id="whatsappEnabled" name="whatsapp_enabled" value="1"
+                                               <?= (!empty($settings['whatsapp_enabled']) && $settings['whatsapp_enabled'] == '1') ? 'checked' : '' ?>>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Enable WhatsApp Advanced Features toggle -->
+                            <div class="setting-item">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <label class="form-label mb-0">Enable Advanced Triggers</label>
+                                        <div class="form-text">Show automatic message prompts on new appointment bookings and visit completions</div>
+                                    </div>
+                                    <div class="toggle-switch-wrapper">
+                                        <input type="hidden" name="whatsapp_advanced_features" value="0">
+                                        <input type="checkbox" class="toggle-switch" id="whatsappAdvancedFeatures" name="whatsapp_advanced_features" value="1"
+                                               <?= (!empty($settings['whatsapp_advanced_features']) && $settings['whatsapp_advanced_features'] == '1') ? 'checked' : '' ?>>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Manage Templates Item -->
+                            <div class="setting-item">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <label class="form-label mb-0">Manage Templates</label>
+                                        <div class="form-text">Configure and edit default ophthalmology message templates</div>
+                                    </div>
+                                    <div>
+                                        <button type="button" class="btn btn-outline-primary btn-sm" onclick="openTemplatesManager()">
+                                            <i class="fas fa-edit me-1"></i>Manage Templates
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Clinics Management Settings -->
+                        <div class="settings-section">
+                            <h5><i class="fas fa-clinic-medical me-2"></i>Clinics Management / إدارة الفروع</h5>
+                            <div class="form-text mb-3" style="margin-top:-6px">
+                                View and edit clinic branches registered in the database, including addresses and telephone numbers.
+                            </div>
+
+                            <div class="table-responsive">
+                                <table class="table table-bordered align-middle">
+                                    <thead>
+                                        <tr>
+                                            <th>Clinic Name (AR)</th>
+                                            <th>Clinic Name (EN)</th>
+                                            <th>Phone</th>
+                                            <th>Address (AR)</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="settingsClinicsTableBody">
+                                        <!-- Loaded dynamically via JS -->
+                                        <tr>
+                                            <td colspan="5" class="text-center text-muted">Loading clinics...</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
 
                         <!-- Action Buttons -->
@@ -865,6 +945,296 @@
 </div>
 
 <script src="/app/Views/doctor/assets/js/settings.js?v=<?= file_exists(__DIR__ . '/assets/js/settings.js') ? filemtime(__DIR__ . '/assets/js/settings.js') : time() ?>"></script>
+
+<!-- Templates Manager Modal -->
+<style>
+    /* Dark/light mode support for the WhatsApp templates manager */
+    .dark #templatesManagerModal .modal-content { background: #131A29; color: #F8FAFC; border: 1px solid #334155; }
+    .dark #templatesManagerModal .bg-light { background-color: #0F1626 !important; }
+    .dark #templatesManagerModal .border-end { border-color: #334155 !important; }
+    .dark #templatesManagerModal .modal-footer { border-top-color: #334155 !important; }
+    .dark #templatesManagerModal .text-secondary,
+    .dark #templatesManagerModal .text-muted { color: #94A3B8 !important; }
+    .dark #templatesManagerModal .form-label { color: #E2E8F0; }
+    .dark #templatesManagerModal .form-control {
+        background-color: #0B1220; color: #F8FAFC; border-color: #334155;
+    }
+    .dark #templatesManagerModal .form-control:focus {
+        background-color: #0B1220; color: #F8FAFC; border-color: #6366F1;
+        box-shadow: 0 0 0 .2rem rgba(99,102,241,.25);
+    }
+    .dark #templatesManagerModal .list-group-item {
+        background-color: #131A29; color: #E2E8F0; border-color: #334155;
+    }
+    .dark #templatesManagerModal .list-group-item:hover { background-color: #1B2436; }
+    .dark #templatesManagerModal .list-group-item.active {
+        background-color: #4F46E5; border-color: #4F46E5; color: #fff;
+    }
+    .dark #templatesManagerModal .badge.bg-secondary { background-color: #334155 !important; }
+</style>
+<div class="modal fade" id="templatesManagerModal" tabindex="-1" aria-labelledby="templatesManagerModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="templatesManagerModalLabel">
+                    <i class="fas fa-edit me-2"></i>Manage WhatsApp Templates
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div class="container-fluid p-0">
+                    <div class="row g-0" style="min-height: 450px;">
+                        <!-- Left Panel: Template List -->
+                        <div class="col-md-4 border-end p-3 bg-light">
+                            <h6 class="mb-3 font-weight-bold text-secondary">Templates</h6>
+                            <div class="list-group" id="settingsTemplateList" style="max-height: 400px; overflow-y: auto;">
+                                <div class="text-center py-4 text-muted">
+                                    <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                                    <span class="ms-2">Loading templates...</span>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Right Panel: Editor -->
+                        <div class="col-md-8 p-3 d-flex flex-column">
+                            <form id="settingsTemplateForm" class="flex-grow-1 d-flex flex-column">
+                                <input type="hidden" id="settingsTemplateId" value="">
+                                <div class="mb-3">
+                                    <label class="form-label font-weight-bold">Template Title</label>
+                                    <input type="text" class="form-control" id="settingsTemplateTitle" required>
+                                </div>
+                                <div class="mb-2">
+                                    <label class="form-label font-weight-bold">Template Body</label>
+                                    <textarea class="form-control" id="settingsTemplateBody" rows="8" style="font-family: monospace; font-size: 0.9rem;" required></textarea>
+                                </div>
+                                <div class="mb-3">
+                                    <small class="text-muted d-block font-weight-bold mb-1">Available placeholders:</small>
+                                    <div class="d-flex flex-wrap gap-1">
+                                        <span class="badge bg-secondary" style="cursor:pointer" onclick="insertPlaceholder('{{patient_name}}')">{{patient_name}}</span>
+                                        <span class="badge bg-secondary" style="cursor:pointer" onclick="insertPlaceholder('{{doctor_name}}')">{{doctor_name}}</span>
+                                        <span class="badge bg-secondary" style="cursor:pointer" onclick="insertPlaceholder('{{appointment_date}}')">{{appointment_date}}</span>
+                                        <span class="badge bg-secondary" style="cursor:pointer" onclick="insertPlaceholder('{{appointment_time}}')">{{appointment_time}}</span>
+                                        <span class="badge bg-secondary" style="cursor:pointer" onclick="insertPlaceholder('{{clinic_name}}')">{{clinic_name}}</span>
+                                        <span class="badge bg-secondary" style="cursor:pointer" onclick="insertPlaceholder('{{clinic_address}}')">{{clinic_address}}</span>
+                                        <span class="badge bg-secondary" style="cursor:pointer" onclick="insertPlaceholder('{{visit_summary}}')">{{visit_summary}}</span>
+                                        <span class="badge bg-secondary" style="cursor:pointer" onclick="insertPlaceholder('{{follow_up_date}}')">{{follow_up_date}}</span>
+                                        <span class="badge bg-secondary" style="cursor:pointer" onclick="insertPlaceholder('{{eye_drops_schedule}}')">{{eye_drops_schedule}}</span>
+                                        <span class="badge bg-secondary" style="cursor:pointer" onclick="insertPlaceholder('{{diagnosis}}')">{{diagnosis}}</span>
+                                        <span class="badge bg-secondary" style="cursor:pointer" onclick="insertPlaceholder('{{prescription_summary}}')">{{prescription_summary}}</span>
+                                        <span class="badge bg-secondary" style="cursor:pointer" onclick="insertPlaceholder('{{glasses_prescription}}')">{{glasses_prescription}}</span>
+                                        <span class="badge bg-secondary" style="cursor:pointer" onclick="insertPlaceholder('{{requested_tests}}')">{{requested_tests}}</span>
+                                        <span class="badge bg-secondary" style="cursor:pointer" onclick="insertPlaceholder('{{surgery_type}}')">{{surgery_type}}</span>
+                                        <span class="badge bg-secondary" style="cursor:pointer" onclick="insertPlaceholder('{{surgery_date}}')">{{surgery_date}}</span>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer bg-light p-2">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary btn-sm" id="saveTemplateBtn" onclick="saveActiveTemplate()" disabled>
+                    <i class="fas fa-save me-1"></i>Save Template
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let settingsTemplates = [];
+    let activeTemplate = null;
+
+    async function openTemplatesManager() {
+        const modal = new bootstrap.Modal(document.getElementById('templatesManagerModal'));
+        modal.show();
+        await loadSettingsTemplates();
+    }
+
+    async function loadSettingsTemplates() {
+        const listContainer = document.getElementById('settingsTemplateList');
+        listContainer.innerHTML = `
+            <div class="text-center py-4 text-muted">
+                <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                <span class="ms-2">Loading templates...</span>
+            </div>
+        `;
+        try {
+            const res = await fetch('/api/whatsapp/templates');
+            const data = await res.json();
+            if (data.success && data.templates) {
+                settingsTemplates = data.templates;
+                renderSettingsTemplatesList();
+            } else {
+                listContainer.innerHTML = '<div class="text-danger p-3">Failed to load templates.</div>';
+            }
+        } catch (e) {
+            listContainer.innerHTML = '<div class="text-danger p-3">Error loading templates.</div>';
+        }
+    }
+
+    function renderSettingsTemplatesList() {
+        const listContainer = document.getElementById('settingsTemplateList');
+        listContainer.innerHTML = '';
+        if (settingsTemplates.length === 0) {
+            listContainer.innerHTML = '<div class="text-muted p-3">No templates found.</div>';
+            return;
+        }
+        settingsTemplates.forEach(t => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'list-group-item list-group-item-action py-2 px-3 small';
+            btn.innerHTML = `
+                <div class="d-flex w-100 justify-content-between align-items-center">
+                    <strong class="mb-1">${t.title}</strong>
+                    <span class="badge bg-secondary px-1 py-0" style="font-size:0.65rem">${t.category}</span>
+                </div>
+            `;
+            btn.onclick = () => selectSettingsTemplate(t, btn);
+            listContainer.appendChild(btn);
+        });
+
+        // Select first template
+        if (settingsTemplates.length > 0) {
+            listContainer.children[0].click();
+        }
+    }
+
+    function selectSettingsTemplate(template, buttonEl) {
+        activeTemplate = template;
+        
+        // Highlight active button
+        const buttons = document.querySelectorAll('#settingsTemplateList .list-group-item');
+        buttons.forEach(btn => btn.classList.remove('active'));
+        if (buttonEl) buttonEl.classList.add('active');
+
+        document.getElementById('settingsTemplateId').value = template.id;
+        document.getElementById('settingsTemplateTitle').value = template.title;
+        document.getElementById('settingsTemplateBody').value = template.body;
+        document.getElementById('saveTemplateBtn').disabled = false;
+    }
+
+    function insertPlaceholder(placeholder) {
+        const textarea = document.getElementById('settingsTemplateBody');
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const text = textarea.value;
+        textarea.value = text.substring(0, start) + placeholder + text.substring(end);
+        textarea.focus();
+        textarea.selectionStart = textarea.selectionEnd = start + placeholder.length;
+    }
+
+    async function saveActiveTemplate() {
+        if (!activeTemplate) return;
+        const id = document.getElementById('settingsTemplateId').value;
+        const title = document.getElementById('settingsTemplateTitle').value;
+        const body = document.getElementById('settingsTemplateBody').value;
+        
+        const saveBtn = document.getElementById('saveTemplateBtn');
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> Saving...';
+
+        try {
+            const res = await fetch('/api/whatsapp/templates/' + id, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                body: JSON.stringify({ title, body })
+            });
+            const data = await res.json();
+            if (data.success) {
+                // Update in memory list
+                const idx = settingsTemplates.findIndex(t => t.id == id);
+                if (idx !== -1) {
+                    settingsTemplates[idx].title = title;
+                    settingsTemplates[idx].body = body;
+                }
+                
+                // Re-render list and highlight updated button
+                renderSettingsTemplatesList();
+                
+                // Find and click the updated button
+                setTimeout(() => {
+                    const listContainer = document.getElementById('settingsTemplateList');
+                    const updatedBtn = Array.from(listContainer.children).find(btn => 
+                        btn.querySelector('strong').textContent === title
+                    );
+                    if (updatedBtn) updatedBtn.click();
+                }, 100);
+
+                // Show notification using doctor's page function
+                if (typeof showSuccessMessage === 'function') {
+                    showSuccessMessage('Template updated successfully!');
+                } else {
+                    alert('Template updated successfully!');
+                }
+            } else {
+                if (typeof showErrorMessage === 'function') {
+                    showErrorMessage('Failed to update template: ' + data.message);
+                } else {
+                    alert('Failed to update template: ' + data.message);
+                }
+            }
+        } catch (e) {
+            if (typeof showErrorMessage === 'function') {
+                showErrorMessage('Error saving template: ' + e.message);
+            } else {
+                alert('Error saving template: ' + e.message);
+            }
+        } finally {
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = '<i class="fas fa-save me-1"></i>Save Template';
+        }
+    }
+</script>
+
+<!-- Edit Clinic Modal -->
+<div class="modal fade" id="editClinicModal" tabindex="-1" aria-labelledby="editClinicModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 12px; overflow: hidden;">
+            <div class="modal-header bg-primary text-white py-2 px-3">
+                <h6 class="modal-title d-flex align-items-center gap-2" id="editClinicModalLabel">
+                    <i class="fas fa-edit"></i>
+                    <span>Edit Clinic Details / تعديل بيانات العيادة</span>
+                </h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body py-3 px-3">
+                <form id="editClinicForm">
+                    <input type="hidden" id="editClinicId">
+                    <div class="mb-3">
+                        <label for="editClinicNameAr" class="form-label">Name (Arabic) / الاسم بالعربية</label>
+                        <input type="text" class="form-control" id="editClinicNameAr" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editClinicNameEn" class="form-label">Name (English) / الاسم بالإنجليزية</label>
+                        <input type="text" class="form-control" id="editClinicNameEn" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editClinicPhone" class="form-label">Phone / الهاتف</label>
+                        <input type="text" class="form-control" id="editClinicPhone">
+                    </div>
+                    <div class="mb-3">
+                        <label for="editClinicAddressAr" class="form-label">Address (Arabic) / العنوان بالعربية</label>
+                        <input type="text" class="form-control" id="editClinicAddressAr">
+                    </div>
+                    <div class="mb-3">
+                        <label for="editClinicAddressEn" class="form-label">Address (English) / العنوان بالإنجليزية</label>
+                        <input type="text" class="form-control" id="editClinicAddressEn">
+                    </div>
+                    <div class="mb-3 form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="editClinicActive" checked>
+                        <label class="form-check-label" for="editClinicActive">Active / نشط</label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-top-0 pt-0 pb-3">
+                <button type="button" class="btn btn-secondary btn-sm px-4" data-bs-dismiss="modal" style="border-radius: 6px;">Cancel / إلغاء</button>
+                <button type="button" class="btn btn-primary btn-sm px-4" id="saveClinicBtn" onclick="saveClinicDetails()" style="border-radius: 6px;">Save / حفظ</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <style>
 .dark .modal-content{
     background: rgba(11, 18, 32, 0.8) !important;

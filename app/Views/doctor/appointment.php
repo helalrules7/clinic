@@ -1,5 +1,10 @@
 <link href="/app/Views/doctor/assets/css/appointment.css?v=<?= file_exists(__DIR__ . '/assets/css/appointment.css') ? filemtime(__DIR__ . '/assets/css/appointment.css') : time() ?>" rel="stylesheet">
-
+<?php
+$__db = \App\Config\Database::getInstance()->getConnection();
+$__waSettingsStmt = $__db->prepare("SELECT setting_key, setting_value FROM settings WHERE setting_key = 'whatsapp_enabled'");
+$__waSettingsStmt->execute();
+$__waEnabled = (bool)($__waSettingsStmt->fetchColumn() ?? false);
+?>
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <nav class="app-breadcrumb" aria-label="Breadcrumb">
@@ -240,6 +245,11 @@ if ($status === 'completed') {
             <?php if (!empty($labTests)): ?>
             <button type="button" class="btn btn-action-lab hide-on-mobile" onclick="printLabTests(<?= $appointment['id'] ?>)">
                 <i class="bi bi-clipboard-data me-1"></i>Print Lab Tests
+            </button>
+            <?php endif; ?>
+            <?php if ($__waEnabled): ?>
+            <button type="button" class="btn btn-success hide-on-mobile d-inline-flex align-items-center gap-1" onclick="WhatsAppIntegration.openModal(<?= $appointment['patient_id'] ?>, <?= $appointment['id'] ?>, 'report')" style="background-color: #25D366; border-color: #25D366; color: #fff;">
+                <i class="bi bi-whatsapp"></i>Send WhatsApp
             </button>
             <?php endif; ?>
             
@@ -742,7 +752,14 @@ if ($status === 'completed') {
                         <!-- Diagnosis -->
                         <?php if (!empty($note['diagnosis'])): ?>
                         <div class="mb-3">
-                            <h6 class="text-danger">Diagnosis (Required)</h6>
+                            <h6 class="text-danger d-flex align-items-center gap-2">
+                                <span>Diagnosis (Required)</span>
+                                <?php if ($__waEnabled): ?>
+                                <button type="button" class="btn btn-link text-success p-0 m-0 border-0 lh-1" onclick="WhatsAppIntegration.openModal(<?= $patient['id'] ?>, <?= $appointment['id'] ?>, 'report')" title="Send Diagnosis/Visit Info via WhatsApp">
+                                    <i class="bi bi-whatsapp"></i>
+                                </button>
+                                <?php endif; ?>
+                            </h6>
                             <p><?= htmlspecialchars($note['diagnosis']) ?>
                             <?php if (!empty($note['diagnosis_code'])): ?>
                                 <span class="badge bg-secondary ms-2"><?= htmlspecialchars($note['diagnosis_code']) ?></span>
@@ -754,7 +771,14 @@ if ($status === 'completed') {
                         <!-- Plan -->
                         <?php if (!empty($note['plan'])): ?>
                         <div class="mb-3">
-                            <h6 class="text-secondary">Treatment Plan</h6>
+                            <h6 class="text-secondary d-flex align-items-center gap-2">
+                                <span>Treatment Plan</span>
+                                <?php if ($__waEnabled): ?>
+                                <button type="button" class="btn btn-link text-success p-0 m-0 border-0 lh-1" onclick="WhatsAppIntegration.openModal(<?= $patient['id'] ?>, <?= $appointment['id'] ?>, 'report')" title="Send Plan/Instructions via WhatsApp">
+                                    <i class="bi bi-whatsapp"></i>
+                                </button>
+                                <?php endif; ?>
+                            </h6>
                             <p><?= nl2br(htmlspecialchars($note['plan'])) ?></p>
                         </div>
                         <?php endif; ?>
@@ -815,6 +839,11 @@ if ($status === 'completed') {
                         <?php if (!empty($medications)): ?>
                         <button class="btn btn-sm btn-warning" onclick="printPrescription(<?= $appointment['id'] ?>)" title="Print Prescription">
                             <i class="bi bi-printer"></i>
+                        </button>
+                        <?php endif; ?>
+                        <?php if (!empty($medications) && $__waEnabled): ?>
+                        <button class="btn btn-sm btn-success" onclick="WhatsAppIntegration.openModal(<?= $appointment['patient_id'] ?>, <?= $appointment['id'] ?>, 'eye_drops')" title="Send Prescription / Eye Drops Schedule via WhatsApp">
+                            <i class="bi bi-whatsapp"></i>
                         </button>
                         <?php endif; ?>
                         <button class="btn btn-sm btn-info" id="suggestMedicationsBtn" onclick="showPrescriptionSuggestions(<?= (int) $appointment['id'] ?>, <?= htmlspecialchars(json_encode($latestNote['diagnosis'] ?? ''), ENT_QUOTES) ?>, <?= htmlspecialchars(json_encode($latestNote['chief_complaint'] ?? ''), ENT_QUOTES) ?>)" title="Suggest medications from similar cases or your most-used drugs">
@@ -945,6 +974,11 @@ if ($status === 'completed') {
                         <?php if (!empty($glasses)): ?>
                         <button class="btn btn-sm btn-info" onclick="printGlassesPrescription(<?= $appointment['id'] ?>)" title="Print Glasses">
                             <i class="bi bi-printer"></i>
+                        </button>
+                        <?php endif; ?>
+                        <?php if (!empty($glasses) && $__waEnabled): ?>
+                        <button class="btn btn-sm btn-success" onclick="WhatsAppIntegration.openModal(<?= $appointment['patient_id'] ?>, <?= $appointment['id'] ?>, 'prescription')" title="Send Glasses Prescription via WhatsApp">
+                            <i class="bi bi-whatsapp"></i>
                         </button>
                         <?php endif; ?>
                         <button class="btn btn-sm btn-primary" onclick="addGlassesPrescription(<?= $appointment['id'] ?>)">

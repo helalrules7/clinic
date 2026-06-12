@@ -730,6 +730,21 @@ function renderAppointmentSlot(appointment) {
                        data-bs-title="View Patient Profile">
                         <i class="bi bi-person-circle"></i>
                     </a>
+                    ${
+                      window.WHATSAPP_CONFIG && window.WHATSAPP_CONFIG.enabled
+                        ? `
+                    <button class="btn btn-sm btn-outline-success send-whatsapp-btn"
+                            onclick="event.stopPropagation(); window.WhatsAppIntegration.openModal(${
+                              appointment.patient_id
+                            }, ${appointment.id}, 'confirmation')"
+                            data-bs-toggle="tooltip"
+                            data-bs-placement="top"
+                            data-bs-title="Send Confirmation / إرسال تأكيد">
+                        <i class="bi bi-whatsapp"></i>
+                    </button>
+                    `
+                        : ""
+                    }
                     <button class="btn btn-sm btn-outline-primary edit-appointment-btn"
                             onclick="event.stopPropagation(); openEditAppointmentFromCard(${
                               appointment.id
@@ -740,11 +755,7 @@ function renderAppointmentSlot(appointment) {
                         <i class="bi bi-pencil-square"></i>
                     </button>
                     <button class="btn btn-sm btn-outline-danger delete-appointment-btn"
-                            onclick="event.stopPropagation(); deleteAppointment(${
-                              appointment.id
-                            }, '${appointment.patient_name}', '${formatTime(
-    appointment.start_time
-  )}')"
+                            onclick="event.stopPropagation(); deleteAppointment(${appointment.id}, '${appointment.patient_name}', '${formatTime(appointment.start_time)}', ${appointment.patient_id}, '${appointment.date}', '${appointment.doctor_display_name || ''}', ${appointment.clinic_id || 'null'})"
                             data-bs-toggle="tooltip"
                             data-bs-placement="top"
                             data-bs-title="Delete this appointment">
@@ -976,12 +987,16 @@ function navigateToAppointment(appointmentId) {
 // Global variables for delete appointment
 let currentAppointmentToDelete = null;
 
-function deleteAppointment(appointmentId, patientName, appointmentTime) {
+function deleteAppointment(appointmentId, patientName, appointmentTime, patientId = null, date = '', doctorName = '', clinicId = null) {
   // Store appointment data
   currentAppointmentToDelete = {
     id: appointmentId,
     patientName: patientName,
     time: appointmentTime,
+    patientId: patientId,
+    date: date,
+    doctorName: doctorName,
+    clinicId: clinicId
   };
 
   // Update modal content
@@ -1014,7 +1029,7 @@ function confirmDeleteAppointment() {
     return;
   }
 
-  const { id, patientName, time } = currentAppointmentToDelete;
+  const { id, patientName, time, patientId, date, doctorName, clinicId } = currentAppointmentToDelete;
 
   // Show loading state
   setDeleteAppointmentButtonLoading(true);
@@ -1040,14 +1055,27 @@ function confirmDeleteAppointment() {
           document.getElementById("deleteAppointmentModal")
         ).hide();
 
-        // Clear current appointment
-        currentAppointmentToDelete = null;
-
         // Refresh calendar
         loadCalendar();
 
         // Dispatch custom event to update carousel
         window.dispatchEvent(new CustomEvent("appointmentDeleted"));
+
+        // Trigger WhatsApp cancellation modal
+        if (window.WhatsAppIntegration && patientId) {
+          window.WhatsAppIntegration.triggerCancellationModal(
+            patientId,
+            id,
+            patientName,
+            date,
+            time,
+            doctorName,
+            clinicId
+          );
+        }
+
+        // Clear current appointment
+        currentAppointmentToDelete = null;
       } else {
         // Error from server
         const errorMsg =
@@ -2300,6 +2328,25 @@ function proceedWithAppointmentCreation(appointmentData) {
 
         // Show success message
         showNotification("Appointment added successfully!", "success");
+
+        // WhatsApp confirmation modal trigger
+        if (window.WhatsAppIntegration) {
+          const patientName = document.getElementById("patientSearch").value;
+          const apptDate = document.getElementById("appointmentDate").value;
+          const apptTime = document.getElementById("appointmentTime").value;
+          const patientId = document.getElementById("selectedPatientId").value;
+          const apptId = data.appointment_id || data.id || null;
+
+          setTimeout(() => {
+            window.WhatsAppIntegration.triggerConfirmationModal(
+              patientId,
+              apptId,
+              patientName,
+              apptDate,
+              apptTime
+            );
+          }, 1000);
+        }
       } else {
         const errorMessage =
           data.message || data.error || "Unknown error occurred";

@@ -89,10 +89,18 @@
                 <div class="row">
                     <div class="col-md-6">
                         <div class="mb-3">
-                            <label class="form-label fw-bold">Display Name</label>
+                            <label class="form-label fw-bold">Display Name (English)</label>
                             <p class="form-control-plaintext"><?= htmlspecialchars($user['doctor_name']) ?></p>
                         </div>
                     </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">الاسم باللغة العربية (للتواصل والقوالب)</label>
+                            <p class="form-control-plaintext" dir="rtl" style="text-align: left;"><?= htmlspecialchars($user['doctor_name_ar'] ?? 'غير مسجل') ?></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
                     <div class="col-md-6">
                         <div class="mb-3">
                             <label class="form-label fw-bold">Specialty</label>
@@ -308,10 +316,19 @@
                         <?php if (isset($user['doctor_name'])): ?>
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="edit_doctor_name" class="form-label">Display Name</label>
+                                <label for="edit_doctor_name" class="form-label">Display Name (English)</label>
                                 <input type="text" class="form-control" id="edit_doctor_name" name="doctor_name" 
                                        value="<?= htmlspecialchars($user['doctor_name']) ?>" 
                                        placeholder="Professional display name">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="edit_doctor_name_ar" class="form-label">الاسم بالكامل باللغة العربية <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="edit_doctor_name_ar" name="doctor_name_ar" 
+                                       value="<?= htmlspecialchars($user['doctor_name_ar'] ?? '') ?>" 
+                                       placeholder="مثال: د. أحمد علي" dir="rtl">
+                                <div class="form-text text-muted" style="font-size:0.85rem;">ملاحظة: هذا الاسم باللغة العربية سيتم استخدامه في قوالب رسائل واتساب والتواصل مع المرضى.</div>
                             </div>
                         </div>
                         <?php endif; ?>

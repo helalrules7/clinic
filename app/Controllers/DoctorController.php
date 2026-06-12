@@ -386,7 +386,7 @@ class DoctorController
         
         // Get doctor-specific information including profile_image
         $stmt = $this->pdo->prepare("
-            SELECT u.*, d.display_name as doctor_name, d.specialty 
+            SELECT u.*, d.display_name as doctor_name, d.display_name_ar as doctor_name_ar, d.specialty 
             FROM users u 
             LEFT JOIN doctors d ON u.id = d.user_id 
             WHERE u.id = ?
@@ -728,6 +728,7 @@ class DoctorController
         $email = trim($_POST['email'] ?? '');
         $phone = trim($_POST['phone'] ?? '');
         $doctorName = trim($_POST['doctor_name'] ?? '');
+        $doctorNameAr = trim($_POST['doctor_name_ar'] ?? '');
         $specialty = trim($_POST['specialty'] ?? 'Ophthalmology');
         $profileImage = null;
         
@@ -839,15 +840,15 @@ class DoctorController
             }
             
             // Update doctor table if doctor-specific fields are provided
-            if (!empty($doctorName) || !empty($specialty)) {
+            if (!empty($doctorName) || !empty($specialty) || isset($_POST['doctor_name_ar'])) {
                 $doctorId = $this->getDoctorId($user['id']);
                 if ($doctorId) {
                     $stmt = $this->pdo->prepare("
                         UPDATE doctors 
-                        SET display_name = ?, specialty = ?, updated_at = NOW() 
+                        SET display_name = ?, display_name_ar = ?, specialty = ?, updated_at = NOW() 
                         WHERE user_id = ?
                     ");
-                    $stmt->execute([$doctorName ?: $name, $specialty, $user['id']]);
+                    $stmt->execute([$doctorName ?: $name, $doctorNameAr ?: null, $specialty, $user['id']]);
                 }
             }
             
@@ -2138,7 +2139,9 @@ class DoctorController
                 'backup_frequency' => 'daily',
                 'email_notifications' => true,
                 'sms_notifications' => false,
-                'maintenance_mode' => false
+                'maintenance_mode' => false,
+                'whatsapp_enabled' => false,
+                'whatsapp_advanced_features' => false
             ];
             
             return array_merge($defaults, $result);
@@ -2155,7 +2158,9 @@ class DoctorController
                 'backup_frequency' => 'daily',
                 'email_notifications' => true,
                 'sms_notifications' => false,
-                'maintenance_mode' => false
+                'maintenance_mode' => false,
+                'whatsapp_enabled' => false,
+                'whatsapp_advanced_features' => false
             ];
         }
     }
@@ -2167,7 +2172,8 @@ class DoctorController
             'clinic_name_arabic', 'clinic_website', 'clinic_logo', 'clinic_logo_print', 'clinic_logo_watermark',
             'new_visit_cost', 'repeated_visit_cost', 'consultation_cost',
             'timezone', 'date_format', 'time_format', 'items_per_page',
-            'backup_frequency', 'email_notifications', 'sms_notifications', 'maintenance_mode'
+            'backup_frequency', 'email_notifications', 'sms_notifications', 'maintenance_mode',
+            'whatsapp_enabled', 'whatsapp_advanced_features'
         ];
 
         try {
@@ -2188,7 +2194,7 @@ class DoctorController
                     
                     // Determine setting type and convert value
                     $settingType = 'string';
-                    if (in_array($key, ['email_notifications', 'sms_notifications', 'maintenance_mode'])) {
+                    if (in_array($key, ['email_notifications', 'sms_notifications', 'maintenance_mode', 'whatsapp_enabled', 'whatsapp_advanced_features'])) {
                         $value = (bool) $value;
                         $settingType = 'boolean';
                     } elseif ($key === 'items_per_page') {

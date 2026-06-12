@@ -1004,3 +1004,124 @@ function updateDockAutohideDemo(isAutohide) {
         shownDemo.style.opacity = '1';
     }
 }
+
+// Clinics Management Functions
+document.addEventListener('DOMContentLoaded', function() {
+    loadClinicsList();
+});
+
+let clinicsCache = [];
+
+async function loadClinicsList() {
+    const container = document.getElementById('settingsClinicsTableBody');
+    if (!container) return;
+
+    try {
+        const response = await fetch('/api/clinics/all', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        });
+
+        const data = await response.json();
+
+        if (data.ok && data.data) {
+            clinicsCache = data.data;
+            let html = '';
+            clinicsCache.forEach(clinic => {
+                html += `
+                    <tr>
+                        <td><strong>${escapeHtml(clinic.name_ar)}</strong></td>
+                        <td>${escapeHtml(clinic.name_en)}</td>
+                        <td>${escapeHtml(clinic.phone || '-')}</td>
+                        <td>${escapeHtml(clinic.address_ar || '-')}</td>
+                        <td>
+                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="openEditClinicModal(${clinic.id})">
+                                <i class="fas fa-edit me-1"></i>Edit / تعديل
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+            container.innerHTML = html;
+        } else {
+            container.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No clinics found / لم يتم العثور على عيادات</td></tr>';
+        }
+    } catch (error) {
+        console.error('Error loading clinics list:', error);
+        container.innerHTML = '<tr><td colspan="5" class="text-center text-danger">Error loading clinics / خطأ في تحميل العيادات</td></tr>';
+    }
+}
+
+function openEditClinicModal(clinicId) {
+    const clinic = clinicsCache.find(c => c.id == clinicId);
+    if (!clinic) return;
+
+    document.getElementById('editClinicId').value = clinic.id;
+    document.getElementById('editClinicNameAr').value = clinic.name_ar;
+    document.getElementById('editClinicNameEn').value = clinic.name_en;
+    document.getElementById('editClinicPhone').value = clinic.phone || '';
+    document.getElementById('editClinicAddressAr').value = clinic.address_ar || '';
+    document.getElementById('editClinicAddressEn').value = clinic.address_en || '';
+    document.getElementById('editClinicActive').checked = clinic.is_active == 1;
+
+    const modal = new bootstrap.Modal(document.getElementById('editClinicModal'));
+    modal.show();
+}
+
+async function saveClinicDetails() {
+    const id = document.getElementById('editClinicId').value;
+    const nameAr = document.getElementById('editClinicNameAr').value.trim();
+    const nameEn = document.getElementById('editClinicNameEn').value.trim();
+    const phone = document.getElementById('editClinicPhone').value.trim();
+    const addressAr = document.getElementById('editClinicAddressAr').value.trim();
+    const addressEn = document.getElementById('editClinicAddressEn').value.trim();
+    const isActive = document.getElementById('editClinicActive').checked ? 1 : 0;
+
+    if (!nameAr || !nameEn) {
+        alert('Both Arabic and English names are required / الاسمان بالعربية والإنجليزية مطلوبان');
+        return;
+    }
+
+    const saveBtn = document.getElementById('saveClinicBtn');
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'Saving...';
+
+    try {
+        const response = await fetch(`/api/clinics/${id}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({
+                name_ar: nameAr,
+                name_en: nameEn,
+                phone: phone,
+                address_ar: addressAr,
+                address_en: addressEn,
+                is_active: isActive
+            })
+        });
+
+        const data = await response.json();
+        if (data.ok) {
+            const modalEl = document.getElementById('editClinicModal');
+            const modal = bootstrap.Modal.getInstance(modalEl);
+            if (modal) modal.hide();
+            
+            // Reload clinics list
+            loadClinicsList();
+        } else {
+            alert('Failed to update clinic: ' + (data.error || 'Unknown error'));
+        }
+    } catch (error) {
+        console.error('Error saving clinic details:', error);
+        alert('Error saving clinic details. Please try again.');
+    } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Save / حفظ';
+    }
+}

@@ -1635,7 +1635,8 @@ input[readonly] {
 #bookingsCalendarContainer .view-patient-btn,
 #bookingsCalendarContainer .edit-appointment-btn,
 #bookingsCalendarContainer .delete-appointment-btn,
-#bookingsCalendarContainer .confirm-attendance-btn {
+#bookingsCalendarContainer .confirm-attendance-btn,
+#bookingsCalendarContainer .send-whatsapp-btn {
     padding: 0.375rem 0.75rem !important;
     font-size: 0.875rem !important;
     border-radius: 10px !important;
@@ -1659,10 +1660,14 @@ input[readonly] {
 #bookingsCalendarContainer .confirm-attendance-btn {
     background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
 }
+#bookingsCalendarContainer .send-whatsapp-btn {
+    background: linear-gradient(135deg, #25D366 0%, #128C7E 100%) !important;
+}
 #bookingsCalendarContainer .view-patient-btn:hover,
 #bookingsCalendarContainer .edit-appointment-btn:hover,
 #bookingsCalendarContainer .delete-appointment-btn:hover,
-#bookingsCalendarContainer .confirm-attendance-btn:hover {
+#bookingsCalendarContainer .confirm-attendance-btn:hover,
+#bookingsCalendarContainer .send-whatsapp-btn:hover {
     transform: translateY(-1px) !important;
     filter: brightness(0.88) !important;
     box-shadow: 0 4px 14px rgba(15, 23, 42, 0.18) !important;
@@ -1674,14 +1679,17 @@ input[readonly] {
 #bookingsCalendarContainer .bookings-appointment-card .appointment-actions .edit-appointment-btn i,
 #bookingsCalendarContainer .bookings-appointment-card .appointment-actions .delete-appointment-btn i,
 #bookingsCalendarContainer .bookings-appointment-card .appointment-actions .confirm-attendance-btn i,
+#bookingsCalendarContainer .bookings-appointment-card .appointment-actions .send-whatsapp-btn i,
 #bookingsCalendarContainer .bookings-appointment-card .appointment-actions .view-patient-btn:hover i,
 #bookingsCalendarContainer .bookings-appointment-card .appointment-actions .edit-appointment-btn:hover i,
 #bookingsCalendarContainer .bookings-appointment-card .appointment-actions .delete-appointment-btn:hover i,
 #bookingsCalendarContainer .bookings-appointment-card .appointment-actions .confirm-attendance-btn:hover i,
+#bookingsCalendarContainer .bookings-appointment-card .appointment-actions .send-whatsapp-btn:hover i,
 .dark #bookingsCalendarContainer .bookings-appointment-card .appointment-actions .view-patient-btn i,
 .dark #bookingsCalendarContainer .bookings-appointment-card .appointment-actions .edit-appointment-btn i,
 .dark #bookingsCalendarContainer .bookings-appointment-card .appointment-actions .delete-appointment-btn i,
-.dark #bookingsCalendarContainer .bookings-appointment-card .appointment-actions .confirm-attendance-btn i {
+.dark #bookingsCalendarContainer .bookings-appointment-card .appointment-actions .confirm-attendance-btn i,
+.dark #bookingsCalendarContainer .bookings-appointment-card .appointment-actions .send-whatsapp-btn i {
     color: #ffffff !important;
 }
 

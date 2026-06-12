@@ -93,6 +93,76 @@ class ApiController
         }
     }
 
+    public function getAllClinics()
+    {
+        try {
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            }
+            
+            $user = $this->auth->user();
+            if ($user['role'] !== 'doctor' && $user['role'] !== 'admin') {
+                return $this->jsonResponse(['error' => 'Forbidden'], 403);
+            }
+
+            $stmt = $this->pdo->query("
+                SELECT id, code, name_ar, name_en, address_ar, address_en, phone, is_active, sort_order
+                FROM clinics
+                ORDER BY sort_order ASC, id ASC
+            ");
+            $clinics = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+            return $this->jsonResponse([
+                'ok' => true,
+                'data' => $clinics
+            ]);
+        } catch (\Exception $e) {
+            return $this->jsonResponse(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    public function updateClinic($id)
+    {
+        try {
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            }
+            
+            $user = $this->auth->user();
+            if ($user['role'] !== 'doctor' && $user['role'] !== 'admin') {
+                return $this->jsonResponse(['error' => 'Forbidden'], 403);
+            }
+
+            $input = file_get_contents('php://input');
+            $data = json_decode($input, true) ?: [];
+
+            $nameAr = $data['name_ar'] ?? '';
+            $nameEn = $data['name_en'] ?? '';
+            $addressAr = $data['address_ar'] ?? '';
+            $addressEn = $data['address_en'] ?? '';
+            $phone = $data['phone'] ?? '';
+            $isActive = isset($data['is_active']) ? (int)$data['is_active'] : 1;
+
+            if (empty($nameAr) || empty($nameEn)) {
+                return $this->jsonResponse(['error' => 'Clinic names are required'], 400);
+            }
+
+            $stmt = $this->pdo->prepare("
+                UPDATE clinics
+                SET name_ar = ?, name_en = ?, address_ar = ?, address_en = ?, phone = ?, is_active = ?, updated_at = NOW()
+                WHERE id = ?
+            ");
+            $stmt->execute([$nameAr, $nameEn, $addressAr, $addressEn, $phone, $isActive, $id]);
+
+            return $this->jsonResponse([
+                'ok' => true,
+                'message' => 'Clinic updated successfully'
+            ]);
+        } catch (\Exception $e) {
+            return $this->jsonResponse(['error' => $e->getMessage()], 500);
+        }
+    }
+
     public function getCalendar()
     {
         try {
