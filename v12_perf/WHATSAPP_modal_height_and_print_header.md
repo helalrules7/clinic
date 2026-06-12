@@ -52,3 +52,29 @@ The per-sheet header copy made the header appear twice in the **web link preview
 (sheet 2+) now carry a `sheet-header--print-only` class — `display:none` by default, shown only under
 `@media print` and `body.pdf-mode` (the html2pdf rasterise pass). The FIRST header (top of the document) always
 shows. Net: link preview = one header; PDF/print = header atop every page.
+
+---
+
+## Smart pagination + header stamped on every page (PDF + print)
+**Goal:** sections reflow to fill pages and a table is **never** split across two pages; the clinic+patient header
+shows atop **every** page — but only in the PDF/print, not the on-screen preview.
+
+### Reflow (no rigid grouping, no cutting)
+Removed the fixed `group-1` (Rx + instructions) / `group-2` (glasses + labs + radiology) split with its forced
+`break-before: page`. All five sections (Rx, instructions, glasses, labs, radiology) now flow as **siblings**
+inside `#reportBody`. Each `.section` / `.dtable` / `ul.instr li` keeps `break-inside: avoid` (already present in
+both `@media print` and `body.pdf-mode`), and the html2pdf `pagebreak` mode is now `['css','legacy','avoid-all']`.
+Result: when (say) instructions are absent, glasses pulls up onto page 1; a section only moves to the next page
+when it doesn't fit, and is never cut.
+
+### Header on every page
+- **Download PDF (html2pdf):** the header (`#reportHeader`) is rasterised once with `html2canvas` → JPEG, the PDF
+  body is rendered from `#reportBody` with the top margin reserved (`margin-top = headerHeight`), then the header
+  image is **stamped on every page** via `pdf.addImage` in a `.get('pdf').then(…)` pass before `.save()`. Using an
+  image (not `jsPDF.text`) keeps the Arabic intact. Falls back to a single-header render if `html2canvas` isn't
+  exposed.
+- **Native print (`window.print()`):** a `beforeprint` handler measures the live header height, injects
+  `@page{margin-top:Nmm}` + `#reportHeader{position:fixed;top:0}` so the browser repeats the running header on
+  every page; `afterprint` removes it.
+- **On-screen link preview:** unchanged — one header at the top (the fixed/stamped repetition only applies to
+  print/PDF).

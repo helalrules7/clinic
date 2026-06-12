@@ -157,9 +157,9 @@ $group2 = $hasGlasses || $hasLabs || $hasRad; // sheet 2
             // v12: the clinic+patient header is a reusable block rendered at the top of EVERY
             // sheet. A table <thead> only repeats under native @media print — it does NOT repeat
             // in the html2pdf (html2canvas) export — so we emit the header per page-broken sheet.
-            $renderSheetHeader = function ($repeat = false) use ($e, $dash, $clinicLogo, $clinicName, $clinic, $patient, $docClean, $visitDate) {
+            $renderSheetHeader = function () use ($e, $dash, $clinicLogo, $clinicName, $clinic, $patient, $docClean, $visitDate) {
                 ob_start(); ?>
-                <div class="sheet-header<?= $repeat ? ' sheet-header--print-only' : '' ?>">
+                <div class="sheet-header" id="reportHeader">
                     <div class="header">
                         <?php if (!empty($clinicLogo)): ?>
                             <div class="logo-chip"><img src="<?= $e($clinicLogo) ?>" alt="" onerror="this.parentElement.style.display='none'"></div>
@@ -185,11 +185,12 @@ $group2 = $hasGlasses || $hasLabs || $hasRad; // sheet 2
             };
             echo $renderSheetHeader();
             ?>
-            <div class="body-content">
+            <div class="body-content" id="reportBody">
 
-                        <!-- ===== Sheet 1: prescription (priority) + instructions ===== -->
-                        <?php if ($group1): ?>
-                        <div class="group group-1">
+                        <?php /* Sections flow naturally; each avoids internal page breaks
+                                 (break-inside:avoid) so a table is NEVER split across pages.
+                                 Glasses / labs / radiology reflow up to fill the page when
+                                 earlier sections are absent — no rigid page grouping. */ ?>
                             <?php if ($hasMeds): ?>
                             <div class="section">
                                 <h2><span class="tag">Rx</span> الوصفة العلاجية</h2>
@@ -223,13 +224,6 @@ $group2 = $hasGlasses || $hasLabs || $hasRad; // sheet 2
                                 </ul>
                             </div>
                             <?php endif; ?>
-                        </div>
-                        <?php endif; ?>
-
-                        <!-- ===== Sheet 2: glasses + labs + radiology ===== -->
-                        <?php if ($group2): ?>
-                        <div class="group group-2 <?= $group1 ? 'has-prev' : '' ?>">
-                            <?php if ($group1): ?><?= $renderSheetHeader(true) /* repeat header atop sheet 2 — print/PDF only */ ?><?php endif; ?>
                             <?php if ($hasGlasses): ?>
                             <div class="section">
                                 <h2><span class="tag">👓</span> مقاس النظارة الطبية</h2>
@@ -312,8 +306,6 @@ $group2 = $hasGlasses || $hasLabs || $hasRad; // sheet 2
                                 </table>
                             </div>
                             <?php endif; ?>
-                        </div>
-                        <?php endif; ?>
 
             </div>
         </div>
@@ -329,26 +321,69 @@ $group2 = $hasGlasses || $hasLabs || $hasRad; // sheet 2
     <script>
         (function () {
             var btn = document.getElementById('btnDownload');
+            var header = document.getElementById('reportHeader');
+            var body = document.getElementById('reportBody');
+            function px2mm(px) { return px * 25.4 / 96; }
+
+            // ── Native print: repeat the header on every page via a fixed running header
+            //    + a reserved @page top margin measured from the live header. ──
+            window.addEventListener('beforeprint', function () {
+                if (!header) return;
+                var mm = Math.ceil(px2mm(header.getBoundingClientRect().height)) + 6;
+                var st = document.getElementById('printHeaderStyle') || document.createElement('style');
+                st.id = 'printHeaderStyle';
+                st.textContent = '@page{margin-top:' + mm + 'mm}'
+                    + '#reportHeader{position:fixed;top:0;left:0;right:0;width:100%}';
+                document.head.appendChild(st);
+            });
+            window.addEventListener('afterprint', function () {
+                var st = document.getElementById('printHeaderStyle'); if (st) st.remove();
+            });
+
+            // ── Download PDF (html2pdf): sections reflow and a table is NEVER cut across
+            //    pages (pagebreak avoid-all); the header is rasterised once then stamped
+            //    on EVERY page (image → keeps Arabic intact, unlike jsPDF.text). ──
             if (!btn) return;
             btn.addEventListener('click', function () {
-                // No library (offline / CDN blocked) → fall back to the print dialog.
                 if (typeof html2pdf === 'undefined') { window.print(); return; }
-                var el = document.querySelector('.card');
-                document.body.classList.add('pdf-mode');
                 var label = btn.textContent;
+                document.body.classList.add('pdf-mode');
                 btn.disabled = true; btn.textContent = '... جاري التحضير';
-                html2pdf().set({
-                    margin: [8, 6, 8, 6],
-                    filename: 'visit-report.pdf',
-                    image: { type: 'jpeg', quality: 0.96 },
-                    html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
-                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-                    pagebreak: { mode: ['css', 'legacy'] }
-                }).from(el).save().then(function () {
-                    document.body.classList.remove('pdf-mode'); btn.disabled = false; btn.textContent = label;
-                }).catch(function () {
-                    document.body.classList.remove('pdf-mode'); btn.disabled = false; btn.textContent = label; window.print();
-                });
+                function done() { document.body.classList.remove('pdf-mode'); btn.disabled = false; btn.textContent = label; }
+                var sideMm = 6, topMm = 6, gapMm = 4, imgWmm = 210 - sideMm * 2;
+                var pagebreak = { mode: ['css', 'legacy', 'avoid-all'] };
+
+                // Fallback when html2canvas isn't exposed → render the whole card (single
+                // top header) but sections still avoid being cut.
+                if (typeof html2canvas === 'undefined') {
+                    html2pdf().set({
+                        margin: [topMm, sideMm, 10, sideMm], filename: 'visit-report.pdf',
+                        image: { type: 'jpeg', quality: 0.96 },
+                        html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
+                        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }, pagebreak: pagebreak
+                    }).from(document.querySelector('.card')).save().then(done).catch(function () { done(); window.print(); });
+                    return;
+                }
+
+                html2canvas(header, { scale: 2, useCORS: true, backgroundColor: '#ffffff' }).then(function (hc) {
+                    var headerImg = hc.toDataURL('image/jpeg', 0.96);
+                    var headerHmm = (hc.height / hc.width) * imgWmm;
+                    var reserveTop = topMm + headerHmm + gapMm;
+                    return html2pdf().set({
+                        margin: [reserveTop, sideMm, 10, sideMm],
+                        filename: 'visit-report.pdf',
+                        image: { type: 'jpeg', quality: 0.96 },
+                        html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
+                        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                        pagebreak: pagebreak
+                    }).from(body).toPdf().get('pdf').then(function (pdf) {
+                        var n = pdf.internal.getNumberOfPages();
+                        for (var i = 1; i <= n; i++) {
+                            pdf.setPage(i);
+                            pdf.addImage(headerImg, 'JPEG', sideMm, topMm, imgWmm, headerHmm);
+                        }
+                    }).save();
+                }).then(done).catch(function () { done(); window.print(); });
             });
         })();
     </script>
