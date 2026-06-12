@@ -162,7 +162,12 @@ class BackupController
         $running = [];
         foreach (glob($this->statusDir . '/*.json') ?: [] as $sf) {
             $st = json_decode((string)file_get_contents($sf), true);
-            if ($st && ($st['status'] ?? '') === 'running') { $running[] = $st; }
+            if ($st && ($st['status'] ?? '') === 'running') {
+                // A job whose status hasn't advanced in 2h means the runner died —
+                // drop the stale entry so it doesn't show "in progress" forever.
+                if (filemtime($sf) < time() - 7200) { @unlink($sf); continue; }
+                $running[] = $st;
+            }
         }
         $this->json(['success' => true, 'backups' => $items, 'running' => $running]);
     }

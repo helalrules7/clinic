@@ -38,3 +38,14 @@ The old `public_html/backups/` held the pre-deploy DB dumps **and was publicly d
 NEW: `bin/backup-run.php`, `app/Controllers/BackupController.php`, Backup section in `doctor/settings.php`,
 backup JS in `settings.js`. Routes in `public/index.php` (adopted as prod root `index.php`).
 Changed: `AdminController::backup()` → redirect.
+
+## Follow-ups
+- **prod env gotcha:** `shell_exec`/`proc_open`/`popen`/`system` are **disabled** on prod (only `exec` is
+  allowed) — the php-CLI probe + the background spawn use `exec()`. And the prod `.env` has **no `DRUGS_DB_*`
+  keys**, so the runner's drugs defaults must match `DoctorController::getDrugsDatabaseConnection()`
+  (`hclinic_drugs` / `Carmen@1230` / `hclinic_drugs`) — not the main user.
+- **Stuck-job cleanup:** a runner that dies before updating its status used to leave a permanent "in progress"
+  entry. `list()` now drops any `running` status file untouched for >2h (and stale ones were cleared on the
+  server). `.part` (incomplete) archives are excluded from the list.
+- **UI dialogs:** the Backup section's errors and the delete confirmation now use the app modal kit
+  (`mkAlertModal` / `mkConfirmModal`) instead of native `alert()` / `confirm()`.

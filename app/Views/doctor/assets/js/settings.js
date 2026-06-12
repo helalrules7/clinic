@@ -1147,6 +1147,17 @@ async function saveClinicDetails() {
     var pollTimer = null;
 
     function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]; }); }
+    function bkAlert(message, title) {
+        if (typeof window.mkAlertModal === 'function') {
+            window.mkAlertModal({ title: title || 'Backup', message: message, confirmText: 'OK', confirmClass: 'btn-primary', icon: 'bi-exclamation-triangle' });
+        } else { alert(message); }
+    }
+    function bkConfirm(message, title) {
+        if (typeof window.mkConfirmModal === 'function') {
+            return window.mkConfirmModal({ title: title || 'Please confirm', message: message, confirmText: 'Delete', cancelText: 'Cancel', confirmClass: 'btn-danger', icon: 'bi-trash' });
+        }
+        return Promise.resolve(window.confirm(message));
+    }
 
     function refreshList() {
         fetch('/api/backup/list', { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
@@ -1181,9 +1192,9 @@ async function saveClinicDetails() {
             headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': csrf() },
             body: JSON.stringify({ type: type, scope: scope })
         }).then(function (r) { return r.json(); }).then(function (d) {
-            if (!d.success || !d.job) { progEl.hidden = true; alert(d.message || 'Backup failed to start'); return; }
+            if (!d.success || !d.job) { progEl.hidden = true; bkAlert(d.message || 'Backup failed to start.'); return; }
             pollStatus(d.job);
-        }).catch(function () { progEl.hidden = true; alert('Backup request failed'); });
+        }).catch(function () { progEl.hidden = true; bkAlert('Backup request failed. Please try again.'); });
     }
 
     function pollStatus(job) {
@@ -1199,7 +1210,7 @@ async function saveClinicDetails() {
                     clearInterval(pollTimer); progBar.style.width = '100%'; progPct.textContent = '100%'; progLbl.textContent = 'Ready';
                     setTimeout(function () { progEl.hidden = true; }, 1500); refreshList();
                 } else if (s.status === 'error') {
-                    clearInterval(pollTimer); progEl.hidden = true; alert('Backup failed: ' + (s.error || '')); refreshList();
+                    clearInterval(pollTimer); progEl.hidden = true; bkAlert('Backup failed: ' + (s.error || 'unknown error'), 'Backup failed'); refreshList();
                 }
             }).catch(function () {});
         }, 1500);
@@ -1220,9 +1231,11 @@ async function saveClinicDetails() {
     listEl.addEventListener('click', function (e) {
         var del = e.target.closest('[data-bk-del]'); if (!del) return;
         var file = decodeURIComponent(del.getAttribute('data-bk-del'));
-        if (!confirm('Delete this backup?\n' + file)) return;
-        fetch('/api/backup/delete', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': csrf() }, body: JSON.stringify({ file: file }) })
-          .then(function (r) { return r.json(); }).then(function () { refreshList(); });
+        Promise.resolve(bkConfirm('“' + file + '” will be permanently deleted.', 'Delete backup?')).then(function (ok) {
+            if (!ok) return;
+            fetch('/api/backup/delete', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': csrf() }, body: JSON.stringify({ file: file }) })
+              .then(function (r) { return r.json(); }).then(function () { refreshList(); });
+        });
     });
 
     refreshList();
