@@ -34,8 +34,38 @@
     }
 
     function toast(type, title, msg) {
-        if (typeof window.showToast === 'function') window.showToast(type, title, msg);
-        else if (type === 'error') alert(msg || title);
+        if (typeof window.showToast === 'function') { window.showToast(type, title, msg); return; }
+        // Fallback: window.showToast isn't present on the appointment page, so
+        // info/success feedback used to vanish silently (the Suggest/Templates
+        // buttons looked dead when there were no templates/suggestions). Render a
+        // lightweight Bootstrap toast instead so the buttons always respond.
+        try {
+            let c = document.getElementById('miToastContainer');
+            if (!c) {
+                c = document.createElement('div');
+                c.id = 'miToastContainer';
+                c.style.cssText = 'position:fixed;bottom:1rem;right:1rem;z-index:11000;display:flex;flex-direction:column;gap:.5rem;max-width:360px;';
+                document.body.appendChild(c);
+            }
+            const cls = { success: 'text-bg-success', error: 'text-bg-danger', info: 'text-bg-secondary', warning: 'text-bg-warning' }[type] || 'text-bg-secondary';
+            const el = document.createElement('div');
+            el.className = 'toast align-items-center border-0 ' + cls;
+            el.setAttribute('role', 'alert');
+            el.innerHTML = '<div class="d-flex"><div class="toast-body">' +
+                (title ? '<strong>' + esc(title) + '</strong>' : '') +
+                (msg ? '<div class="small">' + esc(msg) + '</div>' : '') +
+                '</div><button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button></div>';
+            c.appendChild(el);
+            if (window.bootstrap && bootstrap.Toast) {
+                const tt = new bootstrap.Toast(el, { delay: 4000 });
+                tt.show();
+                el.addEventListener('hidden.bs.toast', () => el.remove());
+            } else {
+                setTimeout(() => el.remove(), 4000);
+            }
+        } catch (e) {
+            if (type === 'error') alert(msg || title);
+        }
     }
 
     function visitTemplateMeta() {

@@ -7091,7 +7091,7 @@ function updateLabTestsPrintButton(hasLabTests) {
     
     if (hasLabTests && !existingPrintBtn) {
         const printBtn = document.createElement('button');
-        printBtn.className = 'btn btn-sm btn-outline-secondary';
+        printBtn.className = 'btn btn-sm btn-warning'; /* v12: match the Medication section's print button */
         printBtn.setAttribute('onclick', `printLabTests(${window.APPOINTMENT_CONFIG.appointmentId})`);
         printBtn.setAttribute('title', 'Print Lab Tests');
         printBtn.innerHTML = '<i class="bi bi-printer"></i>';
@@ -7101,118 +7101,31 @@ function updateLabTestsPrintButton(hasLabTests) {
     }
 }
 
-// Update print buttons in action area
+// v12: Print Prescription / Print Glasses / Print Lab Tests are NO LONGER shown in
+// the action-buttons header row — they live in each card's own header instead. This
+// function used to fetch the three resources and inject those buttons; now it only
+// strips any that might linger (e.g. from a cached render) and never adds them.
 async function updateActionPrintButtons() {
-    const appointmentId = window.APPOINTMENT_CONFIG.appointmentId;
-    if (!appointmentId) return;
-    
     const actionButtonsGroup = document.querySelector('.action-buttons-group');
     if (!actionButtonsGroup) return;
-    
-    // Check medications
-    try {
-        const medResponse = await fetch(`/api/appointments/${appointmentId}/medications`, {
-            credentials: 'same-origin',
-            headers: { 'X-Requested-With': 'XMLHttpRequest' }
-        });
-        const medData = await medResponse.json();
-        const hasMedications = medData.success && medData.medications && medData.medications.length > 0;
-        
-        let printPrescriptionBtn = actionButtonsGroup.querySelector('button[onclick*="printPrescription"]');
-        if (hasMedications && !printPrescriptionBtn) {
-            const btn = document.createElement('button');
-            btn.type = 'button';
-            btn.className = 'btn btn-outline-warning hide-on-mobile';
-            btn.setAttribute('onclick', `printPrescription(${appointmentId})`);
-            btn.innerHTML = '<i class="bi bi-printer me-1"></i>Print Prescription';
-            const historyBtn = actionButtonsGroup.querySelector('#appointmentHistoryBtn');
-            if (historyBtn) {
-                historyBtn.insertAdjacentElement('afterend', btn);
-            }
-        } else if (!hasMedications && printPrescriptionBtn) {
-            printPrescriptionBtn.remove();
-        }
-    } catch (error) {
-        console.error('Error checking medications:', error);
-    }
-    
-    // Check glasses
-    try {
-        const glassesResponse = await fetch(`/api/appointments/${appointmentId}/glasses`, {
-            credentials: 'same-origin',
-            headers: { 'X-Requested-With': 'XMLHttpRequest' }
-        });
-        const glassesData = await glassesResponse.json();
-        const hasGlasses = glassesData.success && glassesData.glasses && glassesData.glasses.length > 0;
-        
-        let printGlassesBtn = actionButtonsGroup.querySelector('button[onclick*="printGlassesPrescription"]');
-        if (hasGlasses && !printGlassesBtn) {
-            const btn = document.createElement('button');
-            btn.type = 'button';
-            btn.className = 'btn btn-outline-info hide-on-mobile';
-            btn.setAttribute('onclick', `printGlassesPrescription(${appointmentId})`);
-            btn.innerHTML = '<i class="bi bi-eyeglasses me-1"></i>Print Glasses';
-            const printPrescriptionBtn = actionButtonsGroup.querySelector('button[onclick*="printPrescription"]');
-            if (printPrescriptionBtn) {
-                printPrescriptionBtn.insertAdjacentElement('afterend', btn);
-            } else {
-                const historyBtn = actionButtonsGroup.querySelector('#appointmentHistoryBtn');
-                if (historyBtn) {
-                    historyBtn.insertAdjacentElement('afterend', btn);
-                }
-            }
-        } else if (!hasGlasses && printGlassesBtn) {
-            printGlassesBtn.remove();
-        }
-    } catch (error) {
-        console.error('Error checking glasses:', error);
-    }
-    
-    // Check lab tests
-    try {
-        const labTestsResponse = await fetch(`/api/lab-tests/appointment/${appointmentId}`, {
-            credentials: 'same-origin',
-            headers: { 'X-Requested-With': 'XMLHttpRequest' }
-        });
-        const labTestsData = await labTestsResponse.json();
-        const hasLabTests = labTestsData.success && labTestsData.lab_tests && labTestsData.lab_tests.length > 0;
-        
-        let printLabTestsBtn = actionButtonsGroup.querySelector('button[onclick*="printLabTests"]');
-        if (hasLabTests && !printLabTestsBtn) {
-            const btn = document.createElement('button');
-            btn.type = 'button';
-            btn.className = 'btn btn-outline-secondary hide-on-mobile';
-            btn.setAttribute('onclick', `printLabTests(${appointmentId})`);
-            btn.innerHTML = '<i class="bi bi-clipboard-data me-1"></i>Print Lab Tests';
-            const printGlassesBtn = actionButtonsGroup.querySelector('button[onclick*="printGlassesPrescription"]');
-            if (printGlassesBtn) {
-                printGlassesBtn.insertAdjacentElement('afterend', btn);
-            } else {
-                const printPrescriptionBtn = actionButtonsGroup.querySelector('button[onclick*="printPrescription"]');
-                if (printPrescriptionBtn) {
-                    printPrescriptionBtn.insertAdjacentElement('afterend', btn);
-                } else {
-                    const historyBtn = actionButtonsGroup.querySelector('#appointmentHistoryBtn');
-                    if (historyBtn) {
-                        historyBtn.insertAdjacentElement('afterend', btn);
-                    }
-                }
-            }
-        } else if (!hasLabTests && printLabTestsBtn) {
-            printLabTestsBtn.remove();
-        }
-    } catch (error) {
-        console.error('Error checking lab tests:', error);
-    }
-    
-    // Update more actions popover
-    updateMoreActionsPopover();
+
+    ['printLabTests', 'printGlassesPrescription', 'printPrescription'].forEach(fn => {
+        actionButtonsGroup
+            .querySelectorAll(`button[onclick*="${fn}"]`)
+            .forEach(btn => btn.remove());
+    });
+    // (v12) The desktop more-actions popover was removed, so there is nothing to
+    // sync here anymore — do NOT call updateMoreActionsPopover() (it would recurse).
 }
 
-// Update more actions popover (if function exists)
+// Update more actions popover (if a real updater was installed by
+// initMoreActionsPopover). The desktop popover was removed in v12, so the inner
+// updater is usually absent; guard against resolving window.updateMoreActionsPopover
+// back to THIS wrapper (that caused an infinite recursion / stack overflow).
 function updateMoreActionsPopover() {
-    if (typeof window.updateMoreActionsPopover === 'function') {
-        window.updateMoreActionsPopover();
+    const fn = window.updateMoreActionsPopover;
+    if (typeof fn === 'function' && fn !== updateMoreActionsPopover) {
+        fn();
     }
 }
 

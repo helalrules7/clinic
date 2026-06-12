@@ -3374,3 +3374,29 @@
     background: rgba(255, 255, 255, .15);
     color: #fff;
 }
+
+/* v12: Medical Instructions card header — keep the action buttons (Suggest /
+   Templates / Add) on the title's row, right-aligned, like the sibling cards in
+   the same column. "Medical Instructions" is the longest title so it would
+   otherwise wrap the button group below; nowrap + a shrinkable title keeps the
+   buttons inline (the title only ellipsises if the column is genuinely too narrow). */
+#medicalInstructionsCard .card-header > .d-flex {
+    flex-wrap: nowrap !important;
+    gap: 0.5rem;
+}
+#medicalInstructionsCard .card-header > .d-flex > h5 {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+#medicalInstructionsCard .card-header > .d-flex > .btn-group {
+    flex-shrink: 0;
+}
+/* Compact the three buttons a touch so the title keeps more room before it
+   needs to ellipsise on a narrow column. */
+#medicalInstructionsCard .card-header > .d-flex > .btn-group .btn {
+    padding-inline: 0.5rem;
+    font-size: 0.78rem;
+    white-space: nowrap;
+}

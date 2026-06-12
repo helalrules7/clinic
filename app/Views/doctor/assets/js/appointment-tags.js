@@ -74,12 +74,61 @@
         wrap.appendChild(addBtn);
     }
 
-    function addSessionLabel() {
-        const text = prompt('Session label (shown in header only)');
-        if (!text || !text.trim()) return;
+    function commitSessionLabel(text) {
+        const t = (text || '').trim();
+        if (!t) return false;
         const colors = ['#f59e0b', '#ef4444', '#22c55e', '#3b82f6', '#8b5cf6'];
-        sessionLabels.push({ label_text: text.trim(), color: colors[sessionLabels.length % colors.length] });
+        sessionLabels.push({ label_text: t, color: colors[sessionLabels.length % colors.length] });
         saveSessionLabels();
+        return true;
+    }
+
+    // v12: replace the native prompt() with a proper modal (input lives in the modal).
+    function addSessionLabel() {
+        if (!(window.bootstrap && bootstrap.Modal)) {
+            commitSessionLabel(prompt('Session label (shown in header only)'));
+            return;
+        }
+        let modal = document.getElementById('sessionLabelModal');
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.id = 'sessionLabelModal';
+            modal.className = 'modal fade';
+            modal.tabIndex = -1;
+            modal.innerHTML = `
+                <div class="modal-dialog modal-dialog-centered modal-sm">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title"><i class="bi bi-bookmark-star me-2"></i>Add Session Label</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p class="text-muted small mb-2">Shown in the appointment header only.</p>
+                            <input type="text" class="form-control" id="sessionLabelInput" maxlength="60" placeholder="e.g. Follow-up, Post-op, Urgent" autocomplete="off">
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                            <button type="button" class="btn btn-primary btn-sm" id="sessionLabelAddBtn">Add</button>
+                        </div>
+                    </div>
+                </div>`;
+            document.body.appendChild(modal);
+        }
+        const input = modal.querySelector('#sessionLabelInput');
+        input.value = '';
+        const bsModal = bootstrap.Modal.getOrCreateInstance(modal);
+        const commit = () => {
+            if (commitSessionLabel(input.value)) bsModal.hide();
+            else input.focus();
+        };
+        // Rebind cleanly so listeners don't stack across opens.
+        const oldBtn = modal.querySelector('#sessionLabelAddBtn');
+        const addBtn = oldBtn.cloneNode(true);
+        oldBtn.parentNode.replaceChild(addBtn, oldBtn);
+        addBtn.addEventListener('click', commit);
+        input.onkeydown = (e) => { if (e.key === 'Enter') { e.preventDefault(); commit(); } };
+        modal.addEventListener('shown.bs.modal', () => input.focus(), { once: true });
+        bsModal.show();
     }
 
     async function saveSessionLabels() {

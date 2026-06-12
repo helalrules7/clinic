@@ -402,9 +402,12 @@
 <?php
 // Check if WhatsApp is enabled in the config
 $__db = \App\Config\Database::getInstance()->getConnection();
-$__waSettingsStmt = $__db->prepare("SELECT setting_key, setting_value FROM settings WHERE setting_key = 'whatsapp_enabled'");
+// v12: select ONLY setting_value — the old query used fetchColumn() on a
+// (setting_key, setting_value) row, so it read setting_key (always truthy) and the
+// WhatsApp card showed regardless of the setting.
+$__waSettingsStmt = $__db->prepare("SELECT setting_value FROM settings WHERE setting_key = 'whatsapp_enabled' LIMIT 1");
 $__waSettingsStmt->execute();
-$__waEnabled = (bool)($__waSettingsStmt->fetchColumn() ?? false);
+$__waEnabled = ((string)$__waSettingsStmt->fetchColumn()) === '1';
 
 if ($__waEnabled):
 ?>
@@ -428,28 +431,11 @@ if ($__waEnabled):
     <div class="card-body">
         <!-- Quick Actions Panel -->
         <h6 class="mb-3 text-muted small"><i class="bi bi-lightning-charge-fill me-1"></i>Quick Send Templates</h6>
-        <div class="d-flex flex-wrap gap-2 mb-4">
-            <button class="btn btn-outline-success btn-sm" onclick="WhatsAppIntegration.openModal(<?= $patient['id'] ?>, null, 'confirmation')">
-                <i class="bi bi-check-circle me-1"></i>Confirm Appointment
-            </button>
-            <button class="btn btn-outline-success btn-sm" onclick="WhatsAppIntegration.openModal(<?= $patient['id'] ?>, null, 'reminder')">
-                <i class="bi bi-alarm me-1"></i>Send Reminder
-            </button>
-            <button class="btn btn-outline-success btn-sm" onclick="WhatsAppIntegration.openModal(<?= $patient['id'] ?>, null, 'eye_drops')">
-                <i class="bi bi-droplet-fill me-1"></i>Send Eye Drops Schedule
-            </button>
-            <button class="btn btn-outline-success btn-sm" onclick="WhatsAppIntegration.openModal(<?= $patient['id'] ?>, null, 'summary')">
-                <i class="bi bi-file-earmark-text me-1"></i>Send Visit Summary
-            </button>
-            <button class="btn btn-outline-success btn-sm" onclick="WhatsAppIntegration.openModal(<?= $patient['id'] ?>, null, 'investigation')">
-                <i class="bi bi-clipboard-pulse me-1"></i>Send Investigation Request
-            </button>
-            <button class="btn btn-outline-success btn-sm" onclick="WhatsAppIntegration.openModal(<?= $patient['id'] ?>, null, 'instructions')">
-                <i class="bi bi-info-circle me-1"></i>Send Surgery Instructions
-            </button>
-            <button class="btn btn-outline-success btn-sm" onclick="WhatsAppIntegration.openModal(<?= $patient['id'] ?>, null, 'follow_up')">
-                <i class="bi bi-arrow-repeat me-1"></i>Send Follow-up Reminder
-            </button>
+        <!-- Quick-send badges are rendered dynamically from the (role-filtered)
+             template list so they always reflect the templates that actually
+             exist and open the correct one. -->
+        <div class="d-flex flex-wrap gap-2 mb-4" id="waQuickTemplates">
+            <span class="text-muted small"><span class="spinner-border spinner-border-sm text-success" role="status"></span> Loading templates...</span>
         </div>
 
         <!-- Previous Communication Logs -->
@@ -548,7 +534,10 @@ if ($__waEnabled):
 
     document.addEventListener('DOMContentLoaded', () => {
         loadWaLogs(<?= $patient['id'] ?>);
-        
+        if (window.WhatsAppIntegration) {
+            WhatsAppIntegration.renderQuickTemplates('waQuickTemplates', <?= $patient['id'] ?>);
+        }
+
         // Reload logs when the WhatsApp modal is hidden (since a message might have been sent)
         const modalEl = document.getElementById('whatsappModal');
         if (modalEl) {

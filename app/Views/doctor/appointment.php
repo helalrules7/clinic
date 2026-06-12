@@ -1,9 +1,12 @@
 <link href="/app/Views/doctor/assets/css/appointment.css?v=<?= file_exists(__DIR__ . '/assets/css/appointment.css') ? filemtime(__DIR__ . '/assets/css/appointment.css') : time() ?>" rel="stylesheet">
 <?php
 $__db = \App\Config\Database::getInstance()->getConnection();
-$__waSettingsStmt = $__db->prepare("SELECT setting_key, setting_value FROM settings WHERE setting_key = 'whatsapp_enabled'");
+// v12: select ONLY setting_value — the old query selected setting_key too and used
+// fetchColumn() (column 0 = setting_key, always truthy), so the gate was always ON
+// and WhatsApp buttons showed even when the setting was disabled.
+$__waSettingsStmt = $__db->prepare("SELECT setting_value FROM settings WHERE setting_key = 'whatsapp_enabled' LIMIT 1");
 $__waSettingsStmt->execute();
-$__waEnabled = (bool)($__waSettingsStmt->fetchColumn() ?? false);
+$__waEnabled = ((string)$__waSettingsStmt->fetchColumn()) === '1';
 ?>
 
 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -199,13 +202,7 @@ if ($status === 'completed') {
 <div class="row mb-4">
     <div class="col-12">
         <div class="action-buttons-group" role="group">
-            <button type="button" class="btn btn-action-edit hide-on-mobile" onclick="editConsultation(<?= $appointment['id'] ?>)">
-                <i class="bi bi-pencil me-1"></i>Edit Consultation
-            </button>
-            <button type="button" class="btn btn-action-report hide-on-mobile" onclick="printReport(<?= $appointment['id'] ?>)">
-                <i class="bi bi-printer me-1"></i>Print Report
-            </button>
-            <button type="button" class="btn btn-action-followup hide-on-mobile" 
+            <button type="button" class="btn btn-action-followup hide-on-mobile"
                     id="rescheduleFollowupBtn"
                     onclick="rescheduleFollowupAppointment(<?= $appointment['id'] ?>)"
                     <?= !empty($followupAppointment) ? 'disabled title="Follow-up appointment already scheduled"' : '' ?>>
@@ -232,79 +229,15 @@ if ($status === 'completed') {
                     data-bs-title="View unified clinical dashboard for this patient">
                 <i class="bi bi-clipboard-pulse me-1"></i>Clinical Dashboard
             </button>
-            <?php if (!empty($medications)): ?>
-            <button type="button" class="btn btn-action-prescription hide-on-mobile" onclick="printPrescription(<?= $appointment['id'] ?>)">
-                <i class="bi bi-printer me-1"></i>Print Prescription
-            </button>
-            <?php endif; ?>
-            <?php if (!empty($glasses)): ?>
-            <button type="button" class="btn btn-action-glasses hide-on-mobile" onclick="printGlassesPrescription(<?= $appointment['id'] ?>)">
-                <i class="bi bi-eyeglasses me-1"></i>Print Glasses
-            </button>
-            <?php endif; ?>
-            <?php if (!empty($labTests)): ?>
-            <button type="button" class="btn btn-action-lab hide-on-mobile" onclick="printLabTests(<?= $appointment['id'] ?>)">
-                <i class="bi bi-clipboard-data me-1"></i>Print Lab Tests
-            </button>
-            <?php endif; ?>
             <?php if ($__waEnabled): ?>
             <button type="button" class="btn btn-success hide-on-mobile d-inline-flex align-items-center gap-1" onclick="WhatsAppIntegration.openModal(<?= $appointment['patient_id'] ?>, <?= $appointment['id'] ?>, 'report')" style="background-color: #25D366; border-color: #25D366; color: #fff;">
                 <i class="bi bi-whatsapp"></i>Send WhatsApp
             </button>
             <?php endif; ?>
             
-            <!-- More Actions Button (Three Dots) - Bootstrap Popover -->
-            <button class="btn btn-secondary hide-on-mobile" 
-                    type="button" 
-                    id="moreActionsBtn" 
-                    data-bs-toggle="popover" 
-                    data-bs-placement="bottom"
-                    data-bs-trigger="click"
-                    data-bs-html="true"
-                    data-bs-content="<div class='more-actions-popover'>
-                        <div class='more-actions-popover-item' onclick='bootstrap.Popover.getInstance(document.getElementById(&quot;moreActionsBtn&quot;)).hide(); editConsultation(<?= $appointment['id'] ?>);'>
-                            <i class='bi bi-pencil me-2'></i>Edit Consultation
-                        </div>
-                        <div class='more-actions-popover-item' onclick='bootstrap.Popover.getInstance(document.getElementById(&quot;moreActionsBtn&quot;)).hide(); printReport(<?= $appointment['id'] ?>);'>
-                            <i class='bi bi-printer me-2'></i>Print Report
-                        </div>
-                        <div class='more-actions-popover-item <?= $appointment['status'] === 'Completed' ? 'disabled' : '' ?>' 
-                             <?php if ($appointment['status'] !== 'Completed'): ?>
-                             onclick='bootstrap.Popover.getInstance(document.getElementById(&quot;moreActionsBtn&quot;)).hide(); rescheduleAppointment(<?= $appointment['id'] ?>);'
-                             <?php else: ?>
-                             onclick='return false;' title='Cannot reschedule completed appointments'
-                             <?php endif; ?>>
-                            <i class='bi bi-calendar-plus me-2'></i>Reschedule
-                        </div>
-                        <div class='more-actions-popover-item' onclick='bootstrap.Popover.getInstance(document.getElementById(&quot;moreActionsBtn&quot;)).hide(); openAlertModal(<?= $appointment['patient_id'] ?? 'null' ?>, <?= $appointment['id'] ?>);'>
-                            <i class='bi bi-bell me-2'></i>Set Alert
-                        </div>
-                        <?php if (!empty($medications)): ?>
-                        <div class='more-actions-popover-item' onclick='bootstrap.Popover.getInstance(document.getElementById(&quot;moreActionsBtn&quot;)).hide(); printPrescription(<?= $appointment['id'] ?>);'>
-                            <i class='bi bi-printer me-2'></i>Print Prescription
-                        </div>
-                        <?php endif; ?>
-                        <?php if (!empty($glasses)): ?>
-                        <div class='more-actions-popover-item' onclick='bootstrap.Popover.getInstance(document.getElementById(&quot;moreActionsBtn&quot;)).hide(); printGlassesPrescription(<?= $appointment['id'] ?>);'>
-                            <i class='bi bi-eyeglasses me-2'></i>Print Glasses
-                        </div>
-                        <?php endif; ?>
-                        <?php if (!empty($labTests)): ?>
-                        <div class='more-actions-popover-item' onclick='bootstrap.Popover.getInstance(document.getElementById(&quot;moreActionsBtn&quot;)).hide(); printLabTests(<?= $appointment['id'] ?>);'>
-                            <i class='bi bi-clipboard-data me-2'></i>Print Lab Tests
-                        </div>
-                        <?php endif; ?>
-                        <div class='more-actions-popover-item' onclick='bootstrap.Popover.getInstance(document.getElementById(&quot;moreActionsBtn&quot;)).hide(); viewPatient(<?= $patient['id'] ?>);'>
-                            <i class='bi bi-person me-2'></i>View Patient Profile
-                        </div>
-                        <div class='more-actions-popover-item' onclick='bootstrap.Popover.getInstance(document.getElementById(&quot;moreActionsBtn&quot;)).hide(); showUnifiedClinicalDashboardPopover(<?= $patient['id'] ?>);'>
-                            <i class='bi bi-clipboard-pulse me-2'></i>Clinical Dashboard
-                        </div>
+            <!-- v12: desktop three-dots "More Actions" popover removed — the header row is
+                 now short enough that no overflow menu is needed on desktop. -->
 
-                    </div>">
-                <i class="bi bi-three-dots-vertical"></i>
-            </button>
-            
             <!-- More Actions Dropdown for Mobile -->
             <div class="dropdown more-actions-btn">
                 <button class="btn btn-secondary dropdown-toggle" type="button" id="moreActionsDropdown" data-bs-toggle="dropdown" data-bs-auto-close="true" aria-expanded="false">
@@ -312,12 +245,7 @@ if ($status === 'completed') {
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="moreActionsDropdown">
                     <li>
-                        <a class="dropdown-item" href="javascript:void(0);" onclick="closeDropdownAndExecute('moreActionsDropdown', function() { editConsultation(<?= $appointment['id'] ?>); });">
-                            <i class="bi bi-pencil me-2"></i>Edit Consultation
-                        </a>
-                    </li>
-                    <li>
-                        <a class="dropdown-item text-success fw-bold <?= !empty($followupAppointment) ? 'disabled text-muted' : '' ?>" 
+                        <a class="dropdown-item text-success fw-bold <?= !empty($followupAppointment) ? 'disabled text-muted' : '' ?>"
                            href="javascript:void(0);" 
                            <?php if (empty($followupAppointment)): ?>
                            onclick="closeDropdownAndExecute('moreActionsDropdown', function() { rescheduleFollowupAppointment(<?= $appointment['id'] ?>); });"
@@ -343,24 +271,10 @@ if ($status === 'completed') {
                             <i class="bi bi-bell me-2"></i>Set Alert
                         </a>
                     </li>
-                    <?php if (!empty($medications)): ?>
+                    <?php if ($__waEnabled): ?>
                     <li>
-                        <a class="dropdown-item" href="javascript:void(0);" onclick="closeDropdownAndExecute('moreActionsDropdown', function() { printPrescription(<?= $appointment['id'] ?>); });">
-                            <i class="bi bi-printer me-2"></i>Print Prescription
-                        </a>
-                    </li>
-                    <?php endif; ?>
-                    <?php if (!empty($glasses)): ?>
-                    <li>
-                        <a class="dropdown-item" href="javascript:void(0);" onclick="closeDropdownAndExecute('moreActionsDropdown', function() { printGlassesPrescription(<?= $appointment['id'] ?>); });">
-                            <i class="bi bi-eyeglasses me-2"></i>Print Glasses
-                        </a>
-                    </li>
-                    <?php endif; ?>
-                    <?php if (!empty($labTests)): ?>
-                    <li>
-                        <a class="dropdown-item" href="javascript:void(0);" onclick="closeDropdownAndExecute('moreActionsDropdown', function() { printLabTests(<?= $appointment['id'] ?>); });">
-                            <i class="bi bi-clipboard-data me-2"></i>Print Lab Tests
+                        <a class="dropdown-item text-success" href="javascript:void(0);" onclick="closeDropdownAndExecute('moreActionsDropdown', function() { WhatsAppIntegration.openModal(<?= $appointment['patient_id'] ?>, <?= $appointment['id'] ?>, 'report'); });">
+                            <i class="bi bi-whatsapp me-2"></i>Send WhatsApp
                         </a>
                     </li>
                     <?php endif; ?>
@@ -933,20 +847,20 @@ if ($status === 'completed') {
         <!-- Medical Instructions -->
         <div class="card mb-4" id="medicalInstructionsCard">
             <div class="card-header">
-                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div class="d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">
                         <i class="bi bi-journal-medical me-2"></i>
                         Medical Instructions
                     </h5>
                     <div class="btn-group btn-group-sm" role="group">
-                        <button type="button" class="btn btn-sm btn-outline-info" id="miCopySuggestedBtn" title="Copy suggested instructions from diagnosis or patient history">
-                            <i class="bi bi-lightbulb me-1"></i>Copy Suggested
+                        <button type="button" class="btn btn-sm btn-info" id="miCopySuggestedBtn" title="Copy suggested instructions from diagnosis or patient history">
+                            <i class="bi bi-lightbulb me-1"></i>Suggest
                         </button>
-                        <button type="button" class="btn btn-sm btn-outline-primary" id="miFromTemplatesBtn" title="Choose from instruction templates">
+                        <button type="button" class="btn btn-sm btn-secondary" id="miFromTemplatesBtn" title="Choose from instruction templates">
                             <i class="bi bi-collection me-1"></i>Templates
                         </button>
                         <button type="button" class="btn btn-sm btn-primary" id="miAddCustomBtn" title="Add custom instructions">
-                            <i class="bi bi-plus me-1"></i>Add Custom
+                            <i class="bi bi-plus me-1"></i>Add
                         </button>
                     </div>
                 </div>
@@ -1325,7 +1239,7 @@ if ($status === 'completed') {
                     </h5>
                     <div class="btn-group btn-group-sm" role="group">
                         <?php if (!empty($labTests)): ?>
-                        <button class="btn btn-sm btn-outline-secondary" onclick="printLabTests(<?= $appointment['id'] ?>)" title="Print Lab Tests">
+                        <button class="btn btn-sm btn-warning" onclick="printLabTests(<?= $appointment['id'] ?>)" title="Print Lab Tests">
                             <i class="bi bi-printer"></i>
                         </button>
                         <?php endif; ?>

@@ -142,9 +142,11 @@
                         </div>
                         <?php
                         $__db = \App\Config\Database::getInstance()->getConnection();
-                        $__waSettingsStmt = $__db->prepare("SELECT setting_key, setting_value FROM settings WHERE setting_key = 'whatsapp_enabled'");
+                        // v12: select ONLY setting_value (the old fetchColumn() read setting_key,
+                        // always truthy, so WhatsApp showed regardless of the setting).
+                        $__waSettingsStmt = $__db->prepare("SELECT setting_value FROM settings WHERE setting_key = 'whatsapp_enabled' LIMIT 1");
                         $__waSettingsStmt->execute();
-                        $__waEnabled = (bool)($__waSettingsStmt->fetchColumn() ?? false);
+                        $__waEnabled = ((string)$__waSettingsStmt->fetchColumn()) === '1';
                         if ($__waEnabled):
                         ?>
                         <div class="d-flex align-items-center gap-2">
@@ -155,6 +157,15 @@
                                 <i class="bi bi-whatsapp"></i>
                             </button>
                         </div>
+                        <!-- Quick-send badges (appointment templates only — role-filtered server-side) -->
+                        <div class="d-flex flex-wrap gap-1 mt-2 arabic-text" id="waQuickTemplatesSec"></div>
+                        <script>
+                            document.addEventListener('DOMContentLoaded', function() {
+                                if (window.WhatsAppIntegration) {
+                                    WhatsAppIntegration.renderQuickTemplates('waQuickTemplatesSec', <?= $patient['id'] ?>);
+                                }
+                            });
+                        </script>
                         <?php endif; ?>
                     </div>
                 </div>
