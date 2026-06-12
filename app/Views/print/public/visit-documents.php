@@ -83,6 +83,10 @@ $group2 = $hasGlasses || $hasLabs || $hasRad; // sheet 2
         .body-cell { padding: 0; }
         /* v12: the repeating per-sheet header must never split across a page boundary */
         .sheet-header { break-inside: avoid; page-break-inside: avoid; }
+        /* The 2nd+ header copies repeat ONLY in the PDF export + native print — hidden
+           in the on-screen link preview (where one header at the top is enough). */
+        .sheet-header--print-only { display: none; }
+        body.pdf-mode .sheet-header--print-only { display: block; }
         .meta { display: flex; flex-wrap: wrap; gap: 8px 24px; padding: 15px 18px; border-bottom: 1px solid var(--border); font-size: 14px; background: var(--card-2); }
         .meta b { color: var(--muted); font-weight: 600; }
         .section { padding: 18px; }
@@ -127,8 +131,8 @@ $group2 = $hasGlasses || $hasLabs || $hasRad; // sheet 2
             body { background: #fff !important; color: #111 !important; background-image: none; }
             .wrap { padding: 0; max-width: 100%; }
             .card { border: 0; box-shadow: none; border-radius: 0; background: #fff; }
-            /* Repeat the clinic header on EVERY printed page via table-header-group */
-            thead.sheet-head { display: table-header-group; }
+            /* Show the repeated per-sheet header copies when printing */
+            .sheet-header--print-only { display: block; }
             .header { background: #fff !important; border-bottom: 2px solid #4F46E5; padding: 6px 8px 8px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             .header h1 { color: #312E81; }
             .header .addr { color: #444; }
@@ -153,9 +157,9 @@ $group2 = $hasGlasses || $hasLabs || $hasRad; // sheet 2
             // v12: the clinic+patient header is a reusable block rendered at the top of EVERY
             // sheet. A table <thead> only repeats under native @media print — it does NOT repeat
             // in the html2pdf (html2canvas) export — so we emit the header per page-broken sheet.
-            $renderSheetHeader = function () use ($e, $dash, $clinicLogo, $clinicName, $clinic, $patient, $docClean, $visitDate) {
+            $renderSheetHeader = function ($repeat = false) use ($e, $dash, $clinicLogo, $clinicName, $clinic, $patient, $docClean, $visitDate) {
                 ob_start(); ?>
-                <div class="sheet-header">
+                <div class="sheet-header<?= $repeat ? ' sheet-header--print-only' : '' ?>">
                     <div class="header">
                         <?php if (!empty($clinicLogo)): ?>
                             <div class="logo-chip"><img src="<?= $e($clinicLogo) ?>" alt="" onerror="this.parentElement.style.display='none'"></div>
@@ -225,7 +229,7 @@ $group2 = $hasGlasses || $hasLabs || $hasRad; // sheet 2
                         <!-- ===== Sheet 2: glasses + labs + radiology ===== -->
                         <?php if ($group2): ?>
                         <div class="group group-2 <?= $group1 ? 'has-prev' : '' ?>">
-                            <?php if ($group1): ?><?= $renderSheetHeader() /* repeat header atop sheet 2 */ ?><?php endif; ?>
+                            <?php if ($group1): ?><?= $renderSheetHeader(true) /* repeat header atop sheet 2 — print/PDF only */ ?><?php endif; ?>
                             <?php if ($hasGlasses): ?>
                             <div class="section">
                                 <h2><span class="tag">👓</span> مقاس النظارة الطبية</h2>

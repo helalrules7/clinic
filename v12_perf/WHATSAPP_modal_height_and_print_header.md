@@ -46,3 +46,9 @@ header. Fix: dropped the `<table class="sheet">` wrapper and made the header a r
 header now appears on every page in **both** html2pdf export and native print. Single-sheet reports render exactly
 one header. `.sheet-header { break-inside: avoid }` keeps it intact across boundaries. Verified by curl: 1 sheet →
 1 header; the table wrapper is gone; colons (`المريض:` / `الطبيب المعالج:`) intact.
+
+## Refinement — repeated header is PRINT/PDF ONLY (not in the on-screen link preview)
+The per-sheet header copy made the header appear twice in the **web link preview** too. The repeated copies
+(sheet 2+) now carry a `sheet-header--print-only` class — `display:none` by default, shown only under
+`@media print` and `body.pdf-mode` (the html2pdf rasterise pass). The FIRST header (top of the document) always
+shows. Net: link preview = one header; PDF/print = header atop every page.
