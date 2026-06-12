@@ -111,7 +111,10 @@ class BackupController
         ]));
 
         $runner = dirname(__DIR__, 2) . '/bin/backup-run.php';
-        $php = trim((string)@shell_exec('command -v php 2>/dev/null'));
+        // NB: shell_exec/proc_open/popen are disabled on prod (hardening); only exec()
+        // is allowed — use it for the php-path probe and the background spawn.
+        $probe = []; @exec('command -v php 2>/dev/null', $probe);
+        $php = trim($probe[0] ?? '');
         if ($php === '' || !is_file($php)) { $php = '/usr/bin/php'; }
         $cmd = sprintf(
             'nohup %s %s %s %s %s %d > /dev/null 2>&1 &',
