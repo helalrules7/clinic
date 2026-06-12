@@ -134,6 +134,12 @@
     .wn12-checks > div { display: flex; align-items: center; gap: 8px; }
     .wn12-checks i { color: #22c55e; font-size: 1rem; }
     .wn12-checks span { flex: 1; height: 8px; border-radius: 4px; background: rgba(148,163,184,.4); }
+    .wn12-bk { display: flex; flex-direction: column; gap: 7px; width: 204px; }
+    .wn12-bkrow { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 8px; background: rgba(148,163,184,.12); }
+    .wn12-bkbadge { font-size: .58rem; font-weight: 700; padding: 2px 6px; border-radius: 999px; background: rgba(99,102,241,.16); color: #4F46E5; white-space: nowrap; }
+    .dark .wn12-bkbadge { color: #a5b4fc; }
+    .wn12-bkbar { flex: 1; height: 7px; border-radius: 4px; background: rgba(148,163,184,.4); }
+    .wn12-bkrow > i { color: #22c55e; }
     .wn12-trophy { font-size: 4.4rem; color: #eab308; filter: drop-shadow(0 6px 14px rgba(234,179,8,.4)); }
 
     /* ════ Animated mockups + intro celebration ════ */
@@ -191,6 +197,11 @@
         /* Phone gentle bob */
         .wn12-phone { animation: wn12phone 4s ease-in-out infinite; }
         @keyframes wn12phone { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-4px)} }
+
+        /* Backup — rows appear, download pulses */
+        .wn12-bk .wn12-bkrow { animation: wn12bub 3.4s ease-in-out infinite; }
+        .wn12-bk .wn12-bkrow:nth-child(2){animation-delay:.25s} .wn12-bk .wn12-bkrow:nth-child(3){animation-delay:.5s}
+        .wn12-bk .wn12-bkrow > i { animation: wn12send 1.6s ease-in-out infinite; }
     }
 
     /* ── Intro slide celebration: tennis balls + rackets + sparkles ── */
@@ -397,7 +408,26 @@
               </ul>
             </div>
 
-            <!-- 10 · Outro -->
+            <!-- 10 · Backup -->
+            <div class="wn12-slide">
+              <div class="wn12-stage"><div class="wn12-mk"><div class="wn12-card wn12-bk">
+                <div class="wn12-bkrow"><span class="wn12-bkbadge">Database</span><span class="wn12-bkbar"></span><i class="bi bi-download"></i></div>
+                <div class="wn12-bkrow"><span class="wn12-bkbadge">DB + Uploads</span><span class="wn12-bkbar"></span><i class="bi bi-download"></i></div>
+                <div class="wn12-bkrow"><span class="wn12-bkbadge">Full system</span><span class="wn12-bkbar"></span><i class="bi bi-download"></i></div>
+              </div></div></div>
+              <span class="wn12-kicker">Backup</span>
+              <h3 class="wn12-title">One-click backups, right from Settings</h3>
+              <p class="wn12-lead">A new <b>Backup</b> section (Settings → Backup, doctor &amp; admin) generates
+                downloadable backups on the server — no command line needed.</p>
+              <ul class="wn12-list">
+                <li><i class="bi bi-database"></i> <b>Databases</b> — clinic and/or drugs DB (pick the scope in a dialog)</li>
+                <li><i class="bi bi-box-archive"></i> <b>+ Uploads</b> — both DBs plus every attachment &amp; uploaded file</li>
+                <li><i class="bi bi-hdd-stack"></i> <b>Full system</b> — DBs + the whole site + scheduled jobs, compressed</li>
+                <li><i class="bi bi-shield-lock"></i> Stored <b>outside the web root</b>; every doctor is notified when ready</li>
+              </ul>
+            </div>
+
+            <!-- 11 · Outro -->
             <div class="wn12-slide">
               <div class="wn12-stage"><div class="wn12-mk"><i class="bi bi-trophy-fill wn12-trophy"></i></div></div>
               <span class="wn12-kicker">That's v12</span>
