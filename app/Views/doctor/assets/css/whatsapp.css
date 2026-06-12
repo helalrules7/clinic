@@ -147,3 +147,14 @@
     background-color: var(--border);
     border-radius: 3px;
 }
+
+/* Mobile: avoid dead space under the message content.
+   The editor uses a flex column with a flex-grow textarea to fill height on
+   desktop; on phones that leaves empty space below the content, so fall back
+   to natural block flow. */
+@media (max-width: 767.98px) {
+    .whatsapp-integration-modal .wa-editor-panel { display: block !important; }
+    .whatsapp-integration-modal .wa-editor-panel .flex-grow-1 { flex: 0 0 auto !important; }
+    .whatsapp-integration-modal .wa-textarea { min-height: 150px; }
+    .whatsapp-integration-modal .wa-templates-panel { max-height: 240px; }
+}

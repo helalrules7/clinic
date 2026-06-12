@@ -86,3 +86,10 @@ INNER JOIN communication_templates t2
 UPDATE communication_templates
 SET body = CONCAT(TRIM(TRAILING '\n' FROM body), '\n\n{{clinic_name}}\n📞 {{clinic_phone}}')
 WHERE is_active = 1 AND body NOT LIKE '%{{clinic_phone}}%';
+
+-- WhatsApp module flags (which surfaces are enabled) — default ON.
+INSERT IGNORE INTO settings (setting_key, setting_value, setting_type) VALUES
+('whatsapp_mod_appointments', '1', 'boolean'),
+('whatsapp_mod_visits',       '1', 'boolean'),
+('whatsapp_mod_report',       '1', 'boolean'),
+('whatsapp_mod_patientlog',   '1', 'boolean');

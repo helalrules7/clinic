@@ -731,7 +731,7 @@ function renderAppointmentSlot(appointment) {
                         <i class="bi bi-person-circle"></i>
                     </a>
                     ${
-                      window.WHATSAPP_CONFIG && window.WHATSAPP_CONFIG.enabled
+                      window.WHATSAPP_CONFIG && window.WHATSAPP_CONFIG.enabled && (!window.WHATSAPP_CONFIG.modules || window.WHATSAPP_CONFIG.modules.appointments)
                         ? `
                     <button class="btn btn-sm btn-outline-success send-whatsapp-btn"
                             onclick="event.stopPropagation(); window.WhatsAppIntegration.openModal(${

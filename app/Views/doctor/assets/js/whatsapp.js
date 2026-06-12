@@ -338,10 +338,6 @@
             const messageBody = document.getElementById('waMessageBody').value;
             const phone = document.getElementById('waPhoneInput').value;
             
-            const relatedEye = document.getElementById('waRelatedEye').value;
-            const relatedService = document.getElementById('waRelatedService').value;
-            const relatedTestType = document.getElementById('waRelatedTestType').value;
-
             if (!phone || !messageBody) {
                 alert(this._isRtl() ? 'رقم الهاتف ونص الرسالة لا يمكن أن يكونا فارغين.' : 'Phone number and message body cannot be empty.');
                 return;
@@ -364,9 +360,9 @@
                         message_body: messageBody,
                         phone_number: phone,
                         status: 'opened',
-                        related_eye: relatedEye,
-                        related_service: relatedService || null,
-                        related_test_type: relatedTestType || null
+                        related_eye: 'not_applicable',
+                        related_service: null,
+                        related_test_type: null
                     })
                 });
 
@@ -447,9 +443,10 @@
             });
         },
 
-        // Triggered on Visit completion
+        // Triggered on Visit completion (gated by the "Post-Visit Report" module)
         triggerCompletionModal: function(patientId, appointmentId, patientName) {
             if (window.WHATSAPP_CONFIG && !window.WHATSAPP_CONFIG.advanced) return;
+            if (window.WHATSAPP_CONFIG && window.WHATSAPP_CONFIG.modules && !window.WHATSAPP_CONFIG.modules.report) return;
 
             const isRtl = document.documentElement.getAttribute('dir') === 'rtl';
             const confirmMsg = isRtl

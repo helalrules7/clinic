@@ -2173,7 +2173,8 @@ class DoctorController
             'new_visit_cost', 'repeated_visit_cost', 'consultation_cost',
             'timezone', 'date_format', 'time_format', 'items_per_page',
             'backup_frequency', 'email_notifications', 'sms_notifications', 'maintenance_mode',
-            'whatsapp_enabled', 'whatsapp_advanced_features'
+            'whatsapp_enabled', 'whatsapp_advanced_features',
+            'whatsapp_mod_appointments', 'whatsapp_mod_visits', 'whatsapp_mod_report', 'whatsapp_mod_patientlog'
         ];
 
         try {
@@ -2194,7 +2195,7 @@ class DoctorController
                     
                     // Determine setting type and convert value
                     $settingType = 'string';
-                    if (in_array($key, ['email_notifications', 'sms_notifications', 'maintenance_mode', 'whatsapp_enabled', 'whatsapp_advanced_features'])) {
+                    if (in_array($key, ['email_notifications', 'sms_notifications', 'maintenance_mode', 'whatsapp_enabled', 'whatsapp_advanced_features', 'whatsapp_mod_appointments', 'whatsapp_mod_visits', 'whatsapp_mod_report', 'whatsapp_mod_patientlog'])) {
                         $value = (bool) $value;
                         $settingType = 'boolean';
                     } elseif ($key === 'items_per_page') {

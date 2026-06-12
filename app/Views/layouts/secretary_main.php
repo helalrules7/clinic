@@ -1388,16 +1388,27 @@
     <script defer src="/app/Views/doctor/assets/js/theme-palette.js?v=<?= file_exists(__DIR__ . '/../doctor/assets/js/theme-palette.js') ? filemtime(__DIR__ . '/../doctor/assets/js/theme-palette.js') : time() ?>"></script>
     <?php
     $__waDb = \App\Config\Database::getInstance()->getConnection();
-    $__waSettingsStmt = $__waDb->prepare("SELECT setting_key, setting_value FROM settings WHERE setting_key IN ('whatsapp_enabled', 'whatsapp_advanced_features')");
+    $__waSettingsStmt = $__waDb->prepare("SELECT setting_key, setting_value FROM settings WHERE setting_key IN ('whatsapp_enabled', 'whatsapp_advanced_features', 'whatsapp_mod_appointments', 'whatsapp_mod_visits', 'whatsapp_mod_report', 'whatsapp_mod_patientlog')");
     $__waSettingsStmt->execute();
     $__waSettings = $__waSettingsStmt->fetchAll(PDO::FETCH_KEY_PAIR);
     $__waEnabled = (bool)($__waSettings['whatsapp_enabled'] ?? false);
     $__waAdvanced = (bool)($__waSettings['whatsapp_advanced_features'] ?? false);
+    // Module flags default ON when the row is absent.
+    $__waModAppt   = ($__waSettings['whatsapp_mod_appointments'] ?? '1') === '1';
+    $__waModVisits = ($__waSettings['whatsapp_mod_visits'] ?? '1') === '1';
+    $__waModReport = ($__waSettings['whatsapp_mod_report'] ?? '1') === '1';
+    $__waModPlog   = ($__waSettings['whatsapp_mod_patientlog'] ?? '1') === '1';
     ?>
     <script>
         window.WHATSAPP_CONFIG = {
             enabled: <?= json_encode($__waEnabled) ?>,
-            advanced: <?= json_encode($__waAdvanced) ?>
+            advanced: <?= json_encode($__waAdvanced) ?>,
+            modules: {
+                appointments: <?= json_encode($__waModAppt) ?>,
+                visits: <?= json_encode($__waModVisits) ?>,
+                report: <?= json_encode($__waModReport) ?>,
+                patientLog: <?= json_encode($__waModPlog) ?>
+            }
         };
     </script>
     <script defer src="/app/Views/doctor/assets/js/whatsapp.js?v=<?= file_exists(__DIR__ . '/../doctor/assets/js/whatsapp.js') ? filemtime(__DIR__ . '/../doctor/assets/js/whatsapp.js') : time() ?>"></script>

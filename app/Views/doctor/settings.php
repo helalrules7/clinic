@@ -767,6 +767,65 @@
                                 </div>
                             </div>
 
+                            <!-- Active Modules -->
+                            <div class="form-text mt-3 mb-2 fw-bold">Active Modules — choose which WhatsApp surfaces are enabled</div>
+
+                            <div class="setting-item">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <label class="form-label mb-0">Appointments (المواعيد)</label>
+                                        <div class="form-text">WhatsApp buttons on the appointments / bookings calendar</div>
+                                    </div>
+                                    <div class="toggle-switch-wrapper">
+                                        <input type="hidden" name="whatsapp_mod_appointments" value="0">
+                                        <input type="checkbox" class="toggle-switch" id="waModAppointments" name="whatsapp_mod_appointments" value="1"
+                                               <?= (($settings['whatsapp_mod_appointments'] ?? '1') == '1') ? 'checked' : '' ?>>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="setting-item">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <label class="form-label mb-0">Visits (الزيارات)</label>
+                                        <div class="form-text">WhatsApp buttons inside the visit / appointment page</div>
+                                    </div>
+                                    <div class="toggle-switch-wrapper">
+                                        <input type="hidden" name="whatsapp_mod_visits" value="0">
+                                        <input type="checkbox" class="toggle-switch" id="waModVisits" name="whatsapp_mod_visits" value="1"
+                                               <?= (($settings['whatsapp_mod_visits'] ?? '1') == '1') ? 'checked' : '' ?>>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="setting-item">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <label class="form-label mb-0">Post-Visit Report (تقرير ما بعد الزيارة)</label>
+                                        <div class="form-text">Auto-prompt to send the comprehensive visit report after completing a visit</div>
+                                    </div>
+                                    <div class="toggle-switch-wrapper">
+                                        <input type="hidden" name="whatsapp_mod_report" value="0">
+                                        <input type="checkbox" class="toggle-switch" id="waModReport" name="whatsapp_mod_report" value="1"
+                                               <?= (($settings['whatsapp_mod_report'] ?? '1') == '1') ? 'checked' : '' ?>>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="setting-item">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <label class="form-label mb-0">Patient Communication Log (سجل التواصل في بروفايل المريض)</label>
+                                        <div class="form-text">The Patient Communication card (quick-send + history) on the patient profile</div>
+                                    </div>
+                                    <div class="toggle-switch-wrapper">
+                                        <input type="hidden" name="whatsapp_mod_patientlog" value="0">
+                                        <input type="checkbox" class="toggle-switch" id="waModPatientLog" name="whatsapp_mod_patientlog" value="1"
+                                               <?= (($settings['whatsapp_mod_patientlog'] ?? '1') == '1') ? 'checked' : '' ?>>
+                                    </div>
+                                </div>
+                            </div>
+
                             <!-- Manage Templates Item -->
                             <div class="setting-item">
                                 <div class="d-flex justify-content-between align-items-center">

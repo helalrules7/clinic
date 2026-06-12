@@ -405,9 +405,11 @@ $__db = \App\Config\Database::getInstance()->getConnection();
 // v12: select ONLY setting_value — the old query used fetchColumn() on a
 // (setting_key, setting_value) row, so it read setting_key (always truthy) and the
 // WhatsApp card showed regardless of the setting.
-$__waSettingsStmt = $__db->prepare("SELECT setting_value FROM settings WHERE setting_key = 'whatsapp_enabled' LIMIT 1");
+// "Patient Communication Log" module gates this card (default ON when row absent).
+$__waSettingsStmt = $__db->prepare("SELECT setting_key, setting_value FROM settings WHERE setting_key IN ('whatsapp_enabled', 'whatsapp_mod_patientlog')");
 $__waSettingsStmt->execute();
-$__waEnabled = ((string)$__waSettingsStmt->fetchColumn()) === '1';
+$__waS = $__waSettingsStmt->fetchAll(PDO::FETCH_KEY_PAIR);
+$__waEnabled = (($__waS['whatsapp_enabled'] ?? '0') === '1') && (($__waS['whatsapp_mod_patientlog'] ?? '1') === '1');
 
 if ($__waEnabled):
 ?>

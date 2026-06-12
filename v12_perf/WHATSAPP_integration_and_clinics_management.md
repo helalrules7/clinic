@@ -156,9 +156,28 @@ Token shortened from 64-hex (256-bit) to **12 base62 chars** (`shortToken()`, ~7
 - Added the same dynamic badges to the **secretary** patient page (`secretary/patient_details.php`) — since `getTemplates` filters by role, the secretary only ever sees **appointment templates** (Confirmation, Reminder, Follow-up, Cancellation). RTL badge labels use `translateTitleToArabic`.
 - The whole Patient Communication section is gated by `whatsapp_enabled` in both views (already the case; verified it disappears when the setting is off); `renderQuickTemplates` also early-returns when `WHATSAPP_CONFIG.enabled` is false (defense-in-depth).
 
+## 12. Report PDF download vs print
+- The report page's single button was split into **two adjacent buttons** (mobile-friendly): **⬇️ تحميل PDF** and **🖨️ طباعة**.
+- **Download** uses **html2pdf.js** (CDN) to rasterize the report directly to a PDF file (one click, no dialog). It applies a `body.pdf-mode` light theme (mirrors `@media print`) during capture, respects the `break-before:page` grouping, and falls back to `window.print()` if the library is unavailable. **Print** is the native `window.print()` (vector, repeating header).
+- No server-side PDF engine exists (mpdf/dompdf not installed), hence the client-side approach.
+
+## 13. WhatsApp module toggles (doctor settings)
+- Settings → WhatsApp now has an **"Active Modules"** group with four toggles (default ON), so the doctor chooses which WhatsApp surfaces are live:
+  - **Appointments (المواعيد)** → WhatsApp buttons on the doctor calendar (`calendar.js`) + secretary bookings calendar (`bookings.js`).
+  - **Visits (الزيارات)** → in-visit WhatsApp buttons on `appointment.php`.
+  - **Post-Visit Report (تقرير ما بعد الزيارة)** → the auto-prompt after completing a visit (`whatsapp.js triggerCompletionModal`).
+  - **Patient Communication Log (سجل التواصل…)** → the Patient Communication card on the patient profile (`doctor/patient.php` + `secretary/patient_details.php`).
+- Keys: `whatsapp_mod_appointments|visits|report|patientlog` (boolean). Saved via `DoctorController` (added to allowed + boolean lists); seeded ON (idempotent `INSERT IGNORE`) in the migration; **default ON** when a row is absent (so existing installs are unaffected).
+- Exposed to JS via `WHATSAPP_CONFIG.modules` (in BOTH `main.php` and `secretary_main.php`). Appointments + report gate in JS; visits + patient-log fold their flag into the page's `$__waEnabled` computation (so the whole surface hides). Verified each toggle hides/shows its surface.
+
+## 14. Modal cleanups
+- Removed the **Eye / Service / Test Type** dropdowns from the WhatsApp modal (no real value); `handleSend` now sends `related_eye='not_applicable'`, `related_service=null`, `related_test_type=null` (columns kept).
+- Fixed **empty space under the message content on mobile**: added a `@media (max-width:767.98px)` rule so the editor panel flows as a normal block (the desktop flex-grow textarea left dead space on phones) + capped the templates panel height.
+
 ## Files touched
 - NEW: `app/Controllers/PublicShareController.php`; `app/Views/print/public/{visit-documents,link-invalid,link-preview}.php`; `database/migrations/2026_06_13_prescription_share_links.sql`.
-- CHANGED (this section): `app/Views/doctor/patient.php` + `app/Views/secretary/patient_details.php` (dynamic quick-send badges); `app/Views/doctor/assets/js/whatsapp.js` (`renderQuickTemplates`, title-match).
+- CHANGED (badges §11): `app/Views/doctor/patient.php` + `app/Views/secretary/patient_details.php` (dynamic quick-send badges); `app/Views/doctor/assets/js/whatsapp.js` (`renderQuickTemplates`, title-match).
+- CHANGED (§12-14): `app/Views/print/public/visit-documents.php` (download/print split, html2pdf, pdf-mode); `app/Views/doctor/settings.php` (module toggles); `app/Controllers/DoctorController.php` (save module keys); `app/Views/layouts/main.php` + `secretary_main.php` (`WHATSAPP_CONFIG.modules`); `app/Views/doctor/assets/js/{calendar,whatsapp}.js` + `app/Views/secretary/assets/js/bookings.js` (module gates); `app/Views/doctor/appointment.php` + `app/Views/secretary/patient_details.php` + `doctor/patient.php` (module-folded `$__waEnabled`); `app/Views/layouts/whatsapp-modal.php` (removed dropdowns); `app/Views/doctor/assets/css/whatsapp.css` (mobile media query).
 - CHANGED: `app/Controllers/WhatsappController.php` (mint/scope/revoke/shortToken, `{{clinic_phone}}`, labs/radiology, label, honorific, secretary template filter); `app/Views/doctor/assets/js/whatsapp.js` (privacy removal, bilingual alerts, no console.log); `app/Views/layouts/whatsapp-modal.php` (privacy block removed); `app/Views/doctor/appointment.php` (3 buttons → `report`); `app/Views/doctor/settings.php` (templates-manager dark mode); `index.php` + `public/index.php` (routes).
 
 ## Verification (local)

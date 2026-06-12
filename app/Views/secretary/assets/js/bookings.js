@@ -500,7 +500,7 @@ function renderAppointmentSlot(appointment) {
                        data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="ملف المريض">
                         <i class="bi bi-person-circle"></i>
                     </a>
-                    ${window.WHATSAPP_CONFIG && window.WHATSAPP_CONFIG.enabled ? `
+                    ${window.WHATSAPP_CONFIG && window.WHATSAPP_CONFIG.enabled && (!window.WHATSAPP_CONFIG.modules || window.WHATSAPP_CONFIG.modules.appointments) ? `
                     <button class="btn btn-sm btn-success send-whatsapp-btn"
                             onclick="event.stopPropagation(); window.WhatsAppIntegration.openModal(${appointment.patient_id}, ${appointment.id}, 'confirmation')"
                             data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="تأكيد الحجز عبر الواتساب">

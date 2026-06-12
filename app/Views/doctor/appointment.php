@@ -4,9 +4,11 @@ $__db = \App\Config\Database::getInstance()->getConnection();
 // v12: select ONLY setting_value — the old query selected setting_key too and used
 // fetchColumn() (column 0 = setting_key, always truthy), so the gate was always ON
 // and WhatsApp buttons showed even when the setting was disabled.
-$__waSettingsStmt = $__db->prepare("SELECT setting_value FROM settings WHERE setting_key = 'whatsapp_enabled' LIMIT 1");
+// "Visits" module gates the in-visit WhatsApp buttons (default ON when the row is absent).
+$__waSettingsStmt = $__db->prepare("SELECT setting_key, setting_value FROM settings WHERE setting_key IN ('whatsapp_enabled', 'whatsapp_mod_visits')");
 $__waSettingsStmt->execute();
-$__waEnabled = ((string)$__waSettingsStmt->fetchColumn()) === '1';
+$__waS = $__waSettingsStmt->fetchAll(PDO::FETCH_KEY_PAIR);
+$__waEnabled = (($__waS['whatsapp_enabled'] ?? '0') === '1') && (($__waS['whatsapp_mod_visits'] ?? '1') === '1');
 ?>
 
 <div class="d-flex justify-content-between align-items-center mb-4">
