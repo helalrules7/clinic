@@ -81,12 +81,8 @@ $group2 = $hasGlasses || $hasLabs || $hasRad; // sheet 2
         .header .addr .sep { opacity: .5; margin: 0 4px; }
         .report-badge { display: inline-block; margin-top: 10px; background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.25); color: #fff; font-size: 12.5px; font-weight: 700; padding: 4px 15px; border-radius: 30px; }
         .body-cell { padding: 0; }
-        /* v12: the repeating per-sheet header must never split across a page boundary */
+        /* v12: header (in the table <thead>) must never split across a page boundary */
         .sheet-header { break-inside: avoid; page-break-inside: avoid; }
-        /* The 2nd+ header copies repeat ONLY in the PDF export + native print — hidden
-           in the on-screen link preview (where one header at the top is enough). */
-        .sheet-header--print-only { display: none; }
-        body.pdf-mode .sheet-header--print-only { display: block; }
         .meta { display: flex; flex-wrap: wrap; gap: 8px 24px; padding: 15px 18px; border-bottom: 1px solid var(--border); font-size: 14px; background: var(--card-2); }
         .meta b { color: var(--muted); font-weight: 600; }
         .section { padding: 18px; }
@@ -131,8 +127,8 @@ $group2 = $hasGlasses || $hasLabs || $hasRad; // sheet 2
             body { background: #fff !important; color: #111 !important; background-image: none; }
             .wrap { padding: 0; max-width: 100%; }
             .card { border: 0; box-shadow: none; border-radius: 0; background: #fff; }
-            /* Show the repeated per-sheet header copies when printing */
-            .sheet-header--print-only { display: block; }
+            /* Repeat the clinic+patient header on EVERY printed page (native print) */
+            thead.sheet-head { display: table-header-group; }
             .header { background: #fff !important; border-bottom: 2px solid #4F46E5; padding: 6px 8px 8px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             .header h1 { color: #312E81; }
             .header .addr { color: #444; }
@@ -183,8 +179,10 @@ $group2 = $hasGlasses || $hasLabs || $hasRad; // sheet 2
                 </div>
                 <?php return ob_get_clean();
             };
-            echo $renderSheetHeader();
             ?>
+            <table class="sheet">
+                <thead class="sheet-head"><tr><td style="padding:0;"><?= $renderSheetHeader() ?></td></tr></thead>
+                <tbody><tr><td class="body-cell">
             <div class="body-content" id="reportBody">
 
                         <?php /* Sections flow naturally; each avoids internal page breaks
@@ -308,6 +306,8 @@ $group2 = $hasGlasses || $hasLabs || $hasRad; // sheet 2
                             <?php endif; ?>
 
             </div>
+                </td></tr></tbody>
+            </table>
         </div>
 
         <div class="foot">هذا التقرير صادر من <?= $e($clinicName) ?> · للاستفسار يُرجى التواصل مع العيادة</div>
@@ -323,22 +323,8 @@ $group2 = $hasGlasses || $hasLabs || $hasRad; // sheet 2
             var btn = document.getElementById('btnDownload');
             var header = document.getElementById('reportHeader');
             var body = document.getElementById('reportBody');
-            function px2mm(px) { return px * 25.4 / 96; }
-
-            // ── Native print: repeat the header on every page via a fixed running header
-            //    + a reserved @page top margin measured from the live header. ──
-            window.addEventListener('beforeprint', function () {
-                if (!header) return;
-                var mm = Math.ceil(px2mm(header.getBoundingClientRect().height)) + 6;
-                var st = document.getElementById('printHeaderStyle') || document.createElement('style');
-                st.id = 'printHeaderStyle';
-                st.textContent = '@page{margin-top:' + mm + 'mm}'
-                    + '#reportHeader{position:fixed;top:0;left:0;right:0;width:100%}';
-                document.head.appendChild(st);
-            });
-            window.addEventListener('afterprint', function () {
-                var st = document.getElementById('printHeaderStyle'); if (st) st.remove();
-            });
+            // Native print repeats the header automatically via the table <thead>
+            // (display: table-header-group) — no JS needed there.
 
             // ── Download PDF (html2pdf): sections reflow and a table is NEVER cut across
             //    pages (pagebreak avoid-all); the header is rasterised once then stamped

@@ -78,3 +78,13 @@ when it doesn't fit, and is never cut.
   every page; `afterprint` removes it.
 - **On-screen link preview:** unchanged — one header at the top (the fixed/stamped repetition only applies to
   print/PDF).
+
+## Fix — native print was dropping sections (only glasses showed)
+The first cut replaced the auto-repeating `<thead>` with a `beforeprint` `position:fixed` header +
+JS-injected `@page{margin-top}`. Chrome does **not** reliably apply an `@page` rule injected during
+`beforeprint`, so the tall fixed header overlapped the first section (the Rx table was hidden behind it; only
+the lower glasses table peeked out). Reverted native print to the **proven `<thead class="sheet-head">` +
+`display:table-header-group`** mechanism: the header repeats AND reserves its own space automatically per page,
+and all sections sit in one `<tbody>` cell so they still reflow and never cut. The html2pdf path is unchanged —
+it renders from `#reportBody` (which excludes the thead) and stamps the rasterised header image on every page,
+so the two mechanisms don't double up. Removed the `beforeprint`/`afterprint` hack entirely.
