@@ -79,3 +79,22 @@ php8.2-fpm** after this one (the static JS/CSS don't need it). Versioned by `?v=
   real browser recommended for the end-to-end enable path.
 - Secretary settings page (`secretary/settings.php`) still has **no** push toggle UI (doctor does). Out of
   scope here; the toast is the enable path. Could be a follow-up.
+
+---
+
+## Follow-up (2026-06-12) — visual polish on the secretary toast
+After first review, three fixes to the secretary toast (CSS + the header markup in the JS):
+1. **Title was on the LEFT, not the right.** The app loads the **LTR** Bootstrap build, so `me-auto`/`ms-2`
+   are **physical** margins — `me-auto` on the `<strong>` pushed the title to the visual left under RTL. Fix:
+   dropped the utility classes, wrapped the bell+title in `.push-toast-title`, and gave `.push-toast-header`
+   an explicit `display:flex; justify-content:space-between`. Now the title group hugs the start (right) and
+   the close button hugs the end (left). CDP-verified geometry: title-center right of toast-center, close left.
+2. **Buttons were too faint** (esp. the dark-mode outline buttons). Primary "تفعيل" is now a **solid accent**
+   (`var(--accent)`) with white text in both modes; the secondary buttons get readable contrast — dark text on
+   a light fill in light mode, bright text + a 1.5px visible border in dark mode. Button icon spacing switched
+   from the physical `ms-1` to flex `gap` (`.btn i { margin:0 }`).
+3. **Theme fit.** Verified the toast in **both** light and dark (CDP screenshots). Also themed the bottom
+   **feedback** toast (success/error) for dark/light (it previously used the default light Bootstrap toast).
+
+**Gotcha:** an explanatory CSS comment originally contained the literal `me-*/ms-*` — the `*/` inside it
+**closed the comment early** and broke the file. Never put `*/` inside a CSS comment body.
