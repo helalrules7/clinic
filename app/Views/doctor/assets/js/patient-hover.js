@@ -1,5 +1,5 @@
 /* =====================================================================
-   patient-hover.js — v11.0.0
+   patient-hover.js — v12.0.0
 
    Patient hover-card behaviour.
 

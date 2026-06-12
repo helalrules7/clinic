@@ -21,7 +21,7 @@ if (file_exists($vendorAutoload)) {
     require_once $vendorAutoload;
 }
 
-// v11.0.0 — Global procedural helpers (base_url, asset_url) used by view partials.
+// v12.0.0 — Global procedural helpers (base_url, asset_url) used by view partials.
 require_once __DIR__ . '/app/Lib/global_helpers.php';
 
 // Load Controllers
@@ -222,14 +222,14 @@ try {
     $router->delete('/api/notifications/{id}', 'NotificationController@delete');
     $router->post('/api/notifications/system', 'NotificationController@createSystemNotification');
 
-    // v11.0.0 — Notification center extensions (grouped feed + snooze + pin)
+    // v12.0.0 — Notification center extensions (grouped feed + snooze + pin)
     $router->get('/api/notifications/grouped',           'NotificationControllerV11@grouped');
     $router->post('/api/notifications/{id}/snooze',      'NotificationControllerV11@snooze');
     $router->post('/api/notifications/{id}/unsnooze',    'NotificationControllerV11@unsnooze');
     $router->post('/api/notifications/{id}/pin',         'NotificationControllerV11@pin');
     $router->post('/api/notifications/{id}/unpin',       'NotificationControllerV11@unpin');
 
-    // v11.0.0 — To-Do (multi-list) routes
+    // v12.0.0 — To-Do (multi-list) routes
     $router->get('/doctor/todos',           'TodoController@page');
     $router->get('/api/todos',              'TodoController@index');
     $router->get('/api/todos/counts',       'TodoController@counts');
@@ -243,7 +243,7 @@ try {
     $router->post('/api/todos/{id}/reopen', 'TodoController@reopen');
     $router->post('/api/todos/{id}/snooze', 'TodoController@snooze');
 
-    // v11.0.0 — To-Do lists
+    // v12.0.0 — To-Do lists
     $router->get('/api/todo-lists',                  'TodoListController@index');
     $router->post('/api/todo-lists/reorder',         'TodoListController@reorder');
     $router->get('/api/todo-lists/{id}',             'TodoListController@show');
@@ -253,7 +253,7 @@ try {
     $router->post('/api/todo-lists/{id}/restore',    'TodoListController@restore');
     $router->delete('/api/todo-lists/{id}',          'TodoListController@delete');
 
-    // v11.0.0 — Quick notes (scratchpad)
+    // v12.0.0 — Quick notes (scratchpad)
     $router->get('/api/quick-notes',              'QuickNoteController@index');
     $router->post('/api/quick-notes',             'QuickNoteController@create');
     $router->get('/api/quick-notes/{id}',         'QuickNoteController@show');
@@ -262,7 +262,7 @@ try {
     $router->post('/api/quick-notes/{id}/pin',    'QuickNoteController@pin');
     $router->post('/api/quick-notes/{id}/unpin',  'QuickNoteController@unpin');
 
-    // v11.0.0 — Note templates (phrase library)
+    // v12.0.0 — Note templates (phrase library)
     $router->get('/api/note-templates',                    'NoteTemplateController@index');
     $router->post('/api/note-templates',                   'NoteTemplateController@create');
     $router->post('/api/note-templates/reorder',           'NoteTemplateController@reorder');
@@ -284,17 +284,17 @@ try {
     $router->patch('/api/appointments/{id}/medical-instructions/{instId}',    'MedicalInstructionController@updateAppointment');
     $router->delete('/api/appointments/{id}/medical-instructions/{instId}',   'MedicalInstructionController@deleteAppointment');
 
-    // v11.0.0 — Activity feed
+    // v12.0.0 — Activity feed
     $router->get('/api/activity', 'ActivityController@feed');
     $router->get('/api/activity/page', 'ActivityController@page');
 
-    // v11.0.0 — Cmd+K command palette search
+    // v12.0.0 — Cmd+K command palette search
     $router->get('/api/search/palette', 'SearchController@palette');
 
-    // v11.0.0 — Patient summary (hover-card)
+    // v12.0.0 — Patient summary (hover-card)
     $router->get('/api/patients/{id}/summary', 'PatientSummaryController@summary');
 
-    // v11.0.0 — Settings: theme palette + auto-schedule + appearance read
+    // v12.0.0 — Settings: theme palette + auto-schedule + appearance read
     $router->get('/api/settings/appearance',            'SettingsControllerV11@getAppearance');
     $router->post('/api/settings/theme-palette',        'SettingsControllerV11@setThemePalette');
     $router->post('/api/settings/theme-auto-schedule',  'SettingsControllerV11@setThemeAutoSchedule');

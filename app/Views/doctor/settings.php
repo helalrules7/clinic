@@ -302,7 +302,7 @@
                             </div>
                         </div>
 
-                        <!-- v11.0.0 — Appearance (Themes + Auto schedule) -->
+                        <!-- v12.0.0 — Appearance (Themes + Auto schedule) -->
                         <div class="settings-section">
                             <h5><i class="bi bi-palette-fill me-2"></i>Appearance</h5>
                             <div class="form-text mb-3" style="margin-top:-6px">
@@ -446,7 +446,7 @@
                             </script>
                         </div>
 
-                        <!-- v11.0.0 — Note Templates manager -->
+                        <!-- v12.0.0 — Note Templates manager -->
                         <div class="settings-section">
                             <h5><i class="bi bi-stickies-fill me-2"></i>Note Templates</h5>
                             <div class="form-text mb-3" style="margin-top:-6px">

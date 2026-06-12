@@ -34,7 +34,7 @@
     <!-- Shared modal kit (center + animate + drag affordance) — after design-system so it wins -->
     <link href="/app/Views/layouts/modal-kit.css?v=<?= file_exists(__DIR__ . '/modal-kit.css') ? filemtime(__DIR__ . '/modal-kit.css') : time() ?>" rel="stylesheet">
 
-    <!-- v11.0.0 feature CSS bundle -->
+    <!-- v12.0.0 feature CSS bundle -->
     <link href="/app/Views/doctor/assets/css/notification-center.css?v=<?= file_exists(__DIR__ . '/../doctor/assets/css/notification-center.css') ? filemtime(__DIR__ . '/../doctor/assets/css/notification-center.css') : time() ?>" rel="stylesheet">
     <link href="/app/Views/doctor/assets/css/chat-widget.css?v=<?= file_exists(__DIR__ . '/../doctor/assets/css/chat-widget.css') ? filemtime(__DIR__ . '/../doctor/assets/css/chat-widget.css') : time() ?>" rel="stylesheet">
     <link href="/app/Views/doctor/assets/css/image-viewer-modal.css?v=<?= file_exists(__DIR__ . '/../doctor/assets/css/image-viewer-modal.css') ? filemtime(__DIR__ . '/../doctor/assets/css/image-viewer-modal.css') : time() ?>" rel="stylesheet">
@@ -62,7 +62,7 @@
          theme variant on first paint — no Light→Dark flicker on refresh. -->
     <script>
         (function() {
-            // v11.0.0 — Theme + Palette + Auto-schedule pre-paint (secretary layout).
+            // v12.0.0 — Theme + Palette + Auto-schedule pre-paint (secretary layout).
 
             var html = document.documentElement;
             var ALLOWED_PALETTES = ['indigo','emerald','rose','slate','amber','ocean'];
@@ -328,7 +328,7 @@
             <div class="sidebar-footer p-3 text-center border-top">
                 <small class="text-muted">
                     <div class="mb-1">
-                        HClinic / Roaya Clinic v11.0.0
+                        HClinic / Roaya Clinic v12.0.0
                         <span aria-hidden="true">·</span>
                         <a href="https://hclinic.clinic/docs/opth/" target="_blank" rel="noopener" style="color: var(--accent);"><i class="bi bi-book me-1"></i>Docs</a>
                     </div>
@@ -1330,7 +1330,7 @@
 
     <?php include __DIR__ . '/whats-new-secretary-modal.php'; ?>
 
-    <!-- v11.0.0 feature surfaces -->
+    <!-- v12.0.0 feature surfaces -->
     <?php
         $GLOBALS['v11Lang'] = 'ar';
         $GLOBALS['v11Layout'] = 'secretary';
@@ -1348,7 +1348,7 @@
     <?php include __DIR__ . '/notes-drawer.php'; ?>
     <?php include __DIR__ . '/whatsapp-modal.php'; ?>
 
-    <!-- v11.0.0 feature JS bundle -->
+    <!-- v12.0.0 feature JS bundle -->
     <script>
         window.__GLOBAL_SEARCH_CONFIG__ = { mode: 'secretary' };
         window.kbdHelpRoutes = {

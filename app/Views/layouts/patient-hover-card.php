@@ -1,6 +1,6 @@
 <?php
 /**
- * Patient Hover Card — v11.0.0
+ * Patient Hover Card — v12.0.0
  *
  * Single recycled hover-card element. Included once at body level by
  * main.php / secretary_main.php. Activated by patient-hover.js which

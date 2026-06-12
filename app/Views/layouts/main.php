@@ -71,7 +71,7 @@
     <!-- Shared weather visuals (animated scene/icons + eye-care advisory + UV) -->
     <link href="/app/Views/layouts/weather-fx.css?v=<?= file_exists(__DIR__ . '/weather-fx.css') ? filemtime(__DIR__ . '/weather-fx.css') : time() ?>" rel="stylesheet">
 
-    <!-- v11.0.0 feature CSS bundle -->
+    <!-- v12.0.0 feature CSS bundle -->
     <link href="/app/Views/doctor/assets/css/notification-center.css?v=<?= file_exists(__DIR__ . '/../doctor/assets/css/notification-center.css') ? filemtime(__DIR__ . '/../doctor/assets/css/notification-center.css') : time() ?>" rel="stylesheet">
     <link href="/app/Views/doctor/assets/css/chat-widget.css?v=<?= file_exists(__DIR__ . '/../doctor/assets/css/chat-widget.css') ? filemtime(__DIR__ . '/../doctor/assets/css/chat-widget.css') : time() ?>" rel="stylesheet">
     <link href="/app/Views/doctor/assets/css/todo-drawer.css?v=<?= file_exists(__DIR__ . '/../doctor/assets/css/todo-drawer.css') ? filemtime(__DIR__ . '/../doctor/assets/css/todo-drawer.css') : time() ?>" rel="stylesheet">
@@ -98,7 +98,7 @@
          theme-matched asset — no flash from Light → Dark on dark-mode refreshes. -->
     <script>
         (function() {
-            // v11.0.0 — Theme + Palette + Auto-schedule pre-paint. Runs in <head>
+            // v12.0.0 — Theme + Palette + Auto-schedule pre-paint. Runs in <head>
             // BEFORE any <body> content parses, so logo, favicon AND data-palette
             // are all resolved on first paint — no flashes.
 
@@ -439,7 +439,7 @@
             <div class="sidebar-footer p-3 text-center border-top">
                 <small class="sidebar-footer-text">
                     <div class="mb-1">
-                        HClinic / Roaya Clinic v11.0.0
+                        HClinic / Roaya Clinic v12.0.0
                         <span aria-hidden="true">·</span>
                         <a href="https://hclinic.clinic/docs/opth/" target="_blank" rel="noopener" class="sidebar-footer-link"><i class="bi bi-book me-1"></i>Docs</a>
                     </div>
@@ -1348,9 +1348,10 @@
         })();
     </script>
 
-    <?php include __DIR__ . '/whats-new-v9-modal.php'; ?>
+    <?php /* v12: the v9 modal file is kept on disk but the active What's-New wizard is now v12 (doctor-only). */ ?>
+    <?php include __DIR__ . '/whats-new-v12-modal.php'; ?>
 
-    <!-- v11.0.0 feature surfaces -->
+    <!-- v12.0.0 feature surfaces -->
     <?php include __DIR__ . '/notification-center.php'; ?>
     <?php include __DIR__ . '/todo-drawer.php'; ?>
     <?php include __DIR__ . '/cmdk-palette.php'; ?>
@@ -1360,7 +1361,7 @@
     <?php include __DIR__ . '/notes-drawer.php'; ?>
     <?php include __DIR__ . '/whatsapp-modal.php'; ?>
 
-    <!-- v11.0.0 feature JS bundle (deferred so it doesn't block paint) -->
+    <!-- v12.0.0 feature JS bundle (deferred so it doesn't block paint) -->
     <script defer src="/app/Views/doctor/assets/js/patient-color.js?v=<?= file_exists(__DIR__ . '/../doctor/assets/js/patient-color.js') ? filemtime(__DIR__ . '/../doctor/assets/js/patient-color.js') : time() ?>"></script>
     <!-- Shared notes background presets + cross-surface live-sync bus (load before note surfaces) -->
     <script defer src="/app/Views/doctor/assets/js/note-bg.js?v=<?= file_exists(__DIR__ . '/../doctor/assets/js/note-bg.js') ? filemtime(__DIR__ . '/../doctor/assets/js/note-bg.js') : time() ?>"></script>

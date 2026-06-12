@@ -9,7 +9,7 @@ use PDOException;
 use Throwable;
 
 /**
- * v11.0.0 — Appearance settings (theme palette + auto-schedule).
+ * v12.0.0 — Appearance settings (theme palette + auto-schedule).
  *
  * IMPORTANT: doctor_settings is a KEY-VALUE table. Schema:
  *   id, user_id, setting_key, setting_value, setting_type, created_at, updated_at

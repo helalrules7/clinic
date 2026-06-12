@@ -1,17 +1,17 @@
 <link href="/app/Views/doctor/assets/css/dashboard.css?v=<?= file_exists(__DIR__ . '/assets/css/dashboard.css') ? filemtime(__DIR__ . '/assets/css/dashboard.css') : time() ?>" rel="stylesheet">
 
-<!-- v11.0.0 celebration notice bar — chat release fanfare. Layered FX:
-     entrance reveal, aurora mesh, rotating border-beam, floating orbs,
+<!-- v12.0.0 celebration notice bar — WhatsApp + patient-link release fanfare.
+     Layered FX: entrance reveal, aurora mesh, rotating border-beam, floating orbs,
      shimmer sweep, sparkle drift, gradient sweep, pulsing pill + CTA,
      one-shot confetti burst (sessionStorage). Dismissable per browser.
-     7-day TTL from launch timestamp. Wizard auto-show disabled — bar only.
-     Respects prefers-reduced-motion. -->
+     7-day TTL from launch timestamp. Opens the v12 What's-New modal.
+     Doctor-only (never rendered in the secretary layout). Respects prefers-reduced-motion. -->
 <?php
     // Launch epoch — bump when shipping a NEW release to extend visibility.
-    $whatsNewLaunchTs   = strtotime('2026-06-06 12:00:00');
+    $whatsNewLaunchTs   = strtotime('2026-06-12 12:00:00');
     $whatsNewLaunchDays = 7;
     $whatsNewVisibleUntil = $whatsNewLaunchTs + ($whatsNewLaunchDays * 24 * 3600);
-    $whatsNewVersion = 'v11_0_4';
+    $whatsNewVersion = 'v12_0_0';
 ?>
 <?php if (time() < $whatsNewVisibleUntil): ?>
 <div class="whatsnew-notice whatsnew-celebrate mb-4" id="whatsNewNotice"
@@ -28,20 +28,23 @@
     <span class="whatsnew-sparkles" aria-hidden="true"></span>
     <span class="wn-shimmer-sweep" aria-hidden="true"></span>
     <span class="whatsnew-confetti" id="whatsNewConfetti" aria-hidden="true"></span>
+    <img class="wn-novak-wm wn-novak-light" src="/app/Views/doctor/assets/svg/nd-light.png" alt="" aria-hidden="true">
+    <img class="wn-novak-wm wn-novak-dark" src="/app/Views/doctor/assets/svg/nd-dark.png" alt="" aria-hidden="true">
+    <span class="wn-tennis-ball" aria-hidden="true"></span>
     <span class="whatsnew-notice-pill">
         <span class="wn-pill-ring" aria-hidden="true"></span>
         <i class="bi bi-stars wn-pill-star" aria-hidden="true"></i>
-        <span class="wn-pill-label">v11.0.0 (RF)</span>
+        <span class="wn-pill-label">v12.0.0 ND</span>
         <span class="wn-pill-spark" aria-hidden="true">NEW</span>
     </span>
     <span class="whatsnew-notice-text">
-        <strong class="wn-headline">v11 Roger Federer Is Here</strong>
-        <span class="wn-subcopy">Message your secretary from the dock &mdash; glass panel, groups,
-        emoji reactions, voice notes, photos, <strong>@patient</strong> chips, and
-        <strong>✓✓</strong> read receipts. Your thread stays open as you move between pages.</span>
+        <strong class="wn-headline">v12 Novak Djokovic Is Here</strong>
+        <span class="wn-subcopy"><strong>WhatsApp Integration</strong> &mdash; send appointment, follow-up
+        &amp; instruction messages with one tap, plus a secure <strong>public link</strong> that shows your
+        patient their prescription, glasses &amp; instructions. And smarter reports, print/PDF &amp; more.</span>
     </span>
     <button type="button" class="whatsnew-notice-cta"
-            data-bs-toggle="modal" data-bs-target="#whatsNewV9Modal">
+            data-bs-toggle="modal" data-bs-target="#whatsNewV12Modal">
         <span class="wn-cta-shine" aria-hidden="true"></span>
         <span class="wn-cta-label">Tour what's new</span>
         <i class="bi bi-arrow-right" aria-hidden="true"></i>

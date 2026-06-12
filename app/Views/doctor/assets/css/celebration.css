@@ -1,5 +1,5 @@
 /* =====================================================================
-   v11.0.0 — Celebration notice bar (doctor dashboard)
+   v12.0.0 — Celebration notice bar (doctor dashboard)
    Layered FX: entrance · aurora · border-beam · orbs · sparkles · shimmer
    · gradient sweep · pulsing pill/CTA · confetti (celebration.js)
    Respects prefers-reduced-motion.
@@ -593,4 +593,40 @@
     .whatsnew-confetti {
         display: none;
     }
+}
+
+/* ───────────────────────────────────────────────────────────────
+   v12 — Novak watermark + animated tennis ball (celebration banner)
+   ─────────────────────────────────────────────────────────────── */
+.whatsnew-notice .wn-novak-wm {
+    position: absolute; right: 1.2%; bottom: -20%; height: 158%; width: auto;
+    object-fit: contain; opacity: .12; pointer-events: none; z-index: 0;
+    -webkit-mask-image: linear-gradient(to left, #000 50%, transparent 92%);
+            mask-image: linear-gradient(to left, #000 50%, transparent 92%);
+}
+.whatsnew-notice .wn-novak-dark { display: none; }
+.dark .whatsnew-notice .wn-novak-light { display: none; }
+.dark .whatsnew-notice .wn-novak-dark { display: block; }
+.dark .whatsnew-notice .wn-novak-wm { opacity: .17; }
+
+.whatsnew-notice .wn-tennis-ball {
+    position: absolute; top: 30%; left: -26px; width: 15px; height: 15px; border-radius: 50%;
+    background: radial-gradient(circle at 34% 30%, #f2ff7a, #c4ec5a 52%, #93c83f);
+    box-shadow: 0 0 9px rgba(196,236,90,.75), inset -2px -2px 3px rgba(0,0,0,.18);
+    z-index: 1; pointer-events: none;
+    animation: wnBallRoll 4.6s cubic-bezier(.45,.05,.55,.95) infinite;
+}
+.whatsnew-notice .wn-tennis-ball::before {
+    content: ""; position: absolute; inset: 0; border-radius: 50%;
+    background:
+        linear-gradient(115deg, transparent 44%, rgba(255,255,255,.9) 47% 52%, transparent 55%);
+    opacity: .85;
+}
+@keyframes wnBallRoll {
+    0%   { left: -26px; top: 28%; transform: rotate(0deg); }
+    45%  { top: 66%; }
+    100% { left: 103%; top: 34%; transform: rotate(1440deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+    .whatsnew-notice .wn-tennis-ball { animation: none; left: 6%; top: 50%; }
 }

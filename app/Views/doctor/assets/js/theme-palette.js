@@ -1,5 +1,5 @@
 /* =====================================================================
-   v11.0.0 — Theme palette picker + auto-schedule applier.
+   v12.0.0 — Theme palette picker + auto-schedule applier.
 
    What this file owns
    -------------------

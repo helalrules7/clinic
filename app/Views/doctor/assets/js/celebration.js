@@ -1,5 +1,5 @@
 /* =====================================================================
-   v11.0.0 — Celebration confetti for the dashboard notice bar.
+   v12.0.0 — Celebration confetti for the dashboard notice bar.
 
    Fires once per browser session (sessionStorage flag, managed by the
    caller in dashboard.php). Respects prefers-reduced-motion.

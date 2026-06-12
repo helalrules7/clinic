@@ -1,5 +1,5 @@
 /* =====================================================================
-   v11.0.0 — Patient avatar color seeding.
+   v12.0.0 — Patient avatar color seeding.
 
    Deterministic per patient_id → consistent across the app. Used by:
    - Patient hover-card avatar
