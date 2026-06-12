@@ -41,7 +41,7 @@ $__isSec = ($__role === 'secretary');
 
                         <!-- Right Panel: Message Editor & Settings -->
                         <div class="col-md-8 p-3 wa-editor-panel d-flex flex-column">
-                            <form id="whatsappMessageForm" autocomplete="off" novalidate>
+                            <form id="whatsappMessageForm" class="d-flex flex-column flex-grow-1" autocomplete="off" novalidate>
                                 <input type="hidden" id="waPatientId" name="patient_id" value="">
                                 <input type="hidden" id="waAppointmentId" name="appointment_id" value="">
                                 <input type="hidden" id="waTemplateId" name="template_id" value="">
@@ -88,37 +88,6 @@ $__isSec = ($__role === 'secretary');
                                     </small>
                                 </div>
 
-                                <!-- Optional Fields Layout -->
-                                <div class="row g-2 mb-3">
-                                    <div class="col-md-4">
-                                        <select class="form-select form-select-sm" id="waRelatedEye" name="related_eye">
-                                            <option value="not_applicable"><?= $__isSec ? 'العين: غير محدد' : 'Eye: Not Applicable' ?></option>
-                                            <option value="right"><?= $__isSec ? 'العين اليمنى (OD)' : 'Right Eye (OD)' ?></option>
-                                            <option value="left"><?= $__isSec ? 'العين اليسرى (OS)' : 'Left Eye (OS)' ?></option>
-                                            <option value="both"><?= $__isSec ? 'العينين (OU)' : 'Both Eyes (OU)' ?></option>
-                                        </select>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <select class="form-select form-select-sm" id="waRelatedService" name="related_service">
-                                            <option value=""><?= $__isSec ? 'الخدمة: غير محدد' : 'Service: Not Specified' ?></option>
-                                            <option value="consultation"><?= $__isSec ? 'كشف / استشارة' : 'Consultation / FollowUp' ?></option>
-                                            <option value="surgery"><?= $__isSec ? 'عملية جراحية' : 'Surgery / Operation' ?></option>
-                                            <option value="injection"><?= $__isSec ? 'حقن داخل العين' : 'Intravitreal Injection' ?></option>
-                                            <option value="investigation"><?= $__isSec ? 'فحوصات / أشعة' : 'Investigation / OCT' ?></option>
-                                        </select>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <select class="form-select form-select-sm" id="waRelatedTestType" name="related_test_type">
-                                            <option value=""><?= $__isSec ? 'نوع الفحص: غير محدد' : 'Test Type: Not Specified' ?></option>
-                                            <option value="OCT">OCT</option>
-                                            <option value="Fundus Photo"><?= $__isSec ? 'تصوير قاع العين' : 'Fundus Photo' ?></option>
-                                            <option value="Visual Field"><?= $__isSec ? 'مجال الإبصار' : 'Visual Field' ?></option>
-                                            <option value="Topography"><?= $__isSec ? 'تصوير قرنية' : 'Topography' ?></option>
-                                            <option value="Pachymetry"><?= $__isSec ? 'سمك القرنية' : 'Pachymetry' ?></option>
-                                            <option value="Other"><?= $__isSec ? 'أخرى' : 'Other' ?></option>
-                                        </select>
-                                    </div>
-                                </div>
                             </form>
                         </div>
                     </div>

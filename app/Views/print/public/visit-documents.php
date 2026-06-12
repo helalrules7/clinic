@@ -98,9 +98,28 @@ $group2 = $hasGlasses || $hasLabs || $hasRad; // sheet 2
         ul.instr li { padding: 12px 14px; border: 1px solid var(--border); border-radius: 12px; margin-bottom: 9px; background: rgba(255,255,255,.025); }
         ul.instr li b { color: var(--indigo-2); display: block; margin-bottom: 3px; }
         .foot { text-align: center; color: var(--muted); font-size: 12px; padding: 12px 4px 0; }
-        .actionbar { position: fixed; inset-block-end: 0; inset-inline: 0; background: var(--bg-2); border-top: 1px solid var(--border); padding: 12px 14px; display: flex; justify-content: center; box-shadow: 0 -6px 24px rgba(0,0,0,.5); }
-        .btn { appearance: none; border: 0; cursor: pointer; color: #fff; font-family: inherit; background: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%); font-size: 16px; font-weight: 800; padding: 13px 28px; border-radius: 14px; width: 100%; max-width: 520px; box-shadow: 0 10px 26px rgba(79,70,229,.45); }
+        .actionbar { position: fixed; inset-block-end: 0; inset-inline: 0; background: var(--bg-2); border-top: 1px solid var(--border); padding: 12px 14px; display: flex; justify-content: center; gap: 10px; box-shadow: 0 -6px 24px rgba(0,0,0,.5); }
+        .btn { appearance: none; border: 0; cursor: pointer; color: #fff; font-family: inherit; background: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%); font-size: 15px; font-weight: 800; padding: 13px 14px; border-radius: 14px; flex: 1 1 0; max-width: 240px; box-shadow: 0 10px 26px rgba(79,70,229,.45); display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+        .btn.btn-print { background: transparent; color: var(--indigo-2); border: 2px solid var(--indigo-2); box-shadow: none; }
         .btn:active { transform: translateY(1px); }
+        .btn[disabled] { opacity: .7; cursor: default; }
+
+        /* Light theme used while rasterizing to PDF (html2pdf) — mirrors @media print */
+        body.pdf-mode { background: #fff; color: #111; background-image: none; }
+        body.pdf-mode .wrap { padding: 0; max-width: 100%; }
+        body.pdf-mode .card { border: 0; box-shadow: none; background: #fff; }
+        body.pdf-mode .header { background: #fff; border-bottom: 2px solid #4F46E5; }
+        body.pdf-mode .header h1 { color: #312E81; }
+        body.pdf-mode .header .addr { color: #444; }
+        body.pdf-mode .report-badge { color: #312E81; border-color: #312E81; background: #fff; }
+        body.pdf-mode .meta { background: #fff; color: #111; }
+        body.pdf-mode .meta b { color: #555; }
+        body.pdf-mode .section h2, body.pdf-mode .section h2 .tag, body.pdf-mode .gl-eye, body.pdf-mode .dtable td, body.pdf-mode ul.instr li b { color: #111; }
+        body.pdf-mode .dtable th { background: #EEF2FF; color: #312E81; }
+        body.pdf-mode ul.instr li { background: #fff; border-color: #ccc; }
+        body.pdf-mode .group-2.has-prev { break-before: page; page-break-before: always; }
+        body.pdf-mode .section, body.pdf-mode .dtable, body.pdf-mode ul.instr li { break-inside: avoid; page-break-inside: avoid; }
+        body.pdf-mode .actionbar { display: none; }
 
         @media print {
             body { background: #fff !important; color: #111 !important; background-image: none; }
@@ -146,16 +165,19 @@ $group2 = $hasGlasses || $hasLabs || $hasRad; // sheet 2
                             <div class="report-badge">تقرير الزيارة</div>
                         </div>
                     </td></tr>
-                </thead>
-                <tbody>
-                    <tr><td class="body-cell">
-
+                    <tr><td style="padding:0;">
+                        <!-- v12: patient + doctor now live INSIDE the repeating thead so they
+                             show at the top of EVERY printed page, like the clinic header. -->
                         <div class="meta">
                             <span><b>المريض:</b> <?= $e($dash($patient['full_name'] ?? '')) ?></span>
                             <?php if (!empty($patient['age'])): ?><span><b>السن:</b> <?= $e($patient['age']) ?> سنة</span><?php endif; ?>
-                            <?php if (!empty($docClean)): ?><span><b>الطبيب:</b> د. <?= $e($docClean) ?></span><?php endif; ?>
+                            <?php if (!empty($docClean)): ?><span><b>الطبيب المعالج:</b> د. <?= $e($docClean) ?></span><?php endif; ?>
                             <?php if ($visitDate): ?><span><b>تاريخ الزيارة:</b> <?= $e($visitDate) ?></span><?php endif; ?>
                         </div>
+                    </td></tr>
+                </thead>
+                <tbody>
+                    <tr><td class="body-cell">
 
                         <!-- ===== Sheet 1: prescription (priority) + instructions ===== -->
                         <?php if ($group1): ?>
@@ -293,7 +315,35 @@ $group2 = $hasGlasses || $hasLabs || $hasRad; // sheet 2
     </div>
 
     <div class="actionbar no-print">
-        <button type="button" class="btn" onclick="window.print()">⬇️ تحميل / طباعة التقرير PDF</button>
+        <button type="button" class="btn btn-download" id="btnDownload">⬇️ تحميل PDF</button>
+        <button type="button" class="btn btn-print" onclick="window.print()">🖨️ طباعة</button>
     </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script>
+        (function () {
+            var btn = document.getElementById('btnDownload');
+            if (!btn) return;
+            btn.addEventListener('click', function () {
+                // No library (offline / CDN blocked) → fall back to the print dialog.
+                if (typeof html2pdf === 'undefined') { window.print(); return; }
+                var el = document.querySelector('.card');
+                document.body.classList.add('pdf-mode');
+                var label = btn.textContent;
+                btn.disabled = true; btn.textContent = '... جاري التحضير';
+                html2pdf().set({
+                    margin: [8, 6, 8, 6],
+                    filename: 'visit-report.pdf',
+                    image: { type: 'jpeg', quality: 0.96 },
+                    html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
+                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                    pagebreak: { mode: ['css', 'legacy'] }
+                }).from(el).save().then(function () {
+                    document.body.classList.remove('pdf-mode'); btn.disabled = false; btn.textContent = label;
+                }).catch(function () {
+                    document.body.classList.remove('pdf-mode'); btn.disabled = false; btn.textContent = label; window.print();
+                });
+            });
+        })();
+    </script>
 </body>
 </html>
