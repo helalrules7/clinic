@@ -60,8 +60,10 @@ put_status();
 function pdoFor($which) {
     $host = $_ENV['DB_HOST'] ?? 'localhost';
     if ($which === 'drugs') {
+        // Defaults MUST match DoctorController::getDrugsDatabaseConnection() — the prod
+        // .env has no DRUGS_DB_* keys, and the drugs DB user differs from the main one.
         $db = $_ENV['DRUGS_DB_NAME'] ?? 'hclinic_drugs';
-        $u  = $_ENV['DRUGS_DB_USER'] ?? 'hclinic_roaya';
+        $u  = $_ENV['DRUGS_DB_USER'] ?? 'hclinic_drugs';
         $p  = $_ENV['DRUGS_DB_PASS'] ?? 'Carmen@1230';
     } else {
         $db = $_ENV['DB_NAME'] ?? 'hclinic_roaya';
