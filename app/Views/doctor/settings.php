@@ -882,6 +882,79 @@
                             </button>
                         </div>
                     </form>
+
+                    <!-- ════ v12: Backup ════ -->
+                    <style>
+                        #backupSection .backup-options { display:grid; grid-template-columns:1fr; gap:10px; }
+                        @media (min-width:768px){ #backupSection .backup-options { grid-template-columns:1fr 1fr 1fr; } }
+                        #backupSection .backup-card { display:flex; flex-direction:column; gap:8px; padding:14px; border:1px solid var(--border,rgba(148,163,184,.3)); border-radius:12px; background:var(--bg-alt,rgba(148,163,184,.05)); }
+                        #backupSection .backup-card-icon { font-size:1.5rem; color:var(--accent,#4f46e5); }
+                        #backupSection .backup-card-title { font-weight:700; }
+                        #backupSection .backup-card-desc { font-size:.82rem; color:var(--muted,#64748b); flex:1; }
+                        #backupSection .backup-card .btn { align-self:flex-start; }
+                        #backupSection .backup-list { display:flex; flex-direction:column; gap:8px; }
+                        #backupSection .backup-row { display:flex; align-items:center; gap:10px; padding:10px 12px; border:1px solid var(--border,rgba(148,163,184,.3)); border-radius:10px; }
+                        #backupSection .backup-row .bk-name { font-family:monospace; font-size:.82rem; word-break:break-all; flex:1; }
+                        #backupSection .backup-row .bk-badge { font-size:.66rem; font-weight:700; text-transform:uppercase; padding:2px 7px; border-radius:999px; background:rgba(99,102,241,.14); color:#4f46e5; white-space:nowrap; }
+                        #backupSection .backup-row .bk-meta { font-size:.74rem; color:var(--muted,#64748b); white-space:nowrap; }
+                        #backupSection .backup-progress { margin-top:14px; padding:12px; border:1px solid var(--border,rgba(148,163,184,.3)); border-radius:10px; }
+                    </style>
+                    <div class="settings-section" id="backupSection">
+                        <h5><i class="fas fa-database me-2"></i>Backup</h5>
+                        <div class="form-text mb-3" style="margin-top:-6px">
+                            Generate downloadable backups. Files are stored on the server and listed below; every doctor is notified when a backup is ready. (No automatic restore.)
+                        </div>
+                        <div class="backup-options">
+                            <div class="backup-card">
+                                <div class="backup-card-icon"><i class="fas fa-database"></i></div>
+                                <div class="backup-card-title">Databases</div>
+                                <div class="backup-card-desc">The clinic database and/or the drugs database (SQL).</div>
+                                <button type="button" class="btn btn-primary btn-sm" id="backupDbBtn"><i class="fas fa-download me-1"></i>Backup</button>
+                            </div>
+                            <div class="backup-card">
+                                <div class="backup-card-icon"><i class="fas fa-box-archive"></i></div>
+                                <div class="backup-card-title">Databases + Uploads</div>
+                                <div class="backup-card-desc">Both databases plus all attachments and uploaded files.</div>
+                                <button type="button" class="btn btn-primary btn-sm" data-backup-type="database_uploads"><i class="fas fa-download me-1"></i>Backup</button>
+                            </div>
+                            <div class="backup-card">
+                                <div class="backup-card-icon"><i class="fas fa-server"></i></div>
+                                <div class="backup-card-title">Full system</div>
+                                <div class="backup-card-desc">Both databases + the entire public_html + scheduled jobs, compressed. Large &amp; slow.</div>
+                                <button type="button" class="btn btn-primary btn-sm" data-backup-type="system"><i class="fas fa-download me-1"></i>Backup</button>
+                            </div>
+                        </div>
+
+                        <div id="backupProgress" class="backup-progress" hidden>
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span id="backupProgressLabel" class="small fw-bold">Preparing…</span>
+                                <span id="backupProgressPct" class="small text-muted">0%</span>
+                            </div>
+                            <div class="progress" style="height:8px;"><div id="backupProgressBar" class="progress-bar progress-bar-striped progress-bar-animated bg-primary" style="width:0%"></div></div>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center mt-4 mb-2">
+                            <div class="fw-bold"><i class="fas fa-clock-rotate-left me-1"></i>Available backups</div>
+                            <button type="button" class="btn btn-outline-secondary btn-sm" id="backupRefreshBtn"><i class="fas fa-rotate"></i></button>
+                        </div>
+                        <div id="backupList" class="backup-list"><div class="text-muted small">Loading…</div></div>
+                    </div>
+
+                    <!-- DB scope chooser -->
+                    <div class="modal fade" id="backupDbModal" tabindex="-1" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered modal-sm">
+                            <div class="modal-content">
+                                <div class="modal-header"><h5 class="modal-title"><i class="fas fa-database me-2"></i>Database Backup</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                                <div class="modal-body">
+                                    <p class="text-muted small mb-3">Choose which database(s) to back up.</p>
+                                    <div class="form-check mb-2"><input class="form-check-input" type="radio" name="backupDbScope" id="bdScopeBoth" value="both" checked><label class="form-check-label" for="bdScopeBoth"><b>Both</b> — clinic + drugs</label></div>
+                                    <div class="form-check mb-2"><input class="form-check-input" type="radio" name="backupDbScope" id="bdScopeMain" value="main"><label class="form-check-label" for="bdScopeMain">Clinic database only</label></div>
+                                    <div class="form-check"><input class="form-check-input" type="radio" name="backupDbScope" id="bdScopeDrugs" value="drugs"><label class="form-check-label" for="bdScopeDrugs">Drugs database only</label></div>
+                                </div>
+                                <div class="modal-footer"><button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button><button type="button" class="btn btn-primary btn-sm" id="backupDbConfirm"><i class="fas fa-download me-1"></i>Create backup</button></div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

@@ -1403,21 +1403,10 @@ class AdminController
      */
     public function backup()
     {
-        $user = $this->auth->user();
-        
-        if (!$user || $user['role'] !== 'admin') {
-            header('Location: /admin/dashboard');
-            exit;
-        }
-        
-        $content = $this->view->render('admin/backup', []);
-        
-        echo $this->view->render('layouts/main', [
-            'title' => 'Database Backup & Restore - Admin',
-            'pageTitle' => 'Database Backup & Restore',
-            'pageSubtitle' => 'Backup and restore database',
-            'content' => $content
-        ]);
+        // v12: the backup hub moved into Settings (doctor + admin) — BackupController.
+        // Keep this route working by redirecting to the new section.
+        header('Location: /doctor/settings#backupSection');
+        exit;
     }
     
     /**

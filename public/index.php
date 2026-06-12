@@ -34,6 +34,7 @@ require_once __DIR__ . '/app/Controllers/PatientSummaryController.php';
 require_once __DIR__ . '/app/Controllers/ChatController.php';
 require_once __DIR__ . '/app/Controllers/WhatsappController.php';
 require_once __DIR__ . '/app/Controllers/PublicShareController.php';
+require_once __DIR__ . '/app/Controllers/BackupController.php';
 // require_once __DIR__ . '/app/Controllers/NotesController.php';
 
 // Load environment variables
@@ -83,7 +84,13 @@ try {
     $router->post('/admin/settings', 'AdminController@settings');
     $router->get('/admin/notifications', 'AdminController@notifications');
     $router->get('/admin/media', 'AdminController@media');
-    $router->get('/admin/backup', 'AdminController@backup');
+    $router->get('/admin/backup', 'AdminController@backup'); // v12: redirects to /doctor/settings (Backup section)
+    // v12 backup hub (doctor + admin) — replaces the old admin backup page
+    $router->post('/api/backup/create',   'BackupController@create');
+    $router->get('/api/backup/status',    'BackupController@status');
+    $router->get('/api/backup/list',      'BackupController@index');
+    $router->get('/api/backup/download',  'BackupController@download');
+    $router->post('/api/backup/delete',   'BackupController@delete');
     $router->get('/api/admin/media/list', 'AdminController@apiMediaList');
     $router->post('/api/admin/media/delete', 'AdminController@apiMediaDelete');
     $router->post('/api/admin/media/delete-all', 'AdminController@apiMediaDeleteAll');

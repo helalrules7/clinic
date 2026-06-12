@@ -1125,3 +1125,105 @@ async function saveClinicDetails() {
         saveBtn.textContent = 'Save / حفظ';
     }
 }
+/* ════════════════════════════════════════════════════════════════
+   v12 — Backup hub (Settings → Backup). Triggers server-side backups
+   (database / database+uploads / full system), polls progress, lists
+   downloadable archives. All doctors get a notification when ready.
+   ════════════════════════════════════════════════════════════════ */
+(function () {
+    var sectionEl = document.getElementById('backupSection');
+    if (!sectionEl) return;
+
+    function csrf() { var i = document.querySelector('input[name="csrf_token"]'); return i ? i.value : ''; }
+    function fmtSize(b) { if (!b) return '—'; var u = ['B','KB','MB','GB']; var i = 0; while (b >= 1024 && i < 3) { b /= 1024; i++; } return b.toFixed(b < 10 && i > 0 ? 1 : 0) + ' ' + u[i]; }
+    function fmtDate(ts) { try { return new Date(ts * 1000).toLocaleString(); } catch (e) { return ''; } }
+    var typeLabel = { database: 'Database', database_uploads: 'DB + Uploads', system: 'Full system', other: 'Backup' };
+
+    var listEl = document.getElementById('backupList');
+    var progEl = document.getElementById('backupProgress');
+    var progBar = document.getElementById('backupProgressBar');
+    var progLbl = document.getElementById('backupProgressLabel');
+    var progPct = document.getElementById('backupProgressPct');
+    var pollTimer = null;
+
+    function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]; }); }
+
+    function refreshList() {
+        fetch('/api/backup/list', { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+          .then(function (r) { return r.json(); }).then(function (d) {
+            if (!d.success) return;
+            var rows = '';
+            (d.running || []).forEach(function (s) {
+                rows += '<div class="backup-row"><span class="bk-badge">' + (typeLabel[s.type] || 'Backup') + '</span>'
+                     + '<span class="bk-name">' + esc(s.phase || 'working') + '… ' + (s.pct || 0) + '%</span>'
+                     + '<span class="bk-meta"><i class="fas fa-spinner fa-spin"></i> in progress</span></div>';
+            });
+            if (!(d.backups || []).length && !(d.running || []).length) {
+                listEl.innerHTML = '<div class="text-muted small">No backups yet.</div>'; return;
+            }
+            (d.backups || []).forEach(function (b) {
+                rows += '<div class="backup-row">'
+                    + '<span class="bk-badge">' + (typeLabel[b.type] || 'Backup') + '</span>'
+                    + '<span class="bk-name">' + esc(b.file) + '</span>'
+                    + '<span class="bk-meta">' + fmtSize(b.size) + ' · ' + fmtDate(b.mtime) + '</span>'
+                    + '<a class="btn btn-outline-primary btn-sm" href="/api/backup/download?file=' + encodeURIComponent(b.file) + '" title="Download"><i class="fas fa-download"></i></a>'
+                    + '<button type="button" class="btn btn-outline-danger btn-sm" data-bk-del="' + encodeURIComponent(b.file) + '" title="Delete"><i class="fas fa-trash"></i></button>'
+                    + '</div>';
+            });
+            listEl.innerHTML = rows;
+        }).catch(function () {});
+    }
+
+    function startBackup(type, scope) {
+        progEl.hidden = false; progBar.style.width = '0%'; progPct.textContent = '0%'; progLbl.textContent = 'Preparing…';
+        fetch('/api/backup/create', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': csrf() },
+            body: JSON.stringify({ type: type, scope: scope })
+        }).then(function (r) { return r.json(); }).then(function (d) {
+            if (!d.success || !d.job) { progEl.hidden = true; alert(d.message || 'Backup failed to start'); return; }
+            pollStatus(d.job);
+        }).catch(function () { progEl.hidden = true; alert('Backup request failed'); });
+    }
+
+    function pollStatus(job) {
+        if (pollTimer) clearInterval(pollTimer);
+        pollTimer = setInterval(function () {
+            fetch('/api/backup/status?job=' + encodeURIComponent(job), { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+              .then(function (r) { return r.json(); }).then(function (d) {
+                if (!d.success) return;
+                var s = d.status || {};
+                progBar.style.width = (s.pct || 0) + '%'; progPct.textContent = (s.pct || 0) + '%';
+                progLbl.textContent = (s.phase || 'working') + '…';
+                if (s.status === 'done') {
+                    clearInterval(pollTimer); progBar.style.width = '100%'; progPct.textContent = '100%'; progLbl.textContent = 'Ready';
+                    setTimeout(function () { progEl.hidden = true; }, 1500); refreshList();
+                } else if (s.status === 'error') {
+                    clearInterval(pollTimer); progEl.hidden = true; alert('Backup failed: ' + (s.error || '')); refreshList();
+                }
+            }).catch(function () {});
+        }, 1500);
+    }
+
+    document.getElementById('backupDbBtn').addEventListener('click', function () {
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('backupDbModal')).show();
+    });
+    document.getElementById('backupDbConfirm').addEventListener('click', function () {
+        var scope = (document.querySelector('input[name="backupDbScope"]:checked') || {}).value || 'both';
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('backupDbModal')).hide();
+        startBackup('database', scope);
+    });
+    sectionEl.querySelectorAll('[data-backup-type]').forEach(function (btn) {
+        btn.addEventListener('click', function () { startBackup(btn.getAttribute('data-backup-type'), 'both'); });
+    });
+    document.getElementById('backupRefreshBtn').addEventListener('click', refreshList);
+    listEl.addEventListener('click', function (e) {
+        var del = e.target.closest('[data-bk-del]'); if (!del) return;
+        var file = decodeURIComponent(del.getAttribute('data-bk-del'));
+        if (!confirm('Delete this backup?\n' + file)) return;
+        fetch('/api/backup/delete', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': csrf() }, body: JSON.stringify({ file: file }) })
+          .then(function (r) { return r.json(); }).then(function () { refreshList(); });
+    });
+
+    refreshList();
+})();

@@ -33,3 +33,4 @@ storage.zip
 
 # Local-only generated artifacts
 *.log
+/backups/
