@@ -150,8 +150,15 @@ Token shortened from 64-hex (256-bit) to **12 base62 chars** (`shortToken()`, ~7
 - The report page emits **Open Graph + Twitter Card** tags (`og:title`, `og:description`, `og:image` = absolute clinic-logo URL, `og:site_name`, `og:url`) so a shared link previews with the **clinic logo + name** — using **generic, PHI-free** title/description only.
 - **Preview-bot guard**: `PublicShareController::isPreviewBot()` detects WhatsApp/Facebook/Twitter/etc. crawlers and serves a lightweight `print/public/link-preview.php` (clinic branding only — **no patient/clinical data**), logged as `preview` and **not** consuming a use of the link. Real users get the full page.
 
+## 11. Patient-profile "Quick Send Templates" badges
+- The doctor patient page (`doctor/patient.php`) had **hardcoded** quick-send badges that passed made-up categories (`eye_drops`, `summary`, `investigation`, `follow_up`) — several pointing at templates that were removed, so they silently fell back to the first template. Replaced with a **dynamic** `#waQuickTemplates` container populated by `WhatsAppIntegration.renderQuickTemplates(containerId, patientId)`.
+- `renderQuickTemplates` pulls the **role-filtered** list from `/api/whatsapp/templates` and renders one badge per template; each badge calls `openModal(patientId, null, template.title)`. `renderTemplates` now matches the requested value against **category OR exact title**, so the badge opens the correct template every time, and only templates that actually exist are shown.
+- Added the same dynamic badges to the **secretary** patient page (`secretary/patient_details.php`) — since `getTemplates` filters by role, the secretary only ever sees **appointment templates** (Confirmation, Reminder, Follow-up, Cancellation). RTL badge labels use `translateTitleToArabic`.
+- The whole Patient Communication section is gated by `whatsapp_enabled` in both views (already the case; verified it disappears when the setting is off); `renderQuickTemplates` also early-returns when `WHATSAPP_CONFIG.enabled` is false (defense-in-depth).
+
 ## Files touched
 - NEW: `app/Controllers/PublicShareController.php`; `app/Views/print/public/{visit-documents,link-invalid,link-preview}.php`; `database/migrations/2026_06_13_prescription_share_links.sql`.
+- CHANGED (this section): `app/Views/doctor/patient.php` + `app/Views/secretary/patient_details.php` (dynamic quick-send badges); `app/Views/doctor/assets/js/whatsapp.js` (`renderQuickTemplates`, title-match).
 - CHANGED: `app/Controllers/WhatsappController.php` (mint/scope/revoke/shortToken, `{{clinic_phone}}`, labs/radiology, label, honorific, secretary template filter); `app/Views/doctor/assets/js/whatsapp.js` (privacy removal, bilingual alerts, no console.log); `app/Views/layouts/whatsapp-modal.php` (privacy block removed); `app/Views/doctor/appointment.php` (3 buttons → `report`); `app/Views/doctor/settings.php` (templates-manager dark mode); `index.php` + `public/index.php` (routes).
 
 ## Verification (local)

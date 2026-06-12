@@ -195,14 +195,47 @@
                 listContainer.appendChild(btn);
             });
 
-            // Auto select first template or matching category
+            // Auto select first template, or the one matching the requested
+            // category OR exact title (quick-send badges pass the template title).
             if (templatesCache.length > 0) {
                 let initial = templatesCache[0];
                 if (defaultCategory) {
-                    const match = templatesCache.find(t => t.category === defaultCategory);
+                    const match = templatesCache.find(t => t.category === defaultCategory || t.title === defaultCategory);
                     if (match) initial = match;
                 }
                 this.selectTemplate(initial);
+            }
+        },
+
+        // Render quick-send badges for a patient from the role-filtered template
+        // list (secretaries get appointment templates only). Each badge opens the
+        // modal with that exact template pre-selected.
+        renderQuickTemplates: async function(containerId, patientId) {
+            const box = document.getElementById(containerId);
+            if (!box) return;
+            // Defense-in-depth: never render quick-send badges if WhatsApp is off.
+            if (window.WHATSAPP_CONFIG && !window.WHATSAPP_CONFIG.enabled) { box.innerHTML = ''; return; }
+            try {
+                await this.loadTemplates();
+                const tpls = templatesCache || [];
+                box.innerHTML = '';
+                if (!tpls.length) return;
+                const isRtl = this._isRtl();
+                tpls.forEach(t => {
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'btn btn-outline-success btn-sm';
+                    const ic = document.createElement('i');
+                    ic.className = 'bi bi-chat-dots me-1';
+                    btn.appendChild(ic);
+                    const span = document.createElement('span');
+                    span.textContent = isRtl ? this.translateTitleToArabic(t.title) : t.title;
+                    btn.appendChild(span);
+                    btn.addEventListener('click', () => this.openModal(patientId, null, t.title));
+                    box.appendChild(btn);
+                });
+            } catch (e) {
+                box.innerHTML = '';
             }
         },
 
