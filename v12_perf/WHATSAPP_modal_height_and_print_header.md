@@ -1,6 +1,24 @@
 # v12 — WhatsApp modal full-height Message Content + repeating print header (patient+doctor)
 
 **Date:** 2026-06-12 · **Branch:** v_12_perf · **Shipped to prod:** yes (2026-06-12)
+**Files:** `app/Views/layouts/whatsapp-modal.php`, `app/Views/print/public/visit-documents.php`
+
+## Final behavior (TL;DR — the rest of this doc is the iteration log + gotchas)
+- **WhatsApp modal:** the *Message Content* textarea fills the full editor-panel height on desktop (the form is a
+  growing flex column); mobile unchanged.
+- **Visit report (`/p/v/{token}` — the WhatsApp "Comprehensive Visit Report"):**
+  - **Header** = logo + clinic name + address + phone **and** `المريض:` + `الطبيب المعالج:` + age + visit date.
+    Colons sit **after** the label. Header shows **once on screen**, and repeats **at the top of every page** in
+    the **PDF download and native print** only.
+  - **Smart pagination:** the five sections (Rx, medical instructions, glasses, labs, radiology) flow as siblings
+    and **reflow** to fill pages — if a section is absent the next pulls up; a section only moves to the next page
+    when it doesn't fit, and **a table is never split across two pages**.
+  - **Mechanisms (key gotcha):** native **print** repeats the header via the table `<thead>`
+    (`display:table-header-group`, which also auto-reserves space); the **PDF** (html2pdf/html2canvas) can't
+    repeat a thead, so it renders the body from `#reportBody` (excludes the thead) and **stamps a rasterised
+    header image on every page** via `pdf.addImage`, with `pagebreak: avoid-all` to prevent cuts. A `beforeprint`
+    + injected `@page{margin-top}` + `position:fixed` approach was tried and **rejected** (Chrome doesn't reliably
+    apply `@page` injected at `beforeprint`, which hid the first section).
 
 ## 1) WhatsApp modal — Message Content uses the full available height (desktop)
 `whatsapp-modal.php`: `.wa-editor-panel` is `d-flex flex-column`, but its only child was the `<form>` (a plain
