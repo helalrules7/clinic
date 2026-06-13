@@ -297,7 +297,7 @@ if ($status === 'completed') {
     <div class="col-lg-8">
         
         <!-- Patient Information -->
-        <div class="card mb-4">
+        <div class="card mb-4" id="patientINFO">
             <div class="card-header">
                 <h5 class="mb-0">
                     <i class="bi bi-person-badge me-2"></i>

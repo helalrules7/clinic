@@ -60,8 +60,12 @@ function closeConsultationEditor() {
     if (card) { card.style.display = 'none'; }
     document.body.classList.remove('consultation-editing');
     document.querySelectorAll('.consultation-section.editing').forEach(function (s) { s.classList.remove('editing'); });
-    // Back to the top of the page after Save / Cancel.
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    var notesCard = document.getElementById('medicalInstructionsCard');
+    if (notesCard) {
+        notesCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
 }
 
 function saveInlineConsultation() {
