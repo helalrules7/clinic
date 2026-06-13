@@ -1,8 +1,144 @@
 
+// ── Inline consultation editor ───────────────────────────────────────────────
+// Opens the consultation form IN the appointment page (no navigation to /edit).
+// The form is the same #consultationForm the standalone page uses, so the
+// already-loaded consultation-ai.js wires AI summarize / ICD-10 / autocomplete.
+var CONSULTATION_FIELDS = ['chief_complaint','hx_present_illness','systemic_disease','medication',
+    'visual_acuity_right','visual_acuity_left','refraction_right','refraction_left',
+    'IOP_right','IOP_left','slit_lamp_right','slit_lamp_left','fundus_right','fundus_left',
+    'external_appearance_right','external_appearance_left','eyelid_right','eyelid_left',
+    'diagnosis','diagnosis_code','plan','followup_days'];
+
 function editConsultation(appointmentId) {
-    // Redirect to edit consultation page
-    window.location.href = `/doctor/appointments/${appointmentId}/edit`;
+    // Back-compat shim — open the latest note inline.
+    var latest = (window.APPT_CONSULTATIONS || [])[0];
+    openConsultationEditor(latest ? latest.id : null);
 }
+
+function openConsultationEditor(noteId) {
+    var card = document.getElementById('consultationEditorCard');
+    var form = document.getElementById('consultationForm');
+    if (!card || !form) {
+        // Editor markup missing — fall back to the standalone page.
+        window.location.href = '/doctor/appointments/' + (window.APPT_ID || '') + '/edit'
+            + (noteId ? ('?note_id=' + noteId) : '/new');
+        return;
+    }
+    var notes = window.APPT_CONSULTATIONS || [];
+    var note = noteId ? notes.find(function (n) { return String(n.id) === String(noteId); }) : null;
+
+    CONSULTATION_FIELDS.forEach(function (f) {
+        var el = document.getElementById(f);
+        if (el) { el.value = (note && note[f] != null) ? note[f] : ''; }
+    });
+    document.getElementById('consultationNoteId').value = note ? note.id : '';
+    var title = document.getElementById('consultationEditorTitle');
+    if (title) { title.textContent = note ? 'Edit Consultation' : 'New Consultation'; }
+    var err = document.getElementById('consultationEditorError');
+    if (err) { err.style.display = 'none'; err.textContent = ''; }
+
+    // Highlight (and expand) the note being edited.
+    document.querySelectorAll('.consultation-section.editing').forEach(function (s) { s.classList.remove('editing'); });
+    if (note) {
+        var body = document.getElementById('note-' + note.id);
+        var section = body ? body.closest('.consultation-section') : null;
+        if (section) { section.classList.add('editing'); }
+        if (body && body.classList.contains('collapse')) { body.classList.add('show'); }
+    }
+
+    card.style.display = '';
+    // Hide the bottom dock while editing so the sticky Save/Cancel bar (also pinned
+    // to the bottom) is never covered by it.
+    document.body.classList.add('consultation-editing');
+    card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    var first = document.getElementById('chief_complaint');
+    if (first) { setTimeout(function () { first.focus(); }, 250); }
+}
+
+function closeConsultationEditor() {
+    var card = document.getElementById('consultationEditorCard');
+    if (card) { card.style.display = 'none'; }
+    document.body.classList.remove('consultation-editing');
+    document.querySelectorAll('.consultation-section.editing').forEach(function (s) { s.classList.remove('editing'); });
+    // Back to the top of the page after Save / Cancel.
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function saveInlineConsultation() {
+    var form = document.getElementById('consultationForm');
+    var btn = document.getElementById('consultationSaveBtn');
+    var err = document.getElementById('consultationEditorError');
+    if (!form) { return; }
+
+    // Required fields — parity with the standalone form.
+    var cc = document.getElementById('chief_complaint');
+    var dx = document.getElementById('diagnosis');
+    if (!cc || !cc.value.trim() || !dx || !dx.value.trim()) {
+        if (err) { err.textContent = 'Chief Complaint and Diagnosis are required.'; err.style.display = ''; }
+        (cc && !cc.value.trim() ? cc : dx).focus();
+        return;
+    }
+
+    var original = btn ? btn.innerHTML : '';
+    if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Saving…'; }
+    if (err) { err.style.display = 'none'; }
+
+    fetch(form.getAttribute('action'), {
+        method: 'POST',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        body: new FormData(form)
+    })
+    .then(function (r) { return r.json().catch(function () { return { success: false, message: 'Unexpected server response.' }; }); })
+    .then(function (res) {
+        if (!res || !res.success) {
+            if (err) { err.textContent = (res && res.message) || 'Could not save. Please try again.'; err.style.display = ''; }
+            if (btn) { btn.disabled = false; btn.innerHTML = original; }
+            return;
+        }
+        // Keep the in-memory notes fresh (from the just-submitted values) so a
+        // follow-up Edit shows current data without a reload.
+        var saved = { id: res.noteId };
+        CONSULTATION_FIELDS.forEach(function (f) { var el = document.getElementById(f); saved[f] = el ? el.value : ''; });
+        var notes = window.APPT_CONSULTATIONS || (window.APPT_CONSULTATIONS = []);
+        var idx = notes.findIndex(function (n) { return String(n.id) === String(res.noteId); });
+        if (idx >= 0) { Object.assign(notes[idx], saved); } else { notes.unshift(saved); }
+
+        // Re-render the read-only notes list in place (reuses the server markup).
+        refreshConsultationNotes().then(function () {
+            closeConsultationEditor();
+            if (btn) { btn.disabled = false; btn.innerHTML = original; }
+        });
+    })
+    .catch(function () {
+        if (err) { err.textContent = 'Network error. Please try again.'; err.style.display = ''; }
+        if (btn) { btn.disabled = false; btn.innerHTML = original; }
+    });
+}
+
+function refreshConsultationNotes() {
+    var container = document.getElementById('consultationNotesContainer');
+    if (!container) { window.location.reload(); return Promise.resolve(); }
+    return fetch(window.location.href, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+        .then(function (r) { return r.text(); })
+        .then(function (html) {
+            var doc = new DOMParser().parseFromString(html, 'text/html');
+            var fresh = doc.getElementById('consultationNotesContainer');
+            if (fresh) { container.innerHTML = fresh.innerHTML; }
+            else { window.location.reload(); }
+        })
+        .catch(function () { window.location.reload(); });
+}
+
+// Save button is type=submit — intercept and route through the AJAX save.
+document.addEventListener('DOMContentLoaded', function () {
+    var form = document.getElementById('consultationForm');
+    if (form && document.getElementById('consultationEditorCard')) {
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+            saveInlineConsultation();
+        });
+    }
+});
 
 function addPrescription(appointmentId) {
     // Show prescription modal
@@ -20,8 +156,8 @@ function rescheduleAppointment(appointmentId) {
 }
 
 function addConsultationNotes(appointmentId) {
-    // Redirect to edit consultation page (where notes can be added/edited)
-    window.location.href = `/doctor/appointments/${appointmentId}/edit`;
+    // Open a blank consultation form inline (was: navigate to /edit).
+    openConsultationEditor(null);
 }
 
 function markCompleted(appointmentId) {

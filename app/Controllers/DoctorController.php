@@ -353,7 +353,13 @@ class DoctorController
         $latestNote = !empty($consultationNotes) ? $consultationNotes[0] : null;
         $latestDiagnosis = $latestNote['diagnosis'] ?? '';
         $latestDiagnosisCode = trim((string) ($latestNote['diagnosis_code'] ?? ''));
-        
+
+        // Ensure a CSRF token exists — the inline consultation editor posts the
+        // consultation form straight from this page (same token updateConsultation checks).
+        if (!isset($_SESSION['csrf_token'])) {
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+        }
+
         $content = $this->view->render('doctor/appointment', [
             'appointment' => $appointment,
             'patient' => $patient,
@@ -514,13 +520,23 @@ class DoctorController
             return;
         }
         
+        // Inline editor (appointment page) posts the same form via XHR and wants
+        // JSON back; the standalone edit page keeps its redirect behaviour.
+        $isAjax = (($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '') === 'XMLHttpRequest');
+
         // CSRF Protection
         if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== ($_SESSION['csrf_token'] ?? '')) {
+            if ($isAjax) {
+                http_response_code(419);
+                header('Content-Type: application/json');
+                echo json_encode(['success' => false, 'message' => 'Invalid CSRF token']);
+                exit;
+            }
             http_response_code(403);
             header('Location: /doctor/appointments/' . $id . '/edit?error=' . urlencode('Invalid CSRF token'));
             exit;
         }
-        
+
         try {
             // Check if we're updating existing note or creating new one
             $noteId = $_POST['note_id'] ?? null;
@@ -648,11 +664,24 @@ class DoctorController
                 $this->createMedicalHistoryFromConsultation($appointment['patient_id'], $_POST, $appointment, $user['id']);
             }
             
+            if ($isAjax) {
+                $savedId = $noteId ?: ($newNoteId ?? null);
+                header('Content-Type: application/json');
+                echo json_encode(['success' => true, 'noteId' => $savedId]);
+                exit;
+            }
+
             // Redirect back to appointment view
             header('Location: /doctor/appointments/' . $id . '?success=1');
             exit;
-            
+
         } catch (\Exception $e) {
+            if ($isAjax) {
+                http_response_code(500);
+                header('Content-Type: application/json');
+                echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+                exit;
+            }
             header('Location: /doctor/appointments/' . $id . '/edit?error=' . urlencode($e->getMessage()));
             exit;
         }

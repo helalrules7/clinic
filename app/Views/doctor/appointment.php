@@ -26,9 +26,9 @@ $__waEnabled = (($__waS['whatsapp_enabled'] ?? '0') === '1') && (($__waS['whatsa
         <a href="/doctor/patients/<?= $appointment['patient_id'] ?? '' ?>" class="btn btn-outline-secondary hide-pa-on-mobile">
             <i class="bi bi-person"></i> Patient Profile
         </a>
-        <a href="/doctor/appointments/<?= $appointment['id'] ?? '' ?>/edit" class="btn btn-primary hide-edit-on-mobile">
+        <button type="button" class="btn btn-primary hide-edit-on-mobile" onclick="openConsultationEditor(<?= !empty($consultationNotes) ? (int)$consultationNotes[0]['id'] : 'null' ?>)">
             <i class="bi bi-pencil-square"></i> Edit Consultation
-        </a>
+        </button>
     </div>
 </div>
 
@@ -327,6 +327,7 @@ if ($status === 'completed') {
         </div>
 
         <!-- Consultation Notes -->
+        <div id="consultationNotesContainer">
         <?php if (!empty($consultationNotes)): ?>
         <div class="card mb-4">
             <div class="card-header">
@@ -336,16 +337,19 @@ if ($status === 'completed') {
                         Consultation Notes
                         <span class="badge bg-primary ms-2"><?= count($consultationNotes) ?> Note<?= count($consultationNotes) > 1 ? 's' : '' ?></span>
                     </h5>
-                    <div class="btn-group btn-group-sm" role="group">
+                    <div class="btn-group btn-group-sm consult-actions" role="group">
                         <button class="btn btn-draw-consultation" type="button" onclick="DrawConsultation && DrawConsultation.openForAppointment(<?= $appointment['id'] ?>, <?= $patient['id'] ?>)" title="Open the drawing canvas">
                             <i class="bi bi-pencil-square me-1"></i>Draw Consultation
                         </button>
-                        <button class="btn btn-outline-primary" onclick="editConsultation(<?= $appointment['id'] ?>)">
+                        <button class="btn" onclick="openConsultationEditor(<?= (int)$consultationNotes[0]['id'] ?>)">
                             <i class="bi bi-pencil me-1"></i>Edit Latest
                         </button>
-                        <button class="btn btn-outline-success" onclick="window.location.href='/doctor/appointments/<?= $appointment['id'] ?>/edit/new'">
+                        <button class="btn" onclick="openConsultationEditor(null)">
                             <i class="bi bi-plus me-1"></i>Add New
                         </button>
+                        <a href="/doctor/appointments/<?= (int)$appointment['id'] ?>/edit" class="btn" title="Open the full (previous) editor page directly">
+                            <i class="bi bi-box-arrow-up-right me-1"></i>Full Editor
+                        </a>
                     </div>
                 </div>
             </div>
@@ -371,8 +375,8 @@ if ($status === 'completed') {
                                     <?php endif; ?>
                                 </div>
                                 <div class="btn-group btn-group-sm" role="group">
-                                    <button class="btn btn-outline-primary btn-sm" 
-                                            onclick="window.location.href='/doctor/appointments/<?= $appointment['id'] ?>/edit?note_id=<?= $note['id'] ?>'"
+                                    <button class="btn btn-outline-primary btn-sm"
+                                            onclick="openConsultationEditor(<?= (int)$note['id'] ?>)"
                                             title="Edit this note">
                                         <i class="bi bi-pencil"></i>
                                     </button>
@@ -724,7 +728,7 @@ if ($status === 'completed') {
                 <i class="bi bi-clipboard-pulse text-muted" style="font-size: 3rem;"></i>
                 <p class="text-muted mt-2 mb-0">No consultation notes recorded</p>
                 <div class="d-inline-flex gap-2 mt-3 flex-wrap justify-content-center">
-                    <button class="btn btn-outline-primary" onclick="addConsultationNotes(<?= $appointment['id'] ?>)">
+                    <button class="btn btn-outline-primary" onclick="openConsultationEditor(null)">
                         <i class="bi bi-plus me-2"></i>Add Consultation Notes
                     </button>
                     <button class="btn btn-draw-consultation" type="button" onclick="DrawConsultation && DrawConsultation.openForAppointment(<?= $appointment['id'] ?>, <?= $patient['id'] ?>)" title="Open the drawing canvas">
@@ -734,6 +738,82 @@ if ($status === 'completed') {
             </div>
         </div>
         <?php endif; ?>
+        </div><!-- /#consultationNotesContainer -->
+
+        <!-- Inline consultation editor — opens IN this page instead of navigating
+             to /edit. Same <form id="consultationForm"> the standalone page uses,
+             so the already-loaded consultation-ai.js wires AI / ICD-10 / autocomplete. -->
+        <div class="card mb-4" id="consultationEditorCard" style="display:none;">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="bi bi-clipboard2-pulse me-2"></i>
+                    <span id="consultationEditorTitle">Consultation</span>
+                </h5>
+                <a href="/doctor/appointments/<?= (int)$appointment['id'] ?>/edit" class="btn btn-sm btn-outline-secondary" title="Open the full (previous) editor page instead">
+                    <i class="bi bi-box-arrow-up-right me-1"></i>Full page
+                </a>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-danger" id="consultationEditorError" style="display:none;"></div>
+                <form method="POST" action="/doctor/appointments/<?= (int)$appointment['id'] ?>/edit" id="consultationForm">
+                    <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>">
+                    <input type="hidden" name="note_id" id="consultationNoteId" value="">
+                    <?php $consultation = []; include __DIR__ . '/partials/consultation_form.php'; ?>
+                    <div class="d-flex justify-content-end gap-2 consultation-editor-actions">
+                        <button type="button" class="btn btn-secondary" onclick="closeConsultationEditor()">
+                            <i class="bi bi-x-circle me-1"></i>Cancel
+                        </button>
+                        <button type="submit" class="btn btn-primary" id="consultationSaveBtn">
+                            <i class="bi bi-check-circle me-1"></i>Save Consultation
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <style>
+            .consultation-section.editing { outline: 2px solid var(--accent, #6366f1); outline-offset: 4px; border-radius: 8px; }
+            #consultationEditorCard .cai-icd-popover { z-index: 5; }
+
+            /* Save / Cancel stay pinned to the bottom of the screen while you scroll
+               through the (long) consultation form — z above the dock so it's never
+               covered. Unsticks naturally at the end of the form. */
+            #consultationEditorCard .consultation-editor-actions {
+                position: sticky;
+                bottom: 0;
+                z-index: 1041;
+                background: var(--card);
+                margin-top: 1.25rem;
+                padding: .75rem 0;
+                border-top: 1px solid var(--border);
+            }
+            /* While the inline editor is open, hide the bottom dock so it can't sit
+               on top of the sticky Save/Cancel bar. */
+            body.consultation-editing #quickAccessDock { display: none !important; }
+
+            /* Consultation action group — one continuous indigo→pink gradient sweep
+               across the four filled buttons (each button's right-edge colour matches
+               the next button's left edge, so the seams read as one smooth bar). */
+            .consult-actions > .btn {
+                color: #fff !important;
+                border: none !important;
+                font-weight: 600;
+                box-shadow: none !important;
+                transition: filter .15s ease, transform .15s ease;
+            }
+            .consult-actions > .btn i { color: #fff !important; }
+            .consult-actions > .btn:nth-child(1) { background: linear-gradient(90deg, #6366f1, #8b5cf6) !important; }
+            .consult-actions > .btn:nth-child(2) { background: linear-gradient(90deg, #8b5cf6, #a855f7) !important; }
+            .consult-actions > .btn:nth-child(3) { background: linear-gradient(90deg, #a855f7, #d946ef) !important; }
+            .consult-actions > .btn:nth-child(4) { background: linear-gradient(90deg, #d946ef, #ec4899) !important; }
+            .consult-actions > .btn:hover { filter: brightness(1.08); color: #fff !important; }
+            .consult-actions > .btn:active { transform: translateY(1px); }
+            /* hairline separators so each clickable region stays legible */
+            .consult-actions > .btn + .btn { box-shadow: inset 1px 0 0 rgba(255,255,255,.18) !important; }
+        </style>
+        <script>
+            window.APPT_ID = <?= (int)$appointment['id'] ?>;
+            window.APPT_CONSULTATIONS = <?= json_encode(array_values($consultationNotes ?? []), JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE) ?>;
+        </script>
 
     </div>
 

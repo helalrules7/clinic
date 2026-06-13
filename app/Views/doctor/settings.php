@@ -888,12 +888,12 @@
                         </div>
 
                         <!-- Action Buttons -->
-                        <div class="d-flex justify-content-end gap-2 mt-4">
+                        <div class="d-flex justify-content-end gap-2 mt-4" id="settingsRealActions">
                             <button type="button" class="btn btn-outline-secondary" onclick="resetForm()">
                                 <i class="fas fa-undo me-2"></i>
                                 Reset
                             </button>
-                            <button type="submit" class="btn btn-primary">
+                            <button type="submit" class="btn btn-primary" id="settingsSaveBtn">
                                 <i class="fas fa-save me-2"></i>
                                 Save Settings
                             </button>
@@ -1392,3 +1392,87 @@
     background: var(--card) !important;
     }
 </style>
+
+<!-- ════ Floating Save/Reset bar — reveals on scroll-down, hides when the real
+        action buttons are in view (so they're never duplicated). Solid surface
+        (var(--card)) → looks correct in Performance Mode too. ════ -->
+<style>
+    .settings-floating-actions {
+        position: fixed;
+        left: 50%;
+        bottom: 88px; /* float ABOVE the quick-access dock that sits at the bottom */
+        transform: translateX(-50%) translateY(24px);
+        z-index: 1041; /* above the dock (1040); hidden via JS while a modal is open */
+        display: flex;
+        gap: 10px;
+        padding: 10px 14px;
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        box-shadow: 0 8px 28px rgba(0, 0, 0, 0.18);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity .22s ease, transform .22s ease;
+    }
+    .settings-floating-actions.is-visible {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+        pointer-events: auto;
+    }
+    .settings-floating-actions .btn { white-space: nowrap; }
+    @media (max-width: 575px) {
+        .settings-floating-actions { left: 14px; right: 14px; transform: translateY(24px); justify-content: center; }
+        .settings-floating-actions.is-visible { transform: translateY(0); }
+    }
+</style>
+
+<div class="settings-floating-actions" id="settingsFloatingActions" aria-hidden="true">
+    <button type="button" class="btn btn-outline-secondary btn-sm" id="floatingResetBtn">
+        <i class="fas fa-undo me-2"></i>Reset
+    </button>
+    <button type="button" class="btn btn-primary btn-sm" id="floatingSaveBtn">
+        <i class="fas fa-save me-2"></i>Save Settings
+    </button>
+</div>
+
+<script>
+    (function () {
+        var bar = document.getElementById('settingsFloatingActions');
+        var realActions = document.getElementById('settingsRealActions');
+        if (!bar) return;
+
+        // Reveal once the user has scrolled down a little, but hide again when the
+        // real Reset/Save row is on screen — no duplicate buttons at the bottom.
+        var ticking = false;
+        function update() {
+            ticking = false;
+            var y = window.scrollY || document.documentElement.scrollTop || 0;
+            var realVisible = false;
+            if (realActions) {
+                var r = realActions.getBoundingClientRect();
+                realVisible = r.top < (window.innerHeight - 40) && r.bottom > 0;
+            }
+            var modalOpen = document.body.classList.contains('modal-open');
+            bar.classList.toggle('is-visible', y > 120 && !realVisible && !modalOpen);
+        }
+        window.addEventListener('scroll', function () {
+            if (!ticking) { ticking = true; requestAnimationFrame(update); }
+        }, { passive: true });
+        window.addEventListener('resize', update);
+        // Modals don't fire scroll — re-evaluate on open/close so the bar tucks away.
+        document.addEventListener('show.bs.modal', function () { setTimeout(update, 0); });
+        document.addEventListener('hidden.bs.modal', function () { setTimeout(update, 0); });
+        update();
+
+        // Mirror the real controls exactly: click the real submit button / reset.
+        var fSave = document.getElementById('floatingSaveBtn');
+        var fReset = document.getElementById('floatingResetBtn');
+        if (fSave) fSave.addEventListener('click', function () {
+            var real = document.getElementById('settingsSaveBtn');
+            if (real) real.click();
+        });
+        if (fReset) fReset.addEventListener('click', function () {
+            if (typeof resetForm === 'function') resetForm();
+        });
+    })();
+</script>

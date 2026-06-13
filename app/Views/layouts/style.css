@@ -11228,6 +11228,27 @@
     flex-shrink: 0;
 }
 
+/* FIX (appointment + patient pages): the two rules above pin the Next-Appointment
+   column to `flex-shrink:0` and force `overflow:visible`, so when the eye-tools
+   column is also present the notice bar can't fit and overflows the viewport on
+   mobile (horizontal page scroll). Let column-3 shrink + ellipsis-truncate on
+   small screens — wins via !important + later source order than 11222/11226. */
+@media (max-width: 768px) {
+    .notice-bar-column-3 {
+        flex-shrink: 1 !important;
+        min-width: 0 !important;
+        overflow: hidden !important;
+    }
+    .notice-bar-column-3 .notice-bar-appointment-slider,
+    .notice-bar-column-3 .appointment-scroller,
+    .notice-bar-column-3 .appointment-inner {
+        min-width: 0 !important;
+        max-width: 100% !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis;
+    }
+}
+
 /* Hide button text when sidebar is open and overlapping with notice-bar */
 .sidebar.show ~ .main-content .notice-bar .notice-bar-ophthalmology-tools-btn span {
     display: none !important;
