@@ -410,6 +410,7 @@ try {
     $router->get('/api/appointments/{id}/glasses', 'ApiController@getAppointmentGlasses');
     $router->get('/api/appointments/{id}/followup', 'ApiController@getFollowupAppointment');
     $router->get('/api/appointments/{id}/original', 'ApiController@getOriginalAppointment');
+    $router->get('/api/appointments/{id}/consultations', 'ApiController@getAppointmentConsultations');
     $router->get('/api/appointments/{id}', 'ApiController@getAppointment');
     $router->post('/api/appointments', 'ApiController@createAppointment');
     $router->put('/api/appointments/{id}', 'ApiController@updateAppointment');

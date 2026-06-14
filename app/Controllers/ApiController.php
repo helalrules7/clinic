@@ -124,6 +124,29 @@ class ApiController
         }
     }
 
+    /**
+     * Read-only consultation notes for an appointment (mobile appointment view).
+     * Mirrors DoctorController::getConsultationNotes — returns the full
+     * consultation_notes rows (chief complaint, OD/OS eye exam, diagnosis+ICD,
+     * plan, …) newest first.
+     */
+    public function getAppointmentConsultations($id)
+    {
+        try {
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            }
+            $stmt = $this->pdo->prepare(
+                "SELECT * FROM consultation_notes WHERE appointment_id = ? ORDER BY created_at DESC"
+            );
+            $stmt->execute([(int)$id]);
+            $notes = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+            return $this->jsonResponse(['ok' => true, 'data' => $notes]);
+        } catch (\Exception $e) {
+            return $this->jsonResponse(['error' => $e->getMessage()], 500);
+        }
+    }
+
     public function getAllClinics()
     {
         try {
