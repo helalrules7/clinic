@@ -4245,6 +4245,74 @@ class ApiController
         }
     }
 
+    /**
+     * Clinic-scope guard for a single patient_attachments row (closes a
+     * cross-clinic IDOR). Doctors/admins keep cross-clinic visibility by
+     * design; secretaries may only touch attachments whose patient belongs
+     * to their own clinic. Legacy rows with no clinic are left accessible.
+     */
+    private function attachmentInScope($attachment)
+    {
+        $user = $this->auth->user();
+        if (!$user) {
+            return false;
+        }
+        if (($user['role'] ?? null) !== 'secretary') {
+            return true; // doctors/admins have cross-clinic visibility by design
+        }
+        $secClinic = $user['clinic_id'] ?? null;
+        if (empty($secClinic)) {
+            return false;
+        }
+        $patientId = $attachment['patient_id'] ?? null;
+        if (!$patientId) {
+            return true; // unlinked legacy attachment — no clinic to violate
+        }
+        try {
+            $stmt = $this->pdo->prepare("SELECT clinic_id FROM patients WHERE id = ? LIMIT 1");
+            $stmt->execute([$patientId]);
+            $pc = $stmt->fetchColumn();
+        } catch (\Throwable $e) {
+            return true;
+        }
+        if ($pc === false || $pc === null) {
+            return true; // legacy NULL-clinic patient
+        }
+        return (int)$pc === (int)$secClinic;
+    }
+
+    /** Clinic-scope guard for an appointment id (secretary cross-clinic). */
+    private function appointmentInScope($appointmentId)
+    {
+        $user = $this->auth->user();
+        if (!$user) {
+            return false;
+        }
+        if (($user['role'] ?? null) !== 'secretary') {
+            return true;
+        }
+        $secClinic = $user['clinic_id'] ?? null;
+        if (empty($secClinic)) {
+            return false;
+        }
+        try {
+            $stmt = $this->pdo->prepare("
+                SELECT COALESCE(a.clinic_id, p.clinic_id) AS clinic_id
+                FROM appointments a
+                LEFT JOIN patients p ON p.id = a.patient_id
+                WHERE a.id = ? LIMIT 1
+            ");
+            $stmt->execute([$appointmentId]);
+            $cc = $stmt->fetchColumn();
+        } catch (\Throwable $e) {
+            return true;
+        }
+        if ($cc === false || $cc === null) {
+            return true;
+        }
+        return (int)$cc === (int)$secClinic;
+    }
+
     public function viewAttachment($id)
     {
         try {
@@ -4259,6 +4327,11 @@ class ApiController
 
             if (!$attachment) {
                 http_response_code(404);
+                return;
+            }
+
+            if (!$this->attachmentInScope($attachment)) {
+                http_response_code(403);
                 return;
             }
 
@@ -4300,6 +4373,11 @@ class ApiController
 
             if (!$attachment) {
                 http_response_code(404);
+                return;
+            }
+
+            if (!$this->attachmentInScope($attachment)) {
+                http_response_code(403);
                 return;
             }
 
@@ -4372,6 +4450,11 @@ class ApiController
                 return;
             }
 
+            if (!$this->attachmentInScope($attachment)) {
+                http_response_code(403);
+                return;
+            }
+
             $filePath = __DIR__ . '/../../' . $attachment['file_path'];
 
             if (!file_exists($filePath)) {
@@ -4409,6 +4492,10 @@ class ApiController
 
             if (!$attachment) {
                 return $this->jsonResponse(['success' => false, 'message' => 'Attachment not found']);
+            }
+
+            if (!$this->attachmentInScope($attachment)) {
+                return $this->jsonResponse(['success' => false, 'message' => 'Forbidden'], 403);
             }
 
             // Delete from database
@@ -4511,6 +4598,10 @@ class ApiController
         try {
             if (!$this->auth->check()) {
                 return $this->jsonResponse(['success' => false, 'message' => 'Unauthorized'], 401);
+            }
+
+            if (!$this->appointmentInScope($appointmentId)) {
+                return $this->jsonResponse(['success' => false, 'message' => 'Forbidden'], 403);
             }
 
             // Pagination — `perPage = 0` means "no pagination", return everything.
@@ -4942,6 +5033,16 @@ class ApiController
     public function createLabTest()
     {
         try {
+            // Auth: lab orders are clinical writes; was previously reachable
+            // unauthenticated. Doctor/admin only.
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            }
+            $user = $this->auth->user();
+            if (($user['role'] ?? null) !== 'doctor' && ($user['role'] ?? null) !== 'admin') {
+                return $this->jsonResponse(['error' => 'Forbidden'], 403);
+            }
+
             // Get data from request - support both JSON and form data
             $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
             $input = [];
@@ -5034,6 +5135,15 @@ class ApiController
     public function updateLabTest($testId)
     {
         try {
+            // Auth: clinical write; was previously reachable unauthenticated.
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            }
+            $user = $this->auth->user();
+            if (($user['role'] ?? null) !== 'doctor' && ($user['role'] ?? null) !== 'admin') {
+                return $this->jsonResponse(['error' => 'Forbidden'], 403);
+            }
+
             // Get JSON data from request body
             $input = json_decode(file_get_contents('php://input'), true);
 
@@ -13850,6 +13960,14 @@ class ApiController
     public function getCommonComplaints()
     {
         try {
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            }
+            $user = $this->auth->user();
+            if (($user['role'] ?? null) !== 'doctor' && ($user['role'] ?? null) !== 'admin') {
+                return $this->jsonResponse(['error' => 'Forbidden'], 403);
+            }
+
             $seedFile = __DIR__ . '/../Data/common_complaints.json';
             $cachedFile = __DIR__ . '/../storage/common_complaints.json';
 
@@ -13991,6 +14109,16 @@ class ApiController
     public function getConsultationSuggestions()
     {
         try {
+            // Auth: this returns real prior-patient consultation text (PHI) and
+            // was previously reachable unauthenticated. Doctor/admin only.
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            }
+            $user = $this->auth->user();
+            if (($user['role'] ?? null) !== 'doctor' && ($user['role'] ?? null) !== 'admin') {
+                return $this->jsonResponse(['error' => 'Forbidden'], 403);
+            }
+
             $field = $_GET['field'] ?? '';
             $query = trim($_GET['query'] ?? '');
 

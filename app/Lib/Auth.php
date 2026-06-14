@@ -132,7 +132,78 @@ class Auth
             }
         }
 
+        // Mobile API: opaque Bearer access token (no session / no cookie).
+        // Runs LAST so the web Session/Cookie path is completely unaffected.
+        if ($this->checkBearerToken()) {
+            return true;
+        }
+
         return false;
+    }
+
+    /**
+     * Mobile API authentication: resolve an opaque Bearer access token into a
+     * user, mirroring the session shape so every existing controller gate
+     * ($this->auth->check()/user()/requireRole()) and clinic scoping keep
+     * working unchanged. No cookie is persisted — the mobile client is
+     * stateless and sends none, so this never becomes a web session.
+     */
+    private function checkBearerToken()
+    {
+        $raw = $this->getBearerToken();
+        if ($raw === null) {
+            return false;
+        }
+
+        // The mobile token lib is not in the composer classmap; load on demand.
+        if (!class_exists('App\\Lib\\MobileToken')) {
+            require_once __DIR__ . '/MobileToken.php';
+        }
+
+        $token = (new MobileToken($this->pdo))->verifyAccess($raw);
+        if (!$token) {
+            return false;
+        }
+
+        // Re-fetch the user every request (enforces is_active immediately, just
+        // like the session path) rather than trusting a cached token payload.
+        $user = $this->getUserById($token['user_id']);
+        if (!$user) {
+            return false;
+        }
+
+        $this->user = $user;
+
+        // Hydrate the request-scoped session shape used everywhere downstream.
+        $_SESSION['user_id']       = $user['id'];
+        $_SESSION['user']          = $user;
+        $_SESSION['role']          = $user['role'];
+        $_SESSION['last_activity'] = time();
+        $_SESSION['mobile_token']  = true;
+
+        return true;
+    }
+
+    /** Extract an opaque Bearer token (64 hex chars) from the Authorization header. */
+    private function getBearerToken()
+    {
+        $header = $_SERVER['HTTP_AUTHORIZATION']
+            ?? $_SERVER['REDIRECT_HTTP_AUTHORIZATION']
+            ?? '';
+
+        if ($header === '' && function_exists('getallheaders')) {
+            foreach (getallheaders() as $k => $v) {
+                if (strtolower($k) === 'authorization') {
+                    $header = $v;
+                    break;
+                }
+            }
+        }
+
+        if (preg_match('/^Bearer\s+([a-f0-9]{64})$/i', trim((string) $header), $m)) {
+            return strtolower($m[1]);
+        }
+        return null;
     }
     
     /**
@@ -515,7 +586,19 @@ class Auth
         // Clear all sessions for this user
         $stmt = $this->pdo->prepare("DELETE FROM user_sessions WHERE user_id = ?");
         $stmt->execute([$userId]);
-        
+
+        // Also revoke any mobile (Bearer) tokens for this user so a password
+        // change immediately logs out every device. Non-fatal on un-migrated
+        // installs (the table may not exist yet).
+        try {
+            if (!class_exists('App\\Lib\\MobileToken')) {
+                require_once __DIR__ . '/MobileToken.php';
+            }
+            (new MobileToken($this->pdo))->revokeAllForUser($userId, 'password_change');
+        } catch (\Throwable $e) {
+            // ignore — mobile token table not present
+        }
+
         // Clear current session data (will force re-login)
         session_destroy();
         session_start();

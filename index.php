@@ -34,6 +34,7 @@ require_once __DIR__ . '/app/Controllers/PatientSummaryController.php';
 require_once __DIR__ . '/app/Controllers/ChatController.php';
 require_once __DIR__ . '/app/Controllers/WhatsappController.php';
 require_once __DIR__ . '/app/Controllers/PublicShareController.php';
+require_once __DIR__ . '/app/Controllers/MobileController.php';
 // require_once __DIR__ . '/app/Controllers/NotesController.php';
 
 // Load environment variables
@@ -72,7 +73,18 @@ try {
     $router->post('/login', 'AuthController@login');
     $router->get('/logout', 'AuthController@logout');
     $router->get('/api/auth/session-time', 'AuthController@getSessionTime');
-    
+
+    // ── Mobile API (native app) ──────────────────────────────────────────
+    // Opaque Bearer-token auth, parallel to the web Session/Cookie login.
+    // Keep these literal paths in sync with public/index.php.
+    $router->get('/api/mobile/handshake', 'MobileController@handshake');
+    $router->post('/api/mobile/login', 'MobileController@login');
+    $router->post('/api/mobile/refresh', 'MobileController@refresh');
+    $router->post('/api/mobile/logout', 'MobileController@logout');
+    $router->get('/api/mobile/me', 'MobileController@me');
+    $router->post('/api/mobile/device-token', 'MobileController@registerDevice');
+    $router->delete('/api/mobile/device-token', 'MobileController@unregisterDevice');
+
     // Admin routes
     $router->get('/admin/dashboard', 'AdminController@dashboard');
     $router->get('/admin/users', 'AdminController@users');
