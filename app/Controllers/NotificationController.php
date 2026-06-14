@@ -264,7 +264,41 @@ class NotificationController
 
         $stmt->execute([$userId, $type, $title, $message, $relatedType, $relatedId, $patientId, $groupKey]);
 
-        return $pdo->lastInsertId();
+        $notifId = $pdo->lastInsertId();
+
+        // Best-effort mobile push. PHI-safe: a generic body by type (full detail
+        // lives behind auth in the app). Never blocks the request.
+        try {
+            if (!class_exists('App\\Services\\ExpoPushSender')) {
+                require_once __DIR__ . '/../Services/ExpoPushSender.php';
+            }
+            (new \App\Services\ExpoPushSender($pdo))->sendToUser(
+                $userId,
+                $title ?: 'H-Clinic',
+                self::pushBodyForType($type),
+                ['route' => '/(app)/notifications', 'notificationId' => (int)$notifId, 'type' => $type]
+            );
+        } catch (\Throwable $e) {
+            // ignore — push is optional
+        }
+
+        return $notifId;
+    }
+
+    /** Generic, PHI-free push body for a notification type. */
+    private static function pushBodyForType($type)
+    {
+        switch ($type) {
+            case 'appointment':   return 'You have an appointment update.';
+            case 'payment':       return 'A payment was recorded.';
+            case 'mention':       return 'You were mentioned in a discussion.';
+            case 'message':       return 'You have a new message.';
+            case 'todo':
+            case 'todo_due':
+            case 'todo_reminder': return 'A to-do needs your attention.';
+            case 'alert':         return 'You have a new alert.';
+            default:              return 'Open H-Clinic to view.';
+        }
     }
 
     /**
