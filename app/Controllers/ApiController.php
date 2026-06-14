@@ -107,7 +107,7 @@ class ApiController
             }
 
             $stmt = $this->pdo->query("
-                SELECT d.id, d.user_id, d.display_name, d.specialization, u.name AS user_name
+                SELECT d.id, d.user_id, d.display_name, u.name AS user_name
                 FROM doctors d
                 JOIN users u ON d.user_id = u.id
                 WHERE u.is_active = 1
@@ -524,6 +524,17 @@ class ApiController
                     return $this->jsonResponse(['error' => 'Your account has no clinic assigned'], 403);
                 }
                 $data['clinic_id'] = (int)$currentUser['clinic_id'];
+            }
+
+            // A doctor always books for themselves — force doctor_id to their own
+            // doctors.id (mirrors the web doctor calendar, which has no doctor picker).
+            if (($currentUser['role'] ?? null) === 'doctor') {
+                $docStmt = $this->pdo->prepare("SELECT id FROM doctors WHERE user_id = ? LIMIT 1");
+                $docStmt->execute([(int)($currentUser['id'] ?? 0)]);
+                $ownDoctorId = $docStmt->fetchColumn();
+                if ($ownDoctorId) {
+                    $data['doctor_id'] = (int)$ownDoctorId;
+                }
             }
 
             if (!$this->validator->validate($data, $rules)) {
