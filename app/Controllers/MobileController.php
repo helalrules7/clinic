@@ -49,10 +49,17 @@ class MobileController
             ?? $settings['clinic_name']
             ?? Constants::APP_NAME;
 
+        // Clinic logo — relative path; the mobile app prefixes the clinic base URL.
+        // A dark-mode variant is derived (roaya ships Light.png / Dark.png).
+        $clinicLogo     = $settings['clinic_logo'] ?? '/assets/images/Light.png';
+        $clinicLogoDark = $settings['clinic_logo_dark'] ?? preg_replace('/light/i', 'Dark', $clinicLogo);
+
         $this->respond([
             'ok'                 => true,
             'app'                => 'clinic-system',
             'clinic_name'        => $clinicName,
+            'clinic_logo'        => $clinicLogo,
+            'clinic_logo_dark'   => $clinicLogoDark,
             'version'            => Constants::APP_VERSION,
             'mobile_api_version' => self::MOBILE_API_VERSION,
             'auth_type'          => 'mobile_token',
