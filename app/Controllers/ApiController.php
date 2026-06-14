@@ -93,13 +93,44 @@ class ApiController
         }
     }
 
+    /**
+     * Active doctors list for appointment-booking pickers (mobile add-appointment
+     * modal). Returns the real `doctors.id` (what createAppointment needs) plus
+     * the linked user id/name so a doctor-role client can preselect itself.
+     * Role-agnostic read (any authenticated user).
+     */
+    public function getDoctors()
+    {
+        try {
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            }
+
+            $stmt = $this->pdo->query("
+                SELECT d.id, d.user_id, d.display_name, d.specialization, u.name AS user_name
+                FROM doctors d
+                JOIN users u ON d.user_id = u.id
+                WHERE u.is_active = 1
+                ORDER BY d.display_name ASC, d.id ASC
+            ");
+            $doctors = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+            return $this->jsonResponse([
+                'ok' => true,
+                'data' => $doctors
+            ]);
+        } catch (\Exception $e) {
+            return $this->jsonResponse(['error' => $e->getMessage()], 500);
+        }
+    }
+
     public function getAllClinics()
     {
         try {
             if (!$this->auth->check()) {
                 return $this->jsonResponse(['error' => 'Unauthorized'], 401);
             }
-            
+
             $user = $this->auth->user();
             if ($user['role'] !== 'doctor' && $user['role'] !== 'admin') {
                 return $this->jsonResponse(['error' => 'Forbidden'], 403);

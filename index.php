@@ -364,6 +364,7 @@ try {
     $router->get('/api/clinics/all', 'ApiController@getAllClinics');
     $router->post('/api/clinics/{id}', 'ApiController@updateClinic');
     $router->get('/api/clinics', 'ApiController@getClinics');
+    $router->get('/api/doctors', 'ApiController@getDoctors');
     $router->get('/api/calendar', 'ApiController@getCalendar');
     $router->get('/api/calendar/version', 'ApiController@calendarVersion');
     // --- Chat (doctor<->secretary) — see ChatController + CHAT_FEATURE_PLAN.md ---
