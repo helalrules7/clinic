@@ -2440,6 +2440,76 @@ function buildPatientsPageQuery(page) {
     return params;
 }
 
+// ---------------------------------------------------------------------------
+// Background polling (replaces the old "reload the whole list" auto-refresh).
+//
+// A signature is built from the data the server returns for the CURRENT page.
+// The 60s timer compares the fresh signature against the last one rendered and
+// only re-renders when something actually changed. When nothing changed (the
+// common case) the DOM is left completely untouched, so the table never blinks
+// and the scroll position is never disturbed.
+// ---------------------------------------------------------------------------
+let __patientsPollSig = null;
+
+function patientRowSignature(p) {
+    if (!p) return '';
+    return [
+        p.id, p.first_name, p.last_name, p.phone, p.alt_phone, p.gender, p.dob,
+        p.last_visit, p.last_clinic_id, p.last_clinic_name_ar, p.last_clinic_name_en,
+        p.last_clinic_code, p.total_appointments, p.color_marker,
+        p.created_by_doctor_name, p.created_by_name
+    ].join('');
+}
+
+function patientsPageSignature(patients, total, page) {
+    return page + '|' + total + '|' + (patients || []).map(patientRowSignature).join('');
+}
+
+// Poll the current page in place. Skips entirely when nothing changed.
+function pollPatientsData() {
+    // The Folders view owns its own auto-refresh; leave it alone here.
+    if (currentViewMode === 'folders') return;
+    // Legacy (non server-driven) pages keep the original AJAX refresh.
+    if (!paginationState.serverMode) { refreshPatientsData(); return; }
+
+    const page = paginationState.currentPage || 1;
+    const params = buildPatientsPageQuery(page);
+
+    fetch('/api/patients/paginated?' + params.toString(), {
+        method: 'GET',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (!data || !data.ok) return;
+        const patients = data.patients || [];
+        const total = (data.pagination && data.pagination.total) || 0;
+        const sig = patientsPageSignature(patients, total, page);
+
+        // Nothing changed since the last render → do not touch the DOM at all.
+        if (sig === __patientsPollSig) return;
+        __patientsPollSig = sig;
+
+        paginationState.filteredPatients = patients;
+        paginationState.serverTotal = total;
+        paginationState.totalItems = total;
+
+        if (currentViewMode === 'cards') {
+            renderPatientsCards();
+            if (typeof updatePaginationInfoCards === 'function') updatePaginationInfoCards();
+            if (typeof renderPaginationNavCards === 'function') renderPaginationNavCards();
+        } else {
+            // renderPatientsTable now swaps the tbody in a single synchronous
+            // pass, so this update keeps the scroll position put.
+            renderPatientsTable();
+            updatePaginationInfo();
+            renderPaginationNav();
+        }
+    })
+    .catch(() => { /* silent background poll */ });
+}
+window.pollPatientsData = pollPatientsData;
+
 // Fetch + render ONE page of the patient list. The single entry point for the
 // server-driven table/cards list — search, filters, sort, pagination all call this.
 function loadPatientsPage(page = 1) {
@@ -2463,6 +2533,8 @@ function loadPatientsPage(page = 1) {
         paginationState.serverTotal = (data.pagination && data.pagination.total) || 0;
         paginationState.totalItems = paginationState.serverTotal;
         paginationState.currentPage = (data.pagination && data.pagination.page) || targetPage;
+        // Keep the poll baseline in sync so the next tick is a no-op until the data changes.
+        __patientsPollSig = patientsPageSignature(paginationState.filteredPatients, paginationState.serverTotal, paginationState.currentPage);
 
         if (currentViewMode === 'cards') {
             renderPatientsCards();
@@ -2653,11 +2725,12 @@ function renderPatientsTable() {
         patientsToShow = filteredPatients.slice(startIndex, endIndex);
     }
 
-    // Clear table
-    tableBody.innerHTML = '';
-    
-    // Add delay for smooth transition
-    setTimeout(() => {
+    // v12_perf: render synchronously in a single innerHTML swap. The previous
+    // code cleared the tbody and refilled it 150ms later; during that empty gap
+    // the page height collapsed and the browser snapped the scroll to the top on
+    // every background refresh. Building the HTML first and swapping it in once
+    // keeps the row count (and therefore the scroll position) stable.
+    {
         if (patientsToShow.length === 0) {
             tableBody.innerHTML = `
                 <tr>
@@ -2890,7 +2963,7 @@ function renderPatientsTable() {
         // Remove loading state
         tableBody.parentElement.classList.remove('table-loading');
         
-    }, 150); // Short delay for smooth transition
+    }
 }
 
 // Update pagination information
@@ -4514,30 +4587,18 @@ function initializePhoneTooltips() {
     });
 }
 
-// Auto-refresh patients data every 60 seconds using AJAX (pause when modals are open or user is interacting)
+// Poll the patient list every 60 seconds. pollPatientsData() fetches the
+// CURRENT page and only re-renders when the data actually changed, so it no
+// longer reloads the whole list on every tick (which scrolled the table to the
+// top). It can safely run on any page/filter; we only pause while the user is
+// mid-interaction (a modal is open or they are typing in the search box).
 let refreshInterval = setInterval(() => {
-    const searchModal = document.getElementById('searchModal');
-    const addPatientModal = document.getElementById('addPatientModal');
-    const deleteModal = document.getElementById('deletePatientModal');
-    const deleteConfirmModal = document.getElementById('deletePatientConfirmModal');
-    const editPatientModal = document.getElementById('editPatientModal');
     const quickSearch = document.getElementById('quickSearch');
-    
-    // Don't refresh if user is actively using the page
-    const isUserActive = document.activeElement === quickSearch || 
-                        quickSearch.value.trim().length > 0 ||
-                        paginationState.currentPage > 1 ||
-                        paginationState.itemsPerPage !== 20 ||
-                        document.querySelector('.modal.show') !== null;
-    
-    if (!searchModal.classList.contains('show') && 
-        !addPatientModal.classList.contains('show') &&
-        !deleteModal.classList.contains('show') &&
-        !deleteConfirmModal.classList.contains('show') &&
-        !editPatientModal?.classList.contains('show') &&
-        !isUserActive) {
-        refreshPatientsData();
-    }
+    const anyModalOpen = document.querySelector('.modal.show') !== null;
+    const searchFocused = quickSearch && document.activeElement === quickSearch;
+
+    if (anyModalOpen || searchFocused) return;
+    pollPatientsData();
 }, 60000);
 
 // Function to refresh patients data via AJAX

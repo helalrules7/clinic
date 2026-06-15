@@ -1758,8 +1758,87 @@ function startPatientsAutoRefresh() {
     }, 60000); // 60 seconds
 }
 
+// ---------------------------------------------------------------------------
+// v12_perf: live, scroll-safe refresh of the (server-rendered) patients table.
+// The row markup is owned by PHP, so instead of rebuilding rows in JS we fetch
+// the current URL, lift out #patientsTableBody and swap it in a SINGLE
+// synchronous assignment — there is no clear-then-refill gap, so the page
+// height never collapses and the scroll position is preserved. A signature
+// guard skips the swap when the rows are byte-for-byte unchanged, and we pause
+// while the user is sorting / searching / has a modal open so their current
+// view is never clobbered.
+// ---------------------------------------------------------------------------
+let __secPatientsTableSig = null;
+
+function __secHash(s) {
+    let h = 5381;
+    for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0;
+    return s.length + ':' + (h >>> 0);
+}
+
+function __secPatientsTablePaused() {
+    if (document.querySelector('.modal.show')) return true;
+    if (typeof currentSortColumn !== 'undefined' && currentSortColumn !== null) return true; // client-side sort active
+    const qs = document.getElementById('quickSearch');
+    if (qs && (document.activeElement === qs || qs.value.trim() !== '')) return true;        // searching
+    return false;
+}
+
+function refreshSecretaryPatientsTable() {
+    const tbody = document.getElementById('patientsTableBody');
+    if (!tbody) return;
+    if (__secPatientsTablePaused()) return;
+
+    fetch(window.location.href, {
+        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        credentials: 'same-origin'
+    })
+    .then(r => r.text())
+    .then(html => {
+        const doc = new DOMParser().parseFromString(html, 'text/html');
+        const fresh = doc.getElementById('patientsTableBody');
+        if (!fresh) return;
+
+        const sig = __secHash(fresh.innerHTML);
+        // First successful poll just records the baseline (the table already
+        // shows this exact server render). Comparing fetched-vs-fetched from
+        // here on avoids a spurious first swap from live-DOM serialization
+        // differences (e.g. Bootstrap tooltip init mutating row attributes).
+        if (__secPatientsTableSig === null) { __secPatientsTableSig = sig; return; }
+        if (sig === __secPatientsTableSig) return;   // unchanged -> leave DOM (and scroll) alone
+        __secPatientsTableSig = sig;
+
+        // state may have changed during the fetch — re-check before touching the DOM
+        if (__secPatientsTablePaused()) return;
+        const live = document.getElementById('patientsTableBody');
+        if (!live) return;
+
+        live.innerHTML = fresh.innerHTML;            // single synchronous swap = scroll-safe
+
+        // phone tooltips are delegated on document (they handle new rows
+        // automatically); only the per-element Bootstrap tooltips need re-init.
+        try {
+            live.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => {
+                const inst = bootstrap.Tooltip.getInstance(el);
+                if (inst) inst.dispose();
+                new bootstrap.Tooltip(el);
+            });
+        } catch (e) {}
+
+        // keep the header total in sync with the freshly rendered rows
+        const freshTotal = doc.getElementById('totalPatientsCount');
+        const liveTotal = document.getElementById('totalPatientsCount');
+        if (freshTotal && liveTotal) liveTotal.textContent = freshTotal.textContent;
+    })
+    .catch(() => { /* silent background refresh */ });
+}
+
 // Function to refresh patients data via AJAX
 function refreshPatientsData() {
+    // v12_perf: live-refresh the table rows in place (scroll-safe), alongside
+    // the background stats update below.
+    refreshSecretaryPatientsTable();
+
     // Get current filter values
     const search = document.getElementById('search')?.value || '';
     const gender = document.getElementById('gender')?.value || '';
