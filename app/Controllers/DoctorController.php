@@ -2087,6 +2087,39 @@ class DoctorController
         exit;
     }
 
+    /**
+     * JSON endpoint for the full drugs report (mobile). Mirrors the web
+     * `reports?type=drugs` page: reuses getDrugReportFilters() (reads the
+     * drug_company / drug_category / drug_route / continuation_window query
+     * params) and buildFullDrugReport() — returning the aggregate drug rows,
+     * company stats, monthly trend, regimen breakdown, and filter options.
+     */
+    public function apiDrugsReport()
+    {
+        header('Content-Type: application/json');
+        if (!$this->auth->check()) {
+            http_response_code(401);
+            echo json_encode(['ok' => false, 'error' => 'Unauthorized']);
+            exit;
+        }
+        $user = $this->auth->user();
+        $doctorId = $this->getDoctorId($user['id']);
+        $startDate = $_GET['start_date'] ?? date('Y-m-01');
+        $endDate = $_GET['end_date'] ?? date('Y-m-t');
+
+        try {
+            $filters = $this->getDrugReportFilters();
+            $report = $this->buildFullDrugReport($doctorId, $startDate, $endDate, $filters);
+            echo json_encode(array_merge(
+                ['ok' => true, 'type' => 'drugs', 'start_date' => $startDate, 'end_date' => $endDate],
+                $report
+            ));
+        } catch (\Exception $e) {
+            echo json_encode(['ok' => false, 'error' => 'Failed to generate drugs report']);
+        }
+        exit;
+    }
+
     private function getDoctorInfo($doctorId)
     {
         try {

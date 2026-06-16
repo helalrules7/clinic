@@ -469,6 +469,8 @@ try {
     $router->get('/api/missed-appointments', 'ApiController@getMissedAppointments');
     $router->get('/api/recent-activity', 'ApiController@getRecentActivity');
     $router->get('/api/dashboard-charts', 'ApiController@getDashboardCharts');
+    $router->get('/api/reports', 'DoctorController@apiReports');
+    $router->get('/api/reports/drugs', 'DoctorController@apiDrugsReport');
     $router->get('/api/patients/search', 'ApiController@searchPatients');
     $router->get('/api/patients/paginated', 'ApiController@getPatientsPaginated'); // v12_perf: server-side paged list
     $router->get('/api/patients', 'ApiController@getAllPatients');
