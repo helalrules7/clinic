@@ -601,9 +601,11 @@ try {
     $router->delete('/api/patients/files/{id}', 'ApiController@deletePatientFile');
     
     // Patient Notes API routes
+    $router->get('/api/patients/{id}/notes', 'ApiController@getPatientNotes');
     $router->post('/api/patients/notes', 'ApiController@createPatientNote');
     $router->put('/api/patients/notes/{id}', 'ApiController@updatePatientNote');
     $router->delete('/api/patients/notes/{id}', 'ApiController@deletePatientNote');
+    $router->get('/api/patients/{id}/payments', 'ApiController@getPatientPayments');
     
     // Patient Appointments API routes
     $router->get('/api/patients/{id}/appointments', 'ApiController@getPatientAppointments');

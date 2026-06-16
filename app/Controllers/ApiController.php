@@ -5879,6 +5879,101 @@ class ApiController
         }
     }
 
+    public function getPatientNotes($patientId)
+    {
+        try {
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            }
+
+            $patientId = (int) $patientId;
+            if ($patientId <= 0) {
+                return $this->jsonResponse(['error' => 'Invalid patient id'], 400);
+            }
+
+            $stmt = $this->pdo->prepare("SELECT id FROM patients WHERE id = ? LIMIT 1");
+            $stmt->execute([$patientId]);
+            if (!$stmt->fetch()) {
+                return $this->jsonResponse(['error' => 'Patient not found'], 404);
+            }
+
+            $stmt = $this->pdo->prepare("
+                SELECT pn.*, u.name AS doctor_name
+                FROM patient_notes pn
+                LEFT JOIN users u ON pn.doctor_id = u.id
+                WHERE pn.patient_id = ?
+                ORDER BY pn.created_at DESC
+            ");
+            $stmt->execute([$patientId]);
+            $notes = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+            return $this->jsonResponse([
+                'success' => true,
+                'notes' => $notes,
+            ]);
+        } catch (\Exception $e) {
+            return $this->jsonResponse(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    public function getPatientPayments($patientId)
+    {
+        try {
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            }
+
+            $user = $this->auth->user();
+            $role = $user['role'] ?? null;
+            if (!in_array($role, ['secretary', 'doctor', 'admin'], true)) {
+                return $this->jsonResponse(['error' => 'Permission denied'], 403);
+            }
+
+            $patientId = (int) $patientId;
+            if ($patientId <= 0) {
+                return $this->jsonResponse(['error' => 'Invalid patient id'], 400);
+            }
+
+            $where = 'p.patient_id = ?';
+            $params = [$patientId];
+            if ($role === 'secretary' && !empty($user['clinic_id'])) {
+                $where .= ' AND p.clinic_id = ?';
+                $params[] = (int) $user['clinic_id'];
+            }
+
+            $stmt = $this->pdo->prepare("
+                SELECT
+                    p.id,
+                    p.patient_id,
+                    p.amount,
+                    COALESCE(p.discount_amount, 0) AS discount_amount,
+                    p.is_exempt,
+                    p.method,
+                    p.type,
+                    p.description,
+                    p.created_at,
+                    CONCAT(pat.first_name, ' ', pat.last_name) AS patient_name,
+                    pat.phone AS patient_phone,
+                    u.name AS received_by_name
+                FROM payments p
+                LEFT JOIN patients pat ON p.patient_id = pat.id
+                LEFT JOIN users u ON p.received_by = u.id
+                WHERE {$where}
+                ORDER BY p.created_at DESC
+                LIMIT 100
+            ");
+            $stmt->execute($params);
+            $payments = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+            return $this->jsonResponse([
+                'ok' => true,
+                'payments' => $payments,
+            ]);
+        } catch (\Exception $e) {
+            return $this->jsonResponse(['error' => $e->getMessage()], 500);
+        }
+    }
+
     public function createMedicalHistory($patientId)
     {
         try {
