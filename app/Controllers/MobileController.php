@@ -186,6 +186,31 @@ class MobileController
         $this->respond(['ok' => true]);
     }
 
+    /**
+     * POST /api/mobile/web-ticket — mint a single-use, ~60s ticket for the
+     * mobile→web auto-login bridge. The Bearer access token authenticates this
+     * call (Authorization header) but is NEVER put in the bridge URL; the
+     * short-lived ticket is, so it can't leak anything useful via access logs.
+     */
+    public function webTicket()
+    {
+        if (!$this->auth->check()) {
+            $this->fail('unauthorized', 'Authentication required.', 401);
+        }
+        $user = $this->auth->user();
+        $res = (new MobileToken($this->pdo))->issueWebTicket((int) $user['id'], [
+            'clinic_id'  => $user['clinic_id'] ?? null,
+            'platform'   => 'web',
+            'ip'         => $this->clientIp(),
+            'user_agent' => $this->str($_SERVER['HTTP_USER_AGENT'] ?? null, 255),
+        ]);
+        $this->respond([
+            'ok'         => true,
+            'ticket'     => $res['ticket'],
+            'expires_in' => $res['expires_in'],
+        ]);
+    }
+
     /** GET /api/mobile/me — current user + clinic (fresh row, incl. profile_image). */
     public function me()
     {

@@ -82,16 +82,17 @@ class AuthController
 
     /**
      * Mobile → web auto-login bridge. The app opens this URL in its in-app
-     * browser with its Bearer token + a target path; we mint a real cookie-backed
-     * web session and redirect there, so the user lands already signed in (CSV /
-     * PDF export, full reports, etc.) without retyping credentials.
+     * browser with a single-use ticket (POST /api/mobile/web-ticket) + a target
+     * path; we mint a real cookie-backed web session and redirect there, so the
+     * user lands already signed in (CSV / PDF export, full reports, etc.) without
+     * retyping credentials. The long-lived access token never travels in the URL.
      */
     public function mobileWebLogin()
     {
-        $token = $_GET['token'] ?? '';
+        $ticket = $_GET['ticket'] ?? '';
         $redirect = $this->sanitizeRedirect($_GET['redirect'] ?? '/doctor/dashboard');
 
-        if ($this->auth->loginWithMobileToken($token)) {
+        if ($this->auth->loginWithWebTicket($ticket)) {
             session_write_close();
             UrlHelper::redirect($redirect);
         } else {

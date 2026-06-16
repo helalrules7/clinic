@@ -61,29 +61,26 @@ class Auth
     }
 
     /**
-     * Establish a REAL cookie-backed web session from a valid mobile Bearer
-     * access token. Used by the mobile→web bridge so the in-app browser lands
-     * already signed in. Unlike checkBearerToken() (request-scoped, no cookie),
-     * this calls createSession() so the browser keeps the PHPSESSID. Returns the
-     * user row on success, or false if the token is malformed / invalid.
+     * Establish a REAL cookie-backed web session from a single-use web ticket
+     * (minted by POST /api/mobile/web-ticket). Used by the mobile→web bridge so
+     * the in-app browser lands already signed in, WITHOUT the long-lived access
+     * token ever appearing in a URL. Unlike checkBearerToken() (request-scoped,
+     * no cookie), this calls createSession() so the browser keeps the PHPSESSID.
+     * Returns the user row on success, or false if the ticket is invalid /
+     * expired / already used.
      */
-    public function loginWithMobileToken($rawToken)
+    public function loginWithWebTicket($rawTicket)
     {
-        $raw = strtolower(trim((string) $rawToken));
-        if (!preg_match('/^[a-f0-9]{64}$/', $raw)) {
-            return false;
-        }
-
         if (!class_exists('App\\Lib\\MobileToken')) {
             require_once __DIR__ . '/MobileToken.php';
         }
 
-        $token = (new MobileToken($this->pdo))->verifyAccess($raw);
-        if (!$token) {
+        $userId = (new MobileToken($this->pdo))->consumeWebTicket($rawTicket);
+        if (!$userId) {
             return false;
         }
 
-        $user = $this->getUserById($token['user_id']);
+        $user = $this->getUserById($userId);
         if (!$user) {
             return false;
         }

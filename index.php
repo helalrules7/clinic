@@ -82,6 +82,7 @@ try {
     $router->post('/api/mobile/login', 'MobileController@login');
     $router->post('/api/mobile/refresh', 'MobileController@refresh');
     $router->post('/api/mobile/logout', 'MobileController@logout');
+    $router->post('/api/mobile/web-ticket', 'MobileController@webTicket');
     $router->get('/api/mobile/me', 'MobileController@me');
     $router->get('/api/mobile/profile', 'MobileController@profile');
     $router->post('/api/mobile/profile/update', 'MobileController@updateProfile');

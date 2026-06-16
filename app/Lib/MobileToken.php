@@ -26,6 +26,9 @@ class MobileToken
     /** Refresh token lifetime (seconds). */
     const REFRESH_TTL = 2592000;     // 30 days
 
+    /** Web-login handoff ticket lifetime (seconds). Single-use, very short. */
+    const WEB_TICKET_TTL = 60;
+
     // DB-backed login rate limiting (mobile login only).
     const LOGIN_WINDOW       = 900;  // 15 minutes
     const LOGIN_MAX_PER_IP   = 15;   // failed attempts / window / IP
@@ -83,6 +86,53 @@ class MobileToken
         $upd->execute([$row['id']]);
 
         return $row;
+    }
+
+    /**
+     * Mint a single-use, ~60s "web ticket" — handed to /mobile/web-login so the
+     * real access token never travels in a URL. Returns ['ticket','expires_in'].
+     */
+    public function issueWebTicket($userId, array $ctx = [])
+    {
+        [$raw] = $this->insert($userId, 'web_ticket', $this->uuid4(), null, self::WEB_TICKET_TTL, $ctx);
+        return ['ticket' => $raw, 'expires_in' => self::WEB_TICKET_TTL];
+    }
+
+    /**
+     * Atomically consume a web ticket. Returns the user_id on success (and burns
+     * the ticket so it can never be replayed), or null if missing / expired /
+     * already used. The revoked 0→1 UPDATE with a rowCount() guard makes the
+     * single-use check race-safe against a double-tap / double-redirect.
+     */
+    public function consumeWebTicket($raw)
+    {
+        if (!$this->validShape($raw)) {
+            return null;
+        }
+
+        $stmt = $this->pdo->prepare(
+            "SELECT id, user_id FROM mobile_auth_tokens
+             WHERE token_hash = ? AND type = 'web_ticket' AND revoked = 0
+               AND (expires_at IS NULL OR expires_at > NOW())
+             LIMIT 1"
+        );
+        $stmt->execute([$this->hash($raw)]);
+        $row = $stmt->fetch();
+        if (!$row) {
+            return null;
+        }
+
+        $burn = $this->pdo->prepare(
+            "UPDATE mobile_auth_tokens
+             SET revoked = 1, revoked_reason = 'used', last_used_at = NOW()
+             WHERE id = ? AND revoked = 0"
+        );
+        $burn->execute([$row['id']]);
+        if ($burn->rowCount() !== 1) {
+            return null; // lost the race — another request already consumed it
+        }
+
+        return (int) $row['user_id'];
     }
 
     /**
