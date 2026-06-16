@@ -82,6 +82,9 @@ try {
     $router->post('/api/mobile/refresh', 'MobileController@refresh');
     $router->post('/api/mobile/logout', 'MobileController@logout');
     $router->get('/api/mobile/me', 'MobileController@me');
+    $router->get('/api/mobile/profile', 'MobileController@profile');
+    $router->post('/api/mobile/profile/update', 'MobileController@updateProfile');
+    $router->post('/api/mobile/profile/change-password', 'MobileController@changePassword');
     $router->post('/api/mobile/device-token', 'MobileController@registerDevice');
     $router->delete('/api/mobile/device-token', 'MobileController@unregisterDevice');
 
@@ -529,6 +532,8 @@ try {
     $router->delete('/api/patients/{id}', 'ApiController@deletePatient');
     $router->put('/api/patients/{id}/emergency-contact', 'ApiController@updateEmergencyContact');
     $router->post('/api/consultations', 'ApiController@createConsultation');
+    $router->put('/api/consultation-notes/{id}', 'ApiController@updateConsultationNote');
+    $router->delete('/api/consultation-notes/{id}', 'ApiController@deleteConsultationNote');
     // Consultation autocomplete + common-cases modal: the methods existed
     // but the routes were never registered, so edit_consultation.js's
     // autocomplete and "Common Cases" modal 404'd in production.
@@ -674,9 +679,6 @@ try {
     $router->get('/api/cataract-surgery/postop-outcome', 'ApiController@analyzePostOperativeOutcome');
     $router->get('/api/cataract-surgery/audit', 'ApiController@getSurgicalOutcomesAudit');
     
-    // Unified Clinical Dashboard API routes
-    $router->get('/api/clinical-dashboard/snapshot', 'ApiController@getClinicalDashboardSnapshot');
-        
     // Handle the request
     $router->dispatch();
     

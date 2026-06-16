@@ -186,13 +186,17 @@ class MobileController
         $this->respond(['ok' => true]);
     }
 
-    /** GET /api/mobile/me — current user + clinic. */
+    /** GET /api/mobile/me — current user + clinic (fresh row, incl. profile_image). */
     public function me()
     {
         if (!$this->auth->check()) {
             $this->fail('unauthorized', 'Authentication required.', 401);
         }
-        $user = $this->auth->user();
+        $session = $this->auth->user();
+        $user = $this->getUserById((int) ($session['id'] ?? 0));
+        if (!$user) {
+            $this->fail('unauthorized', 'Authentication required.', 401);
+        }
         $this->respond([
             'ok'     => true,
             'user'   => $this->publicUser($user),
@@ -286,14 +290,36 @@ class MobileController
             ?? null;
 
         return [
-            'id'        => (int) $user['id'],
-            'username'  => $user['username'] ?? null,
-            'name'      => $name,
-            'role'      => $user['role'] ?? null,
-            'clinic_id' => isset($user['clinic_id']) && $user['clinic_id'] !== null
+            'id'            => (int) $user['id'],
+            'username'      => $user['username'] ?? null,
+            'name'          => $name,
+            'role'          => $user['role'] ?? null,
+            'clinic_id'     => isset($user['clinic_id']) && $user['clinic_id'] !== null
                 ? (int) $user['clinic_id'] : null,
-            'specialty' => $user['specialty'] ?? null,
+            'specialty'     => $user['specialty'] ?? null,
+            'profile_image' => $this->profileImageUrl($user['profile_image'] ?? null),
         ];
+    }
+
+    /** Absolute, servable profile-image URL for the mobile client. */
+    private function profileImageUrl(?string $img): ?string
+    {
+        if (!$img) {
+            return null;
+        }
+        if (preg_match('#^https?://#i', $img)) {
+            return $img;
+        }
+        $path = strpos($img, '/public/') === 0 ? $img : '/public' . $img;
+        if (function_exists('avatar_thumb')) {
+            $path = avatar_thumb($path, 96) ?? $path;
+        }
+        $host = $_SERVER['HTTP_HOST'] ?? null;
+        if (!$host) {
+            return $path;
+        }
+        $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+        return $scheme . '://' . $host . $path;
     }
 
     private function clinicInfo($clinicId)
@@ -330,7 +356,10 @@ class MobileController
     private function getUserById($id)
     {
         $stmt = $this->pdo->prepare(
-            "SELECT u.*, d.display_name AS doctor_name, d.specialty
+            "SELECT u.*,
+                    d.display_name AS doctor_name,
+                    d.display_name_ar AS doctor_name_ar,
+                    d.specialty AS doctor_specialty
              FROM users u
              LEFT JOIN doctors d ON u.id = d.user_id
              WHERE u.id = ? AND u.is_active = 1
@@ -338,6 +367,259 @@ class MobileController
         );
         $stmt->execute([$id]);
         return $stmt->fetch() ?: null;
+    }
+
+    /** GET /api/mobile/profile — full editable profile (mirrors web profile page). */
+    public function profile()
+    {
+        if (!$this->auth->check()) {
+            $this->fail('unauthorized', 'Authentication required.', 401);
+        }
+        $user = $this->getUserById((int) ($this->auth->user()['id'] ?? 0));
+        if (!$user) {
+            $this->fail('unauthorized', 'Authentication required.', 401);
+        }
+        $this->respond(['ok' => true, 'profile' => $this->profilePayload($user)]);
+    }
+
+    /** POST /api/mobile/profile/update — multipart profile update (photo + fields). */
+    public function updateProfile()
+    {
+        if (!$this->auth->check()) {
+            $this->fail('unauthorized', 'Authentication required.', 401);
+        }
+        if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
+            $this->fail('invalid_request', 'POST required.', 405);
+        }
+
+        $session = $this->auth->user();
+        $userId  = (int) ($session['id'] ?? 0);
+        $role    = (string) ($session['role'] ?? '');
+
+        try {
+            if ($role === 'secretary') {
+                $profile = $this->updateSecretaryProfileMobile($userId);
+            } else {
+                $profile = $this->updateDoctorProfileMobile($userId);
+            }
+            $this->respond(['ok' => true, 'profile' => $profile, 'message' => 'Profile updated successfully.']);
+        } catch (\InvalidArgumentException $e) {
+            $this->fail('invalid_request', $e->getMessage(), 400);
+        } catch (\Throwable $e) {
+            $this->fail('server_error', 'Failed to update profile.', 500);
+        }
+    }
+
+    /** POST /api/mobile/profile/change-password { new_password, confirm_password } */
+    public function changePassword()
+    {
+        if (!$this->auth->check()) {
+            $this->fail('unauthorized', 'Authentication required.', 401);
+        }
+        if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
+            $this->fail('invalid_request', 'POST required.', 405);
+        }
+
+        $body            = $this->body();
+        $newPassword     = (string) ($body['new_password'] ?? '');
+        $confirmPassword = (string) ($body['confirm_password'] ?? '');
+        $userId          = (int) ($this->auth->user()['id'] ?? 0);
+
+        if ($newPassword === '' || $confirmPassword === '') {
+            $this->fail('invalid_request', 'All password fields are required.', 400);
+        }
+        if ($newPassword !== $confirmPassword) {
+            $this->fail('invalid_request', 'New passwords do not match.', 400);
+        }
+        if (strlen($newPassword) < 8) {
+            $this->fail('invalid_request', 'Password must be at least 8 characters.', 400);
+        }
+        if (!preg_match('/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/', $newPassword)) {
+            $this->fail('invalid_request', 'Password must contain uppercase, lowercase, and numbers.', 400);
+        }
+
+        try {
+            $hashed = password_hash($newPassword, PASSWORD_DEFAULT);
+            $stmt   = $this->pdo->prepare('UPDATE users SET password_hash = ?, updated_at = NOW() WHERE id = ?');
+            $stmt->execute([$hashed, $userId]);
+            $this->respond(['ok' => true, 'message' => 'Password updated successfully.']);
+        } catch (\Throwable $e) {
+            $this->fail('server_error', 'Failed to update password.', 500);
+        }
+    }
+
+    private function profilePayload(array $user): array
+    {
+        $out = $this->publicUser($user);
+        $out['email']          = $user['email'] ?? null;
+        $out['phone']          = $user['phone'] ?? null;
+        $out['is_active']      = (bool) ($user['is_active'] ?? false);
+        $out['last_login_at']  = $user['last_login_at'] ?? null;
+        $out['doctor_name']    = $user['doctor_name'] ?? null;
+        $out['doctor_name_ar'] = $user['doctor_name_ar'] ?? null;
+        $out['specialty']      = $user['doctor_specialty'] ?? $user['specialty'] ?? null;
+        $out['secretary_name'] = $user['secretary_name'] ?? null;
+        $out['department']     = $user['department'] ?? null;
+        return $out;
+    }
+
+    private function updateDoctorProfileMobile(int $userId): array
+    {
+        $name         = trim((string) ($_POST['name'] ?? ''));
+        $email        = trim((string) ($_POST['email'] ?? ''));
+        $phone        = trim((string) ($_POST['phone'] ?? ''));
+        $doctorName   = trim((string) ($_POST['doctor_name'] ?? ''));
+        $doctorNameAr = trim((string) ($_POST['doctor_name_ar'] ?? ''));
+        $specialty    = trim((string) ($_POST['specialty'] ?? 'Ophthalmology'));
+        $profileImage = $this->handleProfileImageUploadMobile($userId);
+
+        if ($name === '') {
+            throw new \InvalidArgumentException('Full name is required');
+        }
+        if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            throw new \InvalidArgumentException('Please enter a valid email address');
+        }
+
+        $stmt = $this->pdo->prepare('SELECT id FROM users WHERE email = ? AND id != ?');
+        $stmt->execute([$email, $userId]);
+        if ($stmt->fetch()) {
+            throw new \InvalidArgumentException('Email is already taken by another user');
+        }
+
+        $this->pdo->beginTransaction();
+        try {
+            if ($profileImage) {
+                $stmt = $this->pdo->prepare(
+                    'UPDATE users SET name = ?, email = ?, phone = ?, profile_image = ?, updated_at = NOW() WHERE id = ?'
+                );
+                $stmt->execute([$name, $email, $phone, $profileImage, $userId]);
+            } else {
+                $stmt = $this->pdo->prepare(
+                    'UPDATE users SET name = ?, email = ?, phone = ?, updated_at = NOW() WHERE id = ?'
+                );
+                $stmt->execute([$name, $email, $phone, $userId]);
+            }
+
+            $stmt = $this->pdo->prepare('SELECT id FROM doctors WHERE user_id = ? LIMIT 1');
+            $stmt->execute([$userId]);
+            if ($stmt->fetchColumn()) {
+                $stmt = $this->pdo->prepare(
+                    'UPDATE doctors SET display_name = ?, display_name_ar = ?, specialty = ?, updated_at = NOW() WHERE user_id = ?'
+                );
+                $stmt->execute([$doctorName ?: $name, $doctorNameAr !== '' ? $doctorNameAr : null, $specialty, $userId]);
+            }
+
+            $this->pdo->commit();
+        } catch (\Throwable $e) {
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+            throw $e;
+        }
+
+        $user = $this->getUserById($userId);
+        if (!$user) {
+            throw new \RuntimeException('User not found after update');
+        }
+        return $this->profilePayload($user);
+    }
+
+    private function updateSecretaryProfileMobile(int $userId): array
+    {
+        $name          = trim((string) ($_POST['name'] ?? ''));
+        $email         = trim((string) ($_POST['email'] ?? ''));
+        $phone         = trim((string) ($_POST['phone'] ?? ''));
+        $secretaryName = trim((string) ($_POST['secretary_name'] ?? ''));
+        $department    = trim((string) ($_POST['department'] ?? 'Administration'));
+        $profileImage  = $this->handleProfileImageUploadMobile($userId);
+
+        if ($name === '') {
+            throw new \InvalidArgumentException('الاسم الكامل مطلوب');
+        }
+        if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            throw new \InvalidArgumentException('يرجى إدخال بريد إلكتروني صالح');
+        }
+
+        $stmt = $this->pdo->prepare('SELECT id FROM users WHERE email = ? AND id != ?');
+        $stmt->execute([$email, $userId]);
+        if ($stmt->fetch()) {
+            throw new \InvalidArgumentException('البريد الإلكتروني مستخدم من قبل مستخدم آخر');
+        }
+
+        $this->pdo->beginTransaction();
+        try {
+            if ($profileImage) {
+                $stmt = $this->pdo->prepare(
+                    'UPDATE users SET name = ?, email = ?, phone = ?, secretary_name = ?, department = ?, profile_image = ?, updated_at = NOW() WHERE id = ?'
+                );
+                $stmt->execute([$name, $email, $phone, $secretaryName, $department, $profileImage, $userId]);
+            } else {
+                $stmt = $this->pdo->prepare(
+                    'UPDATE users SET name = ?, email = ?, phone = ?, secretary_name = ?, department = ?, updated_at = NOW() WHERE id = ?'
+                );
+                $stmt->execute([$name, $email, $phone, $secretaryName, $department, $userId]);
+            }
+            $this->pdo->commit();
+        } catch (\Throwable $e) {
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+            throw $e;
+        }
+
+        $user = $this->getUserById($userId);
+        if (!$user) {
+            throw new \RuntimeException('User not found after update');
+        }
+        return $this->profilePayload($user);
+    }
+
+    /** @return string|null Public path e.g. /uploads/users/user_1_123.jpg */
+    private function handleProfileImageUploadMobile(int $userId): ?string
+    {
+        if (!isset($_FILES['profile_image']) || $_FILES['profile_image']['error'] !== UPLOAD_ERR_OK) {
+            return null;
+        }
+
+        $uploadDir = __DIR__ . '/../../public/uploads/users/';
+        if (!is_dir($uploadDir)) {
+            @mkdir($uploadDir, 0777, true);
+        }
+        if (!is_writable($uploadDir)) {
+            @chmod($uploadDir, 0777);
+        }
+
+        $allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+        $maxSize      = 5 * 1024 * 1024;
+        $file         = $_FILES['profile_image'];
+
+        $finfo    = finfo_open(FILEINFO_MIME_TYPE);
+        $mimeType = finfo_file($finfo, $file['tmp_name']);
+        finfo_close($finfo);
+
+        if (!in_array($mimeType, $allowedTypes, true)) {
+            throw new \InvalidArgumentException('Invalid file type. Only JPEG, PNG, GIF, and WebP are allowed.');
+        }
+        if ($file['size'] > $maxSize) {
+            throw new \InvalidArgumentException('File size exceeds 5MB limit.');
+        }
+
+        $extension  = pathinfo($file['name'], PATHINFO_EXTENSION) ?: 'jpg';
+        $filename   = 'user_' . $userId . '_' . time() . '.' . $extension;
+        $uploadPath = $uploadDir . $filename;
+
+        $stmt = $this->pdo->prepare('SELECT profile_image FROM users WHERE id = ?');
+        $stmt->execute([$userId]);
+        $oldImage = $stmt->fetchColumn();
+        if ($oldImage && file_exists(__DIR__ . '/../../public' . $oldImage)) {
+            @unlink(__DIR__ . '/../../public' . $oldImage);
+        }
+
+        if (!move_uploaded_file($file['tmp_name'], $uploadPath)) {
+            throw new \InvalidArgumentException('Failed to upload image.');
+        }
+
+        return '/uploads/users/' . $filename;
     }
 
     private function getSettings()

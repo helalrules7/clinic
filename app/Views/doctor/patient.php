@@ -229,13 +229,6 @@
                             data-bs-title="Create an alert for this patient">
                         <i class="bi bi-bell"></i>Set Alert
                     </button>
-                    <button class="btn pa-action-btn pa-action-btn--clinical"
-                            onclick="showUnifiedClinicalDashboardPopover(<?= $patient['id'] ?>)"
-                            data-bs-toggle="tooltip"
-                            data-bs-placement="bottom"
-                            data-bs-title="View unified clinical dashboard for this patient">
-                        <i class="bi bi-clipboard-pulse"></i>Clinical Dashboard
-                    </button>
                 </div>
             </div>
         </div>

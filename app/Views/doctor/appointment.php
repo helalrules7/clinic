@@ -224,13 +224,6 @@ if ($status === 'completed') {
                     data-appointment-id="<?= $appointment['id'] ?>">
                 <i class="bi bi-clock-history me-1"></i>Appointment History
             </button>
-            <button type="button" class="btn btn-action-dashboard hide-on-mobile" 
-                    onclick="showUnifiedClinicalDashboardPopover(<?= $patient['id'] ?>)"
-                    data-bs-toggle="tooltip" 
-                    data-bs-placement="bottom" 
-                    data-bs-title="View unified clinical dashboard for this patient">
-                <i class="bi bi-clipboard-pulse me-1"></i>Clinical Dashboard
-            </button>
             <?php if ($__waEnabled): ?>
             <button type="button" class="btn btn-success hide-on-mobile d-inline-flex align-items-center gap-1" onclick="WhatsAppIntegration.openModal(<?= $appointment['patient_id'] ?>, <?= $appointment['id'] ?>, 'report')" style="background-color: #25D366; border-color: #25D366; color: #fff;">
                 <i class="bi bi-whatsapp"></i>Send WhatsApp

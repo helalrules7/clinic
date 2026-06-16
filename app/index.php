@@ -605,9 +605,6 @@ try {
     $router->get('/api/cataract-surgery/postop-outcome', 'ApiController@analyzePostOperativeOutcome');
     $router->get('/api/cataract-surgery/audit', 'ApiController@getSurgicalOutcomesAudit');
     
-    // Unified Clinical Dashboard API routes
-    $router->get('/api/clinical-dashboard/snapshot', 'ApiController@getClinicalDashboardSnapshot');
-        
     // Handle the request
     $router->dispatch();
     

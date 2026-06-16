@@ -13,13 +13,11 @@ class PatientMedicalRecordService
 {
     private PDO $pdo;
     private IOPTrendAnalyzerService $iopAnalyzer;
-    private ClinicalDataParserService $clinicalParser;
 
     public function __construct(?PDO $pdo = null)
     {
         $this->pdo = $pdo ?? Database::getInstance()->getConnection();
         $this->iopAnalyzer = new IOPTrendAnalyzerService();
-        $this->clinicalParser = new ClinicalDataParserService();
     }
 
     public function aggregate(int $patientId, array $exportedBy = []): ?array
@@ -41,7 +39,6 @@ class PatientMedicalRecordService
         $glassesHistory = $this->getGlassesHistory($patientId);
         $medicationRegister = $this->buildMedicationRegister($appointments);
         $iopData = $this->buildIOPData($patientId);
-        $clinicalSnapshot = $this->clinicalParser->getClinicalSnapshot($patientId);
         $osdiHistory = $this->getOsdiHistory($patientId);
         $macularHistory = $this->getMacularHistory($patientId);
         $statistics = $this->buildStatistics($appointments, $medicationRegister, $medicalHistory);
@@ -59,7 +56,6 @@ class PatientMedicalRecordService
             'color_marker' => $colorMarker,
             'medical_history' => $medicalHistory,
             'alerts' => $alerts,
-            'clinical_snapshot' => $clinicalSnapshot,
             'statistics' => $statistics,
             'iop' => $iopData,
             'osdi_history' => $osdiHistory,

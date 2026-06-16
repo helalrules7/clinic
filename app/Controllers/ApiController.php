@@ -22,7 +22,6 @@ use App\Services\DiabeticRetinopathyRiskEstimatorService;
 use App\Services\MacularThicknessTrendAnalyzerService;
 use App\Services\CataractSurgeryReadinessService;
 use App\Services\PostOperativeOutcomeAnalyzerService;
-use App\Services\ClinicalDataParserService;
 use App\Services\PatientMedicalRecordService;
 use Box\Spout\Writer\Common\Creator\WriterEntityFactory;
 use Box\Spout\Common\Entity\Row;
@@ -2317,7 +2316,7 @@ class ApiController
             JOIN users u ON d.user_id = u.id
             {$bookerJoin}
             LEFT JOIN clinics c ON c.id = {$clinicIdExpr}
-            WHERE a.date = ? AND a.status NOT IN ('Cancelled', 'NoShow')
+            WHERE a.date = ? AND a.status NOT IN ('Cancelled')
             ORDER BY a.start_time
         ";
 
@@ -7579,6 +7578,98 @@ class ApiController
         return $d && $d->format('Y-m-d') === $date;
     }
 
+    /** PUT /api/consultation-notes/{id} — bearer-auth update (mobile parity with web inline editor). */
+    public function updateConsultationNote($noteId)
+    {
+        try {
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            }
+
+            $user = $this->auth->user();
+            if ($user['role'] !== 'doctor') {
+                return $this->jsonResponse(['error' => 'Only doctors can update consultations'], 403);
+            }
+
+            $data = json_decode(file_get_contents('php://input'), true);
+            if (!is_array($data)) {
+                $data = $_POST ?: [];
+            }
+
+            $rules = [
+                'diagnosis' => 'required',
+                'plan' => 'required',
+            ];
+            if (!$this->validator->validate($data, $rules)) {
+                return $this->jsonResponse([
+                    'error' => 'Validation failed',
+                    'details' => $this->validator->getAllErrors(),
+                ], 400);
+            }
+
+            $stmt = $this->pdo->prepare('SELECT * FROM consultation_notes WHERE id = ?');
+            $stmt->execute([$noteId]);
+            $note = $stmt->fetch();
+            if (!$note) {
+                return $this->jsonResponse(['error' => 'Consultation note not found'], 404);
+            }
+
+            $stmt = $this->pdo->prepare("
+                UPDATE consultation_notes SET
+                    chief_complaint = ?, hx_present_illness = ?,
+                    visual_acuity_right = ?, visual_acuity_left = ?,
+                    refraction_right = ?, refraction_left = ?,
+                    IOP_right = ?, IOP_left = ?,
+                    slit_lamp_right = ?, slit_lamp_left = ?,
+                    fundus_right = ?, fundus_left = ?,
+                    external_appearance_right = ?, external_appearance_left = ?,
+                    eyelid_right = ?, eyelid_left = ?,
+                    diagnosis = ?, diagnosis_code = ?, systemic_disease = ?, medication = ?,
+                    plan = ?, followup_days = ?, updated_at = CURRENT_TIMESTAMP
+                WHERE id = ? AND appointment_id = ?
+            ");
+
+            $ok = $stmt->execute([
+                $data['chief_complaint'] ?? null,
+                $data['hx_present_illness'] ?? null,
+                $data['visual_acuity_right'] ?? null,
+                $data['visual_acuity_left'] ?? null,
+                $data['refraction_right'] ?? null,
+                $data['refraction_left'] ?? null,
+                $data['IOP_right'] ?? null,
+                $data['IOP_left'] ?? null,
+                $data['slit_lamp_right'] ?? null,
+                $data['slit_lamp_left'] ?? null,
+                $data['fundus_right'] ?? null,
+                $data['fundus_left'] ?? null,
+                $data['external_appearance_right'] ?? null,
+                $data['external_appearance_left'] ?? null,
+                $data['eyelid_right'] ?? null,
+                $data['eyelid_left'] ?? null,
+                $data['diagnosis'],
+                $data['diagnosis_code'] ?? null,
+                $data['systemic_disease'] ?? null,
+                $data['medication'] ?? null,
+                $data['plan'],
+                $data['followup_days'] ?? null,
+                $noteId,
+                $note['appointment_id'],
+            ]);
+
+            if (!$ok) {
+                return $this->jsonResponse(['error' => 'Failed to update consultation note'], 500);
+            }
+
+            return $this->jsonResponse([
+                'ok' => true,
+                'success' => true,
+                'message' => 'Consultation note updated successfully',
+            ]);
+        } catch (\Exception $e) {
+            return $this->jsonResponse(['error' => 'Failed to update consultation note'], 500);
+        }
+    }
+
     // Delete Consultation Note
     public function deleteConsultationNote($noteId)
     {
@@ -7721,7 +7812,31 @@ class ApiController
 
             $drugs = $stmt->fetchAll();
 
+            // Attach the prescription usage count per drug (from the main DB
+            // prescriptions table, matched by drug_name === FirstName).
             if (count($drugs) > 0) {
+                $names = array_values(array_unique(array_filter(array_map(function ($d) {
+                    return isset($d['drug_name']) ? (string) $d['drug_name'] : null;
+                }, $drugs), function ($n) {
+                    return $n !== null && $n !== '';
+                })));
+                $counts = [];
+                if (!empty($names)) {
+                    try {
+                        $ph = implode(',', array_fill(0, count($names), '?'));
+                        $cntStmt = $this->pdo->prepare("SELECT drug_name, COUNT(*) as usage_count FROM prescriptions WHERE drug_name IN ($ph) GROUP BY drug_name");
+                        $cntStmt->execute($names);
+                        foreach ($cntStmt->fetchAll() as $row) {
+                            $counts[$row['drug_name']] = (int) $row['usage_count'];
+                        }
+                    } catch (\Exception $e) {
+                        // usage counts are optional — ignore on error
+                    }
+                }
+                foreach ($drugs as &$d) {
+                    $d['usage_count'] = $counts[$d['drug_name'] ?? ''] ?? 0;
+                }
+                unset($d);
             }
 
             return $this->jsonResponse(['drugs' => $drugs]);
@@ -7770,6 +7885,15 @@ class ApiController
 
             if (!$drug) {
                 return $this->jsonResponse(['error' => 'Drug not found'], 404);
+            }
+
+            // Prescription usage count for this drug (main DB, matched by name).
+            try {
+                $cntStmt = $this->pdo->prepare("SELECT COUNT(*) as c FROM prescriptions WHERE drug_name = ?");
+                $cntStmt->execute([$drug['drug_name']]);
+                $drug['usage_count'] = (int) ($cntStmt->fetch()['c'] ?? 0);
+            } catch (\Exception $e) {
+                $drug['usage_count'] = 0;
             }
 
             // Get exact alternatives (same SRDE)
@@ -13937,91 +14061,6 @@ class ApiController
         }
     }
 
-    /**
-     * Get unified clinical dashboard snapshot for a patient
-     * 
-     * @return \Psr\Http\Message\ResponseInterface JSON response
-     */
-    public function getClinicalDashboardSnapshot()
-    {
-        try {
-            if (!$this->auth->check()) {
-                return $this->jsonResponse(['ok' => false, 'error' => 'Unauthorized'], 401);
-            }
-
-            $user = $this->auth->user();
-            if ($user['role'] !== 'doctor' && $user['role'] !== 'admin') {
-                return $this->jsonResponse(['ok' => false, 'error' => 'Permission denied'], 403);
-            }
-
-            // Get patient_id from query parameter
-            $patientId = $_GET['patient_id'] ?? null;
-
-            if (!$patientId || !is_numeric($patientId)) {
-                return $this->jsonResponse([
-                    'ok' => false,
-                    'error' => 'Patient ID is required',
-                    'data' => [
-                        'snapshot' => null,
-                        'alerts' => [],
-                        'summary' => 'Please select a patient to view clinical dashboard.'
-                    ]
-                ]);
-            }
-
-            $patientId = (int) $patientId;
-
-            // Verify patient exists and get patient name
-            $stmt = $this->pdo->prepare("SELECT id, first_name, last_name FROM patients WHERE id = ?");
-            $stmt->execute([$patientId]);
-            $patient = $stmt->fetch(\PDO::FETCH_ASSOC);
-            if (!$patient) {
-                return $this->jsonResponse([
-                    'ok' => false,
-                    'error' => 'Patient not found',
-                    'data' => [
-                        'snapshot' => null,
-                        'alerts' => [],
-                        'summary' => 'Patient not found.'
-                    ]
-                ]);
-            }
-
-            // Get clinical snapshot using parser service
-            $parserService = new ClinicalDataParserService();
-            $snapshot = $parserService->getClinicalSnapshot($patientId);
-
-            // Generate clinical summary
-            $summary = $parserService->generateClinicalSummary($snapshot);
-
-            // Build patient full name
-            $patientName = trim(($patient['first_name'] ?? '') . ' ' . ($patient['last_name'] ?? ''));
-
-            return $this->jsonResponse([
-                'ok' => true,
-                'data' => [
-                    'snapshot' => $snapshot,
-                    'alerts' => $snapshot['alerts'],
-                    'summary' => $summary,
-                    'patient_id' => $patientId,
-                    'patient_name' => $patientName
-                ]
-            ]);
-
-        } catch (\Exception $e) {
-            error_log("Error getting clinical dashboard snapshot: " . $e->getMessage());
-            return $this->jsonResponse([
-                'ok' => false,
-                'error' => 'Failed to load clinical dashboard data',
-                'data' => [
-                    'snapshot' => null,
-                    'alerts' => [],
-                    'summary' => 'Error loading clinical data.'
-                ]
-            ], 500);
-        }
-    }
-
     public function getCommonComplaints()
     {
         try {
@@ -16195,7 +16234,7 @@ class ApiController
                 return $this->jsonResponse(['error' => 'Invalid system folder ID'], 400);
             }
 
-            if (!in_array($sortType, ['by_date_created', 'by_visits'])) {
+            if (!in_array($sortType, ['by_date_created', 'by_visits', 'by_clinic', 'by_gender'])) {
                 return $this->jsonResponse(['error' => 'Invalid sort type'], 400);
             }
 
@@ -16216,15 +16255,45 @@ class ApiController
             // so a mid-loop failure can't leave a half-sorted state.
             $this->pdo->beginTransaction();
 
-            if ($sortType === 'by_date_created') {
-                // Group by Year - Month
+            if (in_array($sortType, ['by_date_created', 'by_clinic', 'by_gender'])) {
+                // Pre-compute each patient's last-appointment clinic for by_clinic.
+                $clinicByPatient = [];
+                if ($sortType === 'by_clinic') {
+                    $patientIds = array_map(function ($p) { return (int)$p['id']; }, $patients);
+                    if (!empty($patientIds)) {
+                        $ph = implode(',', array_fill(0, count($patientIds), '?'));
+                        $cstmt = $this->pdo->prepare("
+                            SELECT a.patient_id,
+                                   COALESCE(c.name_en, c.name_ar, CONCAT('Clinic #', a.clinic_id)) AS clinic_name
+                            FROM appointments a
+                            INNER JOIN (
+                                SELECT patient_id, MAX(id) AS max_id
+                                FROM appointments
+                                WHERE patient_id IN ($ph)
+                                GROUP BY patient_id
+                            ) latest ON a.id = latest.max_id
+                            LEFT JOIN clinics c ON c.id = a.clinic_id
+                        ");
+                        $cstmt->execute($patientIds);
+                        foreach ($cstmt->fetchAll(\PDO::FETCH_ASSOC) as $row) {
+                            $clinicByPatient[(int)$row['patient_id']] = $row['clinic_name'] ?: 'No clinic';
+                        }
+                    }
+                }
+
+                // Group patients into a name => patients[] map by the chosen criterion.
                 $groupedPatients = [];
                 foreach ($patients as $patient) {
-                    $createdDate = new \DateTime($patient['created_at']);
-                    $year = $createdDate->format('Y');
-                    $month = $createdDate->format('F'); // Full month name
-                    $key = $year . ' - ' . $month;
-                    
+                    if ($sortType === 'by_gender') {
+                        $g = trim((string)($patient['gender'] ?? ''));
+                        $key = $g !== '' ? ucfirst(strtolower($g)) : 'Unspecified';
+                    } elseif ($sortType === 'by_clinic') {
+                        $key = $clinicByPatient[(int)$patient['id']] ?? 'No clinic';
+                    } else { // by_date_created → Year - Month
+                        $createdDate = new \DateTime($patient['created_at']);
+                        $key = $createdDate->format('Y') . ' - ' . $createdDate->format('F');
+                    }
+
                     if (!isset($groupedPatients[$key])) {
                         $groupedPatients[$key] = [];
                     }
