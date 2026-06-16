@@ -1977,9 +1977,10 @@ class DoctorController
 
     public function reports()
     {
+        $this->auth->requireAuth();
         $user = $this->auth->user();
         $doctorId = $this->getDoctorId($user['id']);
-        
+
         // Get report parameters
         $startDate = $_GET['start_date'] ?? date('Y-m-01');
         $endDate = $_GET['end_date'] ?? date('Y-m-t');
@@ -2342,6 +2343,12 @@ class DoctorController
 
     public function exportDoctorReport()
     {
+        // Gate FIRST — an unauthenticated hit (e.g. the export deep-link opened
+        // outside a session) would otherwise read $user as null and leak a
+        // "Trying to access array offset on null" warning into the CSV body,
+        // which then breaks the Content-Disposition headers ("headers already
+        // sent"). Redirects browsers to /login, returns 401 JSON for API.
+        $this->auth->requireAuth();
         try {
             $user = $this->auth->user();
             $doctorId = $this->getDoctorId($user['id']);
@@ -3250,9 +3257,14 @@ class DoctorController
             // Write headers
             fputcsv($output, array_keys($data[0]));
             
-            // Write data
+            // Write data — flatten any array cells (e.g. the drugs report's
+            // `routes`) so fputcsv doesn't emit an "Array to string" warning.
             foreach ($data as $row) {
-                fputcsv($output, $row);
+                $flat = array_map(
+                    fn($v) => is_array($v) ? implode('; ', $v) : $v,
+                    $row
+                );
+                fputcsv($output, $flat);
             }
         }
         

@@ -60,6 +60,41 @@ class Auth
         return $user;
     }
 
+    /**
+     * Establish a REAL cookie-backed web session from a valid mobile Bearer
+     * access token. Used by the mobile→web bridge so the in-app browser lands
+     * already signed in. Unlike checkBearerToken() (request-scoped, no cookie),
+     * this calls createSession() so the browser keeps the PHPSESSID. Returns the
+     * user row on success, or false if the token is malformed / invalid.
+     */
+    public function loginWithMobileToken($rawToken)
+    {
+        $raw = strtolower(trim((string) $rawToken));
+        if (!preg_match('/^[a-f0-9]{64}$/', $raw)) {
+            return false;
+        }
+
+        if (!class_exists('App\\Lib\\MobileToken')) {
+            require_once __DIR__ . '/MobileToken.php';
+        }
+
+        $token = (new MobileToken($this->pdo))->verifyAccess($raw);
+        if (!$token) {
+            return false;
+        }
+
+        $user = $this->getUserById($token['user_id']);
+        if (!$user) {
+            return false;
+        }
+
+        $this->user = $user;
+        $this->createSession($user);
+        $this->updateLastLogin($user['id']);
+
+        return $user;
+    }
+
     public function logout()
     {
         // Clear remember me cookie

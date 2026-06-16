@@ -72,6 +72,7 @@ try {
     $router->get('/', 'AuthController@showLogin');
     $router->get('/login', 'AuthController@showLogin');
     $router->post('/login', 'AuthController@login');
+    $router->get('/mobile/web-login', 'AuthController@mobileWebLogin');
     $router->get('/logout', 'AuthController@logout');
     $router->get('/api/auth/session-time', 'AuthController@getSessionTime');
 

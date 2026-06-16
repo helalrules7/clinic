@@ -1252,3 +1252,21 @@ $reportTypes = [
 </script>
 
 <script src="/app/Views/doctor/assets/js/reports.js?v=<?= file_exists(__DIR__ . '/assets/js/reports.js') ? filemtime(__DIR__ . '/assets/js/reports.js') : time() ?>"></script>
+
+<?php if (($_GET['auto_export'] ?? '') === 'pdf'): ?>
+<!-- One-tap PDF: the mobile app deep-links here with ?auto_export=pdf so it
+     gets the EXACT same jsPDF output as the web button, without an extra tap.
+     Wait for load + charts (reports.js renders mini-charts on a 100ms delay). -->
+<script>
+    window.addEventListener('load', function () {
+        setTimeout(function () {
+            if (typeof window.exportToPDF === 'function') {
+                window.exportToPDF();
+            } else {
+                var b = document.getElementById('exportPdfBtn');
+                if (b) b.click();
+            }
+        }, 1400);
+    });
+</script>
+<?php endif; ?>

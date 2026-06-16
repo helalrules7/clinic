@@ -80,6 +80,35 @@ class AuthController
         UrlHelper::redirect('/login');
     }
 
+    /**
+     * Mobile → web auto-login bridge. The app opens this URL in its in-app
+     * browser with its Bearer token + a target path; we mint a real cookie-backed
+     * web session and redirect there, so the user lands already signed in (CSV /
+     * PDF export, full reports, etc.) without retyping credentials.
+     */
+    public function mobileWebLogin()
+    {
+        $token = $_GET['token'] ?? '';
+        $redirect = $this->sanitizeRedirect($_GET['redirect'] ?? '/doctor/dashboard');
+
+        if ($this->auth->loginWithMobileToken($token)) {
+            session_write_close();
+            UrlHelper::redirect($redirect);
+        } else {
+            UrlHelper::redirect('/login?expired=1');
+        }
+    }
+
+    /** Only allow a same-origin absolute path (no scheme / protocol-relative / backslash). */
+    private function sanitizeRedirect($path)
+    {
+        $path = (string) $path;
+        if ($path === '' || $path[0] !== '/' || strncmp($path, '//', 2) === 0 || strpos($path, '\\') !== false) {
+            return '/doctor/dashboard';
+        }
+        return $path;
+    }
+
     private function redirectByRole($role)
     {
         // Ensure session is saved before redirect
