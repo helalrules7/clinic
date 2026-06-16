@@ -2039,6 +2039,54 @@ class DoctorController
         ]);
     }
 
+    /**
+     * JSON variant of reports() for the mobile app: the per-day rows
+     * (generateDoctorReport) + per-type "extra" data, over a date range.
+     * The drugs report is heavy (continuation/regimen/enrichment) so it is
+     * deferred — the mobile deep-links the web page for that one.
+     */
+    public function apiReports()
+    {
+        header('Content-Type: application/json');
+        if (!$this->auth->check()) {
+            http_response_code(401);
+            echo json_encode(['ok' => false, 'error' => 'Unauthorized']);
+            exit;
+        }
+        $user = $this->auth->user();
+        $doctorId = $this->getDoctorId($user['id']);
+        $startDate = $_GET['start_date'] ?? date('Y-m-01');
+        $endDate = $_GET['end_date'] ?? date('Y-m-t');
+        $type = $_GET['type'] ?? 'appointments';
+
+        $allowed = ['appointments', 'patients', 'revenue', 'medical_prescriptions', 'glasses_prescriptions'];
+        if (!in_array($type, $allowed, true)) {
+            echo json_encode(['ok' => false, 'error' => 'Unsupported report type for the mobile API']);
+            exit;
+        }
+
+        try {
+            $rows = $this->generateDoctorReport($doctorId, $type, $startDate, $endDate);
+            $extra = [];
+            if ($type === 'medical_prescriptions') {
+                $extra['top_medications'] = $this->getTopMedications($doctorId, $startDate, $endDate, 10);
+            } elseif ($type === 'glasses_prescriptions') {
+                $extra['lens_types'] = $this->getGlassesLensTypeStats($doctorId, $startDate, $endDate);
+            }
+            echo json_encode([
+                'ok' => true,
+                'type' => $type,
+                'start_date' => $startDate,
+                'end_date' => $endDate,
+                'rows' => $rows,
+                'extra' => $extra,
+            ]);
+        } catch (\Exception $e) {
+            echo json_encode(['ok' => false, 'error' => 'Failed to generate report']);
+        }
+        exit;
+    }
+
     private function getDoctorInfo($doctorId)
     {
         try {
