@@ -1575,8 +1575,9 @@ class ApiController
                     emergency_contact,
                     emergency_phone,
                     address,
+                    whatsapp_consent,
                     created_at
-                FROM patients 
+                FROM patients
                 WHERE id = ?
             ");
             $stmt->execute([$id]);
@@ -1936,6 +1937,100 @@ class ApiController
             } else {
                 return $this->jsonResponse(['error' => 'Failed to update emergency contact'], 500);
             }
+
+        } catch (\Exception $e) {
+            return $this->jsonResponse(['error' => 'Server error: ' . $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Update core patient demographics (JSON PUT) — the clean API counterpart of the
+     * web-only DoctorController@updatePatient (which is a multipart/HTML-redirect route).
+     * Added for the desktop/mobile client. Doctor/admin only.
+     */
+    public function updatePatient($id)
+    {
+        try {
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            }
+
+            $user = $this->auth->user();
+            if (!in_array(($user['role'] ?? ''), ['doctor', 'admin'], true)) {
+                return $this->jsonResponse(['error' => 'Insufficient permissions'], 403);
+            }
+
+            if (!$id) {
+                return $this->jsonResponse(['error' => 'Patient ID is required'], 400);
+            }
+
+            // Verify patient exists
+            $stmt = $this->pdo->prepare("SELECT id FROM patients WHERE id = ?");
+            $stmt->execute([$id]);
+            if (!$stmt->fetch()) {
+                return $this->jsonResponse(['error' => 'Patient not found'], 404);
+            }
+
+            // Accept JSON body (falls back to form-encoded PUT / $_POST).
+            $raw = file_get_contents('php://input');
+            $input = json_decode($raw, true);
+            if (!is_array($input)) {
+                $input = [];
+                parse_str($raw, $input);
+                if (empty($input)) {
+                    $input = $_POST;
+                }
+            }
+
+            foreach (['first_name', 'last_name', 'phone'] as $req) {
+                if (empty($input[$req])) {
+                    return $this->jsonResponse(['error' => "Field {$req} is required"], 400);
+                }
+            }
+
+            $fields = \App\Lib\DigitNormalizer::normalizePatientNumericFields($input);
+
+            $stmt = $this->pdo->prepare("
+                UPDATE patients SET
+                    first_name = ?,
+                    last_name = ?,
+                    phone = ?,
+                    alt_phone = ?,
+                    address = ?,
+                    national_id = ?,
+                    dob = ?,
+                    gender = COALESCE(?, gender),
+                    emergency_contact = ?,
+                    emergency_phone = ?,
+                    updated_at = NOW()
+                WHERE id = ?
+            ");
+            $ok = $stmt->execute([
+                $fields['first_name'],
+                $fields['last_name'],
+                $fields['phone'],
+                $fields['alt_phone'] ?? null,
+                $fields['address'] ?? null,
+                $fields['national_id'] ?? null,
+                $fields['dob'] ?? null,
+                $fields['gender'] ?? null,
+                $fields['emergency_contact'] ?? null,
+                $fields['emergency_phone'] ?? null,
+                $id
+            ]);
+
+            if (!$ok) {
+                return $this->jsonResponse(['error' => 'Failed to update patient'], 500);
+            }
+
+            try {
+                $this->createTimelineEvent($id, null, 'Update', 'Patient details updated');
+            } catch (\Exception $e) {
+                // non-fatal
+            }
+
+            // Return the fresh record (same shape as getPatient).
+            return $this->getPatient($id);
 
         } catch (\Exception $e) {
             return $this->jsonResponse(['error' => 'Server error: ' . $e->getMessage()], 500);

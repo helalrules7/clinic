@@ -540,6 +540,7 @@ try {
     $router->head('/api/patients/{id}/export', 'ApiController@checkExportAccess');
     $router->get('/api/patients/{id}', 'ApiController@getPatient');
     $router->post('/api/patients', 'ApiController@createPatient');
+    $router->put('/api/patients/{id}', 'ApiController@updatePatient');
     $router->delete('/api/patients/{id}', 'ApiController@deletePatient');
     $router->put('/api/patients/{id}/emergency-contact', 'ApiController@updateEmergencyContact');
     $router->post('/api/consultations', 'ApiController@createConsultation');
