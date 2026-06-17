@@ -312,6 +312,7 @@ try {
     $router->get('/api/search/palette',                 'SearchController@palette');
     $router->get('/api/patients/{id}/summary',          'PatientSummaryController@summary');
     $router->get('/api/settings/appearance',            'SettingsControllerV11@getAppearance');
+    $router->get('/api/visit-costs', 'ApiController@getVisitCosts');
     $router->post('/api/settings/theme-palette',        'SettingsControllerV11@setThemePalette');
     $router->post('/api/settings/theme-auto-schedule',  'SettingsControllerV11@setThemeAutoSchedule');
     
@@ -468,6 +469,7 @@ try {
     $router->get('/api/reports/drugs', 'DoctorController@apiDrugsReport');
     $router->get('/api/patients/search', 'ApiController@searchPatients');
     $router->get('/api/patients/paginated', 'ApiController@getPatientsPaginated'); // v12_perf: server-side paged list
+    $router->get('/api/patients/stats', 'ApiController@getPatientsStats'); // desktop stat tiles
     $router->get('/api/patients', 'ApiController@getAllPatients');
     // Patient folders routes
     // More specific routes first to avoid conflicts

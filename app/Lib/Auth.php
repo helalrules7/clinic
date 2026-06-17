@@ -127,6 +127,19 @@ class Auth
             return true;
         }
 
+        // Mobile API: a Bearer access token ALWAYS takes precedence over any
+        // session cookie. React Native's fetch persists the `clinic_session`
+        // cookie that checkBearerToken() sets below, so after switching accounts
+        // (e.g. secretary → doctor) the PREVIOUS account's session cookie would
+        // otherwise shadow the new Bearer token and resolve the wrong user. By
+        // resolving the Bearer FIRST whenever the header is present, the request
+        // always maps to the token's user (and an invalid/expired Bearer returns
+        // 401 so the client can refresh — it must NOT silently fall back to a
+        // stale cookie). The web (no Bearer) path below is unaffected.
+        if ($this->getBearerToken() !== null) {
+            return $this->checkBearerToken();
+        }
+
         // Check session
         if (isset($_SESSION['user_id'])) {
             // Check if session has expired due to inactivity

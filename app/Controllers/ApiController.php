@@ -902,6 +902,40 @@ class ApiController
         return null;
     }
 
+    /**
+     * Visit costs from clinic settings, keyed by visit type. Used by the mobile
+     * booking modal to cap the payment-on-booking amount at the allowed fee.
+     * GET /api/visit-costs
+     */
+    public function getVisitCosts()
+    {
+        try {
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            }
+            $stmt = $this->pdo->prepare(
+                "SELECT setting_key, setting_value FROM settings WHERE setting_key IN ('new_visit_cost','repeated_visit_cost','consultation_cost')"
+            );
+            $stmt->execute();
+            $s = [];
+            foreach ($stmt->fetchAll(\PDO::FETCH_ASSOC) as $row) {
+                $s[$row['setting_key']] = (float) $row['setting_value'];
+            }
+            $newCost = $s['new_visit_cost'] ?? 0;
+            return $this->jsonResponse([
+                'ok' => true,
+                'data' => [
+                    'New' => $newCost,
+                    'FollowUp' => $s['repeated_visit_cost'] ?? 0,
+                    'Consultation' => $s['consultation_cost'] ?? 0,
+                    'Procedure' => $newCost,
+                ],
+            ]);
+        } catch (\Exception $e) {
+            return $this->jsonResponse(['error' => $e->getMessage()], 500);
+        }
+    }
+
     public function createPayment()
     {
         try {
@@ -1331,6 +1365,57 @@ class ApiController
      * range"). The per-patient row shape is identical to getAllPatients() so
      * the existing table/cards renderers need no changes.
      */
+    /**
+     * Patient header stats as JSON (mirrors DoctorController::getPatientStats, which is
+     * server-rendered only). Added for the desktop client's stat tiles.
+     */
+    public function getPatientsStats()
+    {
+        try {
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            }
+            $d7 = date('Y-m-d', strtotime('-7 days'));
+            $d30 = date('Y-m-d', strtotime('-30 days'));
+            $d90 = date('Y-m-d', strtotime('-90 days'));
+
+            $pStmt = $this->pdo->prepare("
+                SELECT COUNT(*) AS total_patients,
+                    SUM(CASE WHEN LOWER(gender)='male' THEN 1 ELSE 0 END) AS male_count,
+                    SUM(CASE WHEN LOWER(gender)='female' THEN 1 ELSE 0 END) AS female_count,
+                    SUM(CASE WHEN DATE(created_at) >= ? THEN 1 ELSE 0 END) AS new_this_week,
+                    SUM(CASE WHEN DATE(created_at) >= ? THEN 1 ELSE 0 END) AS new_this_month
+                FROM patients
+            ");
+            $pStmt->execute([$d7, $d30]);
+            $p = $pStmt->fetch(\PDO::FETCH_ASSOC) ?: [];
+
+            $vStmt = $this->pdo->prepare("
+                SELECT COALESCE(SUM(cnt),0) AS total_visits,
+                    COALESCE(SUM(CASE WHEN last_visit >= ? THEN 1 ELSE 0 END),0) AS active_patients
+                FROM (SELECT patient_id, COUNT(*) AS cnt, MAX(date) AS last_visit
+                      FROM appointments WHERE patient_id IS NOT NULL GROUP BY patient_id) lv
+            ");
+            $vStmt->execute([$d90]);
+            $v = $vStmt->fetch(\PDO::FETCH_ASSOC) ?: [];
+
+            return $this->jsonResponse([
+                'ok' => true,
+                'stats' => [
+                    'total_patients' => (int)($p['total_patients'] ?? 0),
+                    'male_count' => (int)($p['male_count'] ?? 0),
+                    'female_count' => (int)($p['female_count'] ?? 0),
+                    'new_this_week' => (int)($p['new_this_week'] ?? 0),
+                    'new_this_month' => (int)($p['new_this_month'] ?? 0),
+                    'total_visits' => (int)($v['total_visits'] ?? 0),
+                    'active_patients' => (int)($v['active_patients'] ?? 0)
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return $this->jsonResponse(['error' => $e->getMessage()], 500);
+        }
+    }
+
     public function getPatientsPaginated()
     {
         try {
@@ -1451,6 +1536,10 @@ class ApiController
             if ($lvTo !== '') {
                 $where[] = "(SELECT MAX(a2.date) FROM appointments a2 WHERE a2.patient_id = p.id) <= ?";
                 $params[] = $lvTo;
+            }
+            // "never visited": no appointment rows at all (web parity preset).
+            if ((string)($_GET['last_visit'] ?? '') === 'never') {
+                $where[] = "NOT EXISTS (SELECT 1 FROM appointments a3 WHERE a3.patient_id = p.id)";
             }
 
             $whereSql = $where ? ('WHERE ' . implode(' AND ', $where)) : '';
@@ -6040,6 +6129,7 @@ class ApiController
                 SELECT
                     p.id,
                     p.patient_id,
+                    p.appointment_id,
                     p.amount,
                     COALESCE(p.discount_amount, 0) AS discount_amount,
                     p.is_exempt,
