@@ -64,7 +64,7 @@ class GlassesController
     {
         try {
             $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
-            $perPage = 12;
+            $perPage = isset($_GET['per_page']) ? max(1, min(120, (int)$_GET['per_page'])) : 12;
             $offset = ($page - 1) * $perPage;
             $patientId = isset($_GET['patient_id']) ? (int)$_GET['patient_id'] : null;
 
