@@ -497,13 +497,20 @@ class AlertController
             return;
         }
         
-        // Toggle is_active status
+        // Toggle is_active status. AlertModel::update does a full-row UPDATE (message/date/time
+        // are NOT NULL), so carry the existing values over instead of sending a partial array.
         $newStatus = $alert['is_active'] == 1 ? 0 : 1;
-        
+
         $updateData = [
-            'is_active' => $newStatus
+            'message' => $alert['message'],
+            'alert_date' => $alert['alert_date'],
+            'alert_time' => $alert['alert_time'],
+            'repeat_count' => $alert['repeat_count'] ?? 1,
+            'repeat_interval' => $alert['repeat_interval'] ?? 0,
+            'is_active' => $newStatus,
+            'is_dismissed' => $alert['is_dismissed'] ?? 0
         ];
-        
+
         $result = $this->alertModel->update($alertId, $updateData, $doctorId);
         
         if ($result) {

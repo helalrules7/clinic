@@ -1476,3 +1476,41 @@
         });
     })();
 </script>
+
+<script>
+/* WhatsApp prefs are now PER-USER: hydrate the toggles from /api/whatsapp/config
+   and live-save each change to the role-aware endpoint (writes doctor_settings). */
+(function () {
+    var KEYS = { enabled: 'whatsapp_enabled', advanced: 'whatsapp_advanced_features', appointments: 'whatsapp_mod_appointments', visits: 'whatsapp_mod_visits', report: 'whatsapp_mod_report', patientLog: 'whatsapp_mod_patientlog' };
+    function cb(n) { return document.querySelector('input[type=checkbox][name="' + n + '"]'); }
+    function payload() {
+        return {
+            enabled: !!(cb(KEYS.enabled) && cb(KEYS.enabled).checked),
+            advanced: !!(cb(KEYS.advanced) && cb(KEYS.advanced).checked),
+            modules: {
+                appointments: !!(cb(KEYS.appointments) && cb(KEYS.appointments).checked),
+                visits: !!(cb(KEYS.visits) && cb(KEYS.visits).checked),
+                report: !!(cb(KEYS.report) && cb(KEYS.report).checked),
+                patientLog: !!(cb(KEYS.patientLog) && cb(KEYS.patientLog).checked)
+            }
+        };
+    }
+    fetch('/api/whatsapp/config', { headers: { 'Accept': 'application/json' } })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+            if (!d || d.success === false) return;
+            function set(n, v) { var e = cb(n); if (e) e.checked = !!v; }
+            set(KEYS.enabled, d.enabled); set(KEYS.advanced, d.advanced);
+            set(KEYS.appointments, d.modules && d.modules.appointments);
+            set(KEYS.visits, d.modules && d.modules.visits);
+            set(KEYS.report, d.modules && d.modules.report);
+            set(KEYS.patientLog, d.modules && d.modules.patientLog);
+        }).catch(function () {});
+    Object.keys(KEYS).forEach(function (k) {
+        var e = cb(KEYS[k]); if (!e) return;
+        e.addEventListener('change', function () {
+            fetch('/api/whatsapp/config', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload()) }).catch(function () {});
+        });
+    });
+})();
+</script>

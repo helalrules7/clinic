@@ -150,6 +150,41 @@
                             </div>
                         </div>
                     </div>
+
+                    <div class="settings-section">
+                        <h5 class="arabic-text"><i class="bi bi-whatsapp me-2"></i>واتساب</h5>
+                        <div class="form-text mb-2 arabic-text">تحكّم في تنبيهات واتساب الخاصة بك — تظهر تلقائيًا عند حجز موعد جديد أو إتمام زيارة.</div>
+
+                        <div class="setting-item"><div class="d-flex justify-content-between align-items-center">
+                            <div><label class="form-label mb-0 arabic-text">تفعيل واتساب</label></div>
+                            <div class="toggle-switch-wrapper"><input type="checkbox" class="toggle-switch" name="whatsapp_enabled" /></div>
+                        </div></div>
+
+                        <div class="setting-item"><div class="d-flex justify-content-between align-items-center">
+                            <div><label class="form-label mb-0 arabic-text">المؤثرات المتقدمة (تنبيهات تلقائية)</label>
+                                 <div class="form-text arabic-text">عرض تنبيه إرسال رسالة عند حجز موعد أو إتمام زيارة</div></div>
+                            <div class="toggle-switch-wrapper"><input type="checkbox" class="toggle-switch" name="whatsapp_advanced_features" /></div>
+                        </div></div>
+
+                        <div class="form-text mt-2 mb-1 fw-bold arabic-text">الوحدات الفعّالة</div>
+
+                        <div class="setting-item"><div class="d-flex justify-content-between align-items-center">
+                            <div><label class="form-label mb-0 arabic-text">المواعيد</label></div>
+                            <div class="toggle-switch-wrapper"><input type="checkbox" class="toggle-switch" name="whatsapp_mod_appointments" /></div>
+                        </div></div>
+                        <div class="setting-item"><div class="d-flex justify-content-between align-items-center">
+                            <div><label class="form-label mb-0 arabic-text">الزيارات</label></div>
+                            <div class="toggle-switch-wrapper"><input type="checkbox" class="toggle-switch" name="whatsapp_mod_visits" /></div>
+                        </div></div>
+                        <div class="setting-item"><div class="d-flex justify-content-between align-items-center">
+                            <div><label class="form-label mb-0 arabic-text">تقرير ما بعد الزيارة</label></div>
+                            <div class="toggle-switch-wrapper"><input type="checkbox" class="toggle-switch" name="whatsapp_mod_report" /></div>
+                        </div></div>
+                        <div class="setting-item"><div class="d-flex justify-content-between align-items-center">
+                            <div><label class="form-label mb-0 arabic-text">سجل المريض</label></div>
+                            <div class="toggle-switch-wrapper"><input type="checkbox" class="toggle-switch" name="whatsapp_mod_patientlog" /></div>
+                        </div></div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -157,3 +192,41 @@
 </div>
 
 <script src="/app/Views/secretary/assets/js/settings.js?v=<?= file_exists(__DIR__ . '/assets/js/settings.js') ? filemtime(__DIR__ . '/assets/js/settings.js') : time() ?>"></script>
+
+<script>
+/* Per-user WhatsApp prefs (secretary) — hydrate + live-save via the role-aware
+   endpoint (writes secretary_settings). Same contract as the doctor page. */
+(function () {
+    var KEYS = { enabled: 'whatsapp_enabled', advanced: 'whatsapp_advanced_features', appointments: 'whatsapp_mod_appointments', visits: 'whatsapp_mod_visits', report: 'whatsapp_mod_report', patientLog: 'whatsapp_mod_patientlog' };
+    function cb(n) { return document.querySelector('input[type=checkbox][name="' + n + '"]'); }
+    function payload() {
+        return {
+            enabled: !!(cb(KEYS.enabled) && cb(KEYS.enabled).checked),
+            advanced: !!(cb(KEYS.advanced) && cb(KEYS.advanced).checked),
+            modules: {
+                appointments: !!(cb(KEYS.appointments) && cb(KEYS.appointments).checked),
+                visits: !!(cb(KEYS.visits) && cb(KEYS.visits).checked),
+                report: !!(cb(KEYS.report) && cb(KEYS.report).checked),
+                patientLog: !!(cb(KEYS.patientLog) && cb(KEYS.patientLog).checked)
+            }
+        };
+    }
+    fetch('/api/whatsapp/config', { headers: { 'Accept': 'application/json' } })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+            if (!d || d.success === false) return;
+            function set(n, v) { var e = cb(n); if (e) e.checked = !!v; }
+            set(KEYS.enabled, d.enabled); set(KEYS.advanced, d.advanced);
+            set(KEYS.appointments, d.modules && d.modules.appointments);
+            set(KEYS.visits, d.modules && d.modules.visits);
+            set(KEYS.report, d.modules && d.modules.report);
+            set(KEYS.patientLog, d.modules && d.modules.patientLog);
+        }).catch(function () {});
+    Object.keys(KEYS).forEach(function (k) {
+        var e = cb(KEYS[k]); if (!e) return;
+        e.addEventListener('change', function () {
+            fetch('/api/whatsapp/config', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload()) }).catch(function () {});
+        });
+    });
+})();
+</script>

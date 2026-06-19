@@ -610,6 +610,8 @@ try {
     
     // WhatsApp Integration API routes
     $router->get('/api/whatsapp/templates', 'WhatsappController@getTemplates');
+    $router->get('/api/whatsapp/config', 'WhatsappController@getConfig');
+    $router->post('/api/whatsapp/config', 'WhatsappController@saveConfig');
     $router->get('/api/whatsapp/logs/{patientId}', 'WhatsappController@getLogs');
     $router->post('/api/whatsapp/resolve', 'WhatsappController@resolveMessage');
     $router->post('/api/whatsapp/consent', 'WhatsappController@updateConsent');

@@ -1394,8 +1394,10 @@
     <script defer src="/app/Views/doctor/assets/js/theme-palette.js?v=<?= file_exists(__DIR__ . '/../doctor/assets/js/theme-palette.js') ? filemtime(__DIR__ . '/../doctor/assets/js/theme-palette.js') : time() ?>"></script>
     <?php
     $__waDb = \App\Config\Database::getInstance()->getConnection();
-    $__waSettingsStmt = $__waDb->prepare("SELECT setting_key, setting_value FROM settings WHERE setting_key IN ('whatsapp_enabled', 'whatsapp_advanced_features', 'whatsapp_mod_appointments', 'whatsapp_mod_visits', 'whatsapp_mod_report', 'whatsapp_mod_patientlog')");
-    $__waSettingsStmt->execute();
+    // Per-user WhatsApp prefs — each doctor controls their own triggers.
+    $__waUid = (new \App\Lib\Auth())->user()['id'] ?? 0;
+    $__waSettingsStmt = $__waDb->prepare("SELECT setting_key, setting_value FROM doctor_settings WHERE user_id = ? AND setting_key IN ('whatsapp_enabled', 'whatsapp_advanced_features', 'whatsapp_mod_appointments', 'whatsapp_mod_visits', 'whatsapp_mod_report', 'whatsapp_mod_patientlog')");
+    $__waSettingsStmt->execute([$__waUid]);
     $__waSettings = $__waSettingsStmt->fetchAll(PDO::FETCH_KEY_PAIR);
     $__waEnabled = (bool)($__waSettings['whatsapp_enabled'] ?? false);
     $__waAdvanced = (bool)($__waSettings['whatsapp_advanced_features'] ?? false);

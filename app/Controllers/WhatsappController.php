@@ -59,6 +59,82 @@ class WhatsappController
         }
     }
 
+    /** Per-user settings table for the role (doctors vs secretaries each have their own). */
+    private function userSettingsTable(array $user): string
+    {
+        return (($user['role'] ?? '') === 'secretary') ? 'secretary_settings' : 'doctor_settings';
+    }
+
+    /** Read the current user's WhatsApp prefs as the WHATSAPP_CONFIG shape. */
+    private function readUserWhatsapp(array $user): array
+    {
+        $table = $this->userSettingsTable($user);
+        $stmt = $this->pdo->prepare("SELECT setting_key, setting_value FROM {$table} WHERE user_id = ? AND setting_key IN ('whatsapp_enabled', 'whatsapp_advanced_features', 'whatsapp_mod_appointments', 'whatsapp_mod_visits', 'whatsapp_mod_report', 'whatsapp_mod_patientlog')");
+        $stmt->execute([$user['id']]);
+        $s = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
+        return [
+            'enabled'  => ($s['whatsapp_enabled'] ?? '0') === '1',
+            'advanced' => ($s['whatsapp_advanced_features'] ?? '0') === '1',
+            'modules'  => [
+                'appointments' => ($s['whatsapp_mod_appointments'] ?? '1') === '1',
+                'visits'       => ($s['whatsapp_mod_visits'] ?? '1') === '1',
+                'report'       => ($s['whatsapp_mod_report'] ?? '1') === '1',
+                'patientLog'   => ($s['whatsapp_mod_patientlog'] ?? '1') === '1',
+            ],
+        ];
+    }
+
+    /**
+     * GET /api/whatsapp/config — the CURRENT USER's personal WhatsApp toggles
+     * (doctor_settings or secretary_settings, keyed by user_id). The web layouts
+     * (main.php / secretary_main.php) read the same per-user store to build
+     * window.WHATSAPP_CONFIG, so each user's switches drive their own triggers on
+     * web AND mobile.
+     */
+    public function getConfig()
+    {
+        $user = $this->requireAuth();
+        try {
+            $this->jsonResponse(array_merge(['success' => true], $this->readUserWhatsapp($user)));
+        } catch (\Exception $e) {
+            $this->jsonResponse(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * POST /api/whatsapp/config — save the current user's WhatsApp toggles to their
+     * own per-user table. Body: { enabled?, advanced?, modules?: {appointments,
+     * visits, report, patientLog} } — only provided keys are written. Returns the
+     * refreshed config.
+     */
+    public function saveConfig()
+    {
+        $user = $this->requireAuth();
+        try {
+            $raw = json_decode(file_get_contents('php://input'), true);
+            $body = is_array($raw) ? $raw : $_POST;
+            $mods = isset($body['modules']) && is_array($body['modules']) ? $body['modules'] : [];
+            $vals = [
+                'whatsapp_enabled'           => array_key_exists('enabled', $body) ? ($body['enabled'] ? '1' : '0') : null,
+                'whatsapp_advanced_features' => array_key_exists('advanced', $body) ? ($body['advanced'] ? '1' : '0') : null,
+                'whatsapp_mod_appointments'  => array_key_exists('appointments', $mods) ? ($mods['appointments'] ? '1' : '0') : null,
+                'whatsapp_mod_visits'        => array_key_exists('visits', $mods) ? ($mods['visits'] ? '1' : '0') : null,
+                'whatsapp_mod_report'        => array_key_exists('report', $mods) ? ($mods['report'] ? '1' : '0') : null,
+                'whatsapp_mod_patientlog'    => array_key_exists('patientLog', $mods) ? ($mods['patientLog'] ? '1' : '0') : null,
+            ];
+            $table = $this->userSettingsTable($user);
+            $up = $this->pdo->prepare("INSERT INTO {$table} (user_id, setting_key, setting_value, setting_type) VALUES (?, ?, ?, 'boolean') ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value), setting_type = VALUES(setting_type), updated_at = CURRENT_TIMESTAMP");
+            foreach ($vals as $key => $v) {
+                if ($v !== null) {
+                    $up->execute([$user['id'], $key, $v]);
+                }
+            }
+            $this->jsonResponse(array_merge(['success' => true], $this->readUserWhatsapp($user)));
+        } catch (\Exception $e) {
+            $this->jsonResponse(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
     /**
      * GET /api/whatsapp/logs/{patientId}
      */

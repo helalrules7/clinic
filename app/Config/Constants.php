@@ -6,7 +6,7 @@ class Constants
 {
     // Application
     const APP_NAME = 'Roaya Ophthalmology Clinic';
-    const APP_VERSION = '9.0.0';
+    const APP_VERSION = '12.0.0';
     const TIMEZONE = 'Africa/Cairo';
     
     // Working Hours
