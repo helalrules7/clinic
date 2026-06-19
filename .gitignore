@@ -12,10 +12,11 @@ composer.phar
 storage/logs/*
 storage/cache/*
 storage/sessions/*
+storage/ophthalmology_news_cache.json
 !storage/logs/.gitkeep
 !storage/cache/.gitkeep
 !storage/sessions/.gitkeep
-
+!storage/ophthalmology_news_cache.json
 # User-uploaded files
 uploads/
 
