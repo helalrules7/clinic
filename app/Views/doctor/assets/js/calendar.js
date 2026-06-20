@@ -656,7 +656,7 @@ function renderAppointmentSlot(appointment) {
                     )} - ${formatTime(appointment.end_time)}</span></div>
                     ${
                       Number(appointment.consultation_seconds) > 0
-                        ? `<div class="info-line"><span class="badge d-inline-flex align-items-center gap-1" style="background: rgba(99,102,241,.12); color: var(--ds-primary, #6366f1); font-weight:600;"><i class="bi bi-stopwatch"></i> ${fmtConsult(appointment.consultation_seconds)}</span></div>`
+                        ? `<div class="info-line"><span class="badge d-inline-flex align-items-center gap-1" style="background: var(--ds-primary, #6366f1); color: #fff; font-weight:600; padding: 4px 13px; font-size: 12px;"><i class="bi bi-stopwatch"></i> ${fmtConsult(appointment.consultation_seconds)}</span></div>`
                         : ""
                     }
                     ${
