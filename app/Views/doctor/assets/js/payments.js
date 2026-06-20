@@ -481,10 +481,17 @@ function displayTransactions(transactions) {
     
     let html = '';
     transactions.forEach(transaction => {
-        const typeBadge = getTransactionTypeBadge(transaction.type);
-        const amountClass = transaction.type === 'expense' ? 'text-danger' : 'text-success';
-        const amountPrefix = transaction.type === 'expense' ? '-' : '+';
-        
+        // A refund is a payment row with a negative net amount → render as outflow.
+        const amt = parseFloat(transaction.amount) || 0;
+        const isRefund = transaction.type === 'payment' &&
+            (String(transaction.is_refund) === '1' || transaction.source_type === 'Refund' || amt < 0);
+        const typeBadge = isRefund
+            ? '<span class="badge bg-warning text-dark">Refund</span>'
+            : getTransactionTypeBadge(transaction.type);
+        const isOutflow = transaction.type === 'expense' || isRefund || amt < 0;
+        const amountClass = isOutflow ? 'text-danger' : 'text-success';
+        const amountPrefix = isOutflow ? '-' : '+';
+
         html += `
             <tr>
                 <td>${formatDateTime(transaction.created_at)}</td>
@@ -492,7 +499,7 @@ function displayTransactions(transactions) {
                 <td>${transaction.description}</td>
                 <td>
                     <span class="fw-bold ${amountClass}">
-                        ${amountPrefix}${formatMoney(transaction.amount)}
+                        ${amountPrefix}${formatMoney(Math.abs(amt))}
                     </span>
                 </td>
                 <td>
@@ -521,25 +528,38 @@ function getTransactionTypeBadge(type) {
 
 function getTransactionActions(transaction) {
     let actions = '';
-    
+
     if (transaction.type === 'payment') {
+        const amt = parseFloat(transaction.amount) || 0;
+        const isRefund = String(transaction.is_refund) === '1' || transaction.source_type === 'Refund' || amt < 0;
+        const isExempt = String(transaction.is_exempt) === '1';
         actions += `
-            <button type="button" class="btn btn-outline-primary btn-sm" 
+            <button type="button" class="btn btn-outline-primary btn-sm"
                     onclick="viewPayment(${transaction.id})"
                     title="View Payment Details">
                 <i class="bi bi-eye"></i>
             </button>
-            <button type="button" class="btn btn-outline-info btn-sm" 
+            <button type="button" class="btn btn-outline-info btn-sm"
                     onclick="printReceipt(${transaction.id})"
                     title="Print Receipt">
                 <i class="bi bi-printer"></i>
-            </button>
-            <button type="button" class="btn btn-outline-warning btn-sm" 
+            </button>`;
+        // Refund — doctor page, so the viewer is the doctor. Not on a refund/exempt row.
+        if (!isRefund && !isExempt && amt > 0) {
+            actions += `
+            <button type="button" class="btn btn-outline-danger btn-sm"
+                    onclick="refundPayment(${transaction.id}, ${amt})"
+                    title="Refund Payment">
+                <i class="bi bi-arrow-counterclockwise"></i>
+            </button>`;
+        }
+        actions += `
+            <button type="button" class="btn btn-outline-warning btn-sm"
                     onclick="editPayment(${transaction.id})"
                     title="Edit Payment">
                 <i class="bi bi-pencil"></i>
             </button>
-            <button type="button" class="btn btn-outline-danger btn-sm" 
+            <button type="button" class="btn btn-outline-danger btn-sm"
                     onclick="deletePayment(${transaction.id})"
                     title="Delete Payment">
                 <i class="bi bi-trash"></i>
@@ -749,6 +769,50 @@ function editPayment(paymentId) {
             console.error('Error loading payment data:', error);
             showErrorModal('Error loading payment data: ' + error.message);
         });
+}
+
+let _refundPaymentId = null;
+function refundPayment(paymentId, maxAmount) {
+    _refundPaymentId = paymentId;
+    const amtInput = document.getElementById('refundAmount');
+    const reasonInput = document.getElementById('refundReason');
+    const errEl = document.getElementById('refundError');
+    const maxEl = document.getElementById('refundMax');
+    if (errEl) errEl.classList.add('d-none');
+    if (amtInput) { amtInput.value = (maxAmount != null ? maxAmount : ''); amtInput.max = maxAmount; }
+    if (reasonInput) reasonInput.value = '';
+    if (maxEl) maxEl.textContent = formatMoney(maxAmount || 0);
+    new bootstrap.Modal(document.getElementById('refundModal')).show();
+}
+
+function submitRefund() {
+    const errEl = document.getElementById('refundError');
+    const showErr = (m) => { errEl.textContent = m; errEl.classList.remove('d-none'); };
+    const amount = parseFloat(document.getElementById('refundAmount').value);
+    const reason = (document.getElementById('refundReason').value || '').trim();
+    if (!(amount > 0)) return showErr('Enter a valid amount.');
+    if (!reason) return showErr('A reason is required.');
+    const btn = document.getElementById('refundSubmit');
+    btn.disabled = true;
+    fetch(`/api/payments/${_refundPaymentId}/refund`, {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount: amount, reason: reason })
+    })
+        .then(r => r.json())
+        .then(data => {
+            btn.disabled = false;
+            if (data.ok) {
+                bootstrap.Modal.getInstance(document.getElementById('refundModal')).hide();
+                showNotification('Refund of ' + formatMoney(data.amount) + ' booked.', 'success');
+                loadFinancialTransactions();
+                setTimeout(() => location.reload(), 700);
+            } else {
+                showErr(data.error || 'Refund failed.');
+            }
+        })
+        .catch(e => { btn.disabled = false; showErr('Error: ' + e.message); });
 }
 
 function deletePayment(paymentId) {

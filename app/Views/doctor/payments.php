@@ -878,6 +878,34 @@ $pageSubtitle = 'Manage payments, expenses, and daily operations';
     </div>
 </div>
 
+<!-- Refund Payment Modal (doctor) -->
+<div class="modal fade" id="refundModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-arrow-counterclockwise me-2"></i>Refund Payment</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="refundError" class="alert alert-danger d-none"></div>
+                <p class="text-muted small mb-3">Refundable up to <strong id="refundMax">0.00 EGP</strong>. A refund books a negative payment dated today.</p>
+                <div class="mb-3">
+                    <label class="form-label">Refund amount (EGP)</label>
+                    <input type="number" step="0.01" min="0" class="form-control" id="refundAmount" placeholder="0.00">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Reason <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="refundReason" placeholder="Required">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="refundSubmit" onclick="submitRefund()">Confirm refund</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Edit Expense Modal -->
 <div class="modal fade" id="editExpenseModal" tabindex="-1">
     <div class="modal-dialog modal-lg">

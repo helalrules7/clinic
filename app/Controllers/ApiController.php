@@ -4185,6 +4185,118 @@ class ApiController
         }
     }
 
+    /**
+     * Doctor-issued REFUND of a payment (partial allowed). DOCTOR/ADMIN ONLY —
+     * the secretary can SEE refund rows in the ledger but cannot create them.
+     * A refund is a NEGATIVE payment row (type='Refund') so it reconciles with
+     * every SUM(amount) summary/ledger; it is recorded TODAY (created_at NOW())
+     * and never edits the original/closed day. Reason mandatory + audit-logged.
+     * Hard cap: cannot make the appointment's net paid go below zero.
+     */
+    public function refundPayment($paymentId)
+    {
+        try {
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            }
+            $user = $this->auth->user();
+            $role = $user['role'] ?? null;
+            if (!in_array($role, ['doctor', 'admin'], true)) {
+                return $this->jsonResponse(['error' => 'Only a doctor may issue a refund'], 403);
+            }
+
+            $stmt = $this->pdo->prepare("SELECT * FROM payments WHERE id = ?");
+            $stmt->execute([(int) $paymentId]);
+            $payment = $stmt->fetch(\PDO::FETCH_ASSOC);
+            if (!$payment) {
+                return $this->jsonResponse(['error' => 'Payment not found'], 404);
+            }
+            if ($payment['type'] === 'Refund' || (float) $payment['amount'] < 0) {
+                return $this->jsonResponse(['error' => 'This row is already a refund'], 400);
+            }
+
+            $data = json_decode(file_get_contents('php://input'), true) ?: [];
+            $reason = trim($data['reason'] ?? '');
+            if ($reason === '') {
+                return $this->jsonResponse(['error' => 'A reason is required for a refund', 'requires_reason' => true], 422);
+            }
+
+            // This payment's own net contribution (exempt rows refund nothing).
+            $paymentNet = ((int) $payment['is_exempt'] === 1)
+                ? 0.0
+                : round((float) $payment['amount'] - (float) ($payment['discount_amount'] ?? 0), 2);
+
+            // Appointment-level net paid — refunds can never drive it below zero.
+            $apptId = $payment['appointment_id'] ?? null;
+            if ($apptId) {
+                $netStmt = $this->pdo->prepare("
+                    SELECT COALESCE(SUM(CASE WHEN is_exempt = 1 THEN 0
+                                ELSE (amount - COALESCE(discount_amount,0)) END),0)
+                      FROM payments WHERE appointment_id = ?");
+                $netStmt->execute([$apptId]);
+                $netPaid = (float) $netStmt->fetchColumn();
+            } else {
+                $netPaid = $paymentNet;
+            }
+
+            $maxRefund = round(min($paymentNet, max(0, $netPaid)), 2);
+            $amount = isset($data['amount']) ? round((float) $data['amount'], 2) : $maxRefund;
+            if ($amount <= 0) {
+                return $this->jsonResponse(['error' => 'Refund amount must be greater than zero'], 400);
+            }
+            if ($amount > $maxRefund + 0.001) {
+                return $this->jsonResponse([
+                    'error' => 'Refund exceeds the refundable amount (' . $maxRefund . ')',
+                    'max_refund' => $maxRefund
+                ], 422);
+            }
+
+            $clinicId = !empty($payment['clinic_id']) ? (int) $payment['clinic_id'] : null;
+            $doctorId = $user['id'] ?? 0;
+            $desc = 'Refund of payment #' . $payment['id'] . ': ' . $reason;
+
+            $this->pdo->beginTransaction();
+            try {
+                $this->pdo->prepare("
+                    INSERT INTO payments
+                        (appointment_id, patient_id, clinic_id, received_by, type, method, amount,
+                         description, discount_reason, approval_user_id, approval_at, created_at)
+                    VALUES (?, ?, ?, ?, 'Refund', ?, ?, ?, ?, ?, NOW(), NOW())
+                ")->execute([
+                    $apptId,
+                    $payment['patient_id'],
+                    $clinicId,
+                    $doctorId,
+                    $payment['method'] ?: 'Cash',
+                    -1 * $amount,
+                    $desc,
+                    $reason,
+                    $doctorId
+                ]);
+                $refundId = $this->pdo->lastInsertId();
+                $this->pdo->commit();
+            } catch (\Throwable $e) {
+                $this->pdo->rollBack();
+                throw $e;
+            }
+
+            $this->writeAuditLog('payments', $payment['id'], 'REFUND',
+                ['original_amount' => $payment['amount'], 'net_paid_before' => $netPaid],
+                ['refund_amount' => $amount, 'refund_id' => $refundId],
+                'Refund: ' . $reason);
+
+            return $this->jsonResponse([
+                'ok' => true,
+                'refund_id' => $refundId,
+                'amount' => $amount,
+                'net_paid' => round($netPaid - $amount, 2),
+                'message' => 'Refund of ' . $amount . ' booked'
+            ]);
+        } catch (\Exception $e) {
+            return $this->jsonResponse(['error' => 'Error issuing refund: ' . $e->getMessage()], 500);
+        }
+    }
+
     private function createDailyClosure($date, $userId, ?int $clinicId = null)
     {
         // Aggregates are scoped to the same clinic as the closure when given,
@@ -9746,21 +9858,24 @@ class ApiController
 
             $offset = ($page - 1) * $limit;
 
-            // Build WHERE conditions
-            $whereConditions = [];
-            $params = [];
-
-            if ($date) {
-                $whereConditions[] = "DATE(created_at) = ?";
-                $params[] = $date;
-            }
-
-            // Secretary scope: pin to their clinic.
+            // Each source query joins `users` (which also has created_at/clinic_id), so the
+            // filter columns MUST be table-qualified per query or MySQL throws "ambiguous".
             $user = $this->auth->user();
-            if (($user['role'] ?? null) === 'secretary' && !empty($user['clinic_id'])) {
-                $whereConditions[] = "clinic_id = ?";
-                $params[] = (int)$user['clinic_id'];
-            }
+            $secClinic = (($user['role'] ?? null) === 'secretary' && !empty($user['clinic_id']))
+                ? (int)$user['clinic_id'] : null;
+            $buildWhere = function (string $alias) use ($date, $secClinic) {
+                $conds = [];
+                $params = [];
+                if ($date) {
+                    $conds[] = "DATE($alias.created_at) = ?";
+                    $params[] = $date;
+                }
+                if ($secClinic !== null) {
+                    $conds[] = "$alias.clinic_id = ?";
+                    $params[] = $secClinic;
+                }
+                return [$conds ? (' WHERE ' . implode(' AND ', $conds)) : '', $params];
+            };
 
             // Get transactions from different sources
             $transactions = [];
@@ -9779,22 +9894,24 @@ class ApiController
                         p.amount as gross_amount,
                         COALESCE(p.discount_amount, 0) as discount_amount,
                         p.is_exempt,
+                        p.type as source_type,
+                        CASE WHEN p.type = 'Refund' THEN 1 ELSE 0 END as is_refund,
                         p.created_at,
-                        CONCAT('دفعة - ', pat.first_name, ' ', pat.last_name) as description,
+                        CASE WHEN p.type = 'Refund'
+                             THEN CONCAT('استرداد - ', pat.first_name, ' ', pat.last_name)
+                             ELSE CONCAT('دفعة - ', pat.first_name, ' ', pat.last_name)
+                        END as description,
                         u.name as created_by_name
                     FROM payments p
                     LEFT JOIN patients pat ON p.patient_id = pat.id
                     LEFT JOIN users u ON p.received_by = u.id
                 ";
 
-                if (!empty($whereConditions)) {
-                    $paymentQuery .= " WHERE " . implode(' AND ', $whereConditions);
-                }
-
-                $paymentQuery .= " ORDER BY p.created_at DESC";
+                [$pWhere, $pParams] = $buildWhere('p');
+                $paymentQuery .= $pWhere . " ORDER BY p.created_at DESC";
 
                 $stmt = $this->pdo->prepare($paymentQuery);
-                $stmt->execute($params);
+                $stmt->execute($pParams);
                 $payments = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
                 foreach ($payments as $payment) {
@@ -9816,14 +9933,11 @@ class ApiController
                     LEFT JOIN users u ON e.created_by = u.id
                 ";
 
-                if (!empty($whereConditions)) {
-                    $expenseQuery .= " WHERE " . implode(' AND ', $whereConditions);
-                }
-
-                $expenseQuery .= " ORDER BY e.created_at DESC";
+                [$eWhere, $eParams] = $buildWhere('e');
+                $expenseQuery .= $eWhere . " ORDER BY e.created_at DESC";
 
                 $stmt = $this->pdo->prepare($expenseQuery);
-                $stmt->execute($params);
+                $stmt->execute($eParams);
                 $expenses = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
                 foreach ($expenses as $expense) {
@@ -9845,14 +9959,11 @@ class ApiController
                     LEFT JOIN users u ON db.created_by = u.id
                 ";
 
-                if (!empty($whereConditions)) {
-                    $balanceQuery .= " WHERE " . implode(' AND ', $whereConditions);
-                }
-
-                $balanceQuery .= " ORDER BY db.created_at DESC";
+                [$bWhere, $bParams] = $buildWhere('db');
+                $balanceQuery .= $bWhere . " ORDER BY db.created_at DESC";
 
                 $stmt = $this->pdo->prepare($balanceQuery);
-                $stmt->execute($params);
+                $stmt->execute($bParams);
                 $balances = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
                 foreach ($balances as $balance) {
@@ -9865,15 +9976,18 @@ class ApiController
                 return strtotime($b['created_at']) - strtotime($a['created_at']);
             });
 
-            // Calculate running balance
+            // Running balance must accumulate CHRONOLOGICALLY (oldest → newest).
+            // The list is sorted newest-first for display, so walk it in reverse.
+            // Payment rows carry a signed net amount (refunds are negative), so a
+            // simple += is correct; expenses always subtract.
             $runningBalance = 0;
-            foreach ($transactions as &$transaction) {
-                if ($transaction['type'] === 'expense') {
-                    $runningBalance -= $transaction['amount'];
+            for ($i = count($transactions) - 1; $i >= 0; $i--) {
+                if ($transactions[$i]['type'] === 'expense') {
+                    $runningBalance -= $transactions[$i]['amount'];
                 } else {
-                    $runningBalance += $transaction['amount'];
+                    $runningBalance += $transactions[$i]['amount'];
                 }
-                $transaction['balance'] = $runningBalance;
+                $transactions[$i]['balance'] = $runningBalance;
             }
 
             // Apply pagination

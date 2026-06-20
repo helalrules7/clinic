@@ -425,6 +425,7 @@ try {
     $router->put('/api/expenses/{id}', 'ApiController@updateExpense');
     $router->delete('/api/expenses/{id}', 'ApiController@deleteExpense');
     $router->put('/api/payments/{id}', 'ApiController@updatePayment');
+    $router->post('/api/payments/{id}/refund', 'ApiController@refundPayment');
     $router->delete('/api/payments/{id}', 'ApiController@deletePayment');
     $router->get('/api/financial-transactions', 'ApiController@getFinancialTransactions');
     $router->get('/api/financial-transactions/export', 'ApiController@exportFinancialTransactions');

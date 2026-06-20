@@ -2221,6 +2221,61 @@ class SecretaryController
         }
     }
 
+    /**
+     * A patient's full visit/booking list for the secretary profile (clinic-scoped).
+     * Admin/financial only — NO clinical data — each row carries cost/paid/remaining
+     * computed identically to getBookingDetails so the list reconciles with the detail page.
+     */
+    public function getPatientBookings($patientId)
+    {
+        try {
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            }
+            $user = $this->auth->user();
+            $patientId = (int) $patientId;
+
+            $where = 'a.patient_id = ?';
+            $params = [$patientId];
+            if (($user['role'] ?? null) === 'secretary' && !empty($user['clinic_id'])) {
+                $where .= ' AND a.clinic_id = ?';
+                $params[] = (int) $user['clinic_id'];
+            }
+
+            $stmt = $this->pdo->prepare("
+                SELECT a.id, a.date, a.start_time, a.end_time, a.visit_type, a.status, a.clinic_id,
+                       d.display_name as doctor_display_name,
+                       COALESCE(SUM(pay.amount), 0) as total_paid
+                FROM appointments a
+                JOIN doctors d ON a.doctor_id = d.id
+                LEFT JOIN payments pay ON a.id = pay.appointment_id
+                WHERE $where
+                GROUP BY a.id
+                ORDER BY a.date DESC, a.start_time DESC
+                LIMIT 200
+            ");
+            $stmt->execute($params);
+            $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+            $settings = $this->getSystemSettings();
+            foreach ($rows as &$a) {
+                switch ($a['visit_type']) {
+                    case 'New':          $a['visit_cost'] = (float)($settings['new_visit_cost'] ?? 150); break;
+                    case 'FollowUp':     $a['visit_cost'] = (float)($settings['repeated_visit_cost'] ?? 100); break;
+                    case 'Consultation': $a['visit_cost'] = (float)($settings['consultation_cost'] ?? 200); break;
+                    default:             $a['visit_cost'] = 150;
+                }
+                $a['total_paid'] = (float) $a['total_paid'];
+                $a['remaining'] = max(0, $a['visit_cost'] - $a['total_paid']);
+            }
+            unset($a);
+
+            return $this->jsonResponse(['ok' => true, 'bookings' => $rows]);
+        } catch (Exception $e) {
+            return $this->jsonResponse(['error' => 'Error getting patient bookings: ' . $e->getMessage()], 500);
+        }
+    }
+
     public function updateBooking($id)
     {
         try {
