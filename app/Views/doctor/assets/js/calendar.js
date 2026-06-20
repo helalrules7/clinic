@@ -483,6 +483,15 @@ function getClinicVisual(code) {
   return map[code] || { icon: "bi-building", color: "#6c757d" };
 }
 
+function fmtConsult(sec) {
+  sec = Math.max(0, Math.floor(Number(sec) || 0));
+  const h = Math.floor(sec / 3600);
+  const m = Math.floor((sec % 3600) / 60);
+  const s2 = sec % 60;
+  const p = (n) => (n < 10 ? '0' : '') + n;
+  return h > 0 ? `${h}:${p(m)}:${p(s2)}` : `${m}:${p(s2)}`;
+}
+
 function renderClinicChip(appointment, { withName = true } = {}) {
   const meta = resolveClinicMeta(appointment);
   if (!meta.name && meta.id == null) return "";
@@ -645,6 +654,11 @@ function renderAppointmentSlot(appointment) {
                     <div class="info-line"><span class="label">Time:</span> ${formatTime(
                       appointment.start_time
                     )} - ${formatTime(appointment.end_time)}</div>
+                    ${
+                      Number(appointment.consultation_seconds) > 0
+                        ? `<div class="info-line"><span class="badge d-inline-flex align-items-center gap-1" style="background: rgba(99,102,241,.12); color: var(--ds-primary, #6366f1); font-weight:600;"><i class="bi bi-stopwatch"></i> ${fmtConsult(appointment.consultation_seconds)}</span></div>`
+                        : ""
+                    }
                     ${
                       appointment.status &&
                       appointment.status.toLowerCase() !== "completed" &&

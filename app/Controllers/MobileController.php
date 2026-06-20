@@ -61,6 +61,7 @@ class MobileController
             'clinic_logo'        => $clinicLogo,
             'clinic_logo_dark'   => $clinicLogoDark,
             'version'            => Constants::APP_VERSION,
+            'specialty'          => Constants::SPECIALTY,
             'mobile_api_version' => self::MOBILE_API_VERSION,
             'auth_type'          => 'mobile_token',
             'features'           => [
