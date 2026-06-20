@@ -19,6 +19,15 @@ class DoctorController
         $this->auth = new Auth();
         $this->view = new View();
         $this->pdo = Database::getInstance()->getConnection();
+
+        // Capture the clinic logo on the *tenant* connection (this->pdo is correct
+        // here; the Database singleton can be re-pointed before the layout renders).
+        try {
+            $__lg = $this->pdo->query("SELECT setting_key, setting_value FROM settings WHERE setting_key IN ('clinic_logo','clinic_logo_dark')")->fetchAll(\PDO::FETCH_KEY_PAIR);
+            if (!empty($__lg['clinic_logo']))      $GLOBALS['__clinicLogoLight'] = $__lg['clinic_logo'];
+            if (!empty($__lg['clinic_logo_dark'])) $GLOBALS['__clinicLogoDark']  = $__lg['clinic_logo_dark'];
+        } catch (\Throwable $__e) {}
+
         
         // Don't require role in constructor - let each method handle it
         // This allows API methods to handle authentication differently

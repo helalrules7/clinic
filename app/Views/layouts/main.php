@@ -4,15 +4,8 @@
     // editing them in Settings → General updates every page that uses this layout.
     $__logoLight = '/assets/images/Light.png';
     $__logoDark  = '/assets/images/Dark.png';
-    try {
-        $__lStmt = \App\Config\Database::getInstance()->getConnection()
-            ->query("SELECT setting_key, setting_value FROM settings WHERE setting_key IN ('clinic_logo','clinic_logo_dark')");
-        foreach ($__lStmt->fetchAll(PDO::FETCH_KEY_PAIR) as $__lk => $__lv) {
-            if ($__lv === null || $__lv === '') continue;
-            if ($__lk === 'clinic_logo') $__logoLight = $__lv;
-            if ($__lk === 'clinic_logo_dark') $__logoDark = $__lv;
-        }
-    } catch (\Throwable $__le) {}
+    if (!empty($GLOBALS['__clinicLogoLight'])) $__logoLight = $GLOBALS['__clinicLogoLight'];
+    if (!empty($GLOBALS['__clinicLogoDark']))  $__logoDark  = $GLOBALS['__clinicLogoDark'];
 
     // Eye-tools gate — the ophthalmology calculators (header markup AND the ~5.3k-line
     // ophthalmology-tools.js bundle) load ONLY on the Appointment + Patient-profile

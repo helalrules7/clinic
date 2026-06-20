@@ -61,6 +61,25 @@
                                     </div>
                                 </div>
                             </div>
+                            <?php $__VC = '\\App\\Config\\Constants'; $__appV = class_exists($__VC) ? $__VC::APP_VERSION : '—'; $__mobV = (class_exists($__VC) && defined($__VC.'::MOBILE_VERSION')) ? $__VC::MOBILE_VERSION : '1.1.7'; $__deskV = (class_exists($__VC) && defined($__VC.'::DESKTOP_VERSION')) ? $__VC::DESKTOP_VERSION : '0.1.0'; ?>
+                            <style>
+                                .ver-grid{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.6rem;}
+                                .ver-pill{display:inline-flex;align-items:center;gap:.45rem;padding:.4rem .8rem;border-radius:999px;background:var(--glass-bg,rgba(99,102,241,.08));border:1px solid var(--ds-border,rgba(99,102,241,.22));font-size:.82rem;color:var(--text-secondary,#475569);}
+                                .ver-pill b{color:var(--ds-primary,#6366f1);font-weight:700;}
+                                .ver-pill i{color:var(--ds-primary,#6366f1);opacity:.85;}
+                            </style>
+                            <div class="setting-item">
+                                <div>
+                                    <label class="form-label mb-0">Versions</label>
+                                    <div class="form-text">Current release across all platforms.</div>
+                                    <div class="ver-grid">
+                                        <span class="ver-pill"><i class="fas fa-globe"></i> Web <b>v<?= htmlspecialchars($__appV) ?></b></span>
+                                        <span class="ver-pill"><i class="fas fa-mobile-screen-button"></i> Mobile <b>v<?= htmlspecialchars($__mobV) ?></b></span>
+                                        <span class="ver-pill"><i class="fas fa-plug"></i> API <b>v<?= htmlspecialchars($__appV) ?></b></span>
+                                        <span class="ver-pill"><i class="fas fa-desktop"></i> Desktop <b>v<?= htmlspecialchars($__deskV) ?></b></span>
+                                    </div>
+                                </div>
+                            </div>
                             <div class="setting-item">
                                 <div class="d-flex justify-content-between align-items-center">
                                     <div>
