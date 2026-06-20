@@ -651,9 +651,9 @@ function renderAppointmentSlot(appointment) {
                     <div class="info-line"><span class="label">Type:</span> ${
                       appointment.visit_type
                     }</div>
-                    <div class="info-line"><span class="label">Time:</span> ${formatTime(
+                    <div class="info-line"><span class="label">Time:</span> <span style="display:inline-block;background:var(--ds-primary,#6366f1);color:#fff;padding:3px 14px;border-radius:999px;font-weight:600;">${formatTime(
                       appointment.start_time
-                    )} - ${formatTime(appointment.end_time)}</div>
+                    )} - ${formatTime(appointment.end_time)}</span></div>
                     ${
                       Number(appointment.consultation_seconds) > 0
                         ? `<div class="info-line"><span class="badge d-inline-flex align-items-center gap-1" style="background: rgba(99,102,241,.12); color: var(--ds-primary, #6366f1); font-weight:600;"><i class="bi bi-stopwatch"></i> ${fmtConsult(appointment.consultation_seconds)}</span></div>`

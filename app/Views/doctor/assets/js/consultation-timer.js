@@ -164,8 +164,21 @@
     clearRoot();
     var pill = document.createElement('button');
     pill.className = 'ct-pill';
-    pill.innerHTML = '<span>▶</span><span>Start timer</span>';
-    pill.addEventListener('click', startFresh);
+    if (running) {
+      // Minimized while running → show the LIVE timer (tap to expand), not "Start timer".
+      pill.style.display = 'inline-flex';
+      pill.style.alignItems = 'center';
+      pill.style.gap = '8px';
+      pill.innerHTML = '<span class="ct-dot' + (manualPause ? ' ct-paused' : '') + '"></span>' +
+        '<span class="ct-pill-time" style="font-size:15px">' + fmt(elapsed) + '</span>';
+      els.time = pill.querySelector('.ct-pill-time');
+      els.dot = pill.querySelector('.ct-dot');
+      pill.addEventListener('click', renderRunning);
+      applyAlertState();
+    } else {
+      pill.innerHTML = '<span>▶</span><span>Start timer</span>';
+      pill.addEventListener('click', startFresh);
+    }
     els.root.appendChild(pill);
   }
 

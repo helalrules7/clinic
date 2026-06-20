@@ -450,7 +450,7 @@ function renderAppointmentSlot(appointment) {
                     ${clinicMeta.name
                         ? `<div class="info-line arabic-text"><span class="label">العيادة:</span> ${renderClinicChip(appointment)}</div>` : ''}
                     <div class="info-line arabic-text"><span class="label">النوع:</span> ${getVisitTypeInArabic(appointment.visit_type)}</div>
-                    <div class="info-line arabic-text"><span class="label">الوقت:</span> ${formatTime(appointment.start_time)} - ${formatTime(appointment.end_time)}</div>
+                    <div class="info-line arabic-text"><span class="label">الوقت:</span> <span style="display:inline-block;background:var(--ds-primary,#6366f1);color:#fff;padding:3px 14px;border-radius:999px;font-weight:600;">${formatTime(appointment.start_time)} - ${formatTime(appointment.end_time)}</span></div>
                     <div class="info-line arabic-text small">المدفوع: ${totalPaid} جنيه · المتبقي: ${remainingAmount} جنيه</div>
                     ${showProgress ? `
                     <div class="appointment-progress-container mt-2"
