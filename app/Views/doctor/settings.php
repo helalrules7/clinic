@@ -723,17 +723,23 @@
                             <div class="row">
                                 <div class="col-md-4">
                                     <div class="setting-item">
-                                        <label for="clinic_logo" class="form-label">شعار العيادة</label>
-                                        <input type="file" class="form-control" id="clinic_logo" name="clinic_logo" 
-                                               accept="image/*" onchange="previewImage(this, 'clinic_logo_preview')" disabled>
-                                        <div class="form-text">شعار العيادة العام (معطل - يمكن تحديثه من إعدادات أخرى)</div>
-                                        <div class="mt-2">
-                                            <input type="text" class="form-control" id="clinic_logo_path" name="clinic_logo_path" 
-                                                   value="<?= htmlspecialchars($settings['clinic_logo']) ?>" placeholder="مسار الشعار الحالي" readonly>
-                                        </div>
+                                        <label for="clinic_logo" class="form-label">شعار العيادة (الوضع الفاتح)</label>
+                                        <input type="file" class="form-control" id="clinic_logo" name="clinic_logo"
+                                               accept="image/*" onchange="previewImage(this, 'clinic_logo_preview')">
+                                        <div class="form-text">يظهر في الوضع الفاتح، الطباعة، والروابط العامة.</div>
                                         <div class="mt-2" id="clinic_logo_preview">
                                             <?php if (!empty($settings['clinic_logo'])): ?>
-                                                <img src="<?= htmlspecialchars($settings['clinic_logo']) ?>" alt="Current Logo" class="img-thumbnail" style="max-width: 150px; max-height: 150px;" onerror="this.style.display='none'">
+                                                <img src="<?= htmlspecialchars($settings['clinic_logo']) ?>" alt="Light Logo" class="img-thumbnail" style="max-width: 150px; max-height: 150px;" onerror="this.style.display='none'">
+                                            <?php endif; ?>
+                                        </div>
+
+                                        <label for="clinic_logo_dark" class="form-label mt-3">شعار العيادة (الوضع الداكن)</label>
+                                        <input type="file" class="form-control" id="clinic_logo_dark" name="clinic_logo_dark"
+                                               accept="image/*" onchange="previewImage(this, 'clinic_logo_dark_preview')">
+                                        <div class="form-text">يظهر في الوضع الداكن (الشريط الجانبي) وفي تطبيق الجوال.</div>
+                                        <div class="mt-2" id="clinic_logo_dark_preview">
+                                            <?php $__cld = $settings['clinic_logo_dark'] ?? ''; if (!empty($__cld)): ?>
+                                                <img src="<?= htmlspecialchars($__cld) ?>" alt="Dark Logo" class="img-thumbnail" style="max-width: 150px; max-height: 150px; background:#0e1626;" onerror="this.style.display='none'">
                                             <?php endif; ?>
                                         </div>
                                     </div>

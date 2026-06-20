@@ -1,4 +1,19 @@
 <?php
+    // Clinic logo (light/dark) — drives the sidebar logo; falls back to the bundled
+    // defaults when unset. Read here so the <head> pre-paint script can inline them, and
+    // editing them in Settings → General updates every page that uses this layout.
+    $__logoLight = '/assets/images/Light.png';
+    $__logoDark  = '/assets/images/Dark.png';
+    try {
+        $__lStmt = \App\Config\Database::getInstance()->getConnection()
+            ->query("SELECT setting_key, setting_value FROM settings WHERE setting_key IN ('clinic_logo','clinic_logo_dark')");
+        foreach ($__lStmt->fetchAll(PDO::FETCH_KEY_PAIR) as $__lk => $__lv) {
+            if ($__lv === null || $__lv === '') continue;
+            if ($__lk === 'clinic_logo') $__logoLight = $__lv;
+            if ($__lk === 'clinic_logo_dark') $__logoDark = $__lv;
+        }
+    } catch (\Throwable $__le) {}
+
     // Eye-tools gate — the ophthalmology calculators (header markup AND the ~5.3k-line
     // ophthalmology-tools.js bundle) load ONLY on the Appointment + Patient-profile
     // detail pages, cutting header clutter and JS payload off every other doctor page.
@@ -144,8 +159,8 @@
 
             // 3) Pre-resolve the sidebar logo + favicon URLs.
             window.__INITIAL_LOGO_SRC__ = theme === 'dark'
-                ? '/assets/images/Dark.png'
-                : '/assets/images/Light.png';
+                ? '<?= htmlspecialchars($__logoDark, ENT_QUOTES) ?>'
+                : '<?= htmlspecialchars($__logoLight, ENT_QUOTES) ?>';
             window.__INITIAL_FAVICONS__ = {
                 ico:   theme === 'dark' ? '/assets/fav/Dark.ico'         : '/assets/fav/Light.ico',
                 p32:   theme === 'dark' ? '/assets/fav/Dark-32x32.png'   : '/assets/fav/Light-32x32.png',
@@ -215,7 +230,7 @@
     <div class="sidebar" id="sidebar">
         <div class="sidebar-header">
             <div class="clinic-logo">
-                <img id="clinicLogo" src="/assets/images/Light.png" data-light-src="/assets/images/Light.png" data-dark-src="/assets/images/Dark.png" alt="HClinic / Roaya Clinic" style="width: 32px; height: 32px; margin-right: 0.75rem;">
+                <img id="clinicLogo" src="<?= htmlspecialchars($__logoLight, ENT_QUOTES) ?>" data-light-src="<?= htmlspecialchars($__logoLight, ENT_QUOTES) ?>" data-dark-src="<?= htmlspecialchars($__logoDark, ENT_QUOTES) ?>" alt="HClinic / Roaya Clinic" style="width: 32px; height: 32px; margin-right: 0.75rem;">
                 <script>
                     // Runs immediately after #clinicLogo enters the DOM and BEFORE
                     // it commits the initial Light.png src to the network. Rewrites

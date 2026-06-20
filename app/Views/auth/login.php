@@ -1,3 +1,17 @@
+<?php
+    // Clinic logo (light/dark) — from Settings → General; falls back to bundled defaults.
+    $__logoLight = '/assets/images/Light.png';
+    $__logoDark  = '/assets/images/Dark.png';
+    try {
+        $__lStmt = \App\Config\Database::getInstance()->getConnection()
+            ->query("SELECT setting_key, setting_value FROM settings WHERE setting_key IN ('clinic_logo','clinic_logo_dark')");
+        foreach ($__lStmt->fetchAll(PDO::FETCH_KEY_PAIR) as $__lk => $__lv) {
+            if ($__lv === null || $__lv === '') continue;
+            if ($__lk === 'clinic_logo') $__logoLight = $__lv;
+            if ($__lk === 'clinic_logo_dark') $__logoDark = $__lv;
+        }
+    } catch (\Throwable $__le) {}
+?>
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
 <head>
@@ -708,7 +722,7 @@
     <div class="login-container">
         <div class="login-card">
             <div class="clinic-logo">
-                <img src="/assets/images/Light.png" alt="Roaya Clinic Logo" id="clinicLogo" style="max-width: 120px; height: auto; transition: transform 0.3s ease;">
+                <img src="<?= htmlspecialchars($__logoLight, ENT_QUOTES) ?>" data-light-src="<?= htmlspecialchars($__logoLight, ENT_QUOTES) ?>" data-dark-src="<?= htmlspecialchars($__logoDark, ENT_QUOTES) ?>" alt="Clinic Logo" id="clinicLogo" style="max-width: 120px; height: auto; transition: transform 0.3s ease;">
                 <div class="clinic-name">Roaya Clinic</div>
                 <div class="clinic-subtitle">Professional Eye Care Management</div>
             </div>
@@ -791,7 +805,7 @@
             // Update logo
             const logo = document.getElementById('clinicLogo');
             if (logo) {
-                logo.src = theme === 'dark' ? '/assets/images/Dark.png' : '/assets/images/Light.png';
+                logo.src = theme === 'dark' ? '<?= htmlspecialchars($__logoDark, ENT_QUOTES) ?>' : '<?= htmlspecialchars($__logoLight, ENT_QUOTES) ?>';
             }
         }
         

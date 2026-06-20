@@ -1,3 +1,17 @@
+<?php
+    // Clinic logo (light/dark) — drives the sidebar logo from Settings → General.
+    $__logoLight = '/assets/images/Light.png';
+    $__logoDark  = '/assets/images/Dark.png';
+    try {
+        $__lStmt = \App\Config\Database::getInstance()->getConnection()
+            ->query("SELECT setting_key, setting_value FROM settings WHERE setting_key IN ('clinic_logo','clinic_logo_dark')");
+        foreach ($__lStmt->fetchAll(PDO::FETCH_KEY_PAIR) as $__lk => $__lv) {
+            if ($__lv === null || $__lv === '') continue;
+            if ($__lk === 'clinic_logo') $__logoLight = $__lv;
+            if ($__lk === 'clinic_logo_dark') $__logoDark = $__lv;
+        }
+    } catch (\Throwable $__le) {}
+?>
 <!DOCTYPE html>
 <html lang="ar" dir="rtl" data-layout="secretary">
 <head>
@@ -104,8 +118,8 @@
 
             // 3) Logo + favicons.
             window.__INITIAL_LOGO_SRC__ = theme === 'dark'
-                ? '/assets/images/Dark.png'
-                : '/assets/images/Light.png';
+                ? '<?= htmlspecialchars($__logoDark, ENT_QUOTES) ?>'
+                : '<?= htmlspecialchars($__logoLight, ENT_QUOTES) ?>';
 
             var icon = theme === 'dark' ? 'Dark' : 'Light';
             var setHref = function(id, href) {
@@ -241,7 +255,7 @@
     <div class="sidebar" id="sidebar">
         <div class="sidebar-header">
             <div class="clinic-logo">
-                <img id="clinicLogo" src="/assets/images/Light.png" data-light-src="/assets/images/Light.png" data-dark-src="/assets/images/Dark.png" alt="HClinic / عيادة رؤية" style="width: 32px; height: 32px; margin-left: 0.75rem;">
+                <img id="clinicLogo" src="<?= htmlspecialchars($__logoLight, ENT_QUOTES) ?>" data-light-src="<?= htmlspecialchars($__logoLight, ENT_QUOTES) ?>" data-dark-src="<?= htmlspecialchars($__logoDark, ENT_QUOTES) ?>" alt="HClinic / عيادة رؤية" style="width: 32px; height: 32px; margin-left: 0.75rem;">
                 <script>
                     (function() {
                         var img = document.getElementById('clinicLogo');

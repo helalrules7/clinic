@@ -2280,7 +2280,7 @@ class DoctorController
     {
         $allowedSettings = [
             'clinic_name', 'clinic_email', 'clinic_phone', 'clinic_address',
-            'clinic_name_arabic', 'clinic_website', 'clinic_logo', 'clinic_logo_print', 'clinic_logo_watermark',
+            'clinic_name_arabic', 'clinic_website', 'clinic_logo', 'clinic_logo_dark', 'clinic_logo_print', 'clinic_logo_watermark',
             'new_visit_cost', 'repeated_visit_cost', 'consultation_cost',
             'timezone', 'date_format', 'time_format', 'items_per_page',
             'backup_frequency', 'email_notifications', 'sms_notifications', 'maintenance_mode',
@@ -3284,7 +3284,7 @@ class DoctorController
         $allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/svg+xml'];
         $maxSize = 5 * 1024 * 1024; // 5MB
         
-        $logoFields = ['clinic_logo_print', 'clinic_logo_watermark']; // clinic_logo disabled
+        $logoFields = ['clinic_logo', 'clinic_logo_dark', 'clinic_logo_print', 'clinic_logo_watermark'];
         
         foreach ($logoFields as $field) {
             // Handle file upload
