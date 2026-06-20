@@ -806,6 +806,10 @@ if ($status === 'completed') {
         <script>
             window.APPT_ID = <?= (int)$appointment['id'] ?>;
             window.APPT_CONSULTATIONS = <?= json_encode(array_values($consultationNotes ?? []), JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE) ?>;
+            /* Consultation timer seed (read by consultation-timer.js). */
+            window.APPT_STATUS = <?= json_encode($appointment['status'] ?? '') ?>;
+            window.APPT_TIMER_SECONDS = <?= (int)($appointment['consultation_seconds'] ?? 0) ?>;
+            window.APPT_TIMER_STATUS = <?= json_encode($appointment['consultation_timer_status'] ?? null) ?>;
         </script>
 
     </div>
@@ -1731,6 +1735,7 @@ window.APPOINTMENT_CONFIG = {
 </script>
 <script src="/app/Views/doctor/assets/js/appointment-tags.js?v=<?= file_exists(__DIR__ . '/assets/js/appointment-tags.js') ? filemtime(__DIR__ . '/assets/js/appointment-tags.js') : time() ?>"></script>
 <script src="/app/Views/doctor/assets/js/appointment.js?v=<?= file_exists(__DIR__ . '/assets/js/appointment.js') ? filemtime(__DIR__ . '/assets/js/appointment.js') : time() ?>"></script>
+<script src="/app/Views/doctor/assets/js/consultation-timer.js?v=<?= file_exists(__DIR__ . '/assets/js/consultation-timer.js') ? filemtime(__DIR__ . '/assets/js/consultation-timer.js') : time() ?>" defer></script>
 <script src="/app/Views/doctor/assets/js/medical-instructions.js?v=<?= file_exists(__DIR__ . '/assets/js/medical-instructions.js') ? filemtime(__DIR__ . '/assets/js/medical-instructions.js') : time() ?>"></script>
 <script src="/app/Views/doctor/assets/js/ai-chat-widget.js?v=<?= file_exists(__DIR__ . '/assets/js/ai-chat-widget.js') ? filemtime(__DIR__ . '/assets/js/ai-chat-widget.js') : time() ?>"></script>
 <script src="/app/Views/layouts/vendor/fabric.min.js?v=<?= file_exists(dirname(__DIR__) . '/layouts/vendor/fabric.min.js') ? filemtime(dirname(__DIR__) . '/layouts/vendor/fabric.min.js') : '5.3.1' ?>"></script>

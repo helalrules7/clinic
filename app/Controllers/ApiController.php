@@ -3060,6 +3060,58 @@ class ApiController
         }
     }
 
+    /**
+     * Consultation timer (doctor-only). The client accumulates pause/resume-aware active
+     * seconds and posts them here (status running|paused|done). Stored seconds are monotonic
+     * (never decrease). status=done is the kill switch: it also marks the visit Completed.
+     */
+    public function updateConsultationTimer($id)
+    {
+        try {
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            }
+            $user = $this->auth->user();
+            if (!in_array($user['role'] ?? '', ['doctor', 'admin'], true)) {
+                return $this->jsonResponse(['error' => 'Forbidden'], 403);
+            }
+
+            $input   = json_decode(file_get_contents('php://input'), true) ?: [];
+            $seconds = isset($input['seconds']) ? max(0, (int)$input['seconds']) : 0;
+            $status  = $input['status'] ?? 'running';
+            if (!in_array($status, ['running', 'paused', 'done'], true)) {
+                return $this->jsonResponse(['error' => 'Invalid status'], 400);
+            }
+
+            $stmt = $this->pdo->prepare("SELECT id, status, consultation_seconds FROM appointments WHERE id = ?");
+            $stmt->execute([$id]);
+            $appt = $stmt->fetch();
+            if (!$appt) {
+                return $this->jsonResponse(['error' => 'Appointment not found'], 404);
+            }
+
+            // Never let the stored elapsed go backwards (guards out-of-order / stale posts).
+            $seconds = max((int)$appt['consultation_seconds'], $seconds);
+
+            $this->pdo->prepare(
+                "UPDATE appointments SET consultation_seconds = ?, consultation_timer_status = ?, updated_at = NOW() WHERE id = ?"
+            )->execute([$seconds, $status, $id]);
+
+            // Kill switch → complete the visit (idempotent).
+            if ($status === 'done' && ($appt['status'] ?? '') !== 'Completed') {
+                $this->updateAppointmentStatus($id, 'Completed', null);
+            }
+
+            return $this->jsonResponse([
+                'ok' => true,
+                'consultation_seconds' => $seconds,
+                'consultation_timer_status' => $status,
+            ]);
+        } catch (\Exception $e) {
+            return $this->jsonResponse(['error' => $e->getMessage()], 500);
+        }
+    }
+
     private function updateAppointmentStatus($id, $status, $reason = null)
     {
         // Validate status

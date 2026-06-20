@@ -218,6 +218,11 @@ $reportTypes = [
         $totalCompleted = array_sum(array_column($reportData, 'completed'));
         $totalMissed = array_sum(array_column($reportData, 'missed'));
         $completionRatio = $totalAppointments > 0 ? round(($totalCompleted / $totalAppointments) * 100, 2) : 0;
+        // Consultation-timer aggregates.
+        $totalConsultSeconds = (int) array_sum(array_column($reportData, 'total_consultation_seconds'));
+        $timedCount = (int) array_sum(array_column($reportData, 'timed_count'));
+        $avgConsultMin = $timedCount > 0 ? round(($totalConsultSeconds / $timedCount) / 60, 1) : 0;
+        $totalConsultHours = round($totalConsultSeconds / 3600, 1);
         ?>
         
         <!-- Appointments Statistics Card -->
@@ -284,6 +289,34 @@ $reportTypes = [
                         <div class="mini-stat-trend trend-neutral">
                             <i class="bi bi-pie-chart"></i>
                             <span>Ratio</span>
+                        </div>
+                    </div>
+                    <div class="mini-stat-card mini-stat-info">
+                        <div class="mini-stat-icon">
+                            <i class="bi bi-stopwatch"></i>
+                        </div>
+                        <div class="mini-stat-content">
+                            <span class="mini-stat-value"><?= $avgConsultMin ?> min</span>
+                            <span class="mini-stat-label">Avg Consultation Time</span>
+                        </div>
+                        <div class="mini-stat-chart" id="chartAvgConsultation"></div>
+                        <div class="mini-stat-trend trend-neutral">
+                            <i class="bi bi-clock-history"></i>
+                            <span><?= number_format($timedCount) ?> timed</span>
+                        </div>
+                    </div>
+                    <div class="mini-stat-card mini-stat-purple">
+                        <div class="mini-stat-icon">
+                            <i class="bi bi-hourglass-split"></i>
+                        </div>
+                        <div class="mini-stat-content">
+                            <span class="mini-stat-value"><?= $totalConsultHours ?> h</span>
+                            <span class="mini-stat-label">Total Consulting Time</span>
+                        </div>
+                        <div class="mini-stat-chart" id="chartTotalConsulting"></div>
+                        <div class="mini-stat-trend trend-up">
+                            <i class="bi bi-graph-up-arrow"></i>
+                            <span>Total</span>
                         </div>
                     </div>
                 </div>
@@ -991,6 +1024,8 @@ $reportTypes = [
                                 <th>Total Appointments</th>
                                 <th>Completed</th>
                                 <th>Missed</th>
+                                <th>Avg Time</th>
+                                <th>Total Time</th>
                             <?php elseif ($reportType === 'revenue'): ?>
                                 <th>Daily Revenue</th>
                                 <th>Total Transactions</th>
@@ -1022,6 +1057,9 @@ $reportTypes = [
                                     <td><?= number_format($row['total_appointments']) ?></td>
                                     <td><span class="badge bg-success"><?= number_format($row['completed']) ?></span></td>
                                     <td><span class="badge bg-danger"><?= number_format($row['missed']) ?></span></td>
+                                    <?php $rAvg = (int)($row['avg_consultation_seconds'] ?? 0); $rTot = (int)($row['total_consultation_seconds'] ?? 0); ?>
+                                    <td><?= $rAvg > 0 ? gmdate('i:s', $rAvg) : '—' ?></td>
+                                    <td><?= $rTot > 0 ? gmdate('H:i:s', $rTot) : '—' ?></td>
                                 <?php elseif ($reportType === 'revenue'): ?>
                                     <td><strong><?= number_format($row['daily_revenue'], 2) ?> EGP</strong></td>
                                     <td><?= number_format($row['transactions']) ?></td>

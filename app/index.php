@@ -392,6 +392,7 @@ try {
     $router->get('/api/appointments/{id}', 'ApiController@getAppointment');
     $router->post('/api/appointments', 'ApiController@createAppointment');
     $router->put('/api/appointments/{id}', 'ApiController@updateAppointment');
+    $router->post('/api/appointments/{id}/timer', 'ApiController@updateConsultationTimer');
     $router->delete('/api/appointments/{id}', 'ApiController@deleteAppointment');
     $router->post('/api/appointments/{id}/reschedule', 'ApiController@reschedule');
     $router->post('/api/appointments/{id}/reschedule-followup', 'ApiController@rescheduleFollowup');

@@ -331,6 +331,19 @@ async function loadPersonalPreferences() {
             updateToggleSwitch('autocompleteConsultation', personalPreferences.autocomplete_consultation !== false);
             updateToggleSwitch('autocompleteIcd10', personalPreferences.autocomplete_icd10 !== false);
             updateToggleSwitch('autocompleteMedications', personalPreferences.autocomplete_medications !== false);
+
+            // Consultation timer — default OFF (opt-in).
+            updateToggleSwitch('consultationTimerEnabled', personalPreferences.consultation_timer_enabled === true || personalPreferences.consultation_timer_enabled === 1 || personalPreferences.consultation_timer_enabled === '1');
+            updateToggleSwitch('consultationTimerSound', personalPreferences.consultation_timer_sound === true || personalPreferences.consultation_timer_sound === 1 || personalPreferences.consultation_timer_sound === '1');
+            (function () {
+                var sel = document.getElementById('consultationTimerAlertMinutes');
+                if (!sel) return;
+                var mins = parseInt(personalPreferences.consultation_timer_alert_minutes, 10) || 0;
+                if (mins && !Array.prototype.some.call(sel.options, function (o) { return parseInt(o.value, 10) === mins; })) {
+                    var opt = document.createElement('option'); opt.value = String(mins); opt.textContent = mins + ' minutes'; sel.appendChild(opt);
+                }
+                sel.value = String(mins);
+            })();
             
             // Load push subscriptions
             loadPushSubscriptions();

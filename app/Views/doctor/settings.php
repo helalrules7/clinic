@@ -39,8 +39,45 @@
                         <?php unset($_SESSION['error_message']); ?>
                     <?php endif; ?>
 
+                    <!-- Mobile-style settings tabs (sections are filtered by JS per tab) -->
+                    <div class="settings-tabs" id="settingsTabs">
+                        <button type="button" class="stab-btn" data-stab-target="general"><i class="fas fa-sliders-h me-1"></i>General</button>
+                        <button type="button" class="stab-btn" data-stab-target="personal"><i class="fas fa-user-cog me-1"></i>Personal</button>
+                        <button type="button" class="stab-btn" data-stab-target="preferences"><i class="fas fa-magic me-1"></i>Preferences</button>
+                        <button type="button" class="stab-btn" data-stab-target="about"><i class="fas fa-info-circle me-1"></i>About</button>
+                    </div>
+
                     <form method="POST" action="/doctor/settings" enctype="multipart/form-data">
                         <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf_token) ?>">
+
+                        <!-- About -->
+                        <div class="settings-section" data-stab="about">
+                            <h5><i class="fas fa-info-circle me-2"></i>About</h5>
+                            <div class="setting-item">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <label class="form-label mb-0">Application</label>
+                                        <div class="form-text">HClinic — clinic management system.</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="setting-item">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <label class="form-label mb-0">Mobile &amp; desktop apps</label>
+                                        <div class="form-text">Download the apps at <a href="https://downloads.hclinic.clinic" target="_blank" rel="noopener">downloads.hclinic.clinic</a>.</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="setting-item">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <label class="form-label mb-0">Support</label>
+                                        <div class="form-text">For help or to report an issue, contact your clinic administrator.</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
 
                         <!-- Performance Mode (top of page — kills glassmorphism system-wide) -->
                         <div class="settings-section">
@@ -565,6 +602,59 @@
                                         <input type="checkbox" class="toggle-switch" id="autocompleteMedications"
                                                onchange="updatePersonalPreference('autocomplete_medications', this.checked)">
                                     </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Consultation Timer -->
+                        <div class="settings-section">
+                            <h5><i class="fas fa-stopwatch me-2"></i>Consultation Timer</h5>
+                            <div class="form-text mb-3" style="margin-top:-6px">
+                                A floating count-up timer on the appointment page that tracks how long each
+                                consultation takes. The recorded time feeds the <strong>Reports</strong> page.
+                            </div>
+
+                            <div class="setting-item">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <label class="form-label mb-0">Show consultation timer</label>
+                                        <div class="form-text">Offer a timer when you open a non-completed appointment; its kill switch completes the visit.</div>
+                                    </div>
+                                    <div class="toggle-switch-wrapper">
+                                        <input type="checkbox" class="toggle-switch" id="consultationTimerEnabled"
+                                               onchange="updatePersonalPreference('consultation_timer_enabled', this.checked)">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="setting-item">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <label class="form-label mb-0">Play alert sound</label>
+                                        <div class="form-text">Sound an alarm when the timer reaches the alert time below.</div>
+                                    </div>
+                                    <div class="toggle-switch-wrapper">
+                                        <input type="checkbox" class="toggle-switch" id="consultationTimerSound"
+                                               onchange="updatePersonalPreference('consultation_timer_sound', this.checked)">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="setting-item">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <label class="form-label mb-0">Alert after</label>
+                                        <div class="form-text">Timer text turns yellow 2 minutes before, then red (and sounds) at this time. "Off" disables the alert.</div>
+                                    </div>
+                                    <select id="consultationTimerAlertMinutes" class="form-select" style="max-width:160px"
+                                            onchange="updatePersonalPreference('consultation_timer_alert_minutes', parseInt(this.value,10))">
+                                        <option value="0">Off</option>
+                                        <option value="5">5 minutes</option>
+                                        <option value="10">10 minutes</option>
+                                        <option value="15">15 minutes</option>
+                                        <option value="30">30 minutes</option>
+                                        <option value="45">45 minutes</option>
+                                    </select>
                                 </div>
                             </div>
                         </div>
@@ -1512,5 +1602,56 @@
             fetch('/api/whatsapp/config', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload()) }).catch(function () {});
         });
     });
+})();
+</script>
+
+<style>
+.settings-tabs { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:22px; border-bottom:2px solid var(--glass-border, rgba(226,232,240,.7)); }
+.stab-btn { border:0; background:transparent; padding:11px 20px; font-weight:700; font-size:14px; color:var(--ds-text-muted, #64748b); cursor:pointer; border-radius:10px 10px 0 0; border-bottom:3px solid transparent; margin-bottom:-2px; transition:color .15s, border-color .15s, background .15s; }
+.stab-btn:hover { color:var(--ds-primary, #4F46E5); }
+.stab-btn.active { color:var(--ds-primary, #4F46E5); border-bottom-color:var(--ds-primary, #4F46E5); background:var(--ds-primary-soft, rgba(79,70,229,.08)); }
+@media (max-width:640px){ .stab-btn{ padding:9px 13px; font-size:13px; } }
+</style>
+<script>
+/* Mobile-style settings tabs: auto-assign each .settings-section to a tab by its <h5>
+   title, then show only the active tab's sections. Hidden inputs still submit, and a JS
+   failure degrades to the original single-page view. */
+(function () {
+  function tabOf(title) {
+    var t = (title || '').toLowerCase();
+    if (t.indexOf('about') >= 0) return 'about';
+    if (t.indexOf('personal preferences') >= 0 || t.indexOf('appearance') >= 0 || t.indexOf('note template') >= 0 || t.indexOf('المظهر') >= 0 || t.indexOf('القوالب') >= 0) return 'personal';
+    if (t.indexOf('auto complete') >= 0 || t.indexOf('autocomplete') >= 0 || t.indexOf('consultation timer') >= 0 || t.indexOf('whatsapp') >= 0 || t.indexOf('واتساب') >= 0) return 'preferences';
+    return 'general';
+  }
+  function init() {
+    var nav = document.getElementById('settingsTabs');
+    if (!nav) return;
+    var sections = Array.prototype.slice.call(document.querySelectorAll('.card-body .settings-section'));
+    if (!sections.length) return;
+    sections.forEach(function (s) {
+      if (!s.getAttribute('data-stab')) {
+        var h = s.querySelector('h5');
+        s.setAttribute('data-stab', h ? tabOf(h.textContent) : 'general');
+      }
+    });
+    var btns = Array.prototype.slice.call(nav.querySelectorAll('.stab-btn'));
+    function show(tab) {
+      sections.forEach(function (s) { s.style.display = (s.getAttribute('data-stab') === tab) ? '' : 'none'; });
+      btns.forEach(function (b) { b.classList.toggle('active', b.getAttribute('data-stab-target') === tab); });
+      try { localStorage.setItem('settingsActiveTab', tab); } catch (e) {}
+    }
+    btns.forEach(function (b) {
+      var tab = b.getAttribute('data-stab-target');
+      if (!sections.some(function (s) { return s.getAttribute('data-stab') === tab; })) b.style.display = 'none';
+    });
+    btns.forEach(function (b) { b.addEventListener('click', function () { show(b.getAttribute('data-stab-target')); }); });
+    var start = 'general';
+    try { start = localStorage.getItem('settingsActiveTab') || 'general'; } catch (e) {}
+    if (!sections.some(function (s) { return s.getAttribute('data-stab') === start; })) start = 'general';
+    show(start);
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
 })();
 </script>

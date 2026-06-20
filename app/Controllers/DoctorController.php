@@ -2415,7 +2415,10 @@ class DoctorController
                 DATE(a.date) as date,
                 COUNT(*) as total_appointments,
                 SUM(CASE WHEN a.status = 'Completed' THEN 1 ELSE 0 END) as completed,
-                SUM(CASE WHEN a.status != 'Completed' THEN 1 ELSE 0 END) as missed
+                SUM(CASE WHEN a.status != 'Completed' THEN 1 ELSE 0 END) as missed,
+                COALESCE(SUM(a.consultation_seconds), 0) as total_consultation_seconds,
+                COALESCE(ROUND(AVG(NULLIF(a.consultation_seconds, 0))), 0) as avg_consultation_seconds,
+                SUM(CASE WHEN a.consultation_seconds > 0 THEN 1 ELSE 0 END) as timed_count
             FROM appointments a
             WHERE DATE(a.date) BETWEEN ? AND ?
             AND DATE(a.date) < CURDATE()
@@ -4665,7 +4668,11 @@ class DoctorController
             // Doctor-scoped switches; default ON when no row exists.
             'autocomplete_consultation',
             'autocomplete_icd10',
-            'autocomplete_medications'
+            'autocomplete_medications',
+            // Consultation timer (floating count-up widget on the appointment page).
+            'consultation_timer_enabled',
+            'consultation_timer_sound',
+            'consultation_timer_alert_minutes'
         ];
         
         try {
