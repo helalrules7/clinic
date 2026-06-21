@@ -108,7 +108,8 @@ class SecretaryPatientsController
             $total = (int)$this->pdo->query("SELECT COUNT(*) FROM patients")->fetchColumn();
             return $this->json(['ok' => true, 'folders' => $rows, 'total_patients' => $total]);
         } catch (\Exception $e) {
-            return $this->json(['error' => $e->getMessage()], 500);
+            error_log('SecretaryPatientsController: ' . $e->getMessage());
+            return $this->json(['error' => 'حدث خطأ غير متوقع، يرجى المحاولة مرة أخرى'], 500);
         }
     }
 
@@ -138,7 +139,8 @@ class SecretaryPatientsController
             return $this->json(['ok' => true, 'data' => ['id' => $id, 'name' => $name, 'icon' => $icon,
                 'gradient_color' => $grad, 'parent_id' => $parentId, 'patient_count' => 0]]);
         } catch (\Exception $e) {
-            return $this->json(['error' => $e->getMessage()], 500);
+            error_log('SecretaryPatientsController: ' . $e->getMessage());
+            return $this->json(['error' => 'حدث خطأ غير متوقع، يرجى المحاولة مرة أخرى'], 500);
         }
     }
 
@@ -170,7 +172,8 @@ class SecretaryPatientsController
             $stmt->execute($params);
             return $this->json(['ok' => true]);
         } catch (\Exception $e) {
-            return $this->json(['error' => $e->getMessage()], 500);
+            error_log('SecretaryPatientsController: ' . $e->getMessage());
+            return $this->json(['error' => 'حدث خطأ غير متوقع، يرجى المحاولة مرة أخرى'], 500);
         }
     }
 
@@ -191,7 +194,8 @@ class SecretaryPatientsController
             $del->execute(array_merge($ids, [$this->clinicId]));
             return $this->json(['ok' => true, 'deleted' => $ids]);
         } catch (\Exception $e) {
-            return $this->json(['error' => $e->getMessage()], 500);
+            error_log('SecretaryPatientsController: ' . $e->getMessage());
+            return $this->json(['error' => 'حدث خطأ غير متوقع، يرجى المحاولة مرة أخرى'], 500);
         }
     }
 
@@ -219,7 +223,8 @@ class SecretaryPatientsController
             }
             return $this->json(['ok' => true, 'count' => count($ids)]);
         } catch (\Exception $e) {
-            return $this->json(['error' => $e->getMessage()], 500);
+            error_log('SecretaryPatientsController: ' . $e->getMessage());
+            return $this->json(['error' => 'حدث خطأ غير متوقع، يرجى المحاولة مرة أخرى'], 500);
         }
     }
 
@@ -269,7 +274,8 @@ class SecretaryPatientsController
             }
             return $this->json(['ok' => true, 'folders_created' => $foldersCreated, 'patients_filed' => $filed]);
         } catch (\Exception $e) {
-            return $this->json(['error' => $e->getMessage()], 500);
+            error_log('SecretaryPatientsController: ' . $e->getMessage());
+            return $this->json(['error' => 'حدث خطأ غير متوقع، يرجى المحاولة مرة أخرى'], 500);
         }
     }
 
@@ -289,7 +295,8 @@ class SecretaryPatientsController
             $s->execute([$this->clinicId]);
             return $this->json(['ok' => true, 'tags' => $s->fetchAll(\PDO::FETCH_ASSOC)]);
         } catch (\Exception $e) {
-            return $this->json(['error' => $e->getMessage()], 500);
+            error_log('SecretaryPatientsController: ' . $e->getMessage());
+            return $this->json(['error' => 'حدث خطأ غير متوقع، يرجى المحاولة مرة أخرى'], 500);
         }
     }
 
@@ -311,7 +318,8 @@ class SecretaryPatientsController
             $id = (int)$this->pdo->lastInsertId();
             return $this->json(['ok' => true, 'data' => ['id' => $id, 'name' => $name, 'color' => $color, 'icon' => $icon]]);
         } catch (\Exception $e) {
-            return $this->json(['error' => $e->getMessage()], 500);
+            error_log('SecretaryPatientsController: ' . $e->getMessage());
+            return $this->json(['error' => 'حدث خطأ غير متوقع، يرجى المحاولة مرة أخرى'], 500);
         }
     }
 
@@ -327,7 +335,8 @@ class SecretaryPatientsController
             $this->pdo->prepare("DELETE FROM patient_tags WHERE id = ? AND clinic_id = ?")->execute([$id, $this->clinicId]);
             return $this->json(['ok' => true]);
         } catch (\Exception $e) {
-            return $this->json(['error' => $e->getMessage()], 500);
+            error_log('SecretaryPatientsController: ' . $e->getMessage());
+            return $this->json(['error' => 'حدث خطأ غير متوقع، يرجى المحاولة مرة أخرى'], 500);
         }
     }
 
@@ -355,7 +364,8 @@ class SecretaryPatientsController
             }
             return $this->json(['ok' => true]);
         } catch (\Exception $e) {
-            return $this->json(['error' => $e->getMessage()], 500);
+            error_log('SecretaryPatientsController: ' . $e->getMessage());
+            return $this->json(['error' => 'حدث خطأ غير متوقع، يرجى المحاولة مرة أخرى'], 500);
         }
     }
 
@@ -392,7 +402,8 @@ class SecretaryPatientsController
             $s->execute([$pid, $this->clinicId, $color]);
             return $this->json(['ok' => true, 'color_code' => $color]);
         } catch (\Exception $e) {
-            return $this->json(['error' => $e->getMessage()], 500);
+            error_log('SecretaryPatientsController: ' . $e->getMessage());
+            return $this->json(['error' => 'حدث خطأ غير متوقع، يرجى المحاولة مرة أخرى'], 500);
         }
     }
 
@@ -401,7 +412,7 @@ class SecretaryPatientsController
     // ========================================================================
     public function updatePatientBasics($id)
     {
-        if (!$this->auth->check()) return $this->json(['error' => 'Unauthorized'], 401);
+        if (!$this->auth->check()) return $this->json(['error' => 'غير مصرح بالوصول'], 401);
         try {
             $id = (int)$id;
             $d = \App\Lib\DigitNormalizer::normalizePatientNumericFields($this->body());
@@ -427,7 +438,8 @@ class SecretaryPatientsController
             $this->pdo->prepare("UPDATE patients SET " . implode(', ', $sets) . " WHERE id = ?")->execute($params);
             return $this->json(['ok' => true]);
         } catch (\Exception $e) {
-            return $this->json(['error' => $e->getMessage()], 500);
+            error_log('SecretaryPatientsController: ' . $e->getMessage());
+            return $this->json(['error' => 'حدث خطأ غير متوقع، يرجى المحاولة مرة أخرى'], 500);
         }
     }
 
@@ -452,7 +464,8 @@ class SecretaryPatientsController
             $all->execute([$this->clinicId]);
             return $this->json(['ok' => true, 'marker' => $marker, 'tags' => $tags, 'all_tags' => $all->fetchAll(\PDO::FETCH_ASSOC)]);
         } catch (\Exception $e) {
-            return $this->json(['error' => $e->getMessage()], 500);
+            error_log('SecretaryPatientsController: ' . $e->getMessage());
+            return $this->json(['error' => 'حدث خطأ غير متوقع، يرجى المحاولة مرة أخرى'], 500);
         }
     }
 
@@ -480,7 +493,8 @@ class SecretaryPatientsController
             foreach ($tg->fetchAll(\PDO::FETCH_ASSOC) as $r) $tags[(string)$r['patient_id']][] = ['name' => $r['name'], 'color' => $r['color']];
             return $this->json(['ok' => true, 'markers' => (object)$markers, 'tags' => (object)$tags]);
         } catch (\Exception $e) {
-            return $this->json(['error' => $e->getMessage()], 500);
+            error_log('SecretaryPatientsController: ' . $e->getMessage());
+            return $this->json(['error' => 'حدث خطأ غير متوقع، يرجى المحاولة مرة أخرى'], 500);
         }
     }
 
@@ -505,7 +519,8 @@ class SecretaryPatientsController
             $stmt->execute([$this->clinicId]);
             return $this->json(['ok' => true, 'items' => $stmt->fetchAll(\PDO::FETCH_ASSOC)]);
         } catch (\Exception $e) {
-            return $this->json(['error' => $e->getMessage()], 500);
+            error_log('SecretaryPatientsController: ' . $e->getMessage());
+            return $this->json(['error' => 'حدث خطأ غير متوقع، يرجى المحاولة مرة أخرى'], 500);
         }
     }
 
@@ -552,7 +567,8 @@ class SecretaryPatientsController
             }
             return $this->json(['ok' => true, 'data' => ['dataByDate' => $byDate]]);
         } catch (\Exception $e) {
-            return $this->json(['error' => $e->getMessage()], 500);
+            error_log('SecretaryPatientsController: ' . $e->getMessage());
+            return $this->json(['error' => 'حدث خطأ غير متوقع، يرجى المحاولة مرة أخرى'], 500);
         }
     }
 
@@ -580,7 +596,8 @@ class SecretaryPatientsController
             $s->execute([(int)$id]);
             return $this->json(['ok' => true, 'files' => $s->fetchAll(\PDO::FETCH_ASSOC)]);
         } catch (\Exception $e) {
-            return $this->json(['error' => $e->getMessage()], 500);
+            error_log('SecretaryPatientsController: ' . $e->getMessage());
+            return $this->json(['error' => 'حدث خطأ غير متوقع، يرجى المحاولة مرة أخرى'], 500);
         }
     }
 
@@ -606,20 +623,21 @@ class SecretaryPatientsController
             $s->execute([$pid, $file['name'], 'uploads/patients/' . $fname, $file['type'], $file['size'], $this->auth->user()['id'], $cat]);
             return $this->json(['ok' => true, 'file_id' => (int)$this->pdo->lastInsertId()]);
         } catch (\Exception $e) {
-            return $this->json(['error' => $e->getMessage()], 500);
+            error_log('SecretaryPatientsController: ' . $e->getMessage());
+            return $this->json(['error' => 'حدث خطأ غير متوقع، يرجى المحاولة مرة أخرى'], 500);
         }
     }
 
     public function viewFile($fileId)
     {
-        if (!$this->needClinic()) { http_response_code(403); echo 'Forbidden'; return; }
+        if (!$this->needClinic()) { http_response_code(403); echo 'غير مصرح بالوصول'; return; }
         $s = $this->pdo->prepare("SELECT original_filename, file_path, file_type FROM patient_files WHERE id = ? AND audience = 'administrative'");
         $s->execute([(int)$fileId]);
         $f = $s->fetch(\PDO::FETCH_ASSOC);
-        if (!$f) { http_response_code(404); echo 'Not found'; return; }
+        if (!$f) { http_response_code(404); echo 'غير موجود'; return; }
         $path = realpath(__DIR__ . '/../../' . $f['file_path']);
         $base = realpath(__DIR__ . '/../../uploads/patients/');
-        if (!$path || !$base || strpos($path, $base) !== 0 || !is_file($path)) { http_response_code(404); echo 'Missing'; return; }
+        if (!$path || !$base || strpos($path, $base) !== 0 || !is_file($path)) { http_response_code(404); echo 'الملف غير موجود'; return; }
         header('Content-Type: ' . ($f['file_type'] ?: 'application/octet-stream'));
         header('Content-Disposition: inline; filename="' . basename($f['original_filename']) . '"');
         header('Content-Length: ' . filesize($path));
@@ -640,7 +658,8 @@ class SecretaryPatientsController
             $this->pdo->prepare("DELETE FROM patient_files WHERE id = ? AND audience = 'administrative'")->execute([(int)$fileId]);
             return $this->json(['ok' => true]);
         } catch (\Exception $e) {
-            return $this->json(['error' => $e->getMessage()], 500);
+            error_log('SecretaryPatientsController: ' . $e->getMessage());
+            return $this->json(['error' => 'حدث خطأ غير متوقع، يرجى المحاولة مرة أخرى'], 500);
         }
     }
 
@@ -668,7 +687,8 @@ class SecretaryPatientsController
                 ],
             ]);
         } catch (\Exception $e) {
-            return $this->json(['error' => $e->getMessage()], 500);
+            error_log('SecretaryPatientsController: ' . $e->getMessage());
+            return $this->json(['error' => 'حدث خطأ غير متوقع، يرجى المحاولة مرة أخرى'], 500);
         }
     }
 
@@ -704,7 +724,8 @@ class SecretaryPatientsController
             }
             fclose($out);
         } catch (\Exception $e) {
-            return $this->json(['error' => $e->getMessage()], 500);
+            error_log('SecretaryPatientsController: ' . $e->getMessage());
+            return $this->json(['error' => 'حدث خطأ غير متوقع، يرجى المحاولة مرة أخرى'], 500);
         }
     }
 

@@ -116,15 +116,24 @@
                     <div class="activity-list">
                         <?php foreach ($recentActivities as $activity): ?>
                             <div class="activity-item">
+                                <?php
+                                    // audit_logs columns: action, entity_table, reason (no action_type/description).
+                                    $actAction = (string)($activity['action'] ?? '');
+                                    $actEntity = (string)($activity['entity_table'] ?? '');
+                                    $actDesc   = trim(ucfirst($actAction) . ($actEntity !== '' ? ' — ' . str_replace('_', ' ', $actEntity) : ''));
+                                    if ($actDesc === '') { $actDesc = (string)($activity['reason'] ?? ''); }
+                                    $actUser   = (string)($activity['user_name'] ?? 'System');
+                                    $actWhen   = $activity['created_at'] ?? null;
+                                ?>
                                 <div class="activity-icon">
-                                    <i class="fas fa-<?= $activity['action_type'] === 'login' ? 'sign-in' : 'edit' ?>"></i>
+                                    <i class="fas fa-<?= stripos($actAction, 'login') !== false ? 'sign-in' : 'edit' ?>"></i>
                                 </div>
                                 <div class="activity-content">
-                                    <h6 class="mb-1"><?= htmlspecialchars($activity['user_name']) ?></h6>
-                                    <p class="mb-1 text-muted"><?= htmlspecialchars($activity['description']) ?></p>
+                                    <h6 class="mb-1"><?= htmlspecialchars($actUser) ?></h6>
+                                    <p class="mb-1 text-muted"><?= htmlspecialchars($actDesc) ?></p>
                                     <small class="text-muted">
                                         <i class="fas fa-clock me-1"></i>
-                                        <?= date('Y-m-d H:i', strtotime($activity['created_at'])) ?>
+                                        <?= $actWhen ? date('Y-m-d H:i', strtotime((string)$actWhen)) : '' ?>
                                     </small>
                                 </div>
                             </div>

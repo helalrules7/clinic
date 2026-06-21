@@ -107,7 +107,7 @@
         const weekdayLis = AR_WEEK_SHORT.map(d => `<li>${d}</li>`).join('');
 
         popover.innerHTML = `
-            <button type="button" class="clock-popover-close" aria-label="Close"><i class="bi bi-x-lg"></i></button>
+            <button type="button" class="clock-popover-close" aria-label="إغلاق"><i class="bi bi-x-lg"></i></button>
             <div class="clock-calendar-popover-content">
                 <div class="clock-calendar-column clock-column">
                     <div class="clock">

@@ -532,7 +532,7 @@ function updateWeatherCard(weatherData) {
     }
 
     if (descElement) {
-        descElement.textContent = weatherData.condition || 'Clear';
+        descElement.textContent = weatherData.condition || 'صافٍ';
     }
 
     if (dateElement) {

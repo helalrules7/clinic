@@ -322,7 +322,7 @@ $patientTrendDeltas = $patientTrendDeltas ?? ['total' => 0, 'active' => 0, 'new'
                                         </div>
                                         <div>
                                             <h6 class="mb-1 arabic-text patient-hover-name" data-patient-id="<?= (int)$patient['id'] ?>"><?= htmlspecialchars($fullName) ?></h6>
-                                            <small class="text-muted">ID: #<?= $patient['id'] ?></small>
+                                            <small class="text-muted">رقم: #<?= $patient['id'] ?></small>
                                             <?php if (!empty($patient['gender'])): ?>
                                                 <br><small class="text-muted">
                                                     <i class="bi bi-<?= $patient['gender'] === 'Female' ? 'gender-female' : 'gender-male' ?> me-1"></i>
@@ -479,7 +479,7 @@ $patientTrendDeltas = $patientTrendDeltas ?? ['total' => 0, 'active' => 0, 'new'
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header position-relative">
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="إغلاق"></button>
                 <h5 class="modal-title arabic-text">
                     <i class="bi bi-search me-2"></i>
                     البحث في المرضى
@@ -559,7 +559,7 @@ $patientTrendDeltas = $patientTrendDeltas ?? ['total' => 0, 'active' => 0, 'new'
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header position-relative">
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="إغلاق"></button>
                 <h5 class="modal-title arabic-text">
                     <i class="bi bi-person-plus me-2"></i>
                     إضافة مريض جديد
@@ -3509,7 +3509,7 @@ color: var(--text) !important;
 }
 
 .toggle-switch::after {
-    content: "OFF";
+    content: "إيقاف";
     position: absolute;
     right: 8px; /* RTL: right instead of left */
     top: 50%;
@@ -3523,7 +3523,7 @@ color: var(--text) !important;
 }
 
 .toggle-switch:checked::after {
-    content: "ON";
+    content: "تشغيل";
     right: 40px; /* RTL: right instead of left */
     color: black !important;
     opacity: 1;

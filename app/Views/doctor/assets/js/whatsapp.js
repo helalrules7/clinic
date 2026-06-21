@@ -417,7 +417,8 @@
 
         // Triggered after Booking creation
         triggerConfirmationModal: function(patientId, appointmentId, patientName, date, time) {
-            if (window.WHATSAPP_CONFIG && !window.WHATSAPP_CONFIG.advanced) return;
+            const cfg = window.WHATSAPP_CONFIG;
+            if (cfg && (!cfg.enabled || !cfg.advanced || (cfg.modules && !cfg.modules.appointments))) return;
 
             const isRtl = document.documentElement.getAttribute('dir') === 'rtl';
             const confirmMsg = isRtl
@@ -431,7 +432,8 @@
 
         // Triggered on Appointment Cancellation
         triggerCancellationModal: function(patientId, appointmentId, patientName, date, time) {
-            if (window.WHATSAPP_CONFIG && !window.WHATSAPP_CONFIG.advanced) return;
+            const cfg = window.WHATSAPP_CONFIG;
+            if (cfg && (!cfg.enabled || !cfg.advanced || (cfg.modules && !cfg.modules.appointments))) return;
 
             const isRtl = document.documentElement.getAttribute('dir') === 'rtl';
             const confirmMsg = isRtl
@@ -445,8 +447,8 @@
 
         // Triggered on Visit completion (gated by the "Post-Visit Report" module)
         triggerCompletionModal: function(patientId, appointmentId, patientName) {
-            if (window.WHATSAPP_CONFIG && !window.WHATSAPP_CONFIG.advanced) return;
-            if (window.WHATSAPP_CONFIG && window.WHATSAPP_CONFIG.modules && !window.WHATSAPP_CONFIG.modules.report) return;
+            const cfg = window.WHATSAPP_CONFIG;
+            if (cfg && (!cfg.enabled || !cfg.advanced || (cfg.modules && !cfg.modules.report))) return;
 
             const isRtl = document.documentElement.getAttribute('dir') === 'rtl';
             const confirmMsg = isRtl

@@ -1953,7 +1953,7 @@ function showNotification(message, type = 'info') {
                         <div class="flex-grow-1 arabic-text">${escapeHtml(message)}</div>
                     </div>
                 </div>
-                <button type="button" class="btn-close alert-toast-close-btn me-2" data-bs-dismiss="toast" aria-label="Close"></button>
+                <button type="button" class="btn-close alert-toast-close-btn me-2" data-bs-dismiss="toast" aria-label="إغلاق"></button>
             </div>
         </div>
     `;
@@ -2798,7 +2798,7 @@ function initCustomSelects() {
         setCustomSelectToggleLabel(button, selectedOption.textContent.trim());
       }
     } else {
-      setCustomSelectToggleLabel(button, "Select an option");
+      setCustomSelectToggleLabel(button, "اختر خياراً");
     }
 
     function openMenu() {

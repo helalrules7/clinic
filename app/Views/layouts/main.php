@@ -406,6 +406,12 @@
                     </a>
                 </div>
                 <div class="nav-item">
+                    <a href="/admin/clinics" class="nav-link <?= $this->isActiveRoute('/admin/clinics') ? 'active' : '' ?>">
+                        <i class="bi bi-hospital"></i>
+                        Clinics
+                    </a>
+                </div>
+                <div class="nav-item">
                     <a href="/admin/backup" class="nav-link <?= $this->isActiveRoute('/admin/backup') ? 'active' : '' ?>">
                         <i class="bi bi-database"></i>
                         Backup

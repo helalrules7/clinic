@@ -237,7 +237,7 @@ $paymentTrendDeltas = $paymentTrendDeltas ?? ['opening' => 0, 'received' => 0, '
                     <button class="btn btn-success btn-sm" onclick="exportToExcel()" title="تصدير إلى Excel">
                         <i class="bi bi-file-earmark-excel me-1"></i>
                         <span class="d-none d-sm-inline">تصدير Excel</span>
-                        <span class="d-sm-none">Excel</span>
+                        <span class="d-sm-none">تصدير</span>
                     </button>
                     <!-- Date Filter -->
                     <div class="d-flex align-items-center">
@@ -435,7 +435,7 @@ $paymentTrendDeltas = $paymentTrendDeltas ?? ['opening' => 0, 'received' => 0, '
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header position-relative">
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="إغلاق"></button>
                 <h5 class="modal-title arabic-text" id="searchModalLabel">
                     <i class="bi bi-search me-2"></i>
                     البحث في المدفوعات
@@ -515,7 +515,7 @@ $paymentTrendDeltas = $paymentTrendDeltas ?? ['opening' => 0, 'received' => 0, '
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header position-relative">
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="إغلاق"></button>
                 <h5 class="modal-title arabic-text">
                     <i class="bi bi-wallet2 me-2"></i>
                     تسجيل الرصيد اليومي
@@ -608,7 +608,7 @@ $paymentTrendDeltas = $paymentTrendDeltas ?? ['opening' => 0, 'received' => 0, '
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header position-relative">
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="إغلاق"></button>
                 <h5 class="modal-title arabic-text">
                     <i class="bi bi-dash-circle me-2"></i>
                     تسجيل مصروف جديد
@@ -750,7 +750,7 @@ $paymentTrendDeltas = $paymentTrendDeltas ?? ['opening' => 0, 'received' => 0, '
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header position-relative">
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="إغلاق"></button>
                 <h5 class="modal-title arabic-text">
                     <i class="bi bi-lock me-2"></i>
                     إغلاق اليوم

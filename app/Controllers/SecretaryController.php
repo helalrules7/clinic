@@ -93,7 +93,7 @@ class SecretaryController
     {
         try {
             if (!$this->auth->check()) {
-                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+                return $this->jsonResponse(['error' => 'غير مصرح بالوصول'], 401);
             }
 
             $today = date('Y-m-d');
@@ -126,7 +126,8 @@ class SecretaryController
             ]);
             
         } catch (\Exception $e) {
-            return $this->jsonResponse(['error' => 'فشل في تحميل البيانات: ' . $e->getMessage()], 500);
+            error_log('SecretaryController: ' . $e->getMessage());
+            return $this->jsonResponse(['error' => 'حدث خطأ غير متوقع، يرجى المحاولة مرة أخرى'], 500);
         }
     }
 
@@ -230,7 +231,7 @@ class SecretaryController
         try {
             // Check authentication
             if (!$this->auth->check()) {
-                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+                return $this->jsonResponse(['error' => 'غير مصرح بالوصول'], 401);
             }
 
             $input = json_decode(file_get_contents('php://input'), true);
@@ -239,7 +240,7 @@ class SecretaryController
             $currentUser = $this->auth->user();
             if (($currentUser['role'] ?? null) === 'secretary') {
                 if (empty($currentUser['clinic_id'])) {
-                    return $this->jsonResponse(['error' => 'Your account has no clinic assigned'], 403);
+                    return $this->jsonResponse(['error' => 'لا توجد عيادة مرتبطة بحسابك'], 403);
                 }
                 $input['clinic_id'] = (int)$currentUser['clinic_id'];
             }
@@ -248,7 +249,7 @@ class SecretaryController
             $requiredFields = ['patient_id', 'doctor_id', 'clinic_id', 'date', 'start_time', 'visit_type'];
             foreach ($requiredFields as $field) {
                 if (empty($input[$field])) {
-                    return $this->jsonResponse(['error' => "Field {$field} is required"], 400);
+                    return $this->jsonResponse(['error' => "الحقل {$field} مطلوب"], 400);
                 }
             }
 
@@ -256,17 +257,17 @@ class SecretaryController
             $clinicCheck = $this->pdo->prepare("SELECT id FROM clinics WHERE id = ? AND is_active = 1");
             $clinicCheck->execute([(int)$input['clinic_id']]);
             if (!$clinicCheck->fetch()) {
-                return $this->jsonResponse(['error' => 'Invalid or inactive clinic'], 400);
+                return $this->jsonResponse(['error' => 'العيادة غير صالحة أو غير مُفعّلة'], 400);
             }
 
             // Validate date format
             if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $input['date'])) {
-                return $this->jsonResponse(['error' => 'Invalid date format'], 400);
+                return $this->jsonResponse(['error' => 'صيغة التاريخ غير صحيحة'], 400);
             }
 
             // Check if date is not in the past
             if ($input['date'] < date('Y-m-d')) {
-                return $this->jsonResponse(['error' => 'Cannot book appointments in the past'], 400);
+                return $this->jsonResponse(['error' => 'لا يمكن حجز مواعيد في تاريخ سابق'], 400);
             }
 
             // Get visit cost based on type from settings
@@ -295,7 +296,7 @@ class SecretaryController
 
             // Check if time slot is available
             if (!$this->isTimeSlotAvailable($input['doctor_id'], $input['date'], $startTime)) {
-                return $this->jsonResponse(['error' => 'Time slot is not available'], 400);
+                return $this->jsonResponse(['error' => 'هذا الموعد غير متاح'], 400);
             }
 
             // Create appointment
@@ -355,12 +356,12 @@ class SecretaryController
 
             return $this->jsonResponse([
                 'ok' => true,
-                'message' => 'Booking created successfully',
+                'message' => 'تم إنشاء الحجز بنجاح',
                 'appointment_id' => $appointmentId
             ]);
 
         } catch (Exception $e) {
-            return $this->jsonResponse(['error' => 'Failed to create booking'], 500);
+            return $this->jsonResponse(['error' => 'تعذّر إنشاء الحجز'], 500);
         }
     }
 
@@ -369,14 +370,14 @@ class SecretaryController
         try {
             // Check authentication
             if (!$this->auth->check()) {
-                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+                return $this->jsonResponse(['error' => 'غير مصرح بالوصول'], 401);
             }
 
             $date = $_GET['date'] ?? date('Y-m-d');
 
             // Validate date format
             if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
-                return $this->jsonResponse(['error' => 'Invalid date format'], 400);
+                return $this->jsonResponse(['error' => 'صيغة التاريخ غير صحيحة'], 400);
             }
 
             // Get appointments for all doctors on the selected date
@@ -404,7 +405,7 @@ class SecretaryController
             ]);
 
         } catch (Exception $e) {
-            return $this->jsonResponse(['error' => 'Failed to load calendar'], 500);
+            return $this->jsonResponse(['error' => 'تعذّر تحميل التقويم'], 500);
         }
     }
 
@@ -432,13 +433,13 @@ class SecretaryController
         try {
             // Check authentication
             if (!$this->auth->check()) {
-                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+                return $this->jsonResponse(['error' => 'غير مصرح بالوصول'], 401);
             }
 
             // Get appointment details
             $appointment = $this->getAppointmentDetails($id);
             if (!$appointment) {
-                return $this->jsonResponse(['error' => 'Appointment not found'], 404);
+                return $this->jsonResponse(['error' => 'الموعد غير موجود'], 404);
             }
 
             if ($denied = $this->assertBookingInScope($appointment)) return $denied;
@@ -488,11 +489,11 @@ class SecretaryController
 
             return $this->jsonResponse([
                 'ok'      => true,
-                'message' => 'Booking deleted successfully'
+                'message' => 'تم حذف الحجز بنجاح'
             ]);
 
         } catch (Exception $e) {
-            return $this->jsonResponse(['error' => 'Failed to delete booking'], 500);
+            return $this->jsonResponse(['error' => 'تعذّر حذف الحجز'], 500);
         }
     }
 
@@ -623,7 +624,7 @@ class SecretaryController
 
         } catch (Exception $e) {
             return $this->jsonResponse([
-                'error' => 'خطأ في تأكيد الحضور: ' . $e->getMessage()
+                'error' => 'حدث خطأ غير متوقع، يرجى المحاولة مرة أخرى'
             ], 500);
         }
     }
@@ -705,7 +706,7 @@ class SecretaryController
     {
         try {
             if (!$this->auth->check()) {
-                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+                return $this->jsonResponse(['error' => 'غير مصرح بالوصول'], 401);
             }
 
             $dailyBalance = $this->getDailyBalance();
@@ -729,7 +730,8 @@ class SecretaryController
                 ],
             ]);
         } catch (\Exception $e) {
-            return $this->jsonResponse(['error' => 'فشل في تحميل البيانات: ' . $e->getMessage()], 500);
+            error_log('SecretaryController: ' . $e->getMessage());
+            return $this->jsonResponse(['error' => 'حدث خطأ غير متوقع، يرجى المحاولة مرة أخرى'], 500);
         }
     }
 
@@ -740,7 +742,7 @@ class SecretaryController
     {
         try {
             if (!$this->auth->check()) {
-                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+                return $this->jsonResponse(['error' => 'غير مصرح بالوصول'], 401);
             }
 
             // Get filter parameters from query string
@@ -778,7 +780,8 @@ class SecretaryController
             ]);
             
         } catch (\Exception $e) {
-            return $this->jsonResponse(['error' => 'فشل في تحميل البيانات: ' . $e->getMessage()], 500);
+            error_log('SecretaryController: ' . $e->getMessage());
+            return $this->jsonResponse(['error' => 'حدث خطأ غير متوقع، يرجى المحاولة مرة أخرى'], 500);
         }
     }
 
@@ -801,12 +804,12 @@ class SecretaryController
     {
         try {
             if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-                throw new \Exception('Invalid request method');
+                throw new \Exception('طريقة طلب غير صالحة');
             }
             
             // Validate CSRF token
             if (!$this->validateCsrfToken()) {
-                throw new \Exception('Invalid CSRF token');
+                throw new \Exception('رمز التحقق غير صالح');
             }
             
             // Validate input
@@ -819,7 +822,7 @@ class SecretaryController
             
             $data = DigitNormalizer::normalizePatientNumericFields($_POST);
             if (!$this->view->validator->validate($data, $rules)) {
-                throw new \Exception('Validation failed');
+                throw new \Exception('فشل التحقق من البيانات');
             }
             
             // Create patient
@@ -829,10 +832,10 @@ class SecretaryController
                 // Create timeline event
                 $this->createTimelineEvent($patientId, null, 'Booking', 'New patient registered');
                 
-                header('Location: /secretary/patients?success=Patient created successfully');
+                header('Location: /secretary/patients?success=' . urlencode('تم إنشاء المريض بنجاح'));
                 exit;
             } else {
-                throw new \Exception('Failed to create patient');
+                throw new \Exception('تعذّر إنشاء المريض');
             }
             
         } catch (\Exception $e) {
@@ -850,7 +853,7 @@ class SecretaryController
             $patient = $this->getPatientDetails($id);
             if (!$patient) {
                 http_response_code(404);
-                echo "Patient not found";
+                echo "المريض غير موجود";
                 return;
             }
             
@@ -877,7 +880,7 @@ class SecretaryController
             
         } catch (Exception $e) {
             http_response_code(500);
-            echo "Error loading patient details";
+            echo "تعذّر تحميل بيانات المريض";
         }
     }
 
@@ -889,7 +892,7 @@ class SecretaryController
         $invoice = $this->getInvoice($id);
         if (!$invoice) {
             http_response_code(404);
-            echo "Invoice not found";
+            echo "الفاتورة غير موجودة";
             return;
         }
         
@@ -1194,7 +1197,7 @@ class SecretaryController
     {
         try {
             if (!$this->auth->check()) {
-                return $this->jsonResponse(['ok' => false, 'error' => 'Unauthorized'], 401);
+                return $this->jsonResponse(['ok' => false, 'error' => 'غير مصرح بالوصول'], 401);
             }
 
             $today = date('Y-m-d');
@@ -1207,7 +1210,8 @@ class SecretaryController
                 'data' => $data,
             ]);
         } catch (\Exception $e) {
-            return $this->jsonResponse(['ok' => false, 'error' => $e->getMessage()], 500);
+            error_log('SecretaryController: ' . $e->getMessage());
+            return $this->jsonResponse(['ok' => false, 'error' => 'حدث خطأ غير متوقع، يرجى المحاولة مرة أخرى'], 500);
         }
     }
 
@@ -2157,7 +2161,7 @@ class SecretaryController
         try {
             // Check authentication
             if (!$this->auth->check()) {
-                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+                return $this->jsonResponse(['error' => 'غير مصرح بالوصول'], 401);
             }
 
             $stmt = $this->pdo->prepare("
@@ -2179,7 +2183,7 @@ class SecretaryController
             $appointment = $stmt->fetch(\PDO::FETCH_ASSOC);
 
             if (!$appointment) {
-                return $this->jsonResponse(['error' => 'Appointment not found'], 404);
+                return $this->jsonResponse(['error' => 'الموعد غير موجود'], 404);
             }
 
             if ($denied = $this->assertBookingInScope($appointment)) return $denied;
@@ -2217,7 +2221,8 @@ class SecretaryController
             ]);
 
         } catch (Exception $e) {
-            return $this->jsonResponse(['error' => 'Error getting booking details: ' . $e->getMessage()], 500);
+            error_log('SecretaryController: ' . $e->getMessage());
+            return $this->jsonResponse(['error' => 'حدث خطأ غير متوقع، يرجى المحاولة مرة أخرى'], 500);
         }
     }
 
@@ -2230,7 +2235,7 @@ class SecretaryController
     {
         try {
             if (!$this->auth->check()) {
-                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+                return $this->jsonResponse(['error' => 'غير مصرح بالوصول'], 401);
             }
             $user = $this->auth->user();
             $patientId = (int) $patientId;
@@ -2272,7 +2277,8 @@ class SecretaryController
 
             return $this->jsonResponse(['ok' => true, 'bookings' => $rows]);
         } catch (Exception $e) {
-            return $this->jsonResponse(['error' => 'Error getting patient bookings: ' . $e->getMessage()], 500);
+            error_log('SecretaryController: ' . $e->getMessage());
+            return $this->jsonResponse(['error' => 'حدث خطأ غير متوقع، يرجى المحاولة مرة أخرى'], 500);
         }
     }
 
@@ -2281,13 +2287,13 @@ class SecretaryController
         try {
             // Check authentication
             if (!$this->auth->check()) {
-                return $this->jsonResponse(['error' => 'Unauthorized'], 401);
+                return $this->jsonResponse(['error' => 'غير مصرح بالوصول'], 401);
             }
 
             // Block edits to bookings outside the secretary's clinic.
             $existing = $this->getAppointmentDetails($id);
             if (!$existing) {
-                return $this->jsonResponse(['error' => 'Booking not found'], 404);
+                return $this->jsonResponse(['error' => 'الحجز غير موجود'], 404);
             }
             if ($denied = $this->assertBookingInScope($existing)) return $denied;
 
@@ -2307,7 +2313,7 @@ class SecretaryController
             $requiredFields = ['patient_id', 'doctor_id', 'date', 'start_time', 'visit_type'];
             foreach ($requiredFields as $field) {
                 if (empty($input[$field])) {
-                    return $this->jsonResponse(['error' => "Field {$field} is required"], 400);
+                    return $this->jsonResponse(['error' => "الحقل {$field} مطلوب"], 400);
                 }
             }
 
@@ -2466,7 +2472,7 @@ class SecretaryController
 
                 return $this->jsonResponse([
                     'ok' => true,
-                    'message' => 'Booking updated successfully'
+                    'message' => 'تم تحديث الحجز بنجاح'
                 ]);
 
             } catch (Exception $e) {
@@ -2475,7 +2481,8 @@ class SecretaryController
             }
             
         } catch (Exception $e) {
-            return $this->jsonResponse(['error' => 'Error updating booking: ' . $e->getMessage()], 500);
+            error_log('SecretaryController: ' . $e->getMessage());
+            return $this->jsonResponse(['error' => 'حدث خطأ غير متوقع، يرجى المحاولة مرة أخرى'], 500);
         }
     }
     
@@ -2875,7 +2882,7 @@ class SecretaryController
             $payment = $this->getPaymentDetails($id);
             if (!$payment) {
                 http_response_code(404);
-                echo "Payment not found";
+                echo "الدفعة غير موجودة";
                 return;
             }
             
@@ -2883,7 +2890,7 @@ class SecretaryController
             $patient = $this->getPatientDetails($payment['patient_id']);
             if (!$patient) {
                 http_response_code(404);
-                echo "Patient not found";
+                echo "المريض غير موجود";
                 return;
             }
             
@@ -2913,7 +2920,7 @@ class SecretaryController
             
         } catch (Exception $e) {
             http_response_code(500);
-            echo "Error loading payment details";
+            echo "تعذّر تحميل بيانات الدفعة";
         }
     }
 
@@ -2926,7 +2933,7 @@ class SecretaryController
             $expense = $this->getExpenseDetails($id);
             if (!$expense) {
                 http_response_code(404);
-                echo "Expense not found";
+                echo "المصروف غير موجود";
                 return;
             }
             
@@ -2952,7 +2959,7 @@ class SecretaryController
             
         } catch (Exception $e) {
             http_response_code(500);
-            echo "Error loading expense details";
+            echo "تعذّر تحميل بيانات المصروف";
         }
     }
 
@@ -2986,7 +2993,7 @@ class SecretaryController
 
             if (!$booking) {
                 http_response_code(404);
-                echo "Booking not found";
+                echo "الحجز غير موجود";
                 return;
             }
 
@@ -3019,7 +3026,7 @@ class SecretaryController
             $patient = $this->getPatientDetails($booking['patient_id']);
             if (!$patient) {
                 http_response_code(404);
-                echo "Patient not found";
+                echo "المريض غير موجود";
                 return;
             }
             
@@ -3046,7 +3053,7 @@ class SecretaryController
             
         } catch (Exception $e) {
             http_response_code(500);
-            echo "Error loading booking details";
+            echo "تعذّر تحميل بيانات الحجز";
         }
     }
 
@@ -3209,7 +3216,7 @@ class SecretaryController
 
         // CSRF protection
         if (!isset($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
-            header('Location: /secretary/profile?error=' . urlencode('Invalid request'));
+            header('Location: /secretary/profile?error=' . urlencode('طلب غير صالح'));
             exit;
         }
 
@@ -3344,7 +3351,7 @@ class SecretaryController
 
         // CSRF protection
         if (!isset($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
-            header('Location: /secretary/profile?error=' . urlencode('Invalid request'));
+            header('Location: /secretary/profile?error=' . urlencode('طلب غير صالح'));
             exit;
         }
 
@@ -3357,27 +3364,27 @@ class SecretaryController
 
             // Validation
             if (empty($newPassword)) {
-                throw new \Exception('New password is required');
+                throw new \Exception('كلمة المرور الجديدة مطلوبة');
             }
 
             if (strlen($newPassword) < 8) {
-                throw new \Exception('Password must be at least 8 characters long');
+                throw new \Exception('يجب أن تتكوّن كلمة المرور من 8 أحرف على الأقل');
             }
 
             if (!preg_match('/[A-Z]/', $newPassword)) {
-                throw new \Exception('Password must contain at least one uppercase letter');
+                throw new \Exception('يجب أن تحتوي كلمة المرور على حرف كبير واحد على الأقل');
             }
 
             if (!preg_match('/[a-z]/', $newPassword)) {
-                throw new \Exception('Password must contain at least one lowercase letter');
+                throw new \Exception('يجب أن تحتوي كلمة المرور على حرف صغير واحد على الأقل');
             }
 
             if (!preg_match('/\d/', $newPassword)) {
-                throw new \Exception('Password must contain at least one number');
+                throw new \Exception('يجب أن تحتوي كلمة المرور على رقم واحد على الأقل');
             }
 
             if ($newPassword !== $confirmPassword) {
-                throw new \Exception('Passwords do not match');
+                throw new \Exception('كلمتا المرور غير متطابقتين');
             }
 
             // Hash new password
@@ -3394,10 +3401,10 @@ class SecretaryController
                 // Update session
                 $_SESSION['user']['password_changed'] = true;
 
-                header('Location: /secretary/profile?success=' . urlencode('Password changed successfully. Please log in again.'));
+                header('Location: /secretary/profile?success=' . urlencode('تم تغيير كلمة المرور بنجاح. يرجى تسجيل الدخول من جديد.'));
                 exit;
             } else {
-                throw new \Exception('Failed to change password');
+                throw new \Exception('تعذّر تغيير كلمة المرور');
             }
 
         } catch (\Exception $e) {
@@ -3442,7 +3449,7 @@ class SecretaryController
         if (!$this->auth->check()) {
             ob_clean();
             http_response_code(401);
-            echo json_encode(['success' => false, 'message' => 'Unauthorized'], JSON_UNESCAPED_UNICODE);
+            echo json_encode(['success' => false, 'message' => 'غير مصرح بالوصول'], JSON_UNESCAPED_UNICODE);
             ob_end_flush();
             exit;
         }
@@ -3451,7 +3458,7 @@ class SecretaryController
         if (!in_array($user['role'] ?? '', ['secretary', 'admin'], true)) {
             ob_clean();
             http_response_code(403);
-            echo json_encode(['success' => false, 'message' => 'Access denied'], JSON_UNESCAPED_UNICODE);
+            echo json_encode(['success' => false, 'message' => 'تم رفض الوصول'], JSON_UNESCAPED_UNICODE);
             ob_end_flush();
             exit;
         }
@@ -3465,7 +3472,7 @@ class SecretaryController
         } catch (\Exception $e) {
             ob_clean();
             http_response_code(500);
-            echo json_encode(['success' => false, 'message' => 'An error occurred while loading settings'], JSON_UNESCAPED_UNICODE);
+            echo json_encode(['success' => false, 'message' => 'حدث خطأ أثناء تحميل الإعدادات'], JSON_UNESCAPED_UNICODE);
             ob_end_flush();
             exit;
         }
@@ -3485,7 +3492,7 @@ class SecretaryController
         if (!$this->auth->check()) {
             ob_clean();
             http_response_code(401);
-            echo json_encode(['success' => false, 'message' => 'Unauthorized'], JSON_UNESCAPED_UNICODE);
+            echo json_encode(['success' => false, 'message' => 'غير مصرح بالوصول'], JSON_UNESCAPED_UNICODE);
             ob_end_flush();
             exit;
         }
@@ -3494,7 +3501,7 @@ class SecretaryController
         if (!in_array($user['role'] ?? '', ['secretary', 'admin'], true)) {
             ob_clean();
             http_response_code(403);
-            echo json_encode(['success' => false, 'message' => 'Access denied'], JSON_UNESCAPED_UNICODE);
+            echo json_encode(['success' => false, 'message' => 'تم رفض الوصول'], JSON_UNESCAPED_UNICODE);
             ob_end_flush();
             exit;
         }
@@ -3504,7 +3511,7 @@ class SecretaryController
         if (!$input || !is_array($input)) {
             ob_clean();
             http_response_code(400);
-            echo json_encode(['success' => false, 'message' => 'Invalid input data'], JSON_UNESCAPED_UNICODE);
+            echo json_encode(['success' => false, 'message' => 'بيانات الإدخال غير صحيحة'], JSON_UNESCAPED_UNICODE);
             ob_end_flush();
             exit;
         }
@@ -3552,7 +3559,7 @@ class SecretaryController
             ob_clean();
             echo json_encode([
                 'success' => true,
-                'message' => 'Settings updated successfully',
+                'message' => 'تم حفظ الإعدادات بنجاح',
                 'saved_count' => $savedCount,
             ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
             ob_end_flush();
@@ -3561,12 +3568,12 @@ class SecretaryController
             if ($this->pdo->inTransaction()) {
                 $this->pdo->rollBack();
             }
+            error_log('SecretaryController settings: ' . $e->getMessage());
             ob_clean();
             http_response_code(500);
             echo json_encode([
                 'success' => false,
-                'message' => 'An error occurred while updating settings',
-                'error' => $e->getMessage(),
+                'message' => 'حدث خطأ أثناء حفظ الإعدادات',
             ], JSON_UNESCAPED_UNICODE);
             ob_end_flush();
             exit;

@@ -25,7 +25,7 @@
                         <div class="setting-item">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
-                                    <label class="form-label mb-0 arabic-text">وضع الأداء (Performance Mode)</label>
+                                    <label class="form-label mb-0 arabic-text">وضع الأداء</label>
                                     <div class="form-text arabic-text">يوقف كل تأثيرات الزجاج (الـ blur) في السيستم كله لتسريع الحركة والتنقل. تبقى الأسطح صلبة والمظهر أبسط.</div>
                                 </div>
                                 <div class="toggle-switch-wrapper">

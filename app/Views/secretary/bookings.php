@@ -219,7 +219,7 @@ $bookingTrendDates = $bookingTrendDates ?? [];
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="mb-0 arabic-text" id="currentDateDisplay">
-                    <?= date('l, F j, Y') ?>
+                    <?php $__days=['Sunday'=>'الأحد','Monday'=>'الإثنين','Tuesday'=>'الثلاثاء','Wednesday'=>'الأربعاء','Thursday'=>'الخميس','Friday'=>'الجمعة','Saturday'=>'السبت']; $__months=['January'=>'يناير','February'=>'فبراير','March'=>'مارس','April'=>'أبريل','May'=>'مايو','June'=>'يونيو','July'=>'يوليو','August'=>'أغسطس','September'=>'سبتمبر','October'=>'أكتوبر','November'=>'نوفمبر','December'=>'ديسمبر']; echo $__days[date('l')].'، '.date('j').' '.$__months[date('F')].' '.date('Y'); ?>
                 </h5>
                 <div class="d-flex align-items-center">
                     <span class="badge bg-success me-2 status-indicator" id="statusIndicator">
@@ -245,7 +245,7 @@ $bookingTrendDates = $bookingTrendDates ?? [];
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header position-relative">
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="إغلاق"></button>
                 <h5 class="modal-title arabic-text">
                     <i class="bi bi-calendar-plus me-2"></i>
                     حجز موعد جديد
@@ -437,7 +437,7 @@ $bookingTrendDates = $bookingTrendDates ?? [];
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header position-relative">
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="إغلاق"></button>
                 <h5 class="modal-title arabic-text">
                     <i class="bi bi-person-plus me-2"></i>
                     إضافة مريض جديد
@@ -560,7 +560,7 @@ $bookingTrendDates = $bookingTrendDates ?? [];
     <div class="modal-dialog modal-lg">
         <div class="modal-content border-success">
             <div class="modal-header bg-success text-white position-relative">
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="إغلاق"></button>
                 <h5 class="modal-title arabic-text mb-0">
                     <i class="bi bi-check-circle me-2"></i>
                     تأكيد حضور المريض
@@ -700,7 +700,7 @@ $bookingTrendDates = $bookingTrendDates ?? [];
     <div class="modal-dialog modal-xl">
         <div class="modal-content border-primary">
             <div class="modal-header bg-primary text-white position-relative">
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="إغلاق"></button>
                 <h5 class="modal-title arabic-text mb-0">
                     <i class="bi bi-pencil-square me-2"></i>
                     تعديل الحجز
@@ -823,7 +823,7 @@ $bookingTrendDates = $bookingTrendDates ?? [];
     <div class="modal-dialog modal-lg">
         <div class="modal-content border-danger">
             <div class="modal-header bg-danger text-white position-relative">
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="إغلاق"></button>
                 <h5 class="modal-title arabic-text mb-0">
                     <i class="bi bi-exclamation-triangle me-2"></i>
                     تأكيد حذف الحجز

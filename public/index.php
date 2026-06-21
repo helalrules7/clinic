@@ -99,6 +99,7 @@ try {
     $router->delete('/admin/users/{id}', 'AdminController@deleteUser');
     $router->get('/admin/settings', 'AdminController@settings');
     $router->post('/admin/settings', 'AdminController@settings');
+    $router->get('/admin/clinics', 'AdminController@clinics');
     $router->get('/admin/notifications', 'AdminController@notifications');
     $router->get('/admin/media', 'AdminController@media');
     $router->get('/admin/backup', 'AdminController@backup'); // v12: redirects to /doctor/settings (Backup section)

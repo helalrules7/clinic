@@ -353,7 +353,7 @@
                     <div class="mb-1">
                         HClinic / Roaya Clinic v12.0.0
                         <span aria-hidden="true">·</span>
-                        <a href="https://hclinic.clinic/docs/opth/" target="_blank" rel="noopener" style="color: var(--accent);"><i class="bi bi-book me-1"></i>Docs</a>
+                        <a href="https://hclinic.clinic/docs/opth/" target="_blank" rel="noopener" style="color: var(--accent);"><i class="bi bi-book me-1"></i>الدليل</a>
                     </div>
                     <div>© 2025 <a href="https://ahmedhelal.dev" target="_blank" class="text-decoration-none" style="color: var(--accent);">Ahmed Helal</a></div>
                 </small>
@@ -1145,25 +1145,25 @@
                 <div class="modal-header bg-warning text-dark">
                     <h5 class="modal-title" id="sessionExpiryModalLabel">
                         <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                        Session Expiring Soon
+                        الجلسة على وشك الانتهاء
                     </h5>
                 </div>
                 <div class="modal-body text-center">
-                    <p class="mb-3">Your session will expire due to inactivity in:</p>
+                    <p class="mb-3">ستنتهي جلستك بسبب عدم النشاط خلال:</p>
                     <div class="session-countdown mb-3">
                         <span id="sessionCountdown" class="display-4 fw-bold text-danger">30</span>
-                        <span class="fs-5 text-muted ms-2">seconds</span>
+                        <span class="fs-5 text-muted ms-2">ثانية</span>
                     </div>
-                    <p class="text-muted">Click "Stay Logged In" to extend your session.</p>
+                    <p class="text-muted">اضغط «البقاء متصلاً» لتمديد الجلسة.</p>
                 </div>
                 <div class="modal-footer justify-content-center">
                     <button type="button" class="btn btn-primary" id="stayLoggedInBtn">
                         <i class="bi bi-check-circle me-2"></i>
-                        Stay Logged In
+                        البقاء متصلاً
                     </button>
                     <button type="button" class="btn btn-secondary" id="logoutNowBtn">
                         <i class="bi bi-box-arrow-right me-2"></i>
-                        Logout Now
+                        تسجيل الخروج الآن
                     </button>
                 </div>
             </div>

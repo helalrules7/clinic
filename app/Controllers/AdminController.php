@@ -326,7 +326,31 @@ class AdminController
             'content' => $content
         ]);
     }
-    
+
+    /**
+     * Admin Clinic Management Page - list / edit clinic branches.
+     * Mirrors the desktop AdminClinics screen. Reuses the existing /api/clinics
+     * JSON API (no CRUD SQL duplicated here). Ophthalmology = edit-only.
+     */
+    public function clinics()
+    {
+        $_SESSION['csrf_token'] = $_SESSION['csrf_token'] ?? bin2hex(random_bytes(32));
+        $specialty = \App\Config\Constants::SPECIALTY; // 'ophthalmology' | 'orthopedics'
+
+        $content = $this->view->render('admin/clinics', [
+            'csrf_token' => $_SESSION['csrf_token'],
+            'specialty'  => $specialty,
+            'fullManage' => ($specialty === 'orthopedics'),
+        ]);
+
+        echo $this->view->render('layouts/main', [
+            'title' => 'Clinic Management',
+            'pageTitle' => 'Clinic Management',
+            'pageSubtitle' => 'Manage clinic branches',
+            'content' => $content
+        ]);
+    }
+
     public function media()
     {
         $user = $this->auth->user();

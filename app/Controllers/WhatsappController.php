@@ -164,6 +164,10 @@ class WhatsappController
     public function resolveMessage()
     {
         $user = $this->requireAuth();
+        // Only doctors/admins may resolve clinical content. Secretaries are limited
+        // to appointment-category messages; every clinical placeholder stays blank
+        // for them so a crafted template_id / custom_text cannot leak PHI here.
+        $isClinicalStaff = in_array(($user['role'] ?? ''), ['doctor', 'admin'], true);
 
         $input = file_get_contents('php://input');
         $data = json_decode($input, true) ?: [];
@@ -187,11 +191,19 @@ class WhatsappController
                 $this->jsonResponse(['success' => false, 'message' => 'Patient not found.'], 404);
             }
 
-            // Fetch template details if templateId is provided
+            // Fetch template details if templateId is provided. Secretaries are
+            // restricted to appointment-category templates (confirmation / reminder /
+            // cancellation) — the same allow-list enforced in getTemplates() — so a
+            // crafted clinical template_id resolves to an empty body for them.
             $templateBody = '';
             if ($templateId) {
-                $tplStmt = $this->pdo->prepare("SELECT body FROM communication_templates WHERE id = ?");
-                $tplStmt->execute([$templateId]);
+                if ($isClinicalStaff) {
+                    $tplStmt = $this->pdo->prepare("SELECT body FROM communication_templates WHERE id = ?");
+                    $tplStmt->execute([$templateId]);
+                } else {
+                    $tplStmt = $this->pdo->prepare("SELECT body FROM communication_templates WHERE id = ? AND category IN ('confirmation','reminder','cancellation')");
+                    $tplStmt->execute([$templateId]);
+                }
                 $templateBody = $tplStmt->fetchColumn() ?: '';
             } elseif ($customText) {
                 $templateBody = $customText;
@@ -341,6 +353,11 @@ class WhatsappController
                     }
                 }
 
+                // Clinical placeholders (diagnosis, prescriptions, glasses, tests,
+                // instructions, visit-document links) are resolved ONLY for clinical
+                // staff. Secretaries are barred from clinical PHI, so even a crafted
+                // template_id or custom_text cannot extract it through this endpoint.
+                if ($isClinicalStaff) {
                 // Resolve consultation notes (diagnosis, plan/summary)
                 $noteStmt = $this->pdo->prepare("SELECT * FROM consultation_notes WHERE appointment_id = ? ORDER BY id DESC LIMIT 1");
                 $noteStmt->execute([$appt['id']]);
@@ -472,6 +489,7 @@ class WhatsappController
                         }
                     }
                 }
+                } // end if ($isClinicalStaff) — clinical PHI never resolved for secretaries
             }
 
             // Normalize the doctor honorific: every template prepends "د. " but some
