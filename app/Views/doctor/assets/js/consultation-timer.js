@@ -16,7 +16,7 @@
   if (!APPT_ID) return;
 
   var STATUS = window.APPT_STATUS || '';
-  var COMPLETED = STATUS === 'Completed';
+  var COMPLETED = /^(completed|closed|cancelled|canceled|no[ _-]?show)$/i.test(STATUS);
 
   var settings = { enabled: false, sound: false, alertMinutes: 0 };
 
@@ -43,7 +43,7 @@
     if (document.getElementById('ct-styles')) return;
     var css = '' +
       /* Raised above the bottom-right control cluster (back-to-top / chat-fab / ai-chat / dock, all ~bottom 2rem). */
-      '.ct-root{position:fixed;right:18px;bottom:150px;z-index:1030;font-family:inherit;}' +
+      '.ct-root{position:fixed;right:18px;bottom:150px;z-index:1045;font-family:inherit;}' +
       '@media(max-width:640px){.ct-root{right:12px;bottom:120px;}}' +
       '.ct-card{min-width:208px;padding:14px 16px;border-radius:18px;' +
         'background:var(--glass-bg-strong,rgba(255,255,255,.85));' +

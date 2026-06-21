@@ -307,7 +307,7 @@ class WhatsappController
             }
 
             if ($appt) {
-                $placeholders['{{doctor_name}}'] = !empty($appt['doc_display_ar']) ? $appt['doc_display_ar'] : (!empty($appt['doc_display']) ? $appt['doc_display'] : $appt['doc_name']);
+                $placeholders['{{doctor_name}}'] = !empty($loggedInDocName) ? $loggedInDocName : (!empty($appt['doc_display_ar']) ? $appt['doc_display_ar'] : (!empty($appt['doc_display']) ? $appt['doc_display'] : $appt['doc_name']));
                 $placeholders['{{appointment_date}}'] = date('Y-m-d', strtotime($appt['date']));
                 $placeholders['{{appointment_time}}'] = date('g:i A', strtotime($appt['start_time']));
                 
