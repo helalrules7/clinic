@@ -608,11 +608,35 @@ class AdminController
 
     private function updateUserRecord($id, $data)
     {
+        // Optional password reset: only when a non-empty new password is provided.
+        if (!empty($data['new_password'])) {
+            if (strlen($data['new_password']) < 8) {
+                throw new \Exception('Password must be at least 8 characters');
+            }
+
+            $passwordHash = password_hash($data['new_password'], PASSWORD_ARGON2ID);
+
+            $stmt = $this->pdo->prepare("
+                UPDATE users SET name = ?, username = ?, email = ?, role = ?, is_active = ?, password_hash = ?, updated_at = NOW()
+                WHERE id = ?
+            ");
+
+            return $stmt->execute([
+                $data['name'],
+                $data['username'],
+                $data['email'],
+                $data['role'],
+                $data['is_active'] ?? 1,
+                $passwordHash,
+                $id
+            ]);
+        }
+
         $stmt = $this->pdo->prepare("
             UPDATE users SET name = ?, username = ?, email = ?, role = ?, is_active = ?, updated_at = NOW()
             WHERE id = ?
         ");
-        
+
         return $stmt->execute([
             $data['name'],
             $data['username'],
@@ -1977,6 +2001,413 @@ class AdminController
         header('Content-Length: ' . filesize($backupPath));
         readfile($backupPath);
         exit;
+    }
+
+    // ========================================================================
+    // Desktop admin JSON API (Bearer token, CSRF-exempt — no $_POST/csrf_token)
+    // Every endpoint re-gates on the admin role even though the constructor
+    // already calls requireRole(['admin']); the {ok:...} envelope is the
+    // contract the Electron desktop client expects.
+    // ========================================================================
+
+    /**
+     * Emit a JSON response with the {ok:...} envelope and stop.
+     */
+    private function apiJson($data, $statusCode = 200)
+    {
+        while (ob_get_level() > 0) { @ob_end_clean(); }
+        header('Content-Type: application/json; charset=utf-8');
+        http_response_code($statusCode);
+        echo json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        exit;
+    }
+
+    /**
+     * Admin gate shared by every desktop API endpoint. Returns the user row
+     * on success, or emits a 401/403 JSON error and exits.
+     */
+    private function apiRequireAdmin()
+    {
+        if (!$this->auth->check()) {
+            $this->apiJson(['ok' => false, 'error' => 'Unauthorized'], 401);
+        }
+        $u = $this->auth->user();
+        if (($u['role'] ?? '') !== 'admin') {
+            $this->apiJson(['ok' => false, 'error' => 'Forbidden'], 403);
+        }
+        return $u;
+    }
+
+    /**
+     * Read the request body as JSON, falling back to $_POST.
+     */
+    private function apiBody()
+    {
+        $data = json_decode(file_get_contents('php://input'), true);
+        if (!is_array($data)) {
+            $data = $_POST ?: [];
+        }
+        return $data;
+    }
+
+    /**
+     * GET /api/admin/users — paginated user list with aggregates.
+     */
+    public function apiUsersList()
+    {
+        $this->apiRequireAdmin();
+
+        $search = trim((string)($_GET['search'] ?? ''));
+        $role = trim((string)($_GET['role'] ?? ''));
+        $page = max(1, (int)($_GET['page'] ?? 1));
+        $perPage = (int)($_GET['per_page'] ?? 20);
+        if ($perPage < 1) { $perPage = 20; }
+        if ($perPage > 200) { $perPage = 200; }
+
+        try {
+            $where = '';
+            $params = [];
+            if ($search !== '') {
+                $where = "WHERE u.name LIKE ? OR u.email LIKE ? OR u.username LIKE ?";
+                $term = "%{$search}%";
+                $params = [$term, $term, $term];
+            }
+            if ($role !== '' && in_array($role, ['doctor', 'secretary', 'admin'], true)) {
+                $where = $where === '' ? "WHERE u.role = ?" : $where . " AND u.role = ?";
+                $params[] = $role;
+            }
+
+            // Total count (for pagination) using the same filters.
+            $countSql = "SELECT COUNT(*) FROM users u {$where}";
+            $countStmt = $this->pdo->prepare($countSql);
+            $countStmt->execute($params);
+            $total = (int)$countStmt->fetchColumn();
+
+            $offset = ($page - 1) * $perPage;
+            $sql = "
+                SELECT u.*,
+                       COUNT(DISTINCT a.id) as total_appointments,
+                       (SELECT COUNT(DISTINCT a2.patient_id)
+                        FROM appointments a2
+                        WHERE a2.doctor_id = u.id) as total_patients
+                FROM users u
+                LEFT JOIN appointments a ON u.id = a.doctor_id
+                {$where}
+                GROUP BY u.id
+                ORDER BY u.created_at DESC
+                LIMIT ? OFFSET ?
+            ";
+            $rowParams = $params;
+            $rowParams[] = $perPage;
+            $rowParams[] = $offset;
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute($rowParams);
+            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            $users = [];
+            foreach ($rows as $r) {
+                $users[] = [
+                    'id' => (int)$r['id'],
+                    'name' => $r['name'] ?? null,
+                    'username' => $r['username'] ?? null,
+                    'email' => $r['email'] ?? null,
+                    'role' => $r['role'] ?? null,
+                    'is_active' => (int)($r['is_active'] ?? 0),
+                    'clinic_id' => isset($r['clinic_id']) && $r['clinic_id'] !== null ? (int)$r['clinic_id'] : null,
+                    'total_appointments' => (int)($r['total_appointments'] ?? 0),
+                    'total_patients' => (int)($r['total_patients'] ?? 0),
+                    'last_login_at' => $r['last_login_at'] ?? null,
+                    'created_at' => $r['created_at'] ?? null,
+                ];
+            }
+
+            $this->apiJson([
+                'ok' => true,
+                'data' => $users,
+                'pagination' => [
+                    'page' => $page,
+                    'per_page' => $perPage,
+                    'total' => $total,
+                    'total_pages' => $perPage > 0 ? (int)ceil($total / $perPage) : 0,
+                ],
+            ]);
+        } catch (\Throwable $e) {
+            $this->apiJson(['ok' => false, 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * POST /api/admin/users — create a user (reuses createUserRecord/createDoctorRecord).
+     */
+    public function apiUserCreate()
+    {
+        $this->apiRequireAdmin();
+        $data = $this->apiBody();
+
+        $name = trim((string)($data['name'] ?? ''));
+        $username = trim((string)($data['username'] ?? ''));
+        $email = trim((string)($data['email'] ?? ''));
+        $role = trim((string)($data['role'] ?? ''));
+        $password = (string)($data['password'] ?? '');
+
+        if ($name === '' || mb_strlen($name) > 100) {
+            $this->apiJson(['ok' => false, 'error' => 'Name is required (max 100 chars)'], 422);
+        }
+        if (mb_strlen($username) < 3 || mb_strlen($username) > 20) {
+            $this->apiJson(['ok' => false, 'error' => 'Username must be 3-20 characters'], 422);
+        }
+        if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $this->apiJson(['ok' => false, 'error' => 'A valid email is required'], 422);
+        }
+        if (!in_array($role, ['doctor', 'secretary', 'admin'], true)) {
+            $this->apiJson(['ok' => false, 'error' => 'Role must be doctor, secretary or admin'], 422);
+        }
+        if (strlen($password) < 8) {
+            $this->apiJson(['ok' => false, 'error' => 'Password must be at least 8 characters'], 422);
+        }
+
+        // Enforce unique username / email.
+        $dup = $this->pdo->prepare("SELECT id FROM users WHERE username = ? OR email = ? LIMIT 1");
+        $dup->execute([$username, $email]);
+        if ($dup->fetchColumn()) {
+            $this->apiJson(['ok' => false, 'error' => 'Username or email already exists'], 409);
+        }
+
+        try {
+            $record = [
+                'name' => $name,
+                'username' => $username,
+                'email' => $email,
+                'role' => $role,
+                'password' => $password,
+            ];
+            if (isset($data['specialization'])) { $record['specialization'] = $data['specialization']; }
+            if (isset($data['license_number'])) { $record['license_number'] = $data['license_number']; }
+
+            // Reuse the tested insert helper (ARGON2ID hashing lives there).
+            $userId = (int)$this->createUserRecord($record);
+
+            if ($role === 'doctor') {
+                $this->createDoctorRecord($userId, $record);
+            }
+
+            // Optional clinic scoping (NULL = all clinics).
+            if (array_key_exists('clinic_id', $data)) {
+                $clinicId = ($data['clinic_id'] === '' || $data['clinic_id'] === null) ? null : (int)$data['clinic_id'];
+                $up = $this->pdo->prepare("UPDATE users SET clinic_id = ? WHERE id = ?");
+                $up->execute([$clinicId, $userId]);
+            }
+
+            $this->apiJson(['ok' => true, 'data' => ['id' => $userId]]);
+        } catch (\Throwable $e) {
+            $this->apiJson(['ok' => false, 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * PUT /api/admin/users/{id} — update a user (reuses updateUserRecord).
+     */
+    public function apiUserUpdate($id)
+    {
+        $this->apiRequireAdmin();
+        $id = (int)$id;
+        $data = $this->apiBody();
+
+        $existing = $this->pdo->prepare("SELECT * FROM users WHERE id = ? LIMIT 1");
+        $existing->execute([$id]);
+        $user = $existing->fetch(PDO::FETCH_ASSOC);
+        if (!$user) {
+            $this->apiJson(['ok' => false, 'error' => 'User not found'], 404);
+        }
+
+        $name = trim((string)($data['name'] ?? $user['name']));
+        $username = trim((string)($data['username'] ?? $user['username']));
+        $email = trim((string)($data['email'] ?? $user['email']));
+        $role = trim((string)($data['role'] ?? $user['role']));
+        $isActive = array_key_exists('is_active', $data) ? (int)(bool)$data['is_active'] : (int)$user['is_active'];
+
+        if ($name === '' || mb_strlen($name) > 100) {
+            $this->apiJson(['ok' => false, 'error' => 'Name is required (max 100 chars)'], 422);
+        }
+        if (mb_strlen($username) < 3 || mb_strlen($username) > 20) {
+            $this->apiJson(['ok' => false, 'error' => 'Username must be 3-20 characters'], 422);
+        }
+        if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $this->apiJson(['ok' => false, 'error' => 'A valid email is required'], 422);
+        }
+        if (!in_array($role, ['doctor', 'secretary', 'admin'], true)) {
+            $this->apiJson(['ok' => false, 'error' => 'Role must be doctor, secretary or admin'], 422);
+        }
+        if (!empty($data['new_password']) && strlen((string)$data['new_password']) < 8) {
+            $this->apiJson(['ok' => false, 'error' => 'Password must be at least 8 characters'], 422);
+        }
+
+        // Guard unique username/email against OTHER users.
+        $dup = $this->pdo->prepare("SELECT id FROM users WHERE (username = ? OR email = ?) AND id <> ? LIMIT 1");
+        $dup->execute([$username, $email, $id]);
+        if ($dup->fetchColumn()) {
+            $this->apiJson(['ok' => false, 'error' => 'Username or email already in use'], 409);
+        }
+
+        try {
+            $record = [
+                'name' => $name,
+                'username' => $username,
+                'email' => $email,
+                'role' => $role,
+                'is_active' => $isActive,
+            ];
+            if (!empty($data['new_password'])) {
+                $record['new_password'] = (string)$data['new_password'];
+            }
+
+            // Reuse the tested update helper (ARGON2ID hashing on password reset).
+            $this->updateUserRecord($id, $record);
+
+            // Optional clinic scoping (single-tenant: just the column).
+            if (array_key_exists('clinic_id', $data)) {
+                $clinicId = ($data['clinic_id'] === '' || $data['clinic_id'] === null) ? null : (int)$data['clinic_id'];
+                $up = $this->pdo->prepare("UPDATE users SET clinic_id = ? WHERE id = ?");
+                $up->execute([$clinicId, $id]);
+            }
+
+            $this->apiJson(['ok' => true]);
+        } catch (\Throwable $e) {
+            $this->apiJson(['ok' => false, 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * DELETE /api/admin/users/{id} — delete a user (reuses canDeleteUser/deleteUserRecord).
+     */
+    public function apiUserDelete($id)
+    {
+        $admin = $this->apiRequireAdmin();
+        $id = (int)$id;
+
+        if ((int)($admin['id'] ?? 0) === $id) {
+            $this->apiJson(['ok' => false, 'error' => 'You cannot delete your own account'], 422);
+        }
+
+        $existing = $this->pdo->prepare("SELECT role FROM users WHERE id = ? LIMIT 1");
+        $existing->execute([$id]);
+        $row = $existing->fetch(PDO::FETCH_ASSOC);
+        if (!$row) {
+            $this->apiJson(['ok' => false, 'error' => 'User not found'], 404);
+        }
+
+        // Refuse deleting the last admin.
+        if (($row['role'] ?? '') === 'admin') {
+            $adminCount = (int)$this->pdo->query("SELECT COUNT(*) FROM users WHERE role = 'admin'")->fetchColumn();
+            if ($adminCount <= 1) {
+                $this->apiJson(['ok' => false, 'error' => 'Cannot delete the last administrator'], 422);
+            }
+        }
+
+        if (!$this->canDeleteUser($id)) {
+            $this->apiJson(['ok' => false, 'error' => 'User cannot be deleted (has associated records)'], 422);
+        }
+
+        try {
+            $this->deleteUserRecord($id);
+            $this->apiJson(['ok' => true]);
+        } catch (\Throwable $e) {
+            $this->apiJson(['ok' => false, 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * GET /api/admin/dashboard — system stats for the desktop dashboard.
+     */
+    public function apiDashboard()
+    {
+        $this->apiRequireAdmin();
+
+        try {
+            $stats = $this->getSystemStats();
+            $health = $this->getSystemHealth();
+            $activities = $this->getRecentActivities();
+
+            $adminCount = (int)$this->pdo->query("SELECT COUNT(*) FROM users WHERE role = 'admin'")->fetchColumn();
+
+            $recent = [];
+            foreach ($activities as $a) {
+                $recent[] = [
+                    'actor_name' => $a['user_name'] ?? null,
+                    'action' => $a['action'] ?? null,
+                    'detail' => $a['description'] ?? ($a['detail'] ?? ($a['details'] ?? null)),
+                    'created_at' => $a['created_at'] ?? null,
+                ];
+            }
+
+            $storage = $health['storage'] ?? [];
+
+            $this->apiJson([
+                'ok' => true,
+                'data' => [
+                    'users' => [
+                        'total' => (int)($stats['users']['total_users'] ?? 0),
+                        'active' => (int)($stats['users']['active_users'] ?? 0),
+                        'doctors' => (int)($stats['users']['doctors'] ?? 0),
+                        'secretaries' => (int)($stats['users']['secretaries'] ?? 0),
+                        'admins' => $adminCount,
+                    ],
+                    'patients' => [
+                        'total' => (int)($stats['patients']['total_patients'] ?? 0),
+                    ],
+                    'appointments' => [
+                        'total' => (int)($stats['appointments']['total_appointments'] ?? 0),
+                        'completed' => (int)($stats['appointments']['completed'] ?? 0),
+                        'cancelled' => (int)($stats['appointments']['cancelled'] ?? 0),
+                    ],
+                    'revenue' => [
+                        'total' => (float)($stats['financial']['total_revenue'] ?? 0),
+                        'payments' => (int)($stats['financial']['total_payments'] ?? 0),
+                    ],
+                    'recent' => $recent,
+                    'system' => [
+                        'db' => (($health['database'] ?? '') === 'Connected'),
+                        'storage' => [
+                            'used' => $storage['used'] ?? null,
+                            'total' => $storage['total'] ?? null,
+                            'pct' => $storage['usage_percent'] ?? null,
+                        ],
+                        'php' => $health['php_version'] ?? PHP_VERSION,
+                    ],
+                ],
+            ]);
+        } catch (\Throwable $e) {
+            $this->apiJson(['ok' => false, 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * GET /api/admin/settings — current system settings (reuses getSystemSettings).
+     */
+    public function apiSettingsGet()
+    {
+        $this->apiRequireAdmin();
+        try {
+            $settings = $this->getSystemSettings();
+            $this->apiJson(['ok' => true, 'data' => $settings]);
+        } catch (\Throwable $e) {
+            $this->apiJson(['ok' => false, 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * PUT /api/admin/settings — update system settings (reuses updateSystemSettings allow-list).
+     */
+    public function apiSettingsUpdate()
+    {
+        $this->apiRequireAdmin();
+        $data = $this->apiBody();
+        try {
+            $this->updateSystemSettings($data);
+            $this->apiJson(['ok' => true]);
+        } catch (\Throwable $e) {
+            $this->apiJson(['ok' => false, 'error' => $e->getMessage()], 400);
+        }
     }
 }
 

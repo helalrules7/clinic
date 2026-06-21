@@ -251,6 +251,14 @@
                     </div>
                     
                     <div class="mb-3">
+                        <label for="edit_new_password" class="form-label">New Password</label>
+                        <input type="password" class="form-control" id="edit_new_password" name="new_password" minlength="8" autocomplete="new-password" placeholder="Leave blank to keep current password">
+                        <div class="form-text">Leave blank to keep the current password. Minimum 8 characters to set a new one.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <!-- Hidden field ensures an unchecked box still submits is_active=0 (deactivate) -->
+                        <input type="hidden" name="is_active" value="0">
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" id="edit_is_active" name="is_active" value="1">
                             <label class="form-check-label" for="edit_is_active">
@@ -739,7 +747,8 @@ function editUser(user) {
     document.getElementById('edit_email').value = user.email;
     document.getElementById('edit_role').value = user.role;
     document.getElementById('edit_is_active').checked = user.is_active == 1;
-    
+    document.getElementById('edit_new_password').value = '';
+
     document.getElementById('editUserForm').action = '/admin/users/update/' + user.id;
     
     new bootstrap.Modal(document.getElementById('editUserModal')).show();

@@ -116,6 +116,14 @@ try {
     $router->post('/api/admin/backup/restore', 'AdminController@apiBackupRestore');
     $router->post('/api/admin/backup/restore-upload', 'AdminController@apiBackupRestoreUpload');
     $router->get('/api/admin/backup/download/{type}/{name}', 'AdminController@apiBackupDownload');
+    // Desktop admin JSON API (Bearer token, CSRF-exempt)
+    $router->get('/api/admin/users', 'AdminController@apiUsersList');
+    $router->post('/api/admin/users', 'AdminController@apiUserCreate');
+    $router->put('/api/admin/users/{id}', 'AdminController@apiUserUpdate');
+    $router->delete('/api/admin/users/{id}', 'AdminController@apiUserDelete');
+    $router->get('/api/admin/dashboard', 'AdminController@apiDashboard');
+    $router->get('/api/admin/settings', 'AdminController@apiSettingsGet');
+    $router->put('/api/admin/settings', 'AdminController@apiSettingsUpdate');
     $router->post('/admin/users/update/{id}', 'AdminController@updateUser');
     $router->post('/admin/users/delete/{id}', 'AdminController@deleteUser');
     
