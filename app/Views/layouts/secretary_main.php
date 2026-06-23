@@ -351,7 +351,7 @@
             <div class="sidebar-footer p-3 text-center border-top">
                 <small class="text-muted">
                     <div class="mb-1">
-                        HClinic / Roaya Clinic v12.0.0
+                        HClinic / Roaya Clinic v<?= htmlspecialchars(class_exists('\\App\\Config\\Constants') ? \App\Config\Constants::APP_VERSION : '12.1.0') ?>
                         <span aria-hidden="true">·</span>
                         <a href="https://hclinic.clinic/docs/opth/" target="_blank" rel="noopener" style="color: var(--accent);"><i class="bi bi-book me-1"></i>الدليل</a>
                     </div>

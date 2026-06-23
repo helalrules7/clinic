@@ -96,6 +96,39 @@
                                     </div>
                                 </div>
                             </div>
+
+                            <!-- Change Log -->
+                            <style>
+                                .changelog{margin-top:.6rem;display:flex;flex-direction:column;gap:1rem;}
+                                .cl-entry{border-inline-start:3px solid var(--ds-primary,#6366f1);padding-inline-start:.8rem;}
+                                .cl-head{display:flex;align-items:baseline;gap:.6rem;flex-wrap:wrap;margin-bottom:.35rem;}
+                                .cl-ver{font-weight:800;color:var(--ds-primary,#6366f1);}
+                                .cl-title{font-weight:600;}
+                                .cl-date{margin-inline-start:auto;font-size:.78rem;color:var(--text-secondary,#64748b);}
+                                .cl-list{margin:0;padding-inline-start:1.1rem;display:flex;flex-direction:column;gap:.25rem;}
+                                .cl-list li{font-size:.85rem;line-height:1.5;}
+                            </style>
+                            <div class="setting-item">
+                                <div style="width:100%">
+                                    <label class="form-label mb-0"><i class="fas fa-history me-2"></i>Change Log</label>
+                                    <div class="form-text">Recent releases across web, mobile &amp; desktop.</div>
+                                    <div class="changelog">
+                                        <div class="cl-entry">
+                                            <div class="cl-head">
+                                                <span class="cl-ver">v<?= htmlspecialchars($__appV) ?></span>
+                                                <span class="cl-title">Fixes &amp; cross-platform notes</span>
+                                                <span class="cl-date">2026-06-23</span>
+                                            </div>
+                                            <ul class="cl-list">
+                                                <li>Added this Change Log to Settings.</li>
+                                                <li>Notes: patient <b>@mentions</b> and reminder badges now interoperate between the web and desktop apps.</li>
+                                                <li>Patient images can be deleted from the image viewer with a confirmation step.</li>
+                                                <li>Desktop app <b>v<?= htmlspecialchars($__deskV) ?></b>: native prescription/glasses printing, real-location weather, fixed Pain-Score slider and dashboard clock arc (AM/PM colour-coding), patient @mentions and image delete.</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
                         <!-- Performance Mode (top of page — kills glassmorphism system-wide) -->
