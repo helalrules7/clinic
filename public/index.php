@@ -568,6 +568,7 @@ try {
     // Smart-consultation AI assists (Phase 1).
     $router->get('/api/consultation/prior-summary', 'ApiController@getPriorVisitSummary');
     $router->post('/api/consultation/icd10-suggest', 'ApiController@suggestICD10Codes');
+    $router->post('/api/speech/transcribe', 'ApiController@transcribeAudio');
     $router->get('/api/prescriptions/suggestions', 'ApiController@getPrescriptionSuggestions');
     $router->post('/api/prescriptions/meds', 'ApiController@createMedicationPrescription');
     $router->put('/api/prescriptions/meds/{id}', 'ApiController@updateMedication');

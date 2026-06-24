@@ -15197,6 +15197,99 @@ class ApiController
     }
 
     /**
+     * Voice dictation — POST /api/speech/transcribe
+     *
+     * Doctor/admin only. Accepts an uploaded audio clip (multipart field "audio";
+     * the mobile recorder sends .m4a/AAC) plus an optional "language" hint
+     * ("ar"/"en"), and returns its transcription via Groq Whisper
+     * (whisper-large-v3) — the same GROQ_API_KEY the text AI already uses.
+     * The doctor always reviews/edits the text before saving (no auto-commit).
+     *
+     * @return \Psr\Http\Message\ResponseInterface JSON { ok, text }
+     */
+    public function transcribeAudio()
+    {
+        try {
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['ok' => false, 'error' => 'Unauthorized'], 401);
+            }
+            $user = $this->auth->user();
+            if (($user['role'] ?? '') !== 'doctor' && ($user['role'] ?? '') !== 'admin') {
+                return $this->jsonResponse(['ok' => false, 'error' => 'Permission denied'], 403);
+            }
+
+            if (!isset($_FILES['audio']) || $_FILES['audio']['error'] !== UPLOAD_ERR_OK) {
+                return $this->jsonResponse(['ok' => false, 'error' => 'No audio uploaded.'], 400);
+            }
+            $file = $_FILES['audio'];
+
+            // Size cap — a couple of minutes of AAC is well under this.
+            if ($file['size'] > 10 * 1024 * 1024) {
+                return $this->jsonResponse(['ok' => false, 'error' => 'Audio too large (max 10MB).'], 400);
+            }
+
+            // Sniff the real mime; accept the common audio containers a recorder emits.
+            $finfo = finfo_open(FILEINFO_MIME_TYPE);
+            $mime  = finfo_file($finfo, $file['tmp_name']);
+            finfo_close($finfo);
+            $allowed = ['audio/mp4', 'audio/m4a', 'audio/x-m4a', 'audio/aac', 'audio/mpeg', 'audio/mpga', 'audio/wav', 'audio/x-wav', 'audio/webm', 'video/mp4'];
+            if (!in_array($mime, $allowed, true)) {
+                return $this->jsonResponse(['ok' => false, 'error' => 'Unsupported audio format.'], 400);
+            }
+
+            $groqApiKey = $_ENV['GROQ_API_KEY'] ?? getenv('GROQ_API_KEY');
+            if (!$groqApiKey || empty(trim($groqApiKey))) {
+                return $this->jsonResponse(['ok' => false, 'error' => 'AI service not configured.'], 503);
+            }
+
+            // Optional language hint; Whisper auto-detects when omitted.
+            $lang = isset($_POST['language']) ? preg_replace('/[^a-z]/', '', strtolower((string) $_POST['language'])) : '';
+            $ext  = pathinfo($file['name'] ?? 'audio.m4a', PATHINFO_EXTENSION) ?: 'm4a';
+
+            $post = [
+                'file'            => new \CURLFile($file['tmp_name'], $mime, 'audio.' . $ext),
+                'model'           => 'whisper-large-v3',
+                'response_format' => 'json',
+                'temperature'     => '0',
+            ];
+            if ($lang === 'ar' || $lang === 'en') {
+                $post['language'] = $lang;
+            }
+
+            $ch = curl_init('https://api.groq.com/openai/v1/audio/transcriptions');
+            curl_setopt_array($ch, [
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_POST           => true,
+                CURLOPT_HTTPHEADER     => ['Authorization: Bearer ' . $groqApiKey],
+                CURLOPT_POSTFIELDS     => $post,
+                CURLOPT_TIMEOUT        => 60,
+                CURLOPT_CONNECTTIMEOUT => 10,
+            ]);
+            $response = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $curlErr  = curl_error($ch);
+            curl_close($ch);
+
+            if ($curlErr) {
+                error_log('transcribeAudio cURL error: ' . $curlErr);
+                return $this->jsonResponse(['ok' => false, 'error' => 'Transcription connection error.'], 502);
+            }
+            if ($httpCode !== 200) {
+                error_log('transcribeAudio HTTP ' . $httpCode . ' - ' . substr((string) $response, 0, 500));
+                $msg = $httpCode === 429 ? 'Transcription service is busy. Please try again shortly.' : 'Transcription failed.';
+                return $this->jsonResponse(['ok' => false, 'error' => $msg], 502);
+            }
+
+            $decoded = json_decode((string) $response, true);
+            $text = isset($decoded['text']) ? trim((string) $decoded['text']) : '';
+            return $this->jsonResponse(['ok' => true, 'text' => $text]);
+        } catch (\Throwable $e) {
+            error_log('transcribeAudio error: ' . $e->getMessage());
+            return $this->jsonResponse(['ok' => false, 'error' => 'Transcription error.'], 500);
+        }
+    }
+
+    /**
      * Phase 1.2 — Inline "prior-visit clinical summary".
      *
      * GET /api/consultation/prior-summary?appointment_id=
