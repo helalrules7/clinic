@@ -526,6 +526,179 @@ function showPrescriptionModal(appointmentId) {
         };
     })();
 
+    // --- Drug Finder: advanced search (name / active ingredient / company + Route filter)
+    //     with single-pick (fills the form) or multi-select add. Backend ready:
+    //     /api/searchDrugs + /api/getFilterOptions + /api/drug-defaults + /api/prescriptions/meds.
+    (function () {
+        var wrap = drugInput ? drugInput.closest('.position-relative') : null;
+        if (!wrap || document.getElementById('rxFinderBtn')) { return; }
+
+        var fbtn = document.createElement('button');
+        fbtn.type = 'button';
+        fbtn.id = 'rxFinderBtn';
+        fbtn.title = 'Find drug';
+        fbtn.innerHTML = '🔍';
+        fbtn.style.cssText = 'position:absolute;top:6px;right:8px;border:0;background:transparent;cursor:pointer;font-size:1rem;line-height:1;padding:4px 6px;z-index:1060';
+        wrap.appendChild(fbtn);
+        drugInput.style.paddingRight = '38px';
+
+        var CAI = window.CONSULTATION_AI || {};
+        var selected = {}, routesDone = false;
+        var ov = null, listEl = null, qEl = null, routeEl = null, footEl = null;
+
+        function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+        function apptId() { var f = form.elements['appointment_id']; return CAI.appointmentId || (f && f.value) || ''; }
+        function close() { if (ov) { ov.remove(); ov = null; selected = {}; } }
+
+        function open() {
+            if (ov) { return; }
+            ov = document.createElement('div');
+            ov.id = 'rxFinderOverlay';
+            ov.style.cssText = 'position:fixed;inset:0;z-index:1200;background:rgba(15,23,42,.55);display:flex;align-items:flex-start;justify-content:center;padding:5vh 16px';
+            ov.innerHTML =
+                '<div style="background:var(--card,#fff);color:var(--text,#1e293b);border:1px solid var(--border,#e2e8f0);border-radius:14px;width:100%;max-width:720px;max-height:85vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.35);overflow:hidden">'
+              +   '<div style="display:flex;align-items:center;gap:8px;padding:12px 14px;border-bottom:1px solid var(--border,#e2e8f0)">'
+              +     '<span style="font-weight:700;font-size:.95rem">🔍 Find drug</span>'
+              +     '<button type="button" id="rxFinderClose" style="margin-inline-start:auto;border:0;background:transparent;font-size:1.3rem;cursor:pointer;color:inherit;line-height:1">×</button>'
+              +   '</div>'
+              +   '<div style="display:flex;gap:8px;padding:12px 14px;flex-wrap:wrap">'
+              +     '<input id="rxFinderQ" type="text" placeholder="Name / active ingredient / company…" autocomplete="off" style="flex:1;min-width:180px;padding:9px 11px;border:1px solid var(--border,#e2e8f0);border-radius:9px;background:transparent;color:inherit;font-size:.9rem">'
+              +     '<select id="rxFinderRoute" style="padding:9px 11px;border:1px solid var(--border,#e2e8f0);border-radius:9px;background:var(--card,#fff);color:inherit;font-size:.9rem"><option value="">All routes</option></select>'
+              +   '</div>'
+              +   '<div id="rxFinderList" style="flex:1;overflow-y:auto;padding:4px 14px 14px"></div>'
+              +   '<div id="rxFinderFoot" style="display:none;padding:10px 14px;border-top:1px solid var(--border,#e2e8f0);align-items:center;gap:10px">'
+              +     '<span id="rxFinderCount" style="font-size:.85rem;color:var(--muted,#64748b)"></span>'
+              +     '<button type="button" id="rxFinderAddSel" style="margin-inline-start:auto;border:0;border-radius:9px;background:#4f46e5;color:#fff;font-weight:700;padding:9px 16px;cursor:pointer;font-size:.9rem">Add selected</button>'
+              +   '</div>'
+              + '</div>';
+            (drugInput.closest('.modal') || document.body).appendChild(ov);
+            listEl = ov.querySelector('#rxFinderList');
+            qEl = ov.querySelector('#rxFinderQ');
+            routeEl = ov.querySelector('#rxFinderRoute');
+            footEl = ov.querySelector('#rxFinderFoot');
+            ov.querySelector('#rxFinderClose').addEventListener('click', close);
+            ov.addEventListener('click', function (e) { if (e.target === ov) { close(); } });
+            ov.querySelector('#rxFinderAddSel').addEventListener('click', function () { addMany(Object.keys(selected).map(function (k) { return selected[k]; })); });
+            var t = null;
+            qEl.addEventListener('input', function () { clearTimeout(t); t = setTimeout(search, 300); });
+            routeEl.addEventListener('change', search);
+            loadRoutes();
+            qEl.value = (drugInput.value || '').trim();
+            qEl.focus();
+            search();
+        }
+
+        function loadRoutes() {
+            if (routesDone) { return; }
+            fetch('/api/getFilterOptions', { credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                .then(function (r) { return r.json(); })
+                .then(function (d) {
+                    var routes = (d && (d.routes || (d.data && d.data.routes))) || [];
+                    routes.forEach(function (rt) {
+                        var v = (typeof rt === 'string') ? rt : (rt.route || rt.Route || '');
+                        if (!v) { return; }
+                        var o = document.createElement('option'); o.value = v; o.textContent = v; routeEl.appendChild(o);
+                    });
+                    routesDone = true;
+                })
+                .catch(function () {});
+        }
+
+        function updateFoot() {
+            if (!footEl) { return; }
+            var n = Object.keys(selected).length;
+            footEl.style.display = n ? 'flex' : 'none';
+            var c = ov.querySelector('#rxFinderCount'); if (c) { c.textContent = n + ' selected'; }
+        }
+
+        function search() {
+            var q = (qEl.value || '').trim(), route = routeEl.value || '';
+            if (q.length < 2 && !route) { listEl.innerHTML = '<div style="padding:20px;text-align:center;color:var(--muted,#94a3b8);font-size:.85rem">Type 2+ letters or pick a route</div>'; return; }
+            listEl.innerHTML = '<div style="padding:20px;text-align:center;color:var(--muted,#94a3b8);font-size:.85rem">Searching…</div>';
+            var url = '/api/searchDrugs?q=' + encodeURIComponent(q) + '&route=' + encodeURIComponent(route) + '&limit=40';
+            fetch(url, { credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                .then(function (r) { return r.json(); })
+                .then(function (d) { renderList((d && (d.drugs || d.results)) || []); })
+                .catch(function () { listEl.innerHTML = '<div style="padding:20px;text-align:center;color:#ef4444;font-size:.85rem">Search failed</div>'; });
+        }
+
+        function renderList(drugs) {
+            if (!drugs.length) { listEl.innerHTML = '<div style="padding:20px;text-align:center;color:var(--muted,#94a3b8);font-size:.85rem">No results</div>'; return; }
+            listEl.innerHTML = '';
+            drugs.forEach(function (drug) {
+                var name = drug.drug_name || drug.FirstName || '';
+                var ing = drug.active_ingredient || '';
+                var route = drug.administration_route || '';
+                var comp = drug.Company || drug.company || '';
+                var price = drug.price ? ('EGP ' + drug.price) : '';
+                var row = document.createElement('div');
+                row.style.cssText = 'display:flex;align-items:center;gap:10px;padding:9px 8px;border-bottom:1px solid var(--border,#eef2f7)';
+                row.innerHTML =
+                    '<input type="checkbox" class="rxf-chk" ' + (selected[name] ? 'checked' : '') + ' style="width:17px;height:17px;flex:0 0 auto;cursor:pointer">'
+                  + '<div class="rxf-pick" style="flex:1;cursor:pointer;min-width:0">'
+                  +   '<div style="font-weight:700;color:var(--primary,#4f46e5);font-size:.85rem">' + esc(name) + '</div>'
+                  +   '<div style="font-size:.72rem;color:var(--muted,#64748b)">' + esc(ing) + (route ? ' · ' + esc(route) : '') + (comp ? ' · ' + esc(comp) : '') + '</div>'
+                  + '</div>'
+                  + (price ? '<span style="font-size:.68rem;font-weight:700;color:#16a34a;flex:0 0 auto">' + esc(price) + '</span>' : '')
+                  + '<button type="button" class="rxf-add" title="Add" style="flex:0 0 auto;border:0;border-radius:7px;background:rgba(79,70,229,.12);color:#4f46e5;font-weight:700;font-size:1rem;cursor:pointer;padding:3px 10px;line-height:1">＋</button>';
+                row.querySelector('.rxf-pick').addEventListener('click', function () { pickSingle(drug); });
+                row.querySelector('.rxf-add').addEventListener('click', function () { pickSingle(drug); });
+                row.querySelector('.rxf-chk').addEventListener('change', function () {
+                    if (this.checked) { selected[name] = drug; } else { delete selected[name]; }
+                    updateFoot();
+                });
+                listEl.appendChild(row);
+            });
+        }
+
+        function pickSingle(drug) {
+            var name = drug.drug_name || drug.FirstName || '';
+            drugInput.value = name;
+            if (typeof window.__rxApplyDrugTemplate === 'function') { window.__rxApplyDrugTemplate(name); }
+            close();
+            try { drugInput.focus(); } catch (e) {}
+        }
+
+        function postMed(drug) {
+            var name = drug.drug_name || drug.FirstName || '';
+            return fetch('/api/drug-defaults?drug_name=' + encodeURIComponent(name), { credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                .then(function (r) { return r.json().catch(function () { return null; }); })
+                .then(function (d) {
+                    var tpl = (d && d.success && d.default) ? d.default : {};
+                    var body = new URLSearchParams();
+                    body.set('appointment_id', apptId());
+                    body.set('drug_name', name);
+                    body.set('dose', tpl.dose || '');
+                    body.set('frequency', tpl.frequency || '');
+                    body.set('duration', tpl.duration || '');
+                    body.set('route', tpl.route || '');
+                    body.set('notes', tpl.instructions || '');
+                    var h = { 'Content-Type': 'application/x-www-form-urlencoded', 'X-Requested-With': 'XMLHttpRequest' };
+                    if (CAI.csrfToken) { h['X-CSRF-Token'] = CAI.csrfToken; }
+                    return fetch('/api/prescriptions/meds', { method: 'POST', credentials: 'same-origin', headers: h, body: body.toString() });
+                });
+        }
+
+        function addMany(drugs) {
+            if (!drugs.length) { return; }
+            var addBtn = ov.querySelector('#rxFinderAddSel');
+            if (addBtn) { addBtn.disabled = true; addBtn.textContent = 'Adding…'; }
+            var seq = Promise.resolve();
+            drugs.forEach(function (drug) { seq = seq.then(function () { return postMed(drug); }); });
+            seq.then(function () {
+                close();
+                if (typeof showSuccessMessage === 'function') { showSuccessMessage('Added ' + drugs.length + ' drug(s)'); }
+                if (typeof reloadMedications === 'function') { setTimeout(reloadMedications, 300); }
+            }).catch(function () {
+                close();
+                if (typeof showErrorMessage === 'function') { showErrorMessage('Could not add some drugs'); }
+                if (typeof reloadMedications === 'function') { setTimeout(reloadMedications, 300); }
+            });
+        }
+
+        fbtn.addEventListener('click', open);
+    })();
+
     // Load most used drugs suggestions
     loadMostUsedDrugs();
     
@@ -1061,7 +1234,7 @@ function setupDrugNameAutocomplete() {
                     <div class="d-flex align-items-center justify-content-between">
                         <div class="flex-grow-1">
                     <div class="fw-bold text-primary" style="font-size: 0.8rem;">${drug.drug_name}</div>
-                    <small class="text-muted" style="font-size: 0.7rem;">${drug.active_ingredient || ''} ${drug.Company ? '- ' + drug.Company : ''}</small>
+                    <small class="text-muted" style="font-size: 0.7rem;">${drug.active_ingredient || ''}${drug.administration_route ? ' · ' + drug.administration_route : ''}${drug.Company ? ' · ' + drug.Company : ''}</small>
                         </div>
                         ${priceBadge}
                     </div>

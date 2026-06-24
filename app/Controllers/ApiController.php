@@ -8842,10 +8842,10 @@ class ApiController
                     Company,
                     Pharmacology as category,
                     Route as administration_route
-                FROM drugs 
-                WHERE FirstName LIKE ? 
-                ORDER BY 
-                    CASE 
+                FROM drugs
+                WHERE FirstName LIKE ? OR LastName LIKE ?
+                ORDER BY
+                    CASE
                         WHEN FirstName LIKE ? THEN 1
                         WHEN LastName LIKE ? THEN 2
                         WHEN Company LIKE ? THEN 3
@@ -8856,7 +8856,7 @@ class ApiController
             ");
 
             $exactMatch = '%' . trim($_GET['q'] ?? '') . '%';
-            $stmt->execute([$searchTerm, $exactMatch, $exactMatch, $exactMatch, $limit]);
+            $stmt->execute([$searchTerm, $searchTerm, $exactMatch, $exactMatch, $exactMatch, $limit]);
 
             $drugs = $stmt->fetchAll();
 
