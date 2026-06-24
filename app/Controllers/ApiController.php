@@ -15232,9 +15232,13 @@ class ApiController
             $finfo = finfo_open(FILEINFO_MIME_TYPE);
             $mime  = finfo_file($finfo, $file['tmp_name']);
             finfo_close($finfo);
-            $allowed = ['audio/mp4', 'audio/m4a', 'audio/x-m4a', 'audio/aac', 'audio/mpeg', 'audio/mpga', 'audio/wav', 'audio/x-wav', 'audio/webm', 'video/mp4'];
-            if (!in_array($mime, $allowed, true)) {
-                return $this->jsonResponse(['ok' => false, 'error' => 'Unsupported audio format.'], 400);
+            // libmagic reports webm/ogg containers as video/* even for audio-only
+            // clips, so accept the known containers explicitly plus any audio/* type.
+            $allowed = ['audio/mp4', 'audio/m4a', 'audio/x-m4a', 'audio/aac', 'audio/mpeg', 'audio/mpga',
+                        'audio/wav', 'audio/x-wav', 'audio/webm', 'audio/ogg', 'video/webm', 'video/ogg',
+                        'application/ogg', 'video/mp4'];
+            if (!in_array($mime, $allowed, true) && strpos((string) $mime, 'audio/') !== 0) {
+                return $this->jsonResponse(['ok' => false, 'error' => 'Unsupported audio format (' . $mime . ').'], 400);
             }
 
             $groqApiKey = $_ENV['GROQ_API_KEY'] ?? getenv('GROQ_API_KEY');
@@ -15286,6 +15290,49 @@ class ApiController
         } catch (\Throwable $e) {
             error_log('transcribeAudio error: ' . $e->getMessage());
             return $this->jsonResponse(['ok' => false, 'error' => 'Transcription error.'], 500);
+        }
+    }
+
+    /**
+     * Drug-safety check — POST /api/prescriptions/check
+     *
+     * Doctor/admin only. Body { drug_name, patient_id | appointment_id }. Returns
+     * warnings (allergy + drug-drug interactions) for the doctor to review before
+     * adding the drug. FAILS OPEN (empty warnings on any error) — a checker
+     * problem must never block prescribing.
+     *
+     * @return \Psr\Http\Message\ResponseInterface JSON { ok, warnings: [...] }
+     */
+    public function checkPrescriptionSafety()
+    {
+        try {
+            if (!$this->auth->check()) {
+                return $this->jsonResponse(['ok' => false, 'error' => 'Unauthorized'], 401);
+            }
+            $user = $this->auth->user();
+            if (($user['role'] ?? '') !== 'doctor' && ($user['role'] ?? '') !== 'admin') {
+                return $this->jsonResponse(['ok' => false, 'error' => 'Permission denied'], 403);
+            }
+            $json = json_decode((string) file_get_contents('php://input'), true) ?: [];
+            $drugName      = trim((string) ($_POST['drug_name'] ?? $json['drug_name'] ?? ''));
+            $patientId     = (int) ($_POST['patient_id'] ?? $json['patient_id'] ?? 0);
+            $appointmentId = (int) ($_POST['appointment_id'] ?? $json['appointment_id'] ?? 0);
+            if ($patientId <= 0 && $appointmentId > 0) {
+                $st = $this->pdo->prepare('SELECT patient_id FROM appointments WHERE id = ? LIMIT 1');
+                $st->execute([$appointmentId]);
+                $patientId = (int) ($st->fetchColumn() ?: 0);
+            }
+            if ($drugName === '' || $patientId <= 0) {
+                return $this->jsonResponse(['ok' => true, 'warnings' => []]);
+            }
+            if (!class_exists('App\\Services\\DrugInteractionService')) {
+                require_once __DIR__ . '/../Services/DrugInteractionService.php';
+            }
+            $svc = new \App\Services\DrugInteractionService($this->pdo, $this->getDrugsDatabaseConnection());
+            return $this->jsonResponse(['ok' => true, 'warnings' => $svc->check($drugName, $patientId)]);
+        } catch (\Throwable $e) {
+            error_log('checkPrescriptionSafety: ' . $e->getMessage());
+            return $this->jsonResponse(['ok' => true, 'warnings' => []]);
         }
     }
 

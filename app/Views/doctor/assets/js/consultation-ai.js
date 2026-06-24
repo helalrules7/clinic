@@ -458,7 +458,143 @@
         window.addEventListener('scroll', function () { if (!menu.hidden) hide(); }, true);
     }
 
+    /* -----------------------------------------------------------------
+     * Voice dictation — a mic on the main free-text fields. Records via
+     * MediaRecorder, sends the clip to /api/speech/transcribe (Groq
+     * Whisper) and appends the returned text into the field. The doctor
+     * reviews before saving (nothing auto-commits). The language is FORCED
+     * (ar/en, a localStorage toggle) so Whisper never mis-detects a third
+     * language.
+     * ----------------------------------------------------------------- */
+    var MIC_FIELDS = ['chief_complaint', 'hx_present_illness', 'systemic_disease',
+                      'medication', 'diagnosis', 'plan'];
+    var DICT_LANG_KEY = 'cai_dictation_lang';
+
+    function dictLang() {
+        var v = '';
+        try { v = localStorage.getItem(DICT_LANG_KEY) || ''; } catch (e) {}
+        return v === 'ar' ? 'ar' : 'en';
+    }
+    function setDictLang(l) {
+        try { localStorage.setItem(DICT_LANG_KEY, l); } catch (e) {}
+    }
+
+    function micTranscribe(blob) {
+        var fd = new FormData();
+        fd.append('audio', blob, 'dictation.webm');
+        fd.append('language', dictLang());
+        var headers = { 'Accept': 'application/json' };
+        if (CFG.csrfToken) { headers['X-CSRF-Token'] = CFG.csrfToken; }
+        return fetch('/api/speech/transcribe', {
+            method: 'POST', headers: headers, credentials: 'same-origin', body: fd
+        }).then(function (res) {
+            return res.json().catch(function () { return null; }).then(function (json) {
+                if (!res.ok || !json || json.ok === false) {
+                    throw new Error((json && json.error) ||
+                        ('Request failed (' + res.status + ')'));
+                }
+                return (json.text || '').trim();
+            });
+        });
+    }
+
+    function makeMicButton(fieldId) {
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'cai-mic-btn';
+        btn.title = 'Dictate (voice to text)';
+        btn.textContent = '🎙';
+        btn.style.cssText =
+            'position:absolute;bottom:8px;right:8px;width:30px;height:30px;' +
+            'border-radius:50%;border:none;cursor:pointer;font-size:15px;line-height:1;' +
+            'display:flex;align-items:center;justify-content:center;z-index:5;' +
+            'background:rgba(79,70,229,.12);color:#4F46E5';
+
+        var rec = null, chunks = [], recording = false, busy = false;
+        function idle() { btn.textContent = '🎙'; btn.style.background = 'rgba(79,70,229,.12)'; }
+        function rond() { btn.textContent = '⏹'; btn.style.background = 'rgba(239,68,68,.18)'; }
+
+        btn.addEventListener('click', function () {
+            if (busy) { return; }
+            if (recording) { try { rec && rec.stop(); } catch (e) {} return; }
+            if (!navigator.mediaDevices || !window.MediaRecorder) {
+                toast('Voice recording is not supported in this browser.'); return;
+            }
+            navigator.mediaDevices.getUserMedia({ audio: true }).then(function (stream) {
+                var mime = (window.MediaRecorder.isTypeSupported &&
+                    MediaRecorder.isTypeSupported('audio/webm')) ? 'audio/webm' : '';
+                try { rec = mime ? new MediaRecorder(stream, { mimeType: mime }) : new MediaRecorder(stream); }
+                catch (e) { rec = new MediaRecorder(stream); }
+                chunks = [];
+                rec.ondataavailable = function (e) { if (e.data && e.data.size) { chunks.push(e.data); } };
+                rec.onstop = function () {
+                    recording = false;
+                    stream.getTracks().forEach(function (t) { t.stop(); });
+                    var blob = new Blob(chunks, { type: (rec && rec.mimeType) || 'audio/webm' });
+                    if (!blob.size) { idle(); return; }
+                    busy = true; btn.textContent = '…';
+                    micTranscribe(blob).then(function (text) {
+                        if (text) { applyToField(fieldId, text, { append: true }); }
+                        else { toast('No speech detected.'); }
+                    }).catch(function (err) {
+                        toast((err && err.message) ? err.message : 'Transcription failed.');
+                    }).then(function () { busy = false; idle(); });
+                };
+                rec.start();
+                recording = true; rond();
+            }).catch(function () { toast('Microphone permission denied.'); });
+        });
+        return btn;
+    }
+
+    function paintLang(wrap) {
+        var cur = dictLang();
+        wrap.querySelectorAll('button[data-lang]').forEach(function (b) {
+            var on = b.dataset.lang === cur;
+            b.style.background = on ? '#4F46E5' : '#e2e8f0';
+            b.style.color = on ? '#fff' : '#334155';
+        });
+    }
+    function makeLangToggle() {
+        var wrap = document.createElement('div');
+        wrap.style.cssText =
+            'display:flex;gap:6px;align-items:center;margin:0 0 8px;font-size:.8rem;color:#64748b';
+        var lbl = document.createElement('span'); lbl.textContent = '🎙 Dictation:';
+        wrap.appendChild(lbl);
+        ['en', 'ar'].forEach(function (l) {
+            var b = document.createElement('button');
+            b.type = 'button';
+            b.textContent = (l === 'en') ? 'English' : 'عربي';
+            b.dataset.lang = l;
+            b.style.cssText = 'border:none;border-radius:6px;padding:3px 10px;cursor:pointer;font-size:.8rem';
+            b.addEventListener('click', function () { setDictLang(l); paintLang(wrap); });
+            wrap.appendChild(b);
+        });
+        paintLang(wrap);
+        return wrap;
+    }
+
+    function initMicDictation() {
+        if (!('MediaRecorder' in window)) { return; }
+        var firstDone = false;
+        MIC_FIELDS.forEach(function (id) {
+            var el = document.getElementById(id);
+            if (!el || el.dataset.caiMic) { return; }
+            el.dataset.caiMic = '1';
+            var wrap = document.createElement('div');
+            wrap.style.position = 'relative';
+            el.parentNode.insertBefore(wrap, el);
+            wrap.appendChild(el);
+            wrap.appendChild(makeMicButton(id));
+            if (!firstDone) {
+                firstDone = true;
+                wrap.parentNode.insertBefore(makeLangToggle(), wrap);
+            }
+        });
+    }
+
     function init() {
+        initMicDictation();   // voice dictation mic on the free-text fields (always available)
         // Consultation smart-assists (prior-visit summary + quick chips + the
         // floating chat widget) are gated by the "Consultation suggestions"
         // switch. ICD-10 is gated by its own switch.

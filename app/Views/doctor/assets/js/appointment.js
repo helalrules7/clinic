@@ -468,7 +468,64 @@ function showPrescriptionModal(appointmentId) {
     // Expose so the suggestion pickers (most-used badges, autocomplete list)
     // can trigger an instant template load after they set the drug name.
     window.__rxApplyDrugTemplate = (name) => applyDrugTemplateToForm(name, form);
-    
+
+    // --- Drug-safety check (allergy + interactions) — advisory banner by the field.
+    (function () {
+        var box = document.getElementById('rxSafetyWarnings');
+        if (!box && drugInput) {
+            box = document.createElement('div');
+            box.id = 'rxSafetyWarnings';
+            box.style.cssText = 'margin-top:8px;display:flex;flex-direction:column;gap:6px';
+            (drugInput.closest('.mb-3, .form-group, .col, .row') || drugInput.parentNode).appendChild(box);
+        }
+        var CAI = window.CONSULTATION_AI || {};
+        var SEV = {
+            contraindicated: { bg: 'rgba(239,68,68,.16)', fg: '#ef4444', icon: '🚫', label: 'Contraindicated' },
+            major: { bg: 'rgba(239,68,68,.14)', fg: '#ef4444', icon: '🔴', label: 'Major' },
+            moderate: { bg: 'rgba(245,158,11,.18)', fg: '#f59e0b', icon: '🟡', label: 'Moderate' },
+            minor: { bg: 'rgba(59,130,246,.16)', fg: '#3b82f6', icon: 'ℹ️', label: 'Minor' }
+        };
+        function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+        function render(warnings) {
+            if (!box) return;
+            if (!warnings || !warnings.length) { box.innerHTML = ''; return; }
+            box.innerHTML = warnings.map(function (w) {
+                var s = SEV[w.severity] || SEV.moderate;
+                var head = w.type === 'allergy' ? ('Allergy: ' + esc(w.against)) : ('Interaction with ' + esc(w.against));
+                var ai = w.source === 'ai' ? ' <span style="font-size:.7rem;font-weight:700;color:#7c3aed">AI · verify</span>' : '';
+                return '<div style="background:' + s.bg + ';border-left:3px solid ' + s.fg + ';border-radius:8px;padding:8px 10px">' +
+                    '<div style="font-size:.8rem;font-weight:700;color:' + s.fg + '">' + s.icon + ' ' + s.label + ' — ' + head + ai + '</div>' +
+                    '<div style="font-size:.8rem;color:' + s.fg + ';opacity:.9;margin-top:2px">' + esc(w.message) + '</div></div>';
+            }).join('');
+        }
+        var t = null, last = '';
+        function check(name) {
+            name = (name || '').trim();
+            if (name === last) { return; }
+            last = name;
+            if (name.length < 3) { render([]); return; }
+            var apptId = CAI.appointmentId || '';
+            var body = 'drug_name=' + encodeURIComponent(name) +
+                (apptId ? '&appointment_id=' + encodeURIComponent(apptId) : '') +
+                (CAI.patientId ? '&patient_id=' + encodeURIComponent(CAI.patientId) : '');
+            var headers = { 'Content-Type': 'application/x-www-form-urlencoded', 'X-Requested-With': 'XMLHttpRequest' };
+            if (CAI.csrfToken) { headers['X-CSRF-Token'] = CAI.csrfToken; }
+            fetch('/api/prescriptions/check', { method: 'POST', credentials: 'same-origin', headers: headers, body: body })
+                .then(function (r) { return r.json().catch(function () { return null; }); })
+                .then(function (j) { render((j && j.warnings) || []); })
+                .catch(function () { /* advisory — ignore */ });
+        }
+        if (drugInput) {
+            drugInput.addEventListener('input', function () { var v = this.value; clearTimeout(t); t = setTimeout(function () { check(v); }, 500); });
+            drugInput.addEventListener('change', function () { check(this.value); });
+        }
+        var prevApply = window.__rxApplyDrugTemplate;
+        window.__rxApplyDrugTemplate = function (name) {
+            if (typeof prevApply === 'function') { prevApply(name); }
+            check(name);
+        };
+    })();
+
     // Load most used drugs suggestions
     loadMostUsedDrugs();
     
