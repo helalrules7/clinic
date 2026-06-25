@@ -7,9 +7,9 @@ class Constants
     // Application
     const APP_NAME = 'Roaya Ophthalmology Clinic';
     const SPECIALTY = 'ophthalmology';   // mobile setup guard — must match the app's chosen specialty
-    const APP_VERSION = '12.1.0';
-    const MOBILE_VERSION = '1.1.17';
-    const DESKTOP_VERSION = '1.1.0';
+    const APP_VERSION = '12.2.0';
+    const MOBILE_VERSION = '1.2.0';
+    const DESKTOP_VERSION = '1.2.0';
     const TIMEZONE = 'Africa/Cairo';
     
     // Working Hours

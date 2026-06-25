@@ -116,6 +116,19 @@
                                         <div class="cl-entry">
                                             <div class="cl-head">
                                                 <span class="cl-ver">v<?= htmlspecialchars($__appV) ?></span>
+                                                <span class="cl-title">Drug safety &amp; smart drug search</span>
+                                                <span class="cl-date">2026-06-25</span>
+                                            </div>
+                                            <ul class="cl-list">
+                                                <li><b>Drug safety alerts:</b> when prescribing, new drugs are checked against the patient's current medications for interactions and against recorded allergies, with colour-coded severity (contraindicated / major / moderate / minor).</li>
+                                                <li><b>Smart drug search:</b> the drug-name field now also matches the <b>active ingredient</b> — type the generic, not just the brand.</li>
+                                                <li><b>Drug Finder:</b> a search button opens a finder to search by name, active ingredient or company, filter by route, and add one or several drugs at once.</li>
+                                                <li><b>Voice dictation:</b> dictate consultation fields by voice (Arabic &amp; English).</li>
+                                            </ul>
+                                        </div>
+                                        <div class="cl-entry">
+                                            <div class="cl-head">
+                                                <span class="cl-ver">v12.1.0</span>
                                                 <span class="cl-title">Fixes &amp; cross-platform notes</span>
                                                 <span class="cl-date">2026-06-23</span>
                                             </div>
