@@ -537,7 +537,7 @@ function showPrescriptionModal(appointmentId) {
         fbtn.type = 'button';
         fbtn.id = 'rxFinderBtn';
         fbtn.title = 'Find drug';
-        fbtn.innerHTML = '🔍';
+        fbtn.innerHTML = '<i class="bi bi-search"></i>';
         fbtn.style.cssText = 'position:absolute;top:6px;right:8px;border:0;background:transparent;cursor:pointer;font-size:1rem;line-height:1;padding:4px 6px;z-index:1060';
         wrap.appendChild(fbtn);
         drugInput.style.paddingRight = '38px';
@@ -558,7 +558,7 @@ function showPrescriptionModal(appointmentId) {
             ov.innerHTML =
                 '<div style="background:var(--card,#fff);color:var(--text,#1e293b);border:1px solid var(--border,#e2e8f0);border-radius:14px;width:100%;max-width:720px;max-height:85vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.35);overflow:hidden">'
               +   '<div style="display:flex;align-items:center;gap:8px;padding:12px 14px;border-bottom:1px solid var(--border,#e2e8f0)">'
-              +     '<span style="font-weight:700;font-size:.95rem">🔍 Find drug</span>'
+              +     '<span style="font-weight:700;font-size:.95rem"><i class="bi bi-search"></i> Find drug</span>'
               +     '<button type="button" id="rxFinderClose" style="margin-inline-start:auto;border:0;background:transparent;font-size:1.3rem;cursor:pointer;color:inherit;line-height:1">×</button>'
               +   '</div>'
               +   '<div style="display:flex;gap:8px;padding:12px 14px;flex-wrap:wrap">'
